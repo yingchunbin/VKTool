@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Vạn Kiếp Trợ Thủ</title>
+  <style>
+    body{max-width:760px;margin:40px auto;padding:0 18px;font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:#1f2937}code{overflow-wrap:anywhere}button{min-height:44px;padding:10px 14px;border:0;border-radius:10px;background:#8b1e1e;color:#fff;font-weight:700}textarea{box-sizing:border-box;width:100%;min-height:120px;padding:12px;border:1px solid #d0d5dd;border-radius:10px;font:13px/1.5 ui-monospace,monospace}@media(prefers-color-scheme:dark){body{background:#111827;color:#e5e7eb}textarea{background:#182230;color:#e5e7eb;border-color:#475467}}
+  </style>
+</head>
+<body>
+  <h1>Vạn Kiếp Trợ Thủ</h1>
+  <p>Sao chép đoạn dưới đây, tạo dấu trang mới và dán vào trường địa chỉ của dấu trang.</p>
+  <textarea id="code" readonly>javascript:(()=>{import('https://huuhoang1325-beep.github.io/vk-tro-ly/vk-tro-ly.js?v='+Date.now()).catch(e=>alert('Không tải được Vạn Kiếp Trợ Thủ: '+e.message))})()</textarea>
+  <p><button type="button" id="copy">Sao chép bookmarklet</button></p>
+  <p id="status" aria-live="polite"></p>
+  <script>document.getElementById('copy').addEventListener('click',async()=>{const t=document.getElementById('code').value;try{await navigator.clipboard.writeText(t);document.getElementById('status').textContent='Đã sao chép.'}catch{document.getElementById('code').select();document.execCommand('copy');document.getElementById('status').textContent='Đã sao chép.'}})</script>
+</body>
+</html>
