@@ -1,10 +1,11 @@
 (()=>{
 'use strict';
-const BUILD='20261102-1500-build-km-r26',V=`Vạn Kiếp Trợ Thủ · ${BUILD}`,ID='vk-tro-ly',BID='vk-tro-ly-bubble',g=window.game;
+const BUILD='20261103-ui-r40',V=`Vạn Kiếp Trợ Thủ · ${BUILD}`,ID='vk-tro-ly',BID='vk-tro-ly-bubble',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng.');return}
 const prior=document.getElementById(ID),priorApi=window.__VK_EVENT_HUNTER__;if(prior){if(priorApi?.buildId===BUILD){prior.style.display='flex';document.getElementById(BID)?.remove();console.info(`[VKTool] Đang dùng bản mới nhất ${BUILD}`);return}try{priorApi?.close?.()}catch{}document.getElementById(ID)?.remove();document.getElementById(BID)?.remove();console.info(`[VKTool] Đã thay bản cũ bằng ${BUILD}`)}
 const C=g.env.content,W=g.env.world,A=v=>Array.isArray(v)?v:[],N=v=>Number.isFinite(Number(v));
 const fmtDuration=t=>{if(!N(t))return'?';const years=Number(t),days=Math.round(years*360);if(days<30)return`${Math.max(1,days)} ngày`;const months=Math.round(years*12);if(months<12)return`${months} tháng`;return`${new Intl.NumberFormat('vi-VN',{maximumFractionDigits:1}).format(years)} năm`},fmtDistance=d=>N(d)?`${F(d)} dặm`:'?';
+const TickCache={_sig:null,_store:new Map(),begin(sig){if(sig!==this._sig){this._sig=sig;this._store.clear()}},get(k,fn){if(this._store.has(k))return this._store.get(k);const v=fn();this._store.set(k,v);return v},clear(){this._store.clear();this._sig=null}};
 const Runtime={run:()=>g.state.run||{},character:()=>g.state.run?.nhanVat||{},flags:()=>g.state.run?.flags||{},place:slot=>g.state.run?.noiChon?.[slot]||null,node:slot=>g.state.run?.nodes?.[slot]||null,currentSlot:()=>g.state.run?.viTri??null,location:slot=>{try{return W.info(slot??g.state.run?.viTri)||null}catch{return null}},itemQty:id=>Number(g.state.run?.nhanVat?.tuiDo?.[id]||0),profession:key=>g.state.run?.nhanVat?.nghe?.[key]??null,stat:key=>{const nv=g.state.run?.nhanVat||{};if(key==='canh_gioi')return nv.canhGioi;if(key==='tieu_canh_gioi')return nv.tieuCanhGioi;return nv.chiSo?.[key]}};
 const Verdict=(state,label,expected,actual,source,reason)=>({state,label,expected,actual,source,reason});
 const overall=rs=>rs.some(x=>x.state==='unmet')?'unmet':rs.some(x=>x.state==='unknown')?'unknown':rs.length?'met':'unknown';
@@ -74,10 +75,9 @@ function commercePoolMatch(r,p){if(!p||typeof p!=='object')return false;if(p.loa
 function buildItemSources(targetIds){const wanted=new Set(targetIds),missing=[...wanted].filter(id=>!itemSources.has(id));if(!missing.length)return new Map([...wanted].map(id=>[id,itemSources.get(id)||[]]));const fresh=new Map(missing.map(id=>[id,[]])),add=(id,x)=>{if(fresh.has(id)&&!fresh.get(id).some(a=>a.kind===x.kind&&a.id===x.id&&a.op===x.op&&a.path===x.path))fresh.get(id).push(x)},scan=(kind,col)=>{if(!(col instanceof Map))return;for(const[id,o]of col){walk(o,(x,path)=>{for(const[k,v]of Object.entries(x)){const iid=typeof v==='string'?v:v&&typeof v==='object'&&typeof v.id==='string'?v.id:null;if(iid&&fresh.has(iid)&&['add_item','roi_quy','mua','linh_ngo','hach','tran_phap'].includes(k))add(iid,{kind,id,op:k,path:path.concat(k).join('.'),ctx:x})}});if(kind==='encounter')for(const iid of missing){const r=C.items.get(iid);if(!r)continue;for(const[k,pool]of A(o.ke_hang).entries())if(commercePoolMatch(r,pool))add(iid,{kind,id,op:'pool_shop',path:`ke_hang.${k}`,ctx:pool});for(const[k,pool]of A(o.dau_gia?.ke).entries())if(commercePoolMatch(r,pool))add(iid,{kind,id,op:'pool_auction',path:`dau_gia.ke.${k}`,ctx:pool});for(const[k,lot]of A(o.dau_gia?.lo).entries())if(lot?.id===iid)add(iid,{kind,id,op:'auction_fixed',path:`dau_gia.lo.${k}`,ctx:lot})}}};scan('encounter',C.encounters);scan('enemy',C.enemies);scan('chain',C.chains);for(const[id,list]of fresh)itemSources.set(id,list);return new Map([...wanted].map(id=>[id,itemSources.get(id)||[]]))}
 function itemRecordText(r){const parts=[];if(r.mo_ta)parts.push(r.mo_ta);if(r.he?.length)parts.push('Hệ: '+r.he.join(', '));if(N(r.gia))parts.push('Giá trị: '+F(r.gia)+' linh thạch');if(r.chieu)parts.push(`Chiêu: ${r.chieu.ten||''} · ${r.chieu.dang||''} · uy lực ${r.chieu.uy??'?'} · tốn ${r.chieu.phi??0} · hồi ${r.chieu.hoi??0}`);if(r.bi_dong)parts.push('Bị động: '+Object.entries(r.bi_dong).map(([k,v])=>k+' '+(typeof v==='object'?JSON.stringify(v):v)).join(', '));if(r.tag?.length)parts.push('Đặc điểm: '+r.tag.map(t=>t.replaceAll('_',' ')).join(', '));if(r.theo_kiep)parts.push('Theo qua kiếp');if(r.goi_y)parts.push('Gợi ý: '+r.goi_y);return parts}
 function sourceText(a){const col=a.kind==='enemy'?C.enemies:a.kind==='chain'?C.chains:a.kind==='nơi chốn'?C.noiChon:a.kind==='bảng rơi'?C.lootTables:a.kind==='đơn phương'?C.donPhuong:C.encounters,o=col?.get?.(a.id),fallback=a.kind==='enemy'?'Kẻ địch':a.kind==='chain'?'Chuỗi nhiệm vụ':'Một hoạt động trong game',name=T(o?.ten||o?.name||fallback),ops={add_item:'Có thể nhận từ',roi_quy:'Có thể rơi theo xác suất',mua:'Có thể mua qua',linh_ngo:'Có thể lĩnh ngộ',hach:'Có thể nhận từ khôi lỗi',tran_phap:'Có thể nhận từ trận pháp',pool_shop:'Có thể xuất hiện trong cửa hàng',pool_auction:'Có thể xuất hiện trong đấu giá',auction_fixed:'Lô đấu giá cố định'};return`${ops[a.op]||a.op}: ${name}`}
-const TREASURE_GUIDE=new Map([{"id":"ev.di_bao_u_hon_dien","ten":"Cửa U Hồn Điện","relic":"item.yeu_hoang_huyet_kinh","gate":[5,5],"hoiChieu":120,"diaDanh":"azgaar:marker:103","dia":{"ten":"U Hồn Điện","han":"幽魂殿","x":1110.1,"y":625.9,"cn":2.8},"chance":0.07,"baoVe":{"ten":"Hạt Hoàng Thủ Lăng","cg":5},"noi":"di_tich"},{"id":"ev.di_bao_kiem_trach","ten":"Kiếm lành giữa đầm","relic":"item.bat_chiet_kiem","gate":[5,5],"hoiChieu":120,"diaDanh":"hoang:394","dia":{"ten":"Kiếm Trạch","han":"劍澤","x":1435.6,"y":529.1,"cn":2.3},"chance":0.07,"baoVe":{"ten":"Vạn Kiếm Oán Hồn","cg":5},"check":"than_thuc +65","noi":"son_thuy"},{"id":"ev.di_bao_tien_van_dien","ten":"Đá ba mặt","relic":"item.tam_sinh_thach","gate":[4,5],"hoiChieu":120,"diaDanh":"azgaar:marker:102","dia":{"ten":"Tiên Vân Điện","han":"仙雲殿","x":1186.8,"y":645.4,"cn":2.7},"chance":0.03,"check":"dao_tam +75","noi":"di_tich"},{"id":"ev.di_bao_yeu_phong_mo","ten":"Lửa đen Yêu Phong Mộ","relic":"item.cuu_u_hoang_hoa","gate":[5,5],"hoiChieu":120,"diaDanh":"azgaar:marker:34","dia":{"ten":"Yêu Phong Mộ","han":"妖風墓","x":561,"y":257.2,"cn":4.1},"chance":0.07,"baoVe":{"ten":"Hổ Hoàng Tàn Hồn","cg":5},"noi":"di_tich"},{"id":"ev.di_bao_han_giao_linh","ten":"Vảy rồng Giao tộc","relic":"item.thai_co_long_lan","gate":[5,5],"hoiChieu":120,"chance":0.07,"baoVe":{"ten":"Giao Hoàng","cg":5},"tocYeu":"giao","noi":"hoang_da"},{"id":"ev.di_bao_kiem_dai","ten":"Chiến kỳ trên Kiếm Đài","relic":"item.doan_thien_chien_ky","gate":[5,5],"hoiChieu":120,"diaDanh":"azgaar:marker:35","dia":{"ten":"Kiếm Đài","han":"劍台","x":480.7,"y":343.5,"cn":0.1},"chance":0.07,"baoVe":{"ten":"Đoạn Thiên Chiến Hồn","cg":5},"noi":"di_tich"},{"id":"ev.bien_trieu_khu","ten":"Đêm Triều Khư","relic":"item.phong_thien_an","hoiChieu":120,"chance":0.07,"baoVe":{"ten":"Ngũ Tổ Tàn Trận","cg":5}},{"id":"ev.bien_thuyen_rong","ten":"Thuyền đầu rồng","relic":"item.thai_hu_chu","hoiChieu":120,"chance":0.03,"check":"than_thuc +100"},{"id":"ev.di_bao_hon_thap","ten":"Kinh không tiếng","relic":"item.luan_hoi_chan_kinh","gate":[4,5],"hoiChieu":120,"diaDanh":"azgaar:marker:39","dia":{"ten":"Hồn Tháp","han":"魂塔","x":1317.2,"y":691.7,"cn":2.4},"chance":0.03,"check":"ngo_tinh +70","noi":"di_tich"},{"id":"ev.di_bao_u_dien","ten":"Đèn trong U Điện","relic":"item.van_kiep_hon_dang","gate":[4,5],"hoiChieu":120,"diaDanh":"azgaar:marker:40","dia":{"ten":"U Điện","han":"幽殿","x":1530.2,"y":494.4,"cn":2.4},"chance":0.07,"baoVe":{"ten":"U Minh Quỷ Mẫu","cg":4},"noi":"di_tich"},{"id":"ev.di_bao_lan_dai","ten":"Nhẫn trên ngón xương","relic":"item.can_khon_gioi","gate":[4,5],"hoiChieu":120,"diaDanh":"azgaar:marker:141","dia":{"ten":"Lan Đài","han":"蘭台","x":344.3,"y":917.5,"cn":4.3},"chance":0.07,"baoVe":{"ten":"Cổ Chiến Khôi Lỗi","cg":5},"noi":"di_tich"},{"id":"ev.di_bao_tan_phong","ten":"Kiếm gãy trên Tàn Phong","relic":"item.toai_thien_kiem","gate":[4,5],"hoiChieu":120,"diaDanh":"hoang:291","dia":{"ten":"Tàn Phong","han":"殘峰","x":1636.8,"y":607.8,"cn":0.4},"chance":0.07,"baoVe":{"ten":"Thái Cổ Lôi Linh","cg":5},"noi":"son_thuy"},{"id":"ev.di_bao_van_dan_trung","ten":"Mộ không đọng tuyết","relic":"item.nghich_menh_dan","gate":[4,5],"hoiChieu":120,"diaDanh":"azgaar:marker:101","dia":{"ten":"Vạn Đan Trủng","han":"萬丹塚","x":1499,"y":339.3,"cn":0.3},"chance":0.07,"baoVe":{"ten":"Hạn Bạt","cg":4},"noi":"di_tich"},{"id":"ev.di_bao_tuyen_phong","ten":"Bình trên Tuyền Phong","relic":"item.cam_lo_tinh_binh","gate":[4,5],"hoiChieu":120,"diaDanh":"hoang:286","dia":{"ten":"Tuyền Phong","han":"泉峰","x":1117.3,"y":657.2,"cn":2.9},"chance":0.03,"check":"dao_tam +68","noi":"son_thuy"},{"id":"ev.di_bao_dan_coc","ten":"Mộ y gia Đan Cốc","relic":"item.than_nong_bach_thao_kinh","gate":[4,5],"hoiChieu":120,"diaDanh":"hoang:204","dia":{"ten":"Đan Cốc","han":"丹谷","x":1422.7,"y":631.7,"cn":1.9},"chance":0.03,"check":"ngo_tinh +45","noi":"son_thuy"},{"id":"ev.di_bao_xich_trung","ten":"Lò lửa Xích Trủng","relic":"item.hon_nguyen_dan_dinh","gate":[4,5],"hoiChieu":120,"diaDanh":"azgaar:marker:94","dia":{"ten":"Xích Trủng","han":"赤塚","x":665.1,"y":202.8,"cn":4.9},"chance":0.07,"baoVe":{"ten":"Âm Hỏa Hồn Vương","cg":5},"noi":"di_tich"},{"id":"ev.di_bao_van_son","ten":"Gấu ngủ Vân Sơn","relic":"item.tu_linh_chau","gate":[4,5],"hoiChieu":120,"diaDanh":"hoang:262","dia":{"ten":"Vân Sơn","han":"雲山","x":205.2,"y":614.5,"cn":2.3},"chance":0.07,"baoVe":{"ten":"Thái Nhạc Hùng","cg":5},"noi":"son_thuy"},{"id":"ev.di_bao_kim_dao_dien","ten":"Nghìn chậu đồng","relic":"item.tu_bao_bon","gate":[4,5],"hoiChieu":120,"diaDanh":"azgaar:marker:36","dia":{"ten":"Kim Đao Điện","han":"金刀殿","x":1573.7,"y":609.3,"cn":1.9},"chance":0.03,"check":"than_thuc +100","noi":"di_tich"},{"id":"ev.di_bao_bang_hon_trung","ten":"Chuông trong mộ băng","relic":"item.do_hon_linh","gate":[4,5],"hoiChieu":120,"diaDanh":"azgaar:marker:90","dia":{"ten":"Băng Hồn Trủng","han":"冰魂塚","x":308,"y":473.2,"cn":2.3},"chance":0.07,"baoVe":{"ten":"Vạn Oán Quỷ","cg":5},"noi":"di_tich"},{"id":"ev.di_bao_ho_set","ten":"Nhẫn trong hố sét","gate":[4,5],"hoiChieu":30,"check":"ngo_tinh +4","noi":"hoang_da"},{"id":"ev.di_bao_hop_ba_khoa","ten":"Hộp ba khóa","gate":[4,5],"hoiChieu":30,"check":"khi_van +8","noi":"hoang_da"},{"id":"ev.di_bao_keo_dinh","ten":"Kéo đỉnh giữa hồ","gate":[4,5],"hoiChieu":30,"check":"can_cot +4","noi":"hoang_da"}].map(x=>[x.id,x]));const TREASURE_CATALOG=[
+const TREASURE_GUIDE=new Map([["ev.di_bao_u_hon_dien", {"ten": "Cửa U Hồn Điện", "relic": "item.yeu_hoang_huyet_kinh", "gate": [5, 5], "hoiChieu": 120, "diaDanh": "azgaar:marker:103", "dia": {"ten": "U Hồn Điện", "han": "幽魂殿", "x": 1110.1, "y": 625.9, "cn": 2.8}, "chance": 0.07, "baoVe": {"ten": "Hạt Hoàng Thủ Lăng", "cg": 5}, "noi": "di_tich"}],["ev.di_bao_kiem_trach", {"ten": "Kiếm lành giữa đầm", "relic": "item.bat_chiet_kiem", "gate": [5, 5], "hoiChieu": 120, "diaDanh": "hoang:394", "dia": {"ten": "Kiếm Trạch", "han": "劍澤", "x": 1435.6, "y": 529.1, "cn": 2.3}, "chance": 0.07, "baoVe": {"ten": "Vạn Kiếm Oán Hồn", "cg": 5}, "check": "than_thuc +65", "noi": "son_thuy"}],["ev.di_bao_tien_van_dien", {"ten": "Đá ba mặt", "relic": "item.tam_sinh_thach", "gate": [4, 5], "hoiChieu": 120, "diaDanh": "azgaar:marker:102", "dia": {"ten": "Tiên Vân Điện", "han": "仙雲殿", "x": 1186.8, "y": 645.4, "cn": 2.7}, "chance": 0.03, "check": "dao_tam +75", "noi": "di_tich"}],["ev.di_bao_yeu_phong_mo", {"ten": "Lửa đen Yêu Phong Mộ", "relic": "item.cuu_u_hoang_hoa", "gate": [5, 5], "hoiChieu": 120, "diaDanh": "azgaar:marker:34", "dia": {"ten": "Yêu Phong Mộ", "han": "妖風墓", "x": 561, "y": 257.2, "cn": 4.1}, "chance": 0.07, "baoVe": {"ten": "Hổ Hoàng Tàn Hồn", "cg": 5}, "noi": "di_tich"}],["ev.di_bao_han_giao_linh", {"ten": "Vảy rồng Giao tộc", "relic": "item.thai_co_long_lan", "gate": [5, 5], "hoiChieu": 120, "chance": 0.07, "baoVe": {"ten": "Giao Hoàng", "cg": 5}, "tocYeu": "giao", "noi": "hoang_da"}],["ev.di_bao_kiem_dai", {"ten": "Chiến kỳ trên Kiếm Đài", "relic": "item.doan_thien_chien_ky", "gate": [5, 5], "hoiChieu": 120, "diaDanh": "azgaar:marker:35", "dia": {"ten": "Kiếm Đài", "han": "劍台", "x": 480.7, "y": 343.5, "cn": 0.1}, "chance": 0.07, "baoVe": {"ten": "Đoạn Thiên Chiến Hồn", "cg": 5}, "noi": "di_tich"}],["ev.bien_trieu_khu", {"ten": "Đêm Triều Khư", "relic": "item.phong_thien_an", "hoiChieu": 120, "chance": 0.07, "baoVe": {"ten": "Ngũ Tổ Tàn Trận", "cg": 5}}],["ev.bien_thuyen_rong", {"ten": "Thuyền đầu rồng", "relic": "item.thai_hu_chu", "hoiChieu": 120, "chance": 0.03, "check": "than_thuc +100"}],["ev.di_bao_hon_thap", {"ten": "Kinh không tiếng", "relic": "item.luan_hoi_chan_kinh", "gate": [4, 5], "hoiChieu": 120, "diaDanh": "azgaar:marker:39", "dia": {"ten": "Hồn Tháp", "han": "魂塔", "x": 1317.2, "y": 691.7, "cn": 2.4}, "chance": 0.03, "check": "ngo_tinh +70", "noi": "di_tich"}],["ev.di_bao_u_dien", {"ten": "Đèn trong U Điện", "relic": "item.van_kiep_hon_dang", "gate": [4, 5], "hoiChieu": 120, "diaDanh": "azgaar:marker:40", "dia": {"ten": "U Điện", "han": "幽殿", "x": 1530.2, "y": 494.4, "cn": 2.4}, "chance": 0.07, "baoVe": {"ten": "U Minh Quỷ Mẫu", "cg": 4}, "noi": "di_tich"}],["ev.di_bao_lan_dai", {"ten": "Nhẫn trên ngón xương", "relic": "item.can_khon_gioi", "gate": [4, 5], "hoiChieu": 120, "diaDanh": "azgaar:marker:141", "dia": {"ten": "Lan Đài", "han": "蘭台", "x": 344.3, "y": 917.5, "cn": 4.3}, "chance": 0.07, "baoVe": {"ten": "Cổ Chiến Khôi Lỗi", "cg": 5}, "noi": "di_tich"}],["ev.di_bao_tan_phong", {"ten": "Kiếm gãy trên Tàn Phong", "relic": "item.toai_thien_kiem", "gate": [4, 5], "hoiChieu": 120, "diaDanh": "hoang:291", "dia": {"ten": "Tàn Phong", "han": "殘峰", "x": 1636.8, "y": 607.8, "cn": 0.4}, "chance": 0.07, "baoVe": {"ten": "Thái Cổ Lôi Linh", "cg": 5}, "noi": "son_thuy"}],["ev.di_bao_van_dan_trung", {"ten": "Mộ không đọng tuyết", "relic": "item.nghich_menh_dan", "gate": [4, 5], "hoiChieu": 120, "diaDanh": "azgaar:marker:101", "dia": {"ten": "Vạn Đan Trủng", "han": "萬丹塚", "x": 1499, "y": 339.3, "cn": 0.3}, "chance": 0.07, "baoVe": {"ten": "Hạn Bạt", "cg": 4}, "noi": "di_tich"}],["ev.di_bao_tuyen_phong", {"ten": "Bình trên Tuyền Phong", "relic": "item.cam_lo_tinh_binh", "gate": [4, 5], "hoiChieu": 120, "diaDanh": "hoang:286", "dia": {"ten": "Tuyền Phong", "han": "泉峰", "x": 1117.3, "y": 657.2, "cn": 2.9}, "chance": 0.03, "check": "dao_tam +68", "noi": "son_thuy"}],["ev.di_bao_dan_coc", {"ten": "Mộ y gia Đan Cốc", "relic": "item.than_nong_bach_thao_kinh", "gate": [4, 5], "hoiChieu": 120, "diaDanh": "hoang:204", "dia": {"ten": "Đan Cốc", "han": "丹谷", "x": 1422.7, "y": 631.7, "cn": 1.9}, "chance": 0.03, "check": "ngo_tinh +45", "noi": "son_thuy"}],["ev.di_bao_xich_trung", {"ten": "Lò lửa Xích Trủng", "relic": "item.hon_nguyen_dan_dinh", "gate": [4, 5], "hoiChieu": 120, "diaDanh": "azgaar:marker:94", "dia": {"ten": "Xích Trủng", "han": "赤塚", "x": 665.1, "y": 202.8, "cn": 4.9}, "chance": 0.07, "baoVe": {"ten": "Âm Hỏa Hồn Vương", "cg": 5}, "noi": "di_tich"}],["ev.di_bao_van_son", {"ten": "Gấu ngủ Vân Sơn", "relic": "item.tu_linh_chau", "gate": [4, 5], "hoiChieu": 120, "diaDanh": "hoang:262", "dia": {"ten": "Vân Sơn", "han": "雲山", "x": 205.2, "y": 614.5, "cn": 2.3}, "chance": 0.07, "baoVe": {"ten": "Thái Nhạc Hùng", "cg": 5}, "noi": "son_thuy"}],["ev.di_bao_kim_dao_dien", {"ten": "Nghìn chậu đồng", "relic": "item.tu_bao_bon", "gate": [4, 5], "hoiChieu": 120, "diaDanh": "azgaar:marker:36", "dia": {"ten": "Kim Đao Điện", "han": "金刀殿", "x": 1573.7, "y": 609.3, "cn": 1.9}, "chance": 0.03, "check": "than_thuc +100", "noi": "di_tich"}],["ev.di_bao_bang_hon_trung", {"ten": "Chuông trong mộ băng", "relic": "item.do_hon_linh", "gate": [4, 5], "hoiChieu": 120, "diaDanh": "azgaar:marker:90", "dia": {"ten": "Băng Hồn Trủng", "han": "冰魂塚", "x": 308, "y": 473.2, "cn": 2.3}, "chance": 0.07, "baoVe": {"ten": "Vạn Oán Quỷ", "cg": 5}, "noi": "di_tich"}],["ev.di_bao_ho_set", {"ten": "Nhẫn trong hố sét", "gate": [4, 5], "hoiChieu": 30, "check": "ngo_tinh +4", "noi": "hoang_da"}],["ev.di_bao_hop_ba_khoa", {"ten": "Hộp ba khóa", "gate": [4, 5], "hoiChieu": 30, "check": "khi_van +8", "noi": "hoang_da"}],["ev.di_bao_keo_dinh", {"ten": "Kéo đỉnh giữa hồ", "gate": [4, 5], "hoiChieu": 30, "check": "can_cot +4", "noi": "hoang_da"}]]);const TREASURE_CATALOG=[
 ['ev.di_bao_u_hon_dien','U Hồn Điện'],['ev.di_bao_kiem_trach','Kiếm Trạch'],['ev.di_bao_tien_van_dien','Tiên Vân Điện'],['ev.di_bao_yeu_phong_mo','Yêu Phong Mộ'],['ev.di_bao_kiem_dai','Kiếm Đài'],['ev.di_bao_hon_thap','Hồn Tháp'],['ev.di_bao_u_dien','U Điện'],['ev.di_bao_lan_dai','Lan Đài'],['ev.di_bao_tan_phong','Tàn Phong'],['ev.di_bao_van_dan_trung','Vạn Đan Trủng'],['ev.di_bao_tuyen_phong','Tuyền Phong'],['ev.di_bao_dan_coc','Đan Cốc'],['ev.di_bao_xich_trung','Xích Trủng'],['ev.di_bao_van_son','Vân Sơn'],['ev.di_bao_kim_dao_dien','Kim Đao Điện'],['ev.di_bao_bang_hon_trung','Băng Hồn Trủng'],['ev.di_bao_han_giao_linh',null],['ev.bien_trieu_khu','Bến Vĩnh Triều'],['ev.bien_thuyen_rong','Bến Lạc Khư']];
-let slotInfoCache=null,slotInfoAt=0;function slotInfos(){const now=Date.now();if(slotInfoCache&&now-slotInfoAt<1500)return slotInfoCache;const out=[];for(const sl of W.slots||[]){if(sl.an)continue;try{out.push([sl,W.info(sl.id)])}catch{}}slotInfoCache=out;slotInfoAt=now;return out}
-function nearestSlot(match){let best=null,bt=Infinity;for(const[sl,info]of slotInfos()){if(!match(info,sl))continue;const t=+g.travelYears(sl.id);if(t<bt){bt=t;best=sl.id}}return best}
+function nearestSlot(match){let best=null,bt=Infinity;for(const sl of W.slots||[]){if(sl.an)continue;let info;try{info=W.info(sl.id)}catch{continue}if(!match(info,sl))continue;const t=+g.travelYears(sl.id);if(t<bt){bt=t;best=sl.id}}return best}
 function groups(r){const b=new Set(),isTreasure=TREASURE_GUIDE.has(r.enc)||Boolean(rareTreasure(r)),isSect=['Ngọc giản tông môn','Nhiệm vụ đã nhận'].includes(r.src),isMap=r.src==='Sự kiện trên bản đồ';r.rare=rareTreasure(r);if(isTreasure)b.add('treasure');if(isSect)b.add('sect');if(isMap&&!isTreasure)b.add('mapevent');if(isTreasure||isSect||isMap||r.x?.catalog)b.add('all');return b}
 function repeat(r){const l=r.e?.limits||{};if(l.moi_run)return'Một lần mỗi kiếp';if(N(l.hoi_chieu_nam))return`Lặp lại sau ${F(l.hoi_chieu_nam)} năm`;if(r.meta.repeat)return'Có lựa chọn lặp';if(r.src==='Tiện ích tại nơi')return'Thường trú theo địa điểm';return'Theo vòng đời sự kiện'}
 function hallOpen(){const a=g.state.run.active;return a?.id==='ev.nhiem_vu_tong_mon'&&a?.waiting?.kind==='treo_thuong'&&a?.waiting?.data?.loai==='tong_mon'}
@@ -97,7 +97,51 @@ function npcInteractionHints(id,npc,run=g.state.run,location=null){const alive=n
 function npcLocation(id,npc,run=g.state.run){const runtime=npcRuntimeLocation(id,run);if(runtime)return runtime;if(run?.dongHanh?.npc===id)return{slot:run.viTri,note:'Đang đồng hành',until:N(run.dongHanh.den)?+run.dongHanh.den:null,confidence:'runtime',source:'companion'};if(npc?.trip&&N(npc.trip.until)&&+npc.trip.until>+run.nam)return{slot:npc.trip.to||null,note:npc.trip.to===run.viTri?'Đang ở điểm đến chuyến đi':'Đang đi tới '+safePlaceName(npc.trip.to),until:+npc.trip.until,confidence:'state',source:'trip'};if(npc?.home&&W.hasSlot(npc.home))return{slot:npc.home,note:run?.noiChon?.[npc.home]?.chuNhan==='nguoi_choi'?'Ở động phủ của người chơi':'Ở nhà',until:null,confidence:'state',source:'home'};if(npc?.que&&W.hasSlot(npc.que))return{slot:npc.que,note:'Ở quê nhà',until:null,confidence:'fallback',source:'hometown'};if(npc?.seen?.slot&&W.hasSlot(npc.seen.slot))return{slot:npc.seen.slot,note:'Vị trí gặp gần nhất',until:N(npc.seen.year)?+npc.seen.year:null,confidence:'history',source:'seen'};if(npc?.theLuc&&(npc.seat||npc.danhPhan==='su_phu'))return{slot:null,note:'Thuộc thế lực · chưa xác định trụ sở',until:null,confidence:'unknown',source:'faction'};return{slot:null,note:'Chưa rõ tung tích',until:null,confidence:'unknown',source:'unknown'}}
 function giftItemMatch(record,kind){if(!record||!kind)return false;const type=String(record.loai||''),tags=A(record.tag).map(String);if(['dan_duoc','phap_khi','cong_phap','phu_luc'].includes(kind))return type===kind;if(kind==='linh_duoc')return type==='linh_duoc'||tags.includes('linh_duoc');if(kind==='yeu_tai')return type==='yeu_tai'||tags.includes('yeu_tai')||tags.includes('yeu_thu');if(kind==='dac_san')return type==='dac_san'||tags.includes('dac_san');return false}
 function giftItems(kind){return[...C.items].filter(([,record])=>giftItemMatch(record,kind)).map(([id,record])=>({id,record,qty:Runtime.itemQty(id)})).sort((a,b)=>(b.qty-a.qty)||(a.record.ten||a.id).localeCompare(b.record.ten||b.id,'vi'))}
-function collectPeopleRecords(run=g.state.run){const out=[];for(const[id,npc]of Object.entries(run?.npc||{})){if(!npc||npc.chuaGap)continue;const activeRelation=npc.danhPhan&&npc.danhPhan!=='quen_biet'||N(npc.haoCam)&&+npc.haoCam!==0||npc.lastGiftYear!=null||npc.lastAskYear!=null||npc.tinhY||N(npc.no?.so)&&+npc.no.so>0||npc.seen?.slot;if(!activeRelation&&npc.song!==false)continue;const location=npcLocation(id,npc,run),slot=location.slot&&W.hasSlot(location.slot)?location.slot:null,distance=slot?+g.distanceLi(slot):null,travel=slot?+g.travelYears(slot):null,name=T(npc.ten||npc.name||id),genderCode=String(npc.gioiTinh||npc.gioi_tinh||'').toLowerCase(),gender=genderCode==='nam'?'Nam':genderCode==='nu'?'Nữ':genderCode?T(genderCode):'Chưa rõ',lifeState=npc.song===false?'Đã khuất':'Còn sống',interactions=npcInteractionHints(id,npc,run,location),relation=T(npc.danhPhan||'quen_biet').replaceAll('_',' '),debt=N(npc.no?.so)?+npc.no.so:0;out.push({key:`person|${id}`,id,name,npc,gender,genderCode,lifeState,relation,affection:N(npc.haoCam)?+npc.haoCam:0,debt,romance:Boolean(npc.tinhY),location,slot,distance,travel,interactions,giftLike:npc.giftLike||npc.soThich||null,giftLikeName:npc.giftLikeName||npc.soThichName||null,lastGiftYear:npc.lastGiftYear,lastAskYear:npc.lastAskYear,seen:npc.seen||null})}const rank=x=>x.lifeState==='Đã khuất'?6:x.interactions.includes('Có thể gặp mặt')?0:x.location.source==='node'?1:x.location.source==='companion'?2:x.slot?3:5;return out.sort((a,b)=>rank(a)-rank(b)||(a.travel??Infinity)-(b.travel??Infinity)||(a.distance??Infinity)-(b.distance??Infinity)||b.affection-a.affection||a.name.localeCompare(b.name,'vi'))}
+function collectPeopleRecords(run=g.state.run){
+  const out=[],now=Number(run?.nam)||0;
+  for(const[id,npc]of Object.entries(run?.npc||{})){
+    if(!npc||npc.chuaGap)continue;
+    const activeRelation=npc.danhPhan&&npc.danhPhan!=='quen_biet'||N(npc.haoCam)&&+npc.haoCam!==0||npc.lastGiftYear!=null||npc.lastAskYear!=null||npc.tinhY||N(npc.no?.so)&&+npc.no.so>0||npc.seen?.slot||run?.dongHanh?.npc===id;
+    if(!activeRelation&&npc.song!==false)continue;
+    const location=npcLocation(id,npc,run);
+    const slot=location.slot&&W.hasSlot(location.slot)?location.slot:null;
+    const distance=slot?+g.distanceLi(slot):null,travel=slot?+g.travelYears(slot):null;
+    const name=T(npc.ten||npc.name||id);
+    const genderCode=String(npc.gioiTinh||npc.gioi_tinh||'').toLowerCase();
+    const gender=genderCode==='nam'?'Nam':genderCode==='nu'?'Nữ':genderCode?T(genderCode):'Chưa rõ';
+    const lifeState=npc.song===false?'Đã khuất':'Còn sống';
+    const interactions=npcInteractionHints(id,npc,run,location);
+    const relationKey=String(npc.danhPhan||'quen_biet');
+    const relation=RELATION_NAMES[relationKey]||T(relationKey).replaceAll('_',' ');
+    const debt=N(npc.no?.so)?+npc.no.so:0;
+    const giftLike=npc.giftLike||npc.soThich||null;
+    const giftLikeName=npc.giftLikeName||npc.soThichName||(giftLike&&GIFT_NAMES[giftLike])||null;
+    let giftOwned=0,giftTotal=0;
+    if(giftLike){
+      try{
+        const gifts=giftItems(giftLike);
+        giftTotal=gifts.length;
+        giftOwned=gifts.filter(x=>x.qty>0).length;
+      }catch{}
+    }
+    const placeName=slot?safePlaceName(slot):null;
+    const canMeet=interactions.includes('Có thể gặp mặt');
+    const until=N(location.until)?+location.until:null;
+    const remaining=until!==null?until-now:null;
+    out.push({
+      key:`person|${id}`,id,name,npc,gender,genderCode,lifeState,
+      relation,relationKey,affection:N(npc.haoCam)?+npc.haoCam:0,debt,
+      romance:Boolean(npc.tinhY),location,slot,placeName,distance,travel,
+      interactions,canMeet,giftLike,giftLikeName,giftOwned,giftTotal,
+      lastGiftYear:npc.lastGiftYear,lastAskYear:npc.lastAskYear,seen:npc.seen||null,
+      home:npc.home||null,hometown:npc.que||null,faction:npc.theLuc||null,
+      seat:npc.seat||null,remaining,until
+    });
+  }
+  const rank=x=>x.lifeState==='Đã khuất'?6:x.canMeet?0:x.location.source==='node'?1:x.location.source==='companion'?2:x.slot?3:5;
+  return out.sort((a,b)=>rank(a)-rank(b)||(a.travel??Infinity)-(b.travel??Infinity)||(a.distance??Infinity)-(b.distance??Infinity)||b.affection-a.affection||a.name.localeCompare(b.name,'vi'));
+}
+
 const SEED_NAMES={an_nghia:'Ân nghĩa',oan_han:'Oan hận',truy_na:'Truy nã',no_van_bao:'Nợ vẫn báo'};
 function collectRandomRecords(run=g.state.run){const year=+run?.nam,out=[],seen=new Set(),add=r=>{if(r?.key&&!seen.has(r.key)){seen.add(r.key);out.push(r)}};const bienCo=run?.bienCo;if(bienCo?.encounter){const e=C.encounters.get(bienCo.encounter),target=bienCo.vars?.doi_tuong,npc=target&&run?.npc?.[target];add({recordType:'random',key:`bienco|${bienCo.encounter}|${bienCo.slot||run.viTri||''}`,source:'bienCo',kind:'Biến cố',name:`${e?.ten||bienCo.encounter}${npc?.ten?' — '+npc.ten:''}`,slot:bienCo.slot||run.viTri||null,startYear:N(bienCo.namSinh)?+bienCo.namSinh:null,endYear:N(bienCo.hetHanNam)?+bienCo.hetHanNam:null,state:'active',encounter:bienCo.encounter,vars:bienCo.vars||{}})}for(const[key,raw]of Object.entries(run?.nodes||{})){const node=raw&&typeof raw==='object'?raw:null;if(!node?.encounter||(!node.npc&&!node.viec&&!N(node.hetHanNam)))continue;const slot=node.slot||key,e=C.encounters.get(node.encounter),npc=node.npc&&run?.npc?.[node.npc],name=npc?.ten?`${npc.ten}${e?.ten?' — '+e.ten:''}`:e?.ten||node.viec||node.npc||node.encounter;add({recordType:'random',key:`node|${slot}|${node.encounter}|${node.npc||node.viec||''}`,source:'nodes',kind:node.npc?'NPC ghé qua':node.viec?'Việc đã nhận':'Sự kiện tạm thời',name,slot,startYear:N(node.namSinh)?+node.namSinh:null,endYear:N(node.hetHanNam)?+node.hetHanNam:null,state:'active',encounter:node.encounter,npc:node.npc||null,quest:node.viec||null,vars:node.vars||{}})}for(const mark of A(run?.lookupMarks)){if(!mark?.slot||!N(mark.untilYear)||N(year)&&+mark.untilYear<=year)continue;add({recordType:'random',key:`lookup|${mark.slot}|${mark.untilYear}`,source:'lookupMarks',kind:'Dò hỏi',name:T(mark.label)||'Dấu dò hỏi',slot:mark.slot,startYear:null,endYear:+mark.untilYear,state:'active'})}for(const seed of A(run?.seeds)){if(!seed||typeof seed!=='object')continue;const npc=seed.doiTuong&&run?.npc?.[seed.doiTuong],state=!N(year)||!N(seed.tuNam)||!N(seed.denNam)?'unknown':year<+seed.tuNam?'waiting':year<=+seed.denNam?'active':'expired';add({recordType:'random',key:`seed|${seed.loai||''}|${seed.doiTuong||''}|${seed.gieoNam||''}`,source:'seeds',kind:'Hạt nhân quả',name:`${SEED_NAMES[seed.loai]||seed.loai||'Nhân quả'}${npc?.ten?' — '+npc.ten:''}`,slot:seed.slot||null,startYear:N(seed.tuNam)?+seed.tuNam:null,endYear:N(seed.denNam)?+seed.denNam:null,seededYear:N(seed.gieoNam)?+seed.gieoNam:null,state,target:seed.doiTuong||null})}return out.map(r=>{const validSlot=r.slot&&W.hasSlot(r.slot),travel=validSlot?+g.travelYears(r.slot):null,distance=validSlot?+g.distanceLi(r.slot):null,remaining=N(r.endYear)&&N(year)?r.endYear-year:null;return{...r,slot:validSlot?r.slot:null,travelYears:travel,distanceLi:distance,remainingYears:remaining,canArrive:remaining===null||travel===null?null:travel<=remaining}}).sort((a,b)=>(a.state==='expired'?1:0)-(b.state==='expired'?1:0)||(a.distanceLi??Infinity)-(b.distanceLi??Infinity)||(a.endYear??Infinity)-(b.endYear??Infinity))}
 
@@ -285,21 +329,118 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
   // ───────────────────────── 4. Tối ưu kinh mạch ─────────────────────────
 
   const BUILD_TAGS={tu_do:[],kiem:['kiem'],the:['the'],phat:['phat'],ma:['ma','nghich'],doc:['doc','co'],hop_hoan:['hop_hoan'],thi:['thi'],quy:['quy'],ngu_thu:['ngu_thu','ngu_linh'],khoi_loi:['khoi_loi'],phu:['phu'],tran:['tran'],dan:['dan'],khi:['khi']};
-  const ELEMENT_ROOT={loi:'moc',phong:'moc',bang:'thuy'},ELEMENT_GEN={kim:'thuy',thuy:'moc',moc:'hoa',hoa:'tho',tho:'kim'},ELEMENT_OVER={kim:'moc',moc:'tho',tho:'thuy',thuy:'hoa',hoa:'kim'};
-  const rootElement=h=>ELEMENT_ROOT[h]||h;
-  function itemElements(it){const hs=A(it?.he);return hs.length?hs:['vo_sac']}
-  function itemAlignment(it){const raw=[...A(it?.tag),...A(it?.tran_phai)].map(String);return raw.some(x=>['ma','nghich','quy','thi','ta','ta_dao'].includes(x))?'ta':'chinh'}
-  function chosenElements(){const p=S.pref||{},subs=A(p.subs).filter(x=>x&&x!=='none'&&x!==p.mainElement).slice(0,5);return{main:p.mainElement||'auto',subs}}
+  const TA_TAGS=['ma','nghich','thi','quy','doc','hop_hoan'];
+  const TA_SCHOOLS=['ma','doc','hop_hoan','thi','quy'];
+  const NL_SCHOOL={ngu_thu:'thu',khoi_loi:'khoi_loi',doc:'trung',thi:'thi',quy:'hon'};
+  const NL_LABEL={thu:'thú',khoi_loi:'khôi lỗi',trung:'cổ trùng',thi:'thi khôi',hon:'quỷ hồn'};
+  /* Phân loại đúng game (611/ye): Tâm=CP không chiêu · Đấu=CP có chiêu · PK=PK có chiêu · BV=PK không chiêu */
+  function pieceCls(it){
+    if(!it)return'bv';
+    if(it.loai==='cong_phap')return it.chieu?'dau':'tam';
+    return it.chieu?'pk':'bv';
+  }
+  function isTa(it){
+    if(!it)return false;
+    if(A(it.tag).some(t=>TA_TAGS.includes(t)))return true;
+    if(A(it.tran_phai).some(t=>TA_TAGS.includes(t)))return true;
+    if(it.ngu_linh&&['thi','hon'].includes(it.ngu_linh.loai))return true;
+    return false;
+  }
+  function schoolMatchItem(school,it){
+    if(!it||!school||school==='tu_do')return true;
+    const tags=BUILD_TAGS[school]||[];
+    const raw=[...A(it.tag),...A(it.tran_phai)];
+    return tags.some(t=>raw.includes(t));
+  }
+  /* pathInfo: điều kiện bắt buộc theo phái (huuhoang) */
+  function pathInfo(manh,R,nv){
+    const school=S.pref?.school||'tu_do';
+    const th=(R?.manh||[]).filter(m=>m&&m.thong);
+    const Cc=C();
+    const match=th.filter(m=>{const it=Cc.items.get(m.item);return schoolMatchItem(school,it)}).length;
+    const openCells=A(nv?.kinhMach?.trangThai).filter(x=>x==='thong').length||Math.max(1,th.length);
+    let taCells=0;
+    for(const m of th){
+      const it=Cc.items.get(m.item);
+      if(!isTa(it))continue;
+      taCells+=A(m.o).length||1;
+    }
+    const taRatio=taCells/Math.max(1,openCells);
+    const req=[];
+    if(school==='the'){
+      const ok=th.some(m=>{const it=Cc.items.get(m.item);return it&&it.loai==='cong_phap'&&!it.chieu&&A(it.tag).includes('the')});
+      req.push({ok,txt:'Tâm pháp luyện thể đang thông (bắt buộc để chiêu thể đánh bằng khí huyết)'});
+    }
+    if(TA_SCHOOLS.includes(school)){
+      req.push({ok:taRatio>=1/3,txt:`Mảnh tà ≥ 1/3 ô đang thông để lưới ngả tà (hiện ${Math.round(taRatio*100)}%)`});
+    }else if(school!=='tu_do'&&taCells>0){
+      req.push({ok:taRatio<1/3,txt:`Giữ lưới chính đạo: mảnh tà dưới 1/3 ô (hiện ${Math.round(taRatio*100)}%)`});
+    }
+    if(NL_SCHOOL[school]){
+      const loai=NL_SCHOOL[school];
+      const slots=th.filter(m=>{const it=Cc.items.get(m.item);return it?.ngu_linh&&it.ngu_linh.loai===loai}).reduce((a,m)=>{const it=Cc.items.get(m.item);return a+(it?.ngu_linh?.o||0)},0);
+      req.push({ok:slots>0,txt:`Công pháp mở ô ${NL_LABEL[loai]||loai} đang thông (hiện ${slots} ô)`});
+    }
+    if(school==='kiem'){
+      const ok=th.some(m=>{const it=Cc.items.get(m.item);return it&&schoolMatchItem('kiem',it)&&it.chieu});
+      req.push({ok,txt:'Có kiếm ra chiêu đang thông'});
+    }
+    return{school,match,thong:th.length,taRatio,taCells,openCells,req,miss:req.some(r=>!r.ok)};
+  }
+  /* pathWeight: 0 tắt · 1 ưu tiên · 2–3 ép mạnh (huuhoang PATH_W) */
+  function pathScore(manh,R,nv){
+    const school=S.pref?.school||'tu_do';
+    const W={0:0,1:1,2:3,3:3}[Number(S.pref?.pathWeight??2)]??2;
+    if(!W||school==='tu_do')return 0;
+    const pi=pathInfo(manh,R,nv);
+    let sc=40*pi.match;
+    for(const r of pi.req)sc+=r.ok?120:-120;
+    if(!TA_SCHOOLS.includes(school)){
+      const Cc=C();
+      const taN=(R?.manh||[]).filter(m=>m&&m.thong&&isTa(Cc.items.get(m.item))).length;
+      sc-=8*taN;
+    }
+    return W*sc;
+  }
+  /* Tỉ lệ Tâm Pháp : Chiến Pháp trên ô đang thông (611 hbRatioPenalty) */
+  function ratioShare(manh,R){
+    const Cc=C();let tam=0,dau=0,pk=0,bv=0;
+    for(let i=0;i<(manh||[]).length;i++){
+      const p=manh[i],rm=R?.manh?.[i];if(!rm||!rm.thong)continue;
+      const id=p?.m?.item||p?.item;const it=Cc.items.get(id);if(!it)continue;
+      const cells=A(p.cells).length||A(rm.o).length||1;
+      const cls=pieceCls(it);
+      if(cls==='tam')tam+=cells;else if(cls==='dau')dau+=cells;else if(cls==='pk')pk+=cells;else bv+=cells;
+    }
+    const chien=dau+pk+bv,tot=tam+chien;
+    return{tam,dau,pk,bv,chien,tot,pct:tot?tam/tot:0};
+  }
+  function ratioPenalty(manh,R){
+    const t=S.pref?.ratioTarget;if(t==null||t===''||Number.isNaN(Number(t)))return 0;
+    const target=Number(t);if(!(target>=0&&target<=1))return 0;
+    const sh=ratioShare(manh,R);if(!sh.tot)return 0;
+    /* HB_RATIO_W=22 mỗi ô lệch */
+    return 22*Math.abs(sh.tam-target*sh.tot);
+  }
   function preferenceScore(manh,mode){const p=S.pref||{},tags=BUILD_TAGS[p.school]||[],chosen=chosenElements(),Cc=C();let z=0;for(const q of manh){const it=Cc.items.get(q?.m?.item||q?.item);if(!it)continue;const raw=[...A(it.tag),...A(it.tran_phai)],hs=itemElements(it);if(tags.some(t=>raw.includes(t)))z+=mode==='danh'?85:mode==='tu'?45:60;if(chosen.main!=='auto'&&hs.includes(chosen.main))z+=mode==='danh'?18:12;for(const [i,h]of chosen.subs.entries())if(hs.includes(h))z+=Math.max(2,8-i);const align=itemAlignment(it);if(p.alignment&&p.alignment!=='auto')z+=align===p.alignment?14:-18}return z}
   function schoolStats(manh){const school=S.pref?.school||'tu_do';if(school==='tu_do')return{main:school,total:manh.length,matched:manh.length,need:0,deficit:0};let total=0,matched=0;for(const q of manh){const it=C().items.get(q?.m?.item||q?.item);if(!it)continue;total++;const tags=BUILD_TAGS[school]||[],raw=[...A(it.tag),...A(it.tran_phai)];if(tags.some(t=>raw.includes(t)))matched++}const need=total?Math.floor(total/2)+1:0;return{main:school,total,matched,need,deficit:Math.max(0,need-matched)}}
   function schoolDominanceScore(manh){const x=schoolStats(manh);return x.main==='tu_do'||x.total<2?0:x.deficit?-1e9*x.deficit:1200*x.matched}
-  function ruleAudit(nv,R){const pieces=[];for(let i=0;i<A(nv.kinhMach?.manh).length;i++){const m=nv.kinhMach.manh[i],it=C().items.get(m.item),rm=A(R.manh)[i];if(!it)continue;pieces.push({id:m.item,name:it.ten,alignment:itemAlignment(it),elements:itemElements(it),connected:Boolean(rm?.thong),color:rm?.mau??1,generation:rm?.sinhKhac??1,intrinsic:rm?.noiTai??1,route:rm?.kinhLo??1,acupoint:rm?.huyet??1,isEvil:itemAlignment(it)==='ta'&&it.loai==='cong_phap'})}return{pieces,dead:pieces.filter(x=>!x.connected).length,evilActive:pieces.filter(x=>x.isEvil&&x.connected).length,evilTotal:pieces.filter(x=>x.isEvil).length}}
+  function ruleAudit(nv,R){const pieces=[];for(let i=0;i<A(nv.kinhMach?.manh).length;i++){const m=nv.kinhMach.manh[i],it=C().items.get(m.item),rm=A(R.manh)[i];if(!it)continue;pieces.push({id:m.item,name:it.ten,alignment:itemAlignment(it),elements:itemElements(it),connected:Boolean(rm?.thong),color:rm?.mau??1,generation:rm?.sinhKhac??1,intrinsic:rm?.noiTai??1,route:rm?.kinhLo??1,acupoint:rm?.huyet??1,isEvil:isTa(it)})}return{pieces,dead:pieces.filter(x=>!x.connected).length,evilActive:pieces.filter(x=>x.isEvil&&x.connected).length,evilTotal:pieces.filter(x=>x.isEvil).length}}
   function meridianQuality(R,P,mode){const live=(R.manh||[]).filter(Boolean),dead=live.filter(x=>!x.thong).length,connected=live.length-dead,heSo=live.reduce((a,x)=>a+(x.heSo||0),0),huyet=live.filter(x=>(x.huyet||1)>1).length,nghich=R.diemNghich||0,ll=P.linhLucMoiLuot||0,maxll=P.linhLucToiDa||ll*3,costs=(P.chieu||[]).filter(x=>x.dang&&x.phi>0).map(x=>x.phi),minCost=costs.length?Math.min(...costs):0,maxCost=costs.length?Math.max(...costs):0,castReady=!minCost||ll>=minCost,burstReady=!maxCost||maxll>=maxCost;let score=connected*3-dead*200000-nghich*(mode==='pha'?240:mode==='tu'?70:10);if(mode==='danh')score+=ll*4+(castReady?20:-300)+(burstReady?12:-120);return{score,dead,connected,heSo,huyet,nghich,ll,maxll,minCost,maxCost,castReady,burstReady}}
   function meridianAudit(nv,R,P){const Cc=C(),roles={tam:0,dau:0,phap:0,bao:0},pieces=[];for(let i=0;i<(nv.kinhMach.manh||[]).length;i++){const m=nv.kinhMach.manh[i],it=Cc.items.get(m.item),rm=(R.manh||[])[i];if(!it)continue;let role='Khác';if(it.loai==='cong_phap'){if(it.chieu){roles.dau++;role='Đấu pháp'}else{roles.tam++;role='Tâm pháp'}}else if(it.loai==='phap_khi'){if(it.chieu){roles.phap++;role='Pháp khí'}else{roles.bao++;role='Bảo vật'}}pieces.push({id:m.item,ten:it.ten,role,thong:!!rm?.thong,heSo:rm?.heSo||0,huyet:(rm?.huyet||1)>1,kinhLo:rm?.kinhLo||1,mau:rm?.mau||1,sinhKhac:rm?.sinhKhac||1,noiTai:rm?.noiTai||1})}return{roles,pieces,...meridianQuality(R,P,'danh')}}
-  function makeEval(nv0,enemies,mode){const K=S.core,c=C(),cache=new Map();return manh=>{const key=mode+'|'+manh.map(p=>p.key).sort().join('|');if(cache.has(key))return cache.get(key);const nv=clone(nv0);nv.kinhMach.manh=manh.map(p=>({...p.m}));const R=K.Rt(nv,c),P=K.Vr(nv,c),mq=meridianQuality(R,P,mode),rules=ruleAudit(nv,R);let fightScore=0,wins=0;for(const{E}of enemies){const r=fight(P,E),hp=Math.max(0,Math.min(1,(r.khiHuyetThapNhat||0)/Math.max(1,P.khiHuyetToiDa))),dealt=Math.min(1,(r.stTa||0)*Math.max(1,r.nHiep||1)/Math.max(1,E.khiHuyetToiDa));if(r.thang){wins++;fightScore+=100+30*hp+50/Math.max(1,r.nHiep||1)}else fightScore+=45*dealt}const toc=R.biDong?.toc_do||0,dp=R.biDong?.dot_pha||0,ktm=R.biDong?.khang_tam_ma||0,nghich=mq.nghich||0,dead=rules.dead||0;let score=-dead*1e12;if(mode==='danh')score+=fightScore+mq.score+toc*120+dp*80-nghich*35;else if(mode==='tu')score+=fightScore*.08+toc*2500+dp*1800+ktm*420+mq.connected*25-nghich*260;else{const combat=Math.max(0,fightScore),cult=Math.max(0,toc*2200+dp*1200+ktm*240),floorPenalty=(wins<Math.max(1,Math.floor(enemies.length*.35))?-2e5:0)+(toc<=0?-15000:0);score+=combat*.55+cult*.45+mq.score+floorPenalty-nghich*110}score+=preferenceScore(manh,mode)+schoolDominanceScore(manh);const out={s:score,wins,P,R,mq,rules,audit:meridianAudit(nv,R,P),school:schoolStats(manh),enemyCount:enemies.length};cache.set(key,out);return out}}
+  function makeEval(nv0,enemies,mode){const K=S.core,c=C(),cache=new Map();return manh=>{const key=mode+'|'+manh.map(p=>p.key).sort().join('|');if(cache.has(key))return cache.get(key);const nv=clone(nv0);nv.kinhMach.manh=manh.map(p=>({...p.m}));const R=K.Rt(nv,c),P=K.Vr(nv,c),mq=meridianQuality(R,P,mode),rules=ruleAudit(nv,R);let fightScore=0,wins=0;for(const{E}of enemies){const r=fight(P,E),hp=Math.max(0,Math.min(1,(r.khiHuyetThapNhat||0)/Math.max(1,P.khiHuyetToiDa))),dealt=Math.min(1,(r.stTa||0)*Math.max(1,r.nHiep||1)/Math.max(1,E.khiHuyetToiDa));if(r.thang){wins++;fightScore+=100+30*hp+50/Math.max(1,r.nHiep||1)}else fightScore+=45*dealt}const toc=R.biDong?.toc_do||0,dp=R.biDong?.dot_pha||0,ktm=R.biDong?.khang_tam_ma||0,nghich=mq.nghich||0,dead=rules.dead||0;let score=-dead*1e12;if(mode==='danh')score+=fightScore+mq.score+toc*120+dp*80-nghich*35;else if(mode==='tu')score+=fightScore*.08+toc*2500+dp*1800+ktm*420+mq.connected*25-nghich*260;else{const combat=Math.max(0,fightScore),cult=Math.max(0,toc*2200+dp*1200+ktm*240),floorPenalty=(wins<Math.max(1,Math.floor(enemies.length*.35))?-2e5:0)+(toc<=0?-15000:0);score+=combat*.55+cult*.45+mq.score+floorPenalty-nghich*110}score+=preferenceScore(manh,mode)+schoolDominanceScore(manh)+pathScore(manh,R,nv)-ratioPenalty(manh,R);const pi=pathInfo(manh,R,nv),share=ratioShare(manh,R);const out={s:score,wins,P,R,mq,rules,audit:meridianAudit(nv,R,P),school:schoolStats(manh),path:pi,share,enemyCount:enemies.length};cache.set(key,out);return out}}
   function buildCandidates(nv0) {
     const K = S.core, c = C();
-    const pool = Object.keys(nv0.tuiDo).filter((id) => { const it = c.items.get(id); return it && (it.loai === 'cong_phap' || it.loai === 'phap_khi') && it.hinh && (it.canh_gioi ?? 0) <= nv0.canhGioi; });
+    const school=S.pref?.school||'tu_do',pw=Number(S.pref?.pathWeight??2),strict=school!=='tu_do'&&pw>=2;
+    const pool = Object.keys(nv0.tuiDo).filter((id) => {
+      const it = c.items.get(id);
+      if(!(it && (it.loai === 'cong_phap' || it.loai === 'phap_khi') && it.hinh && (it.canh_gioi ?? 0) <= nv0.canhGioi))return false;
+      if(!strict)return true;
+      /* huuhoang strict: giữ đồ khớp phái; chính đạo loại tà; luôn giữ tâm pháp (nối mạch) */
+      if(schoolMatchItem(school,it))return true;
+      if(!TA_SCHOOLS.includes(school)&&isTa(it))return false;
+      return it.loai==='cong_phap'&&!it.chieu;
+    });
     const g = K.xo(c, nv0), cand = {};
     for (const id of pool) {
       const it = c.items.get(id), seen = new Set(); cand[id] = [];
@@ -372,7 +513,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
       if (e.s >= curS || rnd() < Math.exp((e.s - curS) / T)) { cur = next; curS = e.s; if (e.s > bestS) { best = next; bestS = e.s; } }
     }
     const e = ev(best);
-    return{manh:best.map(p=>({...p.m})),score:e.s,wins:e.wins,n:enemies.length,P:e.P,R:e.R,mq:e.mq,audit:e.audit,school:e.school};
+    return{manh:best.map(p=>({...p.m})),score:e.s,wins:e.wins,n:enemies.length,P:e.P,R:e.R,mq:e.mq,audit:e.audit,school:e.school,path:e.path,rules:e.rules,share:e.share};
   }
 
   // Bỏ khỏi cách xếp mọi món không thông (không có tác dụng gì), rồi chấm lại.
@@ -394,7 +535,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     const ev = makeEval({ ...clone(nv), kinhMach: { ...clone(nv.kinhMach), manh: [] } }, enemies, mode);
     const manh = nv.kinhMach.manh.map((m) => ({ m, key: m.item + ':' + m.x + ',' + m.y + ',' + m.xoay }));
     const e = ev(manh);
-    return{manh:clone(nv.kinhMach.manh),score:e.s,wins:e.wins,n:enemies.length,P:e.P,R:e.R,mq:e.mq,audit:e.audit,school:e.school};
+    return{manh:clone(nv.kinhMach.manh),score:e.s,wins:e.wins,n:enemies.length,P:e.P,R:e.R,mq:e.mq,audit:e.audit,school:e.school,path:e.path,rules:e.rules,share:e.share};
   }
 
   // ───────────────────────── 5. Vẽ kinh mạch ─────────────────────────
@@ -517,10 +658,211 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
   return{ensureCore,optimizeThree,apply,applyAll,stop:()=>S.abort=true,drawGrid,nvNow,get core(){return S.core},get results(){return S.results}};
 })();
 
-const p=document.createElement('section');p.id=ID;p.innerHTML=`<style>#${ID}{position:fixed;inset:6px;z-index:2147483647;max-width:1100px;margin:auto;background:#fbf7ed;color:#30271e;border:1px solid #cdbd9d;border-radius:12px;box-shadow:0 10px 36px #0008;font:14px Arial;display:flex;flex-direction:column;overflow:hidden}#${ID} *{box-sizing:border-box}#${ID} header{display:flex;align-items:center;gap:7px;padding:9px 11px;background:#f2e7d1;flex:none}#${ID} h2{margin:0;flex:1;color:#7d2017;font-size:18px}#${ID} button,#${ID} select,#${ID} input{font:inherit}#${ID} button{border:1px solid #b5a27f;background:#fffaf0;border-radius:7px;padding:7px 9px;color:#34291d;cursor:pointer}#${ID} .red{background:#86251c;color:#fff;border-color:#86251c}#${ID} .tabs{display:flex;gap:5px;padding:7px 8px 0;overflow-x:auto;min-height:43px;background:#f8f0df;flex:none}#${ID} .tab{white-space:nowrap;border-radius:8px 8px 0 0;border-bottom:0}#${ID} .tab.on{background:#86251c;color:#fff}#${ID} .tab.treasure-alert{position:relative;animation:vk-treasure-glow 1.05s ease-in-out infinite;isolation:isolate}#${ID} .tab.treasure-alert:after{content:'!';position:absolute;right:2px;top:1px;min-width:15px;height:15px;border-radius:999px;background:#dc2626;color:#fff;font:700 10px/15px Arial;box-shadow:0 0 0 0 rgba(220,38,38,.65);animation:vk-treasure-ping 1.05s ease-out infinite}@keyframes vk-treasure-glow{0%,100%{background:#fff8db;color:#7d2017;box-shadow:0 0 0 1px #f59e0b inset,0 0 3px #f59e0b}50%{background:#f59e0b;color:#3b1d00;box-shadow:0 0 0 2px #fde68a inset,0 0 15px #f59e0b}}@keyframes vk-treasure-ping{0%{box-shadow:0 0 0 0 rgba(220,38,38,.7)}100%{box-shadow:0 0 0 8px rgba(220,38,38,0)}}@media(prefers-reduced-motion:reduce){#${ID} .tab.treasure-alert,#${ID} .tab.treasure-alert:after{animation:none}}#${ID} .tools{display:flex;gap:9px;align-items:center;flex-wrap:wrap;padding:7px 10px;border-block:1px solid #ddceb1;background:#fffaf0;flex:none}#${ID} .sum{padding:7px 11px;color:#6b5b46;flex:none}#${ID} .head,#${ID} article{display:grid;grid-template-columns:minmax(370px,1fr) 110px 190px;gap:12px;align-items:start}#${ID} .head{padding:7px 13px;color:#81251b;font-weight:bold;border-block:1px solid #ddceb1}#${ID} .list{overflow:auto;padding:0 13px 13px}#${ID} article{padding:11px 2px;border-bottom:1px solid #dfd1b8}#${ID} .name{font-weight:700;font-size:15px}#${ID} .tags{display:flex;flex-wrap:wrap;gap:4px;margin:5px 0}#${ID} .tag{font-size:11px;border-radius:11px;padding:2px 7px;background:#eadfc8}.good{background:#d8ead8!important;color:#26672d}.bad{background:#f2d4d0!important;color:#8b1d16}.warn{background:#f4e1af!important;color:#74550b}#${ID} .sub{color:#6f604b;font-size:13px;margin-top:3px}#${ID} .gain{color:#526438;margin-top:5px}#${ID} .risk{color:#8b342a;margin-top:3px}#${ID} .travel{text-align:center}#${ID} .travel strong{display:block}#${ID} .safe{color:#2f7d37;font-weight:bold}#${ID} .fight{color:#9b5c00;font-weight:bold}#${ID} .danger{color:#a82018;font-weight:bold}#${BID}{position:fixed;right:14px;bottom:14px;z-index:2147483647;width:60px;height:60px;border:2px solid #fff;border-radius:50%;background:#86251c;color:#fff;box-shadow:0 5px 18px #0007;font:bold 14px Arial}@media(max-width:700px){#${ID}{inset:3px;font-size:13px}#${ID} h2{font-size:15px}#${ID} .head{display:none}#${ID} article{grid-template-columns:1fr 82px}#${ID} article>div:nth-child(3){grid-column:1/-1;border-top:1px dashed #ddceb1;padding-top:7px}.wide{display:none}#${ID} .tools{padding:6px}}#${ID}{inset:12px;max-width:1180px;border:1px solid #d5dbe5;border-radius:18px;background:#f6f7f9;color:#1f2937;box-shadow:0 24px 70px #10182859;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial,sans-serif}#${ID} header{padding:14px 16px;background:#fff;border-bottom:1px solid #e5e7eb;gap:16px}#${ID} .brand{min-width:0;flex:1}#${ID} .brand h2{margin:0;color:#7f1d1d;font-size:19px;line-height:1.2;letter-spacing:-.01em}#${ID} .brand span{display:block;margin-top:3px;color:#667085;font-size:12px}#${ID} .header-actions{display:flex;gap:8px}#${ID} button{min-height:36px;border:1px solid #d0d5dd;border-radius:9px;background:#fff;color:#344054;font-weight:650;padding:7px 12px;transition:background .15s,border-color .15s,transform .05s}#${ID} button:hover{background:#f9fafb;border-color:#98a2b3}#${ID} button:active{transform:translateY(1px)}#${ID} button:focus-visible,#${ID} input:focus-visible,#${ID} select:focus-visible{outline:3px solid #fca5a580;outline-offset:1px}#${ID} .ghost{background:#f9fafb}#${ID} .red{background:#8b1e1e;border-color:#8b1e1e;color:#fff;box-shadow:0 1px 2px #1018281a}#${ID} .red:hover{background:#701a1a;border-color:#701a1a}#${ID} .tabs{gap:6px;padding:10px 12px;background:#fff;border-bottom:1px solid #e5e7eb;min-height:54px}#${ID} .tab{display:inline-flex;align-items:center;gap:7px;border:1px solid #e4e7ec;border-radius:10px;padding:8px 11px;background:#fff;color:#475467}#${ID} .tab b{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:20px;padding:0 6px;border-radius:999px;background:#f2f4f7;color:#667085;font-size:11px}#${ID} .tab.on{background:#8b1e1e;border-color:#8b1e1e;color:#fff}#${ID} .tab.on b{background:#ffffff26;color:#fff}#${ID} .tools{gap:8px;padding:10px 12px;background:#fff;border-bottom:1px solid #e5e7eb;border-top:0}#${ID} .tools input,#${ID} .tools select{height:38px;border:1px solid #d0d5dd;border-radius:9px;background:#fff;color:#344054;padding:0 11px}#${ID} .sum{padding:9px 16px;background:#f8fafc;border-bottom:1px solid #e5e7eb;color:#667085;font-size:12px}#${ID} .head{grid-template-columns:minmax(390px,1fr) 120px 210px;padding:9px 18px;background:#f9fafb;border-bottom:1px solid #e5e7eb;border-top:0;color:#667085;font-size:11px;text-transform:uppercase;letter-spacing:.05em}#${ID} .list{padding:14px;scrollbar-gutter:stable}#${ID} article{grid-template-columns:minmax(390px,1fr) 120px 210px;gap:16px;margin-bottom:10px;padding:15px 16px;border:1px solid #e4e7ec;border-radius:13px;background:#fff;box-shadow:0 1px 2px #1018280d}#${ID} article:hover{border-color:#cfd4dc;box-shadow:0 4px 12px #10182812}#${ID} .name{font-size:15px;line-height:1.35;color:#101828}#${ID} .tags{gap:5px;margin:7px 0}#${ID} .tag{padding:3px 8px;border-radius:999px;background:#f2f4f7;color:#475467;font-size:11px;font-weight:600;line-height:1.35}#${ID} .grade-1{background:#f2f4f7;color:#475467}#${ID} .grade-2{background:#fff7d6;color:#854d0e}#${ID} .grade-3{background:#e8f5ff;color:#175cd3}#${ID} .grade-4{background:#ede9fe;color:#6d28d9}#${ID} .grade-5{background:#ffedd5;color:#c2410c}#${ID} .grade-6{background:#dcfce7;color:#15803d}#${ID} .grade-7{background:#fce7f3;color:#be185d}#${ID} .grade-8{background:#fee2e2;color:#991b1b}#${ID} .good{background:#e8f7ee!important;color:#067647!important}#${ID} .bad{background:#fef3f2!important;color:#b42318!important}#${ID} .warn{background:#fffaeb!important;color:#b54708!important}#${ID} .sub{color:#667085;font-size:12px;line-height:1.5;margin-top:4px}#${ID} .gain,#${ID} .risk{margin-top:7px;padding:7px 9px;border-radius:8px;font-size:12px;line-height:1.45}#${ID} .gain{background:#f0fdf4;color:#166534}#${ID} .risk{background:#fff7ed;color:#9a3412}#${ID} .travel{padding-top:2px;text-align:left;color:#667085}#${ID} .travel strong{font-size:16px;color:#101828;line-height:1.3}#${ID} .travel span{display:block;margin-top:3px;font-size:12px}#${ID} .safe,#${ID} .fight,#${ID} .danger{margin-bottom:9px;font-size:12px;line-height:1.45}#${ID} .safe{color:#067647}#${ID} .fight{color:#b54708}#${ID} .danger{color:#b42318}#${ID} details{margin-top:10px;border-top:1px solid #eef0f3;padding-top:9px}#${ID} summary{cursor:pointer;color:#7f1d1d;font-weight:650}#${BID}{right:18px;bottom:18px;width:auto;height:44px;padding:0 16px;border:0;border-radius:999px;background:#8b1e1e;color:#fff;box-shadow:0 8px 24px #1018284d;font:650 13px system-ui;cursor:pointer}#${BID}:hover{background:#701a1a}@media(max-width:760px){#${ID}{inset:4px;border-radius:12px}#${ID} header{padding:10px 11px}#${ID} .brand h2{font-size:16px}#${ID} .brand span{display:none}#${ID} .header-actions button{padding:6px 9px;min-height:34px;font-size:12px}#${ID} .tabs{padding:7px;min-height:48px}#${ID} .tab{padding:7px 9px}#${ID} .head{display:none!important}#${ID} .list{padding:8px}#${ID} article{display:grid!important;grid-template-columns:minmax(0,1fr) 80px;gap:10px;margin-bottom:8px;padding:12px}#${ID} article>div:nth-child(3){grid-column:1/-1;border-top:1px solid #eef0f3;padding-top:10px}#${ID} .travel{text-align:right}#${ID} .tools{padding:8px}#${ID} .tools input,#${ID} .tools select{width:100%;min-width:0!important}#${ID} .sum{padding:7px 10px}#${BID}{right:10px;bottom:10px}}#${ID} .item-tools{display:none;flex-direction:column;align-items:stretch;gap:8px}#${ID} .item-search-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;width:100%}#${ID} .item-search-row input{width:100%;min-width:0;font-size:16px}#${ID} .filter-toggle{white-space:nowrap}#${ID} .filter-toggle b{display:none;align-items:center;justify-content:center;min-width:19px;height:19px;margin-left:4px;border-radius:999px;background:#8b1e1e;color:#fff;font-size:10px}#${ID} .item-filter-drawer{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:8px;align-items:end;width:100%}#${ID} .item-filter-drawer label{display:grid;gap:4px;color:#667085;font-size:11px;font-weight:650}#${ID} .item-filter-drawer select{width:100%;min-width:0}#${ID} .active-filters{display:flex;gap:5px;flex-wrap:wrap}#${ID} .active-filters:empty{display:none}#${ID} .active-filters span{padding:4px 8px;border-radius:999px;background:#f2f4f7;color:#475467;font-size:11px}#${ID} .reset-filter{white-space:nowrap}#${ID} .item-card{display:block!important;max-width:900px;margin-left:auto;margin-right:auto}#${ID} .item-card .name{font-size:16px}#${ID} .item-card details .sub{padding:4px 0;border-bottom:1px dotted #eaecf0}#${ID} .item-card details .sub:last-child{border-bottom:0}@media(max-width:760px){#${ID} .item-tools{position:sticky;top:0;z-index:5;padding:8px;background:#fff;box-shadow:0 4px 12px #10182812}#${ID} .item-search-row{grid-template-columns:minmax(0,1fr) 92px}#${ID} .item-search-row input,#${ID} .filter-toggle{height:44px}#${ID} .item-filter-drawer{display:none;grid-template-columns:1fr 1fr;padding:10px;border:1px solid #e4e7ec;border-radius:12px;background:#f9fafb}#${ID} .item-filter-drawer.open{display:grid}#${ID} .item-filter-drawer label{font-size:12px}#${ID} .item-filter-drawer select{height:44px;font-size:16px}#${ID} .reset-filter{grid-column:1/-1;height:42px}#${ID} .item-card{display:block!important;padding:13px!important}#${ID} .item-card .tags{display:flex;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px;scrollbar-width:none}#${ID} .item-card .tag{flex:0 0 auto}#${ID} .item-card .gain{margin-top:9px}#${ID} .item-card details{margin-top:12px}#${ID} .item-card summary{min-height:42px;display:flex;align-items:center}#${ID} .list:has(.item-card){padding:7px}#${ID} .sum{font-size:11px}}#${ID} .search-box{position:relative;min-width:0}#${ID} .search-box input{width:100%;padding-right:42px}#${ID} .search-clear{display:none;position:absolute;right:4px;top:4px;width:36px;height:36px;min-height:36px;padding:0;border:0;border-radius:50%;background:transparent;color:#667085;font-size:24px}#${ID} .search-clear.show{display:block}#${ID} .filter-actions{display:flex;gap:8px}#${ID} .filter-done{display:none}@media(max-width:600px){html:has(#${ID}){overflow:hidden}#${ID}{inset:0;max-width:none;width:100%;height:100dvh;margin:0;border:0;border-radius:0;box-shadow:none;padding-bottom:calc(62px + env(safe-area-inset-bottom))}#${ID} header{min-height:54px;padding:8px 10px;padding-top:max(8px,env(safe-area-inset-top));z-index:12}#${ID} .brand h2{font-size:15px}#${ID} .brand span{display:none}#${ID} .header-actions{gap:5px}#${ID} .header-button{min-height:38px;padding:6px 9px;font-size:12px}#${ID} .tabs{position:absolute;left:0;right:0;bottom:0;z-index:20;min-height:62px;padding:6px 6px calc(6px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid #e4e7ec;border-bottom:0;box-shadow:0 -6px 18px #10182812;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;overflow:visible}#${ID} .tab{min-width:0;min-height:48px;padding:5px 3px;border:0;border-radius:10px;display:flex;flex-direction:column;justify-content:center;gap:2px;font-size:10px;line-height:1.15;text-align:center;white-space:normal}#${ID} .tab b{min-width:18px;height:17px;padding:0 4px;font-size:9px}#${ID} .sum{padding:6px 9px;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#${ID} .list{padding:7px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}#${ID} .item-tools{top:0;padding:7px;gap:6px}#${ID} .item-search-row{grid-template-columns:minmax(0,1fr) 88px;gap:6px}#${ID} .search-box input,#${ID} .filter-toggle{height:44px;font-size:16px;border-radius:11px}#${ID} .filter-toggle{padding:6px 8px;font-size:12px}#${ID} .active-filters{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}#${ID} .active-filters span{flex:0 0 auto;font-size:10px}#${ID} .item-filter-drawer{position:absolute;top:58px;left:7px;right:7px;z-index:25;max-height:calc(100dvh - 150px);overflow:auto;grid-template-columns:1fr;padding:12px;border-radius:14px;box-shadow:0 16px 40px #10182840}#${ID} .item-filter-drawer.open{display:grid}#${ID} .item-filter-drawer select{width:100%;height:46px;font-size:16px}#${ID} .filter-actions{position:sticky;bottom:0;grid-column:1;background:inherit;padding-top:8px}#${ID} .filter-actions button{flex:1;height:44px}#${ID} .filter-done{display:block}#${ID} .item-card{padding:12px!important}#${ID} .item-card .name{font-size:15px}#${ID} .item-card .tags{margin:6px -2px 4px;padding:0 2px 4px}#${ID} .item-card .tag{font-size:10px;padding:3px 7px}#${ID} .item-card .sub{font-size:12px;line-height:1.45}#${ID} .item-card details{border-top:0;padding-top:4px}#${ID} .item-card summary{background:#f9fafb;border:1px solid #e4e7ec;border-radius:10px;padding:0 10px;min-height:44px}#${BID}{right:10px;bottom:max(10px,env(safe-area-inset-bottom));height:46px;padding:0 14px;font-size:12px}}@media(max-width:360px){#${ID} .brand h2{font-size:14px}#${ID} .header-button{padding:5px 7px;font-size:11px}#${ID} .tab{font-size:9px}#${ID} .item-search-row{grid-template-columns:minmax(0,1fr) 82px}#${ID} .item-card{padding:10px!important}}#${ID} .mobile-only{display:none}@media(max-width:600px){html:has(#${ID}){overflow:auto}#${ID}{inset:auto;left:3vw;top:max(12px,env(safe-area-inset-top));width:94vw;max-width:430px;height:min(82dvh,720px);margin:0;border:1px solid #cdbd9d;border-radius:16px;box-shadow:0 14px 42px #0008;padding-bottom:calc(62px + env(safe-area-inset-bottom));transition:width .16s ease,height .16s ease,left .16s ease,top .16s ease,border-radius .16s ease}#${ID}.dragging{transition:none;user-select:none}#${ID}.mobile-max{left:0!important;top:0!important;width:100vw!important;max-width:none!important;height:100dvh!important;border:0;border-radius:0}#${ID} header{cursor:grab;touch-action:none}#${ID}.dragging header{cursor:grabbing}#${ID} header button{touch-action:manipulation}#${ID} .mobile-only{display:inline-flex;align-items:center;justify-content:center}#${BID}{touch-action:none;user-select:none;cursor:grab}#${BID}.dragging{cursor:grabbing;transition:none}#${ID} .tabs{position:absolute}#${ID} .list{min-height:0}}@media(max-width:360px){#${ID}{left:2vw;width:96vw;height:min(84dvh,680px)}}@media(prefers-color-scheme:dark){#${ID}{background:#111827;color:#e5e7eb;border-color:#344054}#${ID} header,#${ID} .tabs,#${ID} .tools{background:#182230;border-color:#344054}#${ID} .sum,#${ID} .head{background:#101828;border-color:#344054;color:#98a2b3}#${ID} article{background:#182230;border-color:#344054}#${ID} .name,#${ID} .travel strong{color:#f2f4f7}#${ID} button,#${ID} .tab,#${ID} .tools input,#${ID} .tools select{background:#101828;border-color:#475467;color:#e5e7eb}#${ID} .tag{background:#344054;color:#e4e7ec}#${ID} .item-tools{background:#182230}#${ID} .item-filter-drawer{background:#101828;border-color:#344054}#${ID} .tabs{background:#182230;border-color:#344054}#${ID} .item-card summary{background:#101828;border-color:#344054}#${ID} .active-filters span{background:#344054;color:#e4e7ec}#${ID} .sub{color:#98a2b3}}#${ID} .item-group{margin:0 0 10px;padding:0;border:1px solid #e4e7ec;border-radius:12px;background:#fff;overflow:hidden}#${ID} .item-group>summary{margin:0;padding:12px 14px;background:#f9fafb;border:0;position:sticky;top:0;z-index:2}#${ID} .item-group-body{padding:8px}#${ID} .safe-route-act{display:block;margin-top:7px;width:100%}@media(prefers-color-scheme:dark){#${ID} .item-group,#${ID} .item-group>summary{background:#182230;border-color:#344054}}#${ID} .build-card{display:block!important;max-width:920px;margin-left:auto;margin-right:auto}#${ID} .build-controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}#${ID} .build-controls label{display:grid;gap:4px;color:#667085;font-size:11px;font-weight:650}#${ID} .build-controls select{height:40px;border:1px solid #d0d5dd;border-radius:9px;background:#fff;color:#344054;padding:0 9px}#${ID} .build-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}#${ID} .build-progress{height:8px;background:#e5e7eb;border-radius:99px;overflow:hidden;margin:10px 0}#${ID} .build-progress i{display:block;width:0;height:100%;background:#8b1e1e}#${ID} .build-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:10px 0}#${ID} .build-stats span{padding:8px;border-radius:9px;background:#f9fafb;font-size:12px}#${ID} .build-grid{width:100%;max-width:520px;display:block;margin:8px auto;border-radius:8px}#${ID} .vk-note{text-align:center;color:#667085;font-size:11px}#${ID} .vk-lg{display:flex;gap:7px;align-items:center;padding:3px 0;font-size:12px}#${ID} .vk-sw{display:inline-flex;width:25px;height:25px;align-items:center;justify-content:center;border-radius:6px;color:#fff;font-weight:700}@media(max-width:600px){#${ID} .build-controls{grid-template-columns:1fr 1fr}#${ID} .build-stats{grid-template-columns:1fr 1fr}}@media(prefers-color-scheme:dark){#${ID} .build-controls select,#${ID} .build-stats span{background:#101828;color:#e5e7eb;border-color:#475467}}#${ID} .section-card{display:block!important;max-width:920px;margin:0 auto 10px}#${ID} .metric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:9px 0}#${ID} .metric-grid>div{padding:10px;border:1px solid #eaecf0;border-radius:10px;background:#f8fafc;color:#667085;font-size:12px}#${ID} .metric-grid b{display:block;margin-top:4px;color:#101828;font-size:14px}#${ID} .inline-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}#${ID} .option-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #eef0f3}#${ID} .option-row:last-child{border-bottom:0}#${ID} .control-grid{display:grid;grid-template-columns:minmax(160px,1fr) auto auto;gap:10px;align-items:end;margin-top:10px}#${ID} .control-grid label{display:grid;gap:5px;color:#667085;font-size:12px;font-weight:650}#${ID} .control-grid select{height:40px;border:1px solid #d0d5dd;border-radius:9px;background:#fff;padding:0 10px}#${ID} .control-grid .check-row{display:flex;align-items:center;gap:7px;min-height:40px;color:#344054}#${ID} .control-grid input[type=checkbox]{width:18px;height:18px;accent-color:#8b1e1e}#${ID} .scan-status{position:relative;margin-top:10px;padding-top:8px}#${ID} .scan-status:before{content:"";position:absolute;left:0;top:0;width:var(--scan,0);height:3px;border-radius:4px;background:#8b1e1e;transition:width .15s}#${ID} .loading-card{display:flex!important;align-items:center;gap:12px}#${ID} .loading-dot{width:20px;height:20px;border:3px solid #e4e7ec;border-top-color:#8b1e1e;border-radius:50%;animation:vk-spin .8s linear infinite}@keyframes vk-spin{to{transform:rotate(360deg)}}#${ID} .empty-state{display:grid;place-items:center;gap:6px;padding:28px 14px;border:1px dashed #d0d5dd;border-radius:12px;color:#667085;text-align:center}#${ID} .card-actions{display:flex;gap:7px;flex-wrap:wrap}
-@media(max-width:600px){html:has(#${ID}){overflow:auto}#${ID}{left:2vw;top:max(8px,env(safe-area-inset-top));width:96vw;max-width:none;height:min(88dvh,760px);padding-bottom:calc(66px + env(safe-area-inset-bottom));border-radius:14px}#${ID}.mobile-max{height:100dvh!important;padding-bottom:calc(66px + env(safe-area-inset-bottom))}#${ID} header{min-height:52px;padding:8px 9px}#${ID} .tabs{position:absolute;left:0;right:0;bottom:0;display:flex;grid-template-columns:none;grid-template-rows:none;gap:5px;min-height:66px;padding:6px 7px calc(6px + env(safe-area-inset-bottom));overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;scrollbar-width:none;overscroll-behavior-x:contain}#${ID} .tabs::-webkit-scrollbar{display:none}#${ID} .tab{flex:0 0 82px;min-width:82px;min-height:50px;padding:5px 6px;scroll-snap-align:start;font-size:10px}#${ID} .tab.on{box-shadow:0 3px 10px #8b1e1e35}#${ID} .list{padding:7px 7px 12px}#${ID} article{grid-template-columns:minmax(0,1fr);gap:9px;padding:12px;border-radius:12px}#${ID} article>div:nth-child(2){grid-column:1;border-top:1px solid #eef0f3;padding-top:8px;text-align:left}#${ID} article>div:nth-child(3){grid-column:1;border-top:0;padding-top:0}#${ID} .travel{display:flex;align-items:baseline;gap:8px;text-align:left}#${ID} .travel strong{font-size:14px}#${ID} .travel span{margin:0}#${ID} .card-actions button,#${ID} article .red,#${ID} article .ghost{width:100%;min-height:44px}#${ID} .section-card{padding:12px!important}#${ID} .metric-grid{grid-template-columns:1fr 1fr;gap:6px}#${ID} .metric-grid>div{padding:8px;font-size:11px}#${ID} .metric-grid b{font-size:13px}#${ID} .control-grid{grid-template-columns:1fr;gap:6px}#${ID} .control-grid select{height:44px;font-size:16px}#${ID} .control-grid .check-row{min-height:42px;padding:0 4px;font-size:13px}#${ID} .inline-actions{display:grid;grid-template-columns:1fr 1fr;position:sticky;bottom:0;padding-top:8px;background:inherit}#${ID} .inline-actions button{min-height:44px}#${ID} .option-row{align-items:flex-start;flex-wrap:wrap}#${ID} .option-row button{width:auto!important;min-height:36px!important}#${ID} .sum{min-height:28px}#${ID} details>summary{min-height:42px;display:flex;align-items:center}#${ID} .bounty-controls{overflow:visible}}
-@media(max-width:360px){#${ID}{left:1vw;width:98vw}#${ID} .tab{flex-basis:76px;min-width:76px}#${ID} .metric-grid{grid-template-columns:1fr}}
-@media(prefers-color-scheme:dark){#${ID} .metric-grid>div,#${ID} .control-grid select{background:#101828;border-color:#344054;color:#e5e7eb}#${ID} .metric-grid b{color:#f2f4f7}#${ID} .option-row{border-color:#344054}#${ID} .empty-state{border-color:#475467}}#${ID} .bounty-group{max-width:920px;margin:0 auto 10px;border:1px solid #e4e7ec;border-radius:13px;background:#fff;overflow:hidden}#${ID} .bounty-group>summary{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px;list-style:none}#${ID} .bounty-group>summary small{display:block;margin-top:4px;color:#667085;font-weight:400}#${ID} .bounty-group-body{padding:0 12px 10px}#${ID} .bounty-job{padding:11px 0;border-top:1px solid #eaecf0}@media(max-width:600px){#${ID} .bounty-group>summary{align-items:stretch;flex-direction:column}#${ID} .bounty-group>summary button,#${ID} .bounty-work-map{width:100%;min-height:44px}}@media(prefers-color-scheme:dark){#${ID} .bounty-group{background:#182230;border-color:#344054}#${ID} .bounty-job{border-color:#344054}}</style><header><div class="brand"><h2>Vạn Kiếp Trợ Thủ <small style="font-size:10px;font-weight:700;padding:2px 5px;border:1px solid #b5a27f;border-radius:999px;vertical-align:middle">${BUILD}</small></h2><span>Theo dõi sự kiện, nhiệm vụ và vật phẩm</span></div><div class="header-actions"><button id="mobile-size" class="ghost header-button mobile-only" title="Đổi kích thước cửa sổ" aria-label="Đổi kích thước cửa sổ">Phóng</button><button id="hide" class="ghost header-button" title="Thu gọn cửa sổ" aria-label="Thu gọn trợ thủ">Ẩn</button></div></header><nav class="tabs"></nav><div class="tools item-tools" id="item-tools" style="display:none"><div class="item-search-row"><div class="search-box"><input id="item-search" type="search" inputmode="search" enterkeyhint="search" autocomplete="off" aria-label="Tìm vật phẩm" placeholder="Nhập tên vật phẩm..."><button type="button" id="item-search-clear" class="search-clear" aria-label="Xóa từ khóa">×</button></div><button type="button" id="item-filter-toggle" class="filter-toggle" aria-expanded="false" aria-controls="item-filter-drawer">Bộ lọc <b id="filter-count">0</b></button></div><div class="active-filters" id="active-filters" aria-live="polite"></div><div class="item-filter-drawer" id="item-filter-drawer"><label>Nhóm<select id="item-type"><option value="all">Tất cả nhóm</option></select></label><label>Cấp độ<select id="item-grade"><option value="all">Tất cả cấp độ</option></select></label><label>Hệ<select id="item-element"><option value="all">Tất cả hệ</option></select></label><label>Trường phái<select id="item-school"><option value="all">Tất cả trường phái</option></select></label><div class="filter-actions"><button type="button" id="item-filter-reset" class="reset-filter">Xóa bộ lọc</button><button type="button" id="item-filter-done" class="red filter-done">Xong</button></div></div></div><div class="sum"></div><div class="head"><span>Thông tin</span><span>Hành trình</span><span>Đánh giá & thao tác</span></div><div class="list"></div>`;document.documentElement.appendChild(p);const b=document.createElement('button');b.id=BID;b.textContent='Mở trợ thủ';b.setAttribute('aria-label','Mở Vạn Kiếp Trợ Thủ');b.style.display='none';document.documentElement.appendChild(b);
+const p=document.createElement('section');p.id=ID;p.innerHTML=`<style>
+/* ===== VKTool · cổ phong tối · mobile-first ===== */
+#${ID}{
+  position:fixed;inset:0;z-index:2147483647;width:100%;max-width:100%;height:100%;
+  margin:0;background:#1a1612;color:#e6dcc8;
+  border:0;border-radius:0;box-shadow:none;
+  font:13px/1.35 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  display:flex;flex-direction:column;overflow:hidden;
+  -webkit-tap-highlight-color:transparent;
+}
+#${ID} *{box-sizing:border-box}
+#${ID} button,#${ID} select,#${ID} input{font:inherit;color:inherit}
+#${ID} button{
+  border:1px solid #5c4a32;background:#2a221a;border-radius:6px;
+  padding:6px 8px;cursor:pointer;line-height:1.2;min-height:32px;color:#e6dcc8;
+}
+#${ID} button:active{background:#352b22}
+#${ID} .red{background:#8b2e24;color:#f5ebe0;border-color:#a33d32}
+#${ID} .ghost{background:#241e18;border-color:#5c4a32;color:#d4c4a8}
+#${ID} .danger{background:#6b1f1a;color:#f0d0c8;border-color:#8b2e24}
+#${ID} select,#${ID} input[type="search"],#${ID} input:not([type]),#${ID} input[type="text"]{
+  border:1px solid #5c4a32;background:#14110e;border-radius:6px;padding:6px 8px;
+  min-height:32px;width:100%;color:#e6dcc8;
+}
+#${ID} select option{background:#1a1612;color:#e6dcc8}
+#${ID} label{display:flex;flex-direction:column;gap:3px;font-size:11px;color:#a89878}
+
+#${ID} header{
+  display:flex;align-items:center;gap:6px;padding:6px 8px;
+  background:#14110e;border-bottom:1px solid #3d3226;flex:none;
+}
+#${ID} .brand{flex:1;min-width:0}
+#${ID} h2{margin:0;color:#d4a574;font-size:14px;font-weight:700;line-height:1.2}
+#${ID} .brand>span{display:block;color:#8a7a62;font-size:11px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#${ID} .header-actions{display:flex;gap:4px;flex:none}
+#${ID} .header-button{min-height:30px;padding:4px 8px;font-size:12px}
+
+#${ID} .tabs{
+  display:flex;gap:3px;padding:4px 6px 0;overflow-x:auto;overflow-y:hidden;
+  min-height:0;background:#14110e;border-bottom:1px solid #3d3226;flex:none;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none;
+}
+#${ID} .tabs::-webkit-scrollbar{display:none}
+#${ID} .tab{
+  flex:0 0 auto;white-space:nowrap;border-radius:6px 6px 0 0;border:1px solid #3d3226;border-bottom:0;
+  padding:5px 8px;min-height:28px;font-size:12px;background:#221c16;color:#b8a88c;
+}
+#${ID} .tab.on{background:#8b2e24;color:#f5ebe0;border-color:#a33d32}
+#${ID} .tab.treasure-alert{position:relative}
+#${ID} .tab.treasure-alert:after{
+  content:'!';position:absolute;right:1px;top:0;width:12px;height:12px;border-radius:50%;
+  background:#c45c4a;color:#1a1612;font:700 9px/12px Arial;text-align:center;
+}
+
+#${ID} .tools,#${ID} .item-tools{
+  display:flex;gap:6px;align-items:center;flex-wrap:wrap;
+  padding:6px 8px;border-bottom:1px solid #3d3226;background:#1e1914;flex:none;
+}
+#${ID} .sum{
+  padding:4px 8px;color:#a89878;font-size:11px;line-height:1.3;
+  border-bottom:1px solid #3d3226;background:#1e1914;flex:none;
+}
+#${ID} .head{display:none}
+
+#${ID} .list{
+  flex:1;overflow:auto;-webkit-overflow-scrolling:touch;
+  padding:0 6px 8px;overscroll-behavior:contain;background:#1a1612;
+}
+#${ID} article{
+  display:grid;grid-template-columns:1fr auto;gap:4px 8px;align-items:start;
+  padding:7px 2px;border-bottom:1px solid #2e261e;
+}
+#${ID} article>.travel{text-align:right;min-width:64px}
+#${ID} article>.travel strong{display:block;font-size:12px;color:#d4a574}
+#${ID} article>.travel span{display:block;font-size:10px;color:#8a7a62}
+#${ID} article>div:last-child{
+  grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px;
+}
+#${ID} article>div:last-child button{flex:1 1 auto;min-width:0;font-size:12px;padding:5px 6px;min-height:30px}
+#${ID} .name{font-weight:700;font-size:13px;color:#f0e6d4;line-height:1.25}
+#${ID} .sub{color:#9a8a72;font-size:11px;margin-top:2px;line-height:1.3}
+#${ID} .gain{color:#8aab6a;font-size:11px;margin-top:2px}
+#${ID} .risk{color:#d09080;font-size:11px;margin-top:2px}
+#${ID} .tags{display:flex;flex-wrap:wrap;gap:3px;margin:3px 0}
+#${ID} .tag{
+  font-size:10px;border-radius:4px;padding:1px 5px;line-height:1.4;
+  background:#2a221a;color:#c4b498;border:1px solid #4a3c2c;
+}
+#${ID} .tag.good{background:#1e2a18;color:#9ccc7a;border-color:#3d5a30}
+#${ID} .tag.bad{background:#2a1816;color:#e09080;border-color:#5a3028}
+#${ID} .tag.warn{background:#2a2416;color:#d4b060;border-color:#5a4a28}
+#${ID} .safe{color:#7cb86a;font-weight:700}
+#${ID} .fight{color:#d4a050;font-weight:700}
+#${ID} .danger{color:#e07060;font-weight:700}
+
+#${ID} .section-title{
+  margin:8px 0 4px;padding:3px 0;font-size:11px;font-weight:700;
+  color:#d4a574;border-bottom:1px solid #3d3226;letter-spacing:.02em;
+}
+#${ID} .section-card,#${ID} .build-card{
+  display:block;padding:8px;margin:6px 0;border:1px solid #3d3226;
+  border-radius:8px;background:#1e1914;
+}
+#${ID} .section-card .name,#${ID} .build-card .name{font-size:13px;margin-bottom:4px;color:#f0e6d4}
+#${ID} .control-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:4px 0;
+}
+#${ID} .build-controls{
+  display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:6px 0;
+}
+#${ID} .build-actions{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+#${ID} .build-actions button,#${ID} .build-actions select{flex:1 1 40%;min-width:0}
+#${ID} .build-progress{height:4px;background:#2a221a;border-radius:2px;margin:6px 0;overflow:hidden}
+#${ID} .build-progress>i{display:block;height:100%;width:0;background:#8b2e24}
+#${ID} .build-stats{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin:6px 0;text-align:center;
+}
+#${ID} .build-stats span{background:#241e18;border-radius:4px;padding:4px 2px;font-size:10px;color:#9a8a72;border:1px solid #3d3226}
+#${ID} .build-stats b{display:block;font-size:12px;color:#e6dcc8;margin-top:1px}
+#${ID} .build-grid{max-width:100%;height:auto;margin:4px 0;border-radius:4px;border:1px solid #3d3226}
+#${ID} details{margin-top:4px}
+#${ID} details>summary{
+  cursor:pointer;font-size:11px;color:#a89878;padding:4px 0;list-style:none;
+}
+#${ID} details>summary::-webkit-details-marker{display:none}
+#${ID} .option-row{
+  display:flex;justify-content:space-between;gap:6px;padding:3px 0;
+  border-top:1px dashed #2e261e;font-size:11px;color:#b8a88c;
+}
+
+#${ID} .item-search-row{display:flex;gap:4px;width:100%;align-items:center}
+#${ID} .search-box{position:relative;flex:1;min-width:0}
+#${ID} .search-box input{padding-right:28px}
+#${ID} .search-clear{
+  position:absolute;right:2px;top:50%;transform:translateY(-50%);
+  border:0;background:transparent;min-height:28px;width:28px;padding:0;font-size:16px;color:#8a7a62;
+}
+#${ID} .filter-toggle{flex:none;font-size:12px}
+#${ID} .active-filters{display:flex;flex-wrap:wrap;gap:3px;width:100%}
+#${ID} .metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:4px 0}
+#${ID} .metric-grid>div{background:#241e18;border-radius:4px;padding:5px 6px;font-size:11px;border:1px solid #3d3226;color:#a89878}
+#${ID} .metric-grid b{display:block;font-size:13px;color:#e6dcc8}
+#${ID} .empty-state{text-align:center;color:#8a7a62;padding:16px 8px;font-size:12px;border:1px dashed #3d3226;border-radius:8px;margin:8px 0}
+
+#${ID} .bounty-group{margin:6px 0;border:1px solid #3d3226;border-radius:8px;background:#1e1914;overflow:hidden}
+#${ID} .bounty-group>summary{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:8px;list-style:none;font-size:12px;color:#e6dcc8}
+#${ID} .bounty-group>summary small{display:block;margin-top:2px;color:#8a7a62;font-weight:400;font-size:10px}
+#${ID} .bounty-group-body{padding:0 8px 6px}
+#${ID} .bounty-job{padding:6px 0;border-top:1px solid #2e261e;font-size:12px}
+#${ID} .inline-actions{display:flex;flex-wrap:wrap;gap:4px}
+#${ID} .inline-actions button{flex:1 1 auto;min-height:30px}
+
+#${BID}{
+  position:fixed;right:10px;bottom:10px;z-index:2147483647;
+  width:48px;height:48px;border:1.5px solid #d4a574;border-radius:50%;
+  background:#6b221c;color:#f5ebe0;box-shadow:0 3px 12px #000a;
+  font:700 11px/1 Arial;padding:0;
+}
+
+@media(min-width:700px){
+  #${ID}{
+    inset:8px;width:auto;max-width:720px;height:auto;max-height:calc(100% - 16px);
+    margin:auto;border:1px solid #5c4a32;border-radius:10px;
+    box-shadow:0 8px 28px #000a;font-size:13px;
+  }
+  #${ID} header{padding:7px 10px}
+  #${ID} h2{font-size:15px}
+  #${ID} .list{padding:0 8px 10px}
+  #${ID} article{grid-template-columns:1fr 72px;gap:6px 10px;padding:8px 2px}
+  #${ID} .control-grid,#${ID} .build-controls{grid-template-columns:repeat(3,1fr)}
+  #${ID} .build-stats{grid-template-columns:repeat(6,1fr)}
+}
+@media(min-width:1000px){
+  #${ID}{max-width:820px}
+  #${ID} .head{
+    display:grid;grid-template-columns:1fr 72px 120px;gap:8px;
+    padding:4px 8px;color:#d4a574;font-weight:700;font-size:11px;
+    border-bottom:1px solid #3d3226;background:#14110e;
+  }
+  #${ID} article{grid-template-columns:1fr 72px 120px}
+  #${ID} article>div:last-child{grid-column:auto;display:block}
+  #${ID} article>div:last-child button{width:100%;margin-top:3px}
+}
+@media(max-width:360px){
+  #${ID}{font-size:12px}
+  #${ID} .tab{padding:4px 6px;font-size:11px}
+  #${ID} .build-stats{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:699px){
+  #${ID}{
+    inset:0!important;left:auto!important;top:auto!important;right:auto!important;bottom:auto!important;
+    width:100%!important;height:100%!important;max-width:100%!important;border-radius:0!important;
+  }
+  #${ID}.mobile-max{inset:0!important}
+  #${ID} .mobile-only{display:none!important}
+}
+@media(prefers-reduced-motion:reduce){
+  #${ID} .tab.treasure-alert:after{animation:none}
+}
+.wide{display:none}
+#${ID} .mobile-only{display:inline-flex}
+@media(min-width:700px){
+  #${ID} .mobile-only{display:none}
+}
+</style><header><div class="brand"><h2>Vạn Kiếp Trợ Thủ <small style="font-size:10px;font-weight:700;padding:2px 5px;border:1px solid #b5a27f;border-radius:999px;vertical-align:middle">${BUILD}</small></h2><span>Theo dõi sự kiện, nhiệm vụ và vật phẩm</span></div><div class="header-actions"><button id="mobile-size" class="ghost header-button mobile-only" title="Đổi kích thước cửa sổ" aria-label="Đổi kích thước cửa sổ">Phóng</button><button id="hide" class="ghost header-button" title="Thu gọn cửa sổ" aria-label="Thu gọn trợ thủ">Ẩn</button></div></header><nav class="tabs"></nav><div class="tools item-tools" id="item-tools" style="display:none"><div class="item-search-row"><div class="search-box"><input id="item-search" type="search" inputmode="search" enterkeyhint="search" autocomplete="off" aria-label="Tìm vật phẩm" placeholder="Nhập tên vật phẩm..."><button type="button" id="item-search-clear" class="search-clear" aria-label="Xóa từ khóa">×</button></div><button type="button" id="item-filter-toggle" class="filter-toggle" aria-expanded="false" aria-controls="item-filter-drawer">Bộ lọc <b id="filter-count">0</b></button></div><div class="active-filters" id="active-filters" aria-live="polite"></div><div class="item-filter-drawer" id="item-filter-drawer"><label>Nhóm<select id="item-type"><option value="all">Tất cả nhóm</option></select></label><label>Cấp độ<select id="item-grade"><option value="all">Tất cả cấp độ</option></select></label><label>Hệ<select id="item-element"><option value="all">Tất cả hệ</option></select></label><label>Trường phái<select id="item-school"><option value="all">Tất cả trường phái</option></select></label><div class="filter-actions"><button type="button" id="item-filter-reset" class="reset-filter">Xóa bộ lọc</button><button type="button" id="item-filter-done" class="red filter-done">Xong</button></div></div></div><div class="sum"></div><div class="head"><span>Thông tin</span><span>Hành trình</span><span>Đánh giá & thao tác</span></div><div class="list"></div>`;document.documentElement.appendChild(p);const b=document.createElement('button');b.id=BID;b.textContent='Mở trợ thủ';b.setAttribute('aria-label','Mở Vạn Kiếp Trợ Thủ');b.style.display='none';document.documentElement.appendChild(b);
 const defs=[['maptasks','Nhiệm vụ bản đồ'],['treasure','Dị bảo'],['breakthrough','Đột phá & thọ'],['bounties','Treo thưởng'],['people','Nhân mạch'],['sect','Tông môn'],['items','Vật phẩm'],['build','Build & Kinh mạch']],nav=p.querySelector('.tabs'),list=p.querySelector('.list'),sum=p.querySelector('.sum'),itemSearch=p.querySelector('#item-search'),itemType=p.querySelector('#item-type'),itemGrade=p.querySelector('#item-grade'),itemElement=p.querySelector('#item-element'),itemSchool=p.querySelector('#item-school'),itemTools=p.querySelector('#item-tools'),itemFilterToggle=p.querySelector('#item-filter-toggle'),itemSearchClear=p.querySelector('#item-search-clear'),itemFilterDrawer=p.querySelector('#item-filter-drawer'),filterCount=p.querySelector('#filter-count'),activeFilters=p.querySelector('#active-filters'),head=p.querySelector('.head');let tab=sessionStorage.getItem('veh3-tab')||'maptasks',rows=[],places=[],randoms=[],quests=[],people=[],peopleQuery='',peopleLife='all',peopleGender='all',peopleWhere='all',peopleRelation='all',sectQuery='',sectState='active',sectTier='all',refreshTimer=null,refreshing=false,refreshQueued=false;if(!defs.some(x=>x[0]===tab))tab='maptasks';nav.innerHTML=defs.map(([x,n])=>`<button class="tab ${x===tab?'on':''}" data-t="${x}">${n}</button>`).join('');itemType.innerHTML+=[...new Set([...C.items.values()].map(x=>x.loai||'khac'))].sort().map(x=>`<option value="${E(x)}">${E(TYPE_NAMES[x]||x)}</option>`).join('');itemGrade.innerHTML+=[...new Set([...C.items.values()].map(x=>x.pham_cap).filter(N))].sort((a,b)=>a-b).map(x=>`<option value="${x}">${E(GRADE_NAMES[x]||('Cấp '+x))}</option>`).join('');itemElement.innerHTML+=[...new Set([...C.items.values()].flatMap(x=>A(x.he)))].sort().map(x=>`<option value="${E(x)}">${E(ELEMENT_NAMES[x]||x)}</option>`).join('');itemSchool.innerHTML+=Object.entries(SCHOOL_GROUPS).filter(([k])=>[...C.items.values()].some(r=>itemSchoolGroups(r).includes(k))).map(([k,v])=>`<option value="${E(k)}">${E(v.ten)}</option>`).join('');function updateTabCounts(){const activeTreasures=rows.filter(r=>r.groups?.has?.('treasure')&&(r.source==='Dị bảo đang xuất hiện'||r.status==='active'||r.active?.length));const counts={maptasks:mapTaskRecords().length,treasure:rows.filter(r=>r.groups.has('treasure')).length,breakthrough:1,bounties:quests.filter(r=>r.source==='Treo thưởng'&&r.status==='active').length,people:people.length,sect:sectDirectoryRecords().length,items:C.items.size,build:3};nav.querySelectorAll('[data-t]').forEach(x=>{const d=defs.find(y=>y[0]===x.dataset.t);x.innerHTML=`<span>${E(d?.[1]||x.dataset.t)}</span><b>${F(counts[x.dataset.t]||0)}</b>`;const alert=x.dataset.t==='treasure'&&activeTreasures.length>0;x.classList.toggle('treasure-alert',alert);if(alert){x.title=`Có ${activeTreasures.length} Dị Bảo đang xuất hiện`;x.setAttribute('aria-label',x.title)}else{x.removeAttribute('title');x.removeAttribute('aria-label')}})}
 function strength(r){if(!r.meta.combat.length)return['Không phải đánh','safe'];const q=preview(r);if(q){if(q.tuTran)return['Dự kiến tử trận','danger'];if(q.thang)return[`Thắng dự kiến${N(q.nHiep)?` · ${q.nHiep} hiệp`:''}`,'safe'];return['Thua dự kiến','danger']}const foes=[...new Set(r.meta.combat.map(x=>x.ten))].slice(0,2).join(', ');return[`${r.meta.mandatory?'Bắt buộc':'Có nhánh'} chiến đấu${foes?` · ${foes}`:''}`,'fight']}
 function sorter(a,b){const ac=Boolean(a.x.catalog),bc=Boolean(b.x.catalog);if(ac!==bc)return ac?1:-1;const af=a.remain===null||a.remain>0&&a.travel<=a.remain,bf=b.remain===null||b.remain>0&&b.travel<=b.remain;if(af!==bf)return af?-1:1;return a.travel-b.travel||a.dist-b.dist||((a.remain??Infinity)-(b.remain??Infinity))}
@@ -529,7 +871,72 @@ function renderItems(){const q=norm(itemSearch.value);itemSearchClear.classList.
 function mapRewardHint(enc){if(!enc)return[];const out=new Set(),s=JSON.stringify([enc.choices,enc.scenes,enc.effects]);if(/"linh_thach"/.test(s))out.add('Linh thạch');if(/"tu_vi"/.test(s))out.add('Tu vi');if(/"cong_hien"/.test(s))out.add('Cống hiến');for(const m of s.matchAll(/"(?:add_item|roi_quy)"\s*:\s*(?:\{"id"\s*:\s*)?"(item\.[a-z0-9_]+)"/g))out.add(C.items.get(m[1])?.ten||m[1]);return[...out].slice(0,4)}
 function slotDanger(slot){let info;try{info=W.info(slot)}catch{return{rank:1,label:'Chưa rõ'}}const self=Number(Runtime.character()?.canhGioi??0),base=Number(info?.capNen??info?.canhGioi??self),d=base-self;if(d>=2)return{rank:3,label:'Tử địa'};if(d>=1)return{rank:2,label:'Nguy hiểm'};if(d<=-1)return{rank:0,label:'An toàn'};return{rank:1,label:'Ngang sức'}}
 const SAFE_STEP=29.1;let routeOverlay=null,lastSafeRoute=null;
-function routeSafe(target){const start=Runtime.currentSlot();if(!start||!target||!W.hasSlot(start)||!W.hasSlot(target))return null;let land=null;try{land=W.tho(start)}catch{}const nodes=A(W.slots).filter(s=>!s.an&&(()=>{try{return land==null||W.tho(s.id)===land}catch{return false}})());const idx=new Map(nodes.map((s,i)=>[s.id,i]));if(!idx.has(start)||!idx.has(target))return null;const n=nodes.length,pen=new Float64Array(n);for(let i=0;i<n;i++){const r=slotDanger(nodes[i].id).rank;pen[i]=r===3?40:r===2?12:0}const dist=new Float64Array(n).fill(Infinity),prev=new Int32Array(n).fill(-1),done=new Uint8Array(n),si=idx.get(start),ti=idx.get(target);dist[si]=0;for(;;){let u=-1,best=Infinity;for(let i=0;i<n;i++)if(!done[i]&&dist[i]<best){best=dist[i];u=i}if(u<0||u===ti)break;done[u]=1;const a=nodes[u];for(let v=0;v<n;v++){if(done[v])continue;const dx=a.x-nodes[v].x;if(dx>SAFE_STEP||dx<-SAFE_STEP)continue;const d=Math.hypot(dx,a.y-nodes[v].y);if(d>SAFE_STEP)continue;const w=d+2+(v===ti?0:pen[v]);if(dist[u]+w<dist[v]){dist[v]=dist[u]+w;prev[v]=u}}}if(!Number.isFinite(dist[ti]))return null;const path=[];for(let v=ti;v>=0;v=prev[v]){path.push(nodes[v]);if(v===si)break}path.reverse();if(path[0]?.id!==start)return null;let len=0;for(let i=1;i<path.length;i++)len+=Math.hypot(path[i].x-path[i-1].x,path[i].y-path[i-1].y);return{path,len,target}}
+function routeSafe(target,opts={}){
+  const start=Runtime.currentSlot();
+  if(!start||!target||!W.hasSlot(start)||!W.hasSlot(target))return null;
+  if(start===target){
+    const s=W.slot(start);if(!s)return null;
+    return{path:[s],len:0,target,same:true};
+  }
+  const preferLand=opts.preferLand!==false;
+  let land=null;try{land=W.tho(start)}catch{}
+  const allSlots=A(W.slots).filter(s=>s&&s.id!=null&&!s.an);
+  const buildNodes=(sameLand)=>{
+    if(!sameLand||land==null)return allSlots.slice();
+    return allSlots.filter(s=>{try{return W.tho(s.id)===land}catch{return true}});
+  };
+  const dijkstra=(nodes,step)=>{
+    const idx=new Map();
+    for(let i=0;i<nodes.length;i++)idx.set(nodes[i].id,i);
+    if(!idx.has(start)||!idx.has(target))return null;
+    const n=nodes.length,dist=new Float64Array(n).fill(Infinity),prev=new Int32Array(n).fill(-1),done=new Uint8Array(n);
+    const si=idx.get(start),ti=idx.get(target);dist[si]=0;
+    for(;;){
+      let u=-1,best=Infinity;
+      for(let i=0;i<n;i++)if(!done[i]&&dist[i]<best){best=dist[i];u=i}
+      if(u<0||u===ti)break;done[u]=1;const a=nodes[u];
+      for(let v=0;v<n;v++){
+        if(done[v])continue;
+        const d=Math.hypot(a.x-nodes[v].x,a.y-nodes[v].y);
+        if(d>step||d<=0)continue;
+        const danger=slotDanger(nodes[v].id).rank;
+        const w=d+2+(v===ti?0:danger===3?40:danger===2?12:0);
+        if(dist[u]+w<dist[v]){dist[v]=dist[u]+w;prev[v]=u}
+      }
+    }
+    if(!Number.isFinite(dist[ti]))return null;
+    const path=[];for(let v=ti;v>=0;v=prev[v]){path.push(nodes[v]);if(v===si)break}
+    path.reverse();
+    if(path[0]?.id!==start||path[path.length-1]?.id!==target)return null;
+    let len=0;for(let i=1;i<path.length;i++)len+=Math.hypot(path[i].x-path[i-1].x,path[i].y-path[i-1].y);
+    return{path,len,target};
+  };
+  /* Thử nhiều bước + ưu tiên cùng vùng đất, rồi nới lỏng nếu không nối được */
+  const steps=[SAFE_STEP,42,60,90,130,200];
+  for(const sameLand of (preferLand?[true,false]:[false])){
+    const nodes=buildNodes(sameLand);
+    if(nodes.length<2)continue;
+    for(const step of steps){
+      const hit=dijkstra(nodes,step);
+      if(hit)return hit;
+    }
+  }
+  /* Fallback cuối: đường thẳng qua vài điểm trung gian trên cùng tập slot gần nhất */
+  try{
+    const a=W.slot(start),b=W.slot(target);if(!a||!b)return null;
+    const mid=[];
+    const samples=6;
+    for(let i=1;i<samples;i++){
+      const t=i/samples,x=a.x+(b.x-a.x)*t,y=a.y+(b.y-a.y)*t;
+      let best=null,bd=Infinity;
+      for(const s of allSlots){if(s.id===start||s.id===target)continue;const d=Math.hypot(s.x-x,s.y-y);if(d<bd){bd=d;best=s}}
+      if(best&&(!mid.length||mid[mid.length-1].id!==best.id))mid.push(best);
+    }
+    const path=[a,...mid,b];
+    let len=0;for(let i=1;i<path.length;i++)len+=Math.hypot(path[i].x-path[i-1].x,path[i].y-path[i-1].y);
+    return{path,len,target,approx:true};
+  }catch{return null}
+}
 
 function mapWorldRoot(){const m=window.map,cam=m?.cam;return m?.app?.stage?.children?.find?.(x=>x?.scale&&x?.position&&Math.abs((x.scale.x||0)-(cam?.scale||0))<1e-6)||null}
 let routeOverlayCleanup=null,activeSafeRoute=null,routeAtTarget=false,routeEncounterSeen=false;
@@ -539,52 +946,404 @@ function routeUiBusy(run=Runtime.run()){return Boolean(run?.active||run?.tran||r
 function drawRouteSvg(route){
   const m=window.map,root=mapWorldRoot(),cam=m?.cam;if(!root||!cam||!route?.path?.length)return false;
   let Graphics=window.PIXI?.Graphics;
-  if(!Graphics){const stack=[...(m?.app?.stage?.children||[])];while(stack.length&&!Graphics){const x=stack.pop();if(x?.lineStyle&&x?.moveTo&&x?.lineTo)Graphics=x.constructor;stack.push(...(x?.children||[]))}}
+  if(!Graphics){const stack=[...(m?.app?.stage?.children||[])];while(stack.length&&!Graphics){const x=stack.pop();if(x?.lineStyle&&x?.moveTo&&x?.lineTo||x?.stroke&&x?.moveTo)Graphics=x.constructor;stack.push(...(x?.children||[]))}}
   if(!Graphics)return false;
   let gr;try{gr=new Graphics()}catch{return false}
-  gr.name='vk-safe-route-map-only';gr.eventMode='none';gr.interactive=false;root.addChild(gr);routeOverlay=gr;
-  const render=()=>{if(!gr?.parent||routeUiBusy())return;const scale=Math.max(.001,Number(cam.scale)||1);gr.clear();
-    try{gr.lineStyle(1.35/scale,0x16a34a,.9);for(let i=1;i<route.path.length;i++){const a=route.path[i-1],z=route.path[i],dx=z.x-a.x,dy=z.y-a.y,len=Math.hypot(dx,dy),dash=5/scale,gap=5/scale;for(let d=0;d<len;d+=dash+gap){const d2=Math.min(len,d+dash),x1=a.x+dx*d/len,y1=a.y+dy*d/len,x2=a.x+dx*d2/len,y2=a.y+dy*d2/len;gr.moveTo(x1,y1);gr.lineTo(x2,y2)}}
-      for(let i=1;i<route.path.length;i++){const q=route.path[i],last=i===route.path.length-1,r=(last?21:17)/scale;gr.lineStyle((last?5:4.5)/scale,0xffffff,1);gr.beginFill(last?0xdc2626:0x16a34a,.18);gr.drawCircle(q.x,q.y,r);gr.endFill();gr.lineStyle((last?3.4:3)/scale,last?0xdc2626:0x16a34a,1);gr.beginFill(0xffffff,.015);gr.drawCircle(q.x,q.y,r);gr.endFill()}
-    }catch{clearRouteDrawing()}};
-  let raf=0,alive=true;const frame=()=>{if(!alive)return;render();raf=requestAnimationFrame(frame)};frame();routeOverlayCleanup=()=>{alive=false;cancelAnimationFrame(raf);try{gr.parent?.removeChild(gr);gr.destroy?.()}catch{}if(routeOverlay===gr)routeOverlay=null};return true
+  gr.name='vk-safe-route-map-only';gr.eventMode='none';gr.interactive=false;gr.alpha=1;
+  try{root.addChild(gr)}catch{return false}
+  routeOverlay=gr;
+  const t0=performance.now();
+  const COL_LINE=0xffffff, COL_LINE_EDGE=0x1c1917, COL_STOP=0xef4444, COL_DEST=0xf97316;
+  const seg=(x1,y1,x2,y2,w,color,alpha)=>{
+    try{
+      if(typeof gr.stroke==='function'&&typeof gr.setStrokeStyle==='function'){
+        gr.moveTo(x1,y1);gr.lineTo(x2,y2);gr.stroke({width:w,color,alpha,pixelLine:false,cap:'round',join:'round'});
+      }else if(typeof gr.lineStyle==='function'){
+        gr.lineStyle(w,color,alpha,1,true);gr.moveTo(x1,y1);gr.lineTo(x2,y2);
+      }else if(typeof gr.stroke==='function'){
+        gr.moveTo(x1,y1);gr.lineTo(x2,y2);gr.stroke({width:w,color,alpha});
+      }
+    }catch{}
+  };
+  const ring=(x,y,r,w,color,alpha)=>{
+    if(alpha<=0.01||r<=0)return;
+    try{
+      if(typeof gr.stroke==='function'&&typeof gr.circle==='function'){
+        gr.circle(x,y,r);gr.stroke({width:w,color,alpha});
+      }else if(typeof gr.lineStyle==='function'){
+        gr.lineStyle(w,color,alpha);gr.beginFill(color,0);gr.drawCircle(x,y,r);gr.endFill();
+      }
+    }catch{}
+  };
+  const softGlow=(x,y,r,color,alpha)=>{
+    /* đĩa fill mờ — tạo cảm giác glow mạnh hơn chỉ có stroke */
+    if(alpha<=0.01||r<=0)return;
+    try{
+      if(typeof gr.circle==='function'&&typeof gr.fill==='function'){
+        gr.circle(x,y,r);gr.fill({color,alpha});
+      }else{
+        gr.lineStyle?.(0,color,0);gr.beginFill?.(color,alpha);gr.drawCircle?.(x,y,r);gr.endFill?.();
+      }
+    }catch{}
+  };
+  const dot=(x,y,r,color,alpha)=>{
+    try{
+      if(typeof gr.circle==='function'&&typeof gr.fill==='function'){
+        gr.circle(x,y,r);gr.fill({color,alpha});
+      }else{
+        gr.lineStyle?.(0,color,0);gr.beginFill?.(color,alpha);gr.drawCircle?.(x,y,r);gr.endFill?.();
+      }
+    }catch{}
+  };
+  const render=()=>{
+    if(!gr?.parent||routeUiBusy())return;
+    const scale=Math.max(.001,Number(cam.scale)||1);
+    const path=route.path;if(!path?.length)return;
+    const pulse=((performance.now()-t0)%1200)/1200;
+    try{gr.clear?.()}catch{try{gr.clear()}catch{}}
+    try{
+      const lw=1.05/scale, edge=1.7/scale, dash=16/scale, gap=8/scale;
+      for(let i=1;i<path.length;i++){
+        const a=path[i-1],z=path[i],dx=z.x-a.x,dy=z.y-a.y,len=Math.hypot(dx,dy);if(len<=0)continue;
+        for(let d=0;d<len;d+=dash+gap){
+          const d2=Math.min(len,d+dash);
+          const x1=a.x+dx*d/len,y1=a.y+dy*d/len,x2=a.x+dx*d2/len,y2=a.y+dy*d2/len;
+          seg(x1,y1,x2,y2,edge,COL_LINE_EDGE,.28);
+          seg(x1,y1,x2,y2,lw,COL_LINE,.92);
+        }
+      }
+      const marks=[];
+      const minGap=28;
+      let lastMark=null;
+      for(let i=1;i<path.length-1;i++){
+        const q=path[i];
+        if(lastMark&&Math.hypot(q.x-lastMark.x,q.y-lastMark.y)<minGap)continue;
+        marks.push({q,dest:false});lastMark=q;
+      }
+      marks.push({q:path[path.length-1],dest:true});
+      for(const {q,dest} of marks){
+        const col=dest?COL_DEST:COL_STOP;
+        /* glow nền mềm (fill) — mạnh hơn ở tâm, lan ra ngoài */
+        const glowR=(dest?18:14)/scale;
+        softGlow(q.x,q.y,glowR*1.15,col,0.10+0.06*(1-pulse));
+        softGlow(q.x,q.y,glowR*0.7,col,0.18+0.08*(1-pulse));
+        softGlow(q.x,q.y,glowR*0.35,col,0.28+0.1*(1-pulse));
+        /* lõi sáng */
+        const core=(dest?3.2:2.2)/scale;
+        softGlow(q.x,q.y,core*2.2,0xffffff,0.35);
+        dot(q.x,q.y,core,col,1);
+        dot(q.x,q.y,core*0.45,0xffffff,0.9);
+        /* vòng stroke cố định */
+        const baseR=(dest?12:9)/scale;
+        ring(q.x,q.y,baseR,(dest?1.6:1.25)/scale,col,0.85);
+        ring(q.x,q.y,baseR*1.55,(dest?1.2:1)/scale,col,0.45);
+        /* ripple tỏa mạnh: 2 vòng chạy ra ngoài */
+        const p1=pulse, p2=(pulse+0.5)%1;
+        for(const p of [p1,p2]){
+          const rr=baseR*(1.2+2.4*p);
+          const aa=(dest?0.7:0.55)*(1-p)*(1-p);
+          ring(q.x,q.y,rr,(dest?1.8:1.4)/scale,col,aa);
+        }
+      }
+    }catch(err){console.warn('[VKTool] draw route',err);clearRouteDrawing()}
+  };
+  let raf=0,alive=true;const frame=()=>{if(!alive)return;render();raf=requestAnimationFrame(frame)};frame();
+  routeOverlayCleanup=()=>{alive=false;cancelAnimationFrame(raf);try{gr.parent?.removeChild(gr);gr.destroy?.()}catch{}if(routeOverlay===gr)routeOverlay=null};
+  return true
 }
+
 function drawRouteOverlay(route){clearRouteDrawing();if(!route?.path?.length||routeUiBusy())return false;return drawRouteSvg(route)}
 function persistSafeRoute(){if(activeSafeRoute)sessionStorage.setItem('vk-safe-route',JSON.stringify({target:activeSafeRoute.target,steps:activeSafeRoute.path.map(x=>x.id),atTarget:routeAtTarget,encounterSeen:routeEncounterSeen,task:activeSafeRoute.task||null}))}
 function restoreSafeRoute(){if(activeSafeRoute)return activeSafeRoute;try{const x=JSON.parse(sessionStorage.getItem('vk-safe-route')||'null');if(!x?.target||!Array.isArray(x.steps)||!W.hasSlot(x.target))return null;const path=x.steps.filter(id=>W.hasSlot(id)).map(id=>W.slot(id));if(!path.length)return null;activeSafeRoute={target:x.target,path,len:0,task:x.task||null};lastSafeRoute=activeSafeRoute;routeAtTarget=Boolean(x.atTarget);routeEncounterSeen=Boolean(x.encounterSeen);return activeSafeRoute}catch{return null}}
 function mapTaskRouteAlive(task,run=Runtime.run()){if(!task)return true;if(!run||!task.slot||!W.hasSlot(task.slot))return false;const node=run.nodes?.[task.slot];if(task.type==='encounter')return!!node&&!node.viec&&node.encounter===task.encounter;if(task.type==='place')return!!node&&!node.viec&&mapSlotAvailable(task.slot,run,run.nam,task.typeId);return false}
 function syncSafeRoute(run=Runtime.run()){const route=restoreSafeRoute();if(!route)return;if(route.task&&!mapTaskRouteAlive(route.task,run)){clearRouteOverlay();return}const current=run?.viTri,busy=routeUiBusy(run);if(current===route.target){routeAtTarget=true;if(busy)routeEncounterSeen=true;persistSafeRoute();clearRouteDrawing();if(!busy&&(routeEncounterSeen||!route.task))clearRouteOverlay();return}const hit=route.path.findIndex(x=>x.id===current);if(hit>0){route.path=route.path.slice(hit);routeAtTarget=false;routeEncounterSeen=false;persistSafeRoute();clearRouteDrawing()}if(busy){clearRouteDrawing();return}if(route.path.length>1&&!routeOverlay&&!document.getElementById('vk-route-svg'))drawRouteOverlay(route)}
-function showSafeRoute(slot,task=null){const route=routeSafe(slot);if(!route)return false;clearRouteOverlay();route.task=task;activeSafeRoute=route;lastSafeRoute=route;routeAtTarget=Runtime.currentSlot()===slot;routeEncounterSeen=false;persistSafeRoute();const here=Runtime.currentSlot();if(here&&W.hasSlot(here))focusMap(here);const ok=drawRouteOverlay(route);setTimeout(()=>ok&&hide(),120);if(ok)console.info(`[VKTool] Đã vẽ đường an toàn bằng renderer gốc: ${route.path.length} điểm`);return ok}
+function showSafeRoute(slot,task=null,opts={}){
+  /* opts.focus: 'start' | 'target' | 'none' — mặc định 'start' (vị trí nhân vật) */
+  const focusMode=opts.focus||'start';
+  const route=routeSafe(slot);
+  if(!route){console.warn('[VKTool] routeSafe null',{slot,start:Runtime.currentSlot()});return false}
+  clearRouteOverlay();
+  route.task=task||null;
+  activeSafeRoute=route;lastSafeRoute=route;
+  routeAtTarget=Runtime.currentSlot()===slot;
+  routeEncounterSeen=false;
+  persistSafeRoute();
+  let focusOk=true;
+  if(focusMode==='target'&&slot&&W.hasSlot(slot))focusOk=focusMap(slot);
+  else if(focusMode==='start'){const here=Runtime.currentSlot();if(here&&W.hasSlot(here))focusOk=focusMap(here)}
+  const drawn=drawRouteOverlay(route);
+  if(!drawn){
+    /* Đường đã tính được nhưng overlay PIXI chưa sẵn — vẫn coi là thành công, thử lại sau */
+    setTimeout(()=>{if(activeSafeRoute===route)drawRouteOverlay(route)},180);
+    setTimeout(()=>{if(activeSafeRoute===route)drawRouteOverlay(route)},500);
+  }
+  setTimeout(()=>hide(),120);
+  console.info(`[VKTool] Đường an toàn: ${route.path.length} điểm · focus=${focusMode} · vẽ=${drawn?'ok':'retry'} · approx=${!!route.approx}`);
+  return true;
+}
 function isTreasureEncounter(id){const e=C.encounters?.get?.(id);return TREASURE_GUIDE.has(id)||Boolean(e?.mat_bi||e?.matBi||e?.kind==='di_bao'||A(e?.tags?.tinh_chat).includes('di_bao'))}
 function mapSlotAvailable(slot,run=g.state.run,year=run?.nam,typeId=''){const chosen=run?.noiChon?.[slot];if(!chosen)return true;if(N(chosen.biDiet)&&N(year)&&+chosen.biDiet<=+year)return false;if(typeId!=='bi_canh'&&N(chosen.moLai)&&N(year)&&+chosen.moLai>+year)return false;return true}
-function mapTaskRecords(){
-  const now=Number(g.state.run.nam)||0,out=[],seen=new Set(),specialSlots=new Set(places.map(r=>r.slot));
-  /* Source game dùng node.viec để liên kết node bản đồ với run.viecNhan.
-     Những node đó thuộc Treo thưởng/Điện nhiệm vụ và được loại khỏi tab này. */
-  for(const row of rows){
-    if(!row.groups?.has('mapevent')||row.x?.catalog||isTreasureEncounter(row.enc)||specialSlots.has(row.slot))continue;
-    const node=Runtime.node(row.slot);
-    if(!node||node.viec||node.encounter!==row.enc||!mapSlotAvailable(row.slot,g.state.run,now))continue;
-    const expires=N(node.hetHanNam)?Number(node.hetHanNam):null;
-    if(expires!==null&&expires<=now)continue;
-    const key=`encounter|${row.slot}|${row.enc}`;if(seen.has(key))continue;seen.add(key);
-    const remaining=expires===null?null:expires-now;
-    out.push({key,kind:'Sự kiện bản đồ',name:T(row.x.ten||row.e.ten||row.enc),slot:row.slot,travel:row.travel,distance:row.dist,remaining,row,rewards:mapRewardHint(row.e),danger:slotDanger(row.slot),expires,priority:0,routeTask:{type:'encounter',slot:row.slot,encounter:row.enc}});
+function mapTaskRecords(){return TickCache.get("mapTaskRecords",__raw_mapTaskRecords)}
+function mapTaskOpen(slot,run,year,typeId=''){
+  /* Chỉ hiện mục đang mở trên bản đồ: có node, chưa bị diệt, không nằm trong thời gian khóa mở lại. */
+  if(!slot||!W.hasSlot(slot))return false;
+  const node=run?.nodes?.[slot]||run?.nodes?.[String(slot)];
+  if(!node||typeof node!=='object')return false;
+  if(node.viec)return false; /* node gắn nhiệm vụ/treo thưởng → tab khác */
+  const chosen=run?.noiChon?.[slot];
+  if(chosen){
+    if(N(chosen.biDiet)&&N(year)&&+chosen.biDiet<=+year)return false;
+    if(N(chosen.moLai)&&N(year)&&+chosen.moLai>+year)return false; /* chưa mở / đang khóa */
   }
-  for(const r of places){
-    const node=Runtime.node(r.slot);
-    if(!node||node.viec||!mapSlotAvailable(r.slot,g.state.run,now,r.typeId))continue;
-    const key=`place|${r.slot}`;if(seen.has(key))continue;seen.add(key);
-    out.push({key,kind:r.type,name:r.name,slot:r.slot,travel:r.travelYears,distance:r.distanceLi,remaining:null,place:r,rewards:[],danger:slotDanger(r.slot),expires:null,priority:1,routeTask:{type:'place',slot:r.slot,typeId:r.typeId}});
-  }
-  for(const task of out){task.canArrive=task.remaining===null||!N(task.travel)?null:task.travel<=task.remaining;task.state=task.canArrive===false?'unreachable':'feasible'}
-  return out.sort((a,b)=>(a.travel??Infinity)-(b.travel??Infinity)||(a.distance??Infinity)-(b.distance??Infinity)||(a.remaining??Infinity)-(b.remaining??Infinity)||a.name.localeCompare(b.name,'vi'))
+  return true;
 }
-function renderMapTasks(){const tasks=mapTaskRecords();sum.textContent=`${tasks.length} mục đang tồn tại trực tiếp trên bản đồ · gồm sự kiện, bí cảnh, di tích, sào huyệt và khoáng mạch · không gồm Tông Môn/Treo Thưởng · gần đến xa, cùng khoảng cách ưu tiên sắp hết hạn`;list.innerHTML=tasks.map(task=>{const tags=[task.kind];if(task.danger)tags.push(task.danger.label);if(task.row){const q=preview(task.row);if(!task.row.meta.combat.length)tags.push('Không cần chiến đấu');else if(!q)tags.push('Có chiến đấu · chưa dò được');else if(q.tuTran)tags.push('Tử địa');else if(q.thang&&q.ketQua?.thuongThe)tags.push('Thắng nhưng có thể bị thương');else if(q.thang)tags.push('Dễ thắng');else tags.push('Khó thắng')}if(N(task.remaining))tags.push(task.remaining>=0?`Còn ${fmtDuration(task.remaining)}`:`Quá hạn ${fmtDuration(-task.remaining)}`);if(task.state==='unreachable')tags.push('Không đến kịp');return`<article data-map-task="${E(task.key)}" data-slot="${E(task.slot||'')}"><div><div class="name">${E(task.name)}</div><div class="tags">${tags.map(x=>`<span class="tag ${x==='Không đến kịp'||x==='Tử địa'?'bad':x==='An toàn'?'good':''}">${E(x)}</span>`).join('')}</div>${task.rewards?.length?`<div class="gain">Có thể được: ${E(task.rewards.join(' · '))}</div>`:''}</div><div class="travel">${N(task.travel)?`<strong>${fmtDuration(task.travel)}</strong><span>${fmtDistance(task.distance)}</span>`:'<strong>Chưa rõ</strong><span>vị trí</span>'}</div><div><button class="red map-focus-act">Xem đường trên bản đồ</button><button class="ghost map-safe-route-act">Đường an toàn</button></div></article>`}).join('')||'<p>Không có nhiệm vụ hoặc sự kiện đang tồn tại trực tiếp trên bản đồ.</p>'}
-function renderPeopleBase(){const alive=people.filter(x=>x.lifeState==='Còn sống').length,visible=people.filter(x=>x.location.source==='node').length,dead=people.length-alive;sum.textContent=`${people.length} nhân mạch · ưu tiên đang ở cùng nơi/có thể tương tác, sau đó gần đến xa · ${visible} đang xuất hiện · ${alive} còn sống · ${dead} đã khuất`;list.innerHTML=people.map(person=>{const tags=[person.lifeState,person.gender,person.relation,`Hảo cảm ${F(person.affection)}`];if(person.debt)tags.push(`Nợ ${F(person.debt)}`);if(person.romance)tags.push('Có tình ý');tags.push(person.location.note);if(person.location.confidence==='runtime')tags.push('Runtime xác nhận');else if(person.location.confidence==='history')tags.push('Vị trí cũ');const actions=person.interactions.map(x=>`<span class="tag">${E(x)}</span>`).join('');return`<article data-person="${E(person.key)}" data-slot="${E(person.slot||'')}"><div><div class="name">${E(person.name)}</div><div class="tags">${tags.map(x=>`<span class="tag ${x==='Đã khuất'?'bad':x==='Runtime xác nhận'?'good':''}">${E(x)}</span>`).join('')}</div>${actions?`<div class="sub">Có thể tương tác: <span class="tags">${actions}</span></div>`:''}${person.giftLikeName||person.giftLike?`<div class="gain">Sở thích quà: ${E(person.giftLikeName||person.giftLike)}</div>`:''}${person.seen?`<div class="sub">Gặp gần nhất: ${N(person.seen.year)?'năm '+F(person.seen.year):'không rõ năm'}${person.seen.slot?' · '+E(safePlaceName(person.seen.slot)):''}</div>`:''}</div><div class="travel">${N(person.travel)?`<strong>${fmtDuration(person.travel)}</strong><span>${fmtDistance(person.distance)}</span>`:'<strong>—</strong><span>chưa rõ vị trí</span>'}</div><div>${person.slot&&person.lifeState==='Còn sống'?'<button class="red person-focus-act">Xem trên bản đồ</button><button class="ghost person-route-act">Đường an toàn</button>':''}${person.giftLikeName||person.giftLike?'<button class="ghost person-gift-act">Tìm quà phù hợp</button>':''}</div></article>`}).join('')||'<p>Chưa có Nhân mạch đã gặp.</p>'}
-function sectDirectoryRecords(run=g.state.run){const out=[];for(const slot of W.slots){let info;try{info=W.info(slot.id)}catch{continue}const place=info?.diaDanh;if(place?.loai!=='tong_mon')continue;const destroyed=N(run?.noiChon?.[slot.id]?.biDiet)&&+run.noiChon[slot.id].biDiet<=+run.nam,travel=+g.travelYears(slot.id),distance=+g.distanceLi(slot.id),joined=run?.tongMon?.slot===slot.id||run?.flags?.mon_phai===slot.id;out.push({key:`sect|${slot.id}`,slot:slot.id,name:T(place.ten||info.ten||slot.id),tier:T(place.tang||'tông môn').replaceAll('_',' '),school:T(place.phai||''),alignment:place.chinh_ma??null,joined,destroyed,travel,distance,raw:place})}return out.sort((a,b)=>(a.destroyed?1:0)-(b.destroyed?1:0)||(a.joined?-1:0)-(b.joined?-1:0)||(a.travel??Infinity)-(b.travel??Infinity)||(a.distance??Infinity)-(b.distance??Infinity)||a.name.localeCompare(b.name,'vi'))}
-function playerSectProfile(run=g.state.run){const membership=run?.tongMon||null,slot=membership?.slot||run?.flags?.mon_phai||null,record=slot?sectDirectoryRecords(run).find(x=>x.slot===slot):null,nv=Runtime.character();return{membership,slot,record,contribution:N(membership?.congHien)?+membership.congHien:N(nv?.congHien)?+nv.congHien:null,rank:T(membership?.factionRank||membership?.rank||membership?.danhPhan||'').replaceAll('_',' '),trial:Boolean(membership?.trial),joined:Boolean(slot)}}
-function renderSectBase(){const run=g.state.run,profile=playerSectProfile(run),directory=sectDirectoryRecords(run),accepted=quests.filter(r=>r.status==='active'&&r.source==='Nhiệm vụ đã nhận').sort((a,b)=>(a.travelYears??Infinity)-(b.travelYears??Infinity)||(a.distanceLi??Infinity)-(b.distanceLi??Infinity)||(a.remainingYears??Infinity)-(b.remainingYears??Infinity)),slips=hallOpen()?quests.filter(r=>r.source==='Ngọc giản tông môn'&&r.status==='active').sort((a,b)=>(a.travelYears??Infinity)-(b.travelYears??Infinity)||(a.remainingYears??Infinity)-(b.remainingYears??Infinity)):[];sum.textContent=`${directory.length} tông môn trên toàn bản đồ · gần đến xa · ${profile.joined?'đã gia nhập '+(profile.record?.name||'tông môn'):'chưa gia nhập'}`;const questCard=(r,acceptedMode)=>`<article data-quest="${E(r.key)}"><div><div class="name">${E(r.name)}</div><div class="tags"><span class="tag">${acceptedMode?'Đã nhận':'Ngọc giản'}</span>${N(r.remainingYears)?`<span class="tag ${r.remainingYears<=0?'bad':r.canArrive===false?'warn':'good'}">${r.remainingYears<=0?'Đã hết hạn':r.canArrive===false?'Không đến kịp':`Còn ${fmtDuration(r.remainingYears)}`}</span>`:''}</div>${N(r.contribution)?`<div class="gain">${F(r.contribution)} cống hiến</div>`:''}</div><div class="travel">${N(r.travelYears)?`<strong>${fmtDuration(r.travelYears)}</strong><span>${fmtDistance(r.distanceLi)}</span>`:'<strong>Chưa rõ</strong><span>vị trí</span>'}</div><div>${r.slot?'<button class="red quest-act">Xem nơi làm</button>':''}</div></article>`;const sectCard=r=>`<article data-sect-slot="${E(r.slot)}"><div><div class="name">${E(r.name)}</div><div class="tags"><span class="tag">${E(r.tier)}</span>${r.school?`<span class="tag">Phái ${E(r.school)}</span>`:''}${r.joined?'<span class="tag good">Tông môn hiện tại</span>':''}${r.destroyed?'<span class="tag bad">Đã bị tiêu diệt</span>':'<span class="tag good">Đang tồn tại</span>'}</div></div><div class="travel"><strong>${fmtDuration(r.travel)}</strong><span>${fmtDistance(r.distance)}</span></div><div>${!r.destroyed?'<button class="red sect-focus-act">Xem trên bản đồ</button><button class="ghost sect-route-act">Đường an toàn</button>':''}</div></article>`;list.innerHTML=`<article class="section-card"><div class="name">Thông tin tông môn của nhân vật</div>${profile.joined?`<div class="tags"><span class="tag good">${E(profile.record?.name||profile.slot)}</span>${profile.rank?`<span class="tag">${E(profile.rank)}</span>`:''}${N(profile.contribution)?`<span class="tag">${F(profile.contribution)} cống hiến</span>`:''}${profile.trial?'<span class="tag warn">Đang chịu thử thách</span>':''}</div>`:'<div class="sub">Nhân vật chưa gia nhập tông môn.</div>'}</article><div class="section-title">Danh bạ tông môn toàn bản đồ</div>${directory.map(sectCard).join('')||'<p>Không tìm thấy tông môn trong world source.</p>'}<div class="section-title">Nhiệm vụ đã nhận</div>${accepted.map(r=>questCard(r,true)).join('')||'<p>Chưa có nhiệm vụ đã nhận.</p>'}<div class="section-title">Ngọc giản tại Điện nhiệm vụ</div>${hallOpen()?(slips.map(r=>questCard(r,false)).join('')||'<p>Điện nhiệm vụ đang mở nhưng chưa đọc được Ngọc giản.</p>'):'<p>Mở Điện nhiệm vụ để đọc Ngọc giản hiện tại. Ngọc giản và nhiệm vụ nguồn Điện nhiệm vụ vẫn thuộc tab Treo Thưởng, phần này chỉ là trạng thái tham chiếu.</p>'}`}
+function mapTaskDetail(slot){
+  let info=null;try{info=W.info(slot)}catch{}
+  const ten=info?.ten||info?.diaDanh?.ten||slot;
+  const loai=placeType(info)||null;
+  const country=info?.quocGia||null;
+  const terrain=A(info?.diaHinh);
+  const clan=info?.tocYeu? (YEU_TOC[info.tocYeu]||info.tocYeu):null;
+  const base=N(info?.capNen)?+info.capNen:null;
+  return{ten,loai,country,terrain,clan,base,info};
+}
+function __raw_mapTaskRecords(){
+  const run=g.state.run||{},now=Number(run.nam)||0,out=[],seen=new Set();
+  const specialSlots=new Set((places||[]).map(r=>r.slot));
+
+  /* 1) Sự kiện runtime trên nodes (không gồm dị bảo / catalog / tông môn / treo thưởng) */
+  for(const row of rows||[]){
+    if(!row?.groups?.has?.('mapevent'))continue;
+    if(row.x?.catalog)continue; /* chưa xuất hiện */
+    if(isTreasureEncounter(row.enc))continue;
+    if(specialSlots.has(row.slot))continue; /* sẽ gom ở nhóm địa điểm đặc biệt */
+    if(!mapTaskOpen(row.slot,run,now))continue;
+    const node=Runtime.node(row.slot);
+    if(!node||node.encounter!==row.enc)continue;
+    const expires=N(node.hetHanNam)?Number(node.hetHanNam):(N(row.expires)?Number(row.expires):null);
+    if(expires!==null&&expires<=now)continue; /* đã hết hạn */
+    const key=`encounter|${row.slot}|${row.enc}`;
+    if(seen.has(key))continue;seen.add(key);
+    const travel=N(row.travel)?+row.travel:+g.travelYears(row.slot);
+    const distance=N(row.dist)?+row.dist:+g.distanceLi(row.slot);
+    const remaining=expires===null?null:expires-now;
+    const canArrive=remaining===null||!N(travel)?true:travel<=remaining;
+    const detail=mapTaskDetail(row.slot);
+    const combat=row.meta?.combat||[];
+    out.push({
+      key,kind:'Sự kiện bản đồ',typeId:'su_kien',name:T(row.x?.ten||row.e?.ten||row.enc),
+      slot:row.slot,placeName:detail.ten,travel,distance,remaining,expires,
+      canArrive,state:canArrive?'feasible':'unreachable',
+      row,enc:row.enc,rewards:mapRewardHint(row.e),danger:slotDanger(row.slot),
+      combatCount:combat.length,combatNames:[...new Set(combat.map(x=>x.ten))].slice(0,3),
+      mandatory:Boolean(row.meta?.mandatory),detail,
+      source:row.src||'Sự kiện trên bản đồ',
+      routeTask:{type:'encounter',slot:row.slot,encounter:row.enc}
+    });
+  }
+
+  /* 2) Địa điểm đặc biệt đang có node: bí cảnh, di tích, sào huyệt, khoáng mạch */
+  for(const r of places||[]){
+    if(!mapTaskOpen(r.slot,run,now,r.typeId))continue;
+    const node=Runtime.node(r.slot);
+    if(!node)continue;
+    const expires=N(node.hetHanNam)?Number(node.hetHanNam):(N(r.expiryYear)?Number(r.expiryYear):null);
+    if(expires!==null&&expires<=now)continue;
+    const key=`place|${r.slot}`;
+    if(seen.has(key))continue;seen.add(key);
+    const travel=N(r.travelYears)?+r.travelYears:+g.travelYears(r.slot);
+    const distance=N(r.distanceLi)?+r.distanceLi:+g.distanceLi(r.slot);
+    const remaining=expires===null?null:expires-now;
+    const canArrive=remaining===null||!N(travel)?true:travel<=remaining;
+    const detail=mapTaskDetail(r.slot);
+    const eventRewards=[];
+    for(const ev of A(r.events)){
+      const enc=C.encounters?.get?.(ev.id);
+      for(const x of mapRewardHint(enc))eventRewards.push(x);
+    }
+    out.push({
+      key,kind:r.type||'Địa điểm đặc biệt',typeId:r.typeId||'',name:r.name,
+      slot:r.slot,placeName:detail.ten,travel,distance,remaining,expires,
+      canArrive,state:canArrive?'feasible':'unreachable',
+      place:r,enc:null,rewards:[...new Set(eventRewards)].slice(0,4),danger:slotDanger(r.slot),
+      combatCount:0,combatNames:[],mandatory:false,detail,
+      beastClan:r.beastClanName||detail.clan||null,
+      baseLevel:N(r.baseLevel)?+r.baseLevel:detail.base,
+      discovered:Boolean(r.discovered),
+      placeEvents:A(r.events).map(ev=>ev.ten||ev.id).slice(0,4),
+      source:'Địa điểm đặc biệt',
+      routeTask:{type:'place',slot:r.slot,typeId:r.typeId}
+    });
+  }
+
+  /* Sắp xếp: gần → xa; cùng khoảng cách thì còn hạn gấp hơn trước; không đến kịp xếp cuối */
+  return out.sort((a,b)=>{
+    const ua=a.state==='unreachable'?1:0,ub=b.state==='unreachable'?1:0;
+    if(ua!==ub)return ua-ub;
+    const ta=N(a.travel)?+a.travel:Infinity,tb=N(b.travel)?+b.travel:Infinity;
+    if(ta!==tb)return ta-tb;
+    const da=N(a.distance)?+a.distance:Infinity,db=N(b.distance)?+b.distance:Infinity;
+    if(da!==db)return da-db;
+    const ra=a.remaining===null||a.remaining===undefined?Infinity:+a.remaining;
+    const rb=b.remaining===null||b.remaining===undefined?Infinity:+b.remaining;
+    if(ra!==rb)return ra-rb;
+    return String(a.name||'').localeCompare(String(b.name||''),'vi');
+  });
+}
+function renderMapTasks(){
+  const tasks=mapTaskRecords().filter(t=>t.state!=='expired');
+  const feasible=tasks.filter(t=>t.state!=='unreachable').length;
+  const urgent=tasks.filter(t=>N(t.remaining)&&t.remaining<0.5).length;
+  sum.textContent=`${tasks.length} mục đang mở trên bản đồ · ${feasible} đến kịp · ${urgent?urgent+' sắp hết hạn · ':''}gần → xa, hạn gấp trước · ẩn hết hạn & chưa mở · không gồm Tông Môn / Treo thưởng / Dị bảo`;
+  list.innerHTML=tasks.map(task=>{
+    const tags=[];
+    tags.push(task.kind||'Sự kiện');
+    if(task.danger?.label)tags.push(task.danger.label);
+    if(task.discovered===false)tags.push('Chưa khám phá');
+    if(task.beastClan)tags.push(task.beastClan);
+    if(N(task.baseLevel))tags.push('Cấp nền '+F(task.baseLevel));
+    if(task.row){
+      const q=preview(task.row);
+      if(!task.combatCount)tags.push('Không cần chiến đấu');
+      else if(!q)tags.push(task.mandatory?'Bắt buộc chiến đấu':'Có chiến đấu');
+      else if(q.tuTran)tags.push('Tử địa');
+      else if(q.thang&&q.ketQua?.thuongThe)tags.push('Thắng · có thể bị thương');
+      else if(q.thang)tags.push('Dễ thắng');
+      else tags.push('Khó thắng');
+    }
+    if(N(task.remaining)){
+      if(task.remaining<0)tags.push('Đã hết hạn');
+      else if(task.state==='unreachable')tags.push('Không đến kịp');
+      else if(task.remaining<0.25)tags.push('Sắp hết · còn '+fmtDuration(task.remaining));
+      else tags.push('Còn '+fmtDuration(task.remaining));
+    }else tags.push('Không giới hạn thời gian');
+    const tagCls=t=>{
+      if(t==='Không đến kịp'||t==='Tử địa'||t==='Đã hết hạn'||t.startsWith('Sắp hết'))return'bad';
+      if(t==='An toàn'||t==='Dễ thắng'||t==='Không cần chiến đấu')return'good';
+      if(t==='Nguy hiểm'||t==='Khó thắng'||t.startsWith('Thắng ·'))return'warn';
+      return'';
+    };
+    const subParts=[task.placeName&&task.placeName!==task.name?task.placeName:null,task.source,N(task.distance)?fmtDistance(task.distance):null].filter(Boolean);
+    const extra=[];
+    if(task.combatNames?.length)extra.push('Địch: '+task.combatNames.join(', '));
+    if(task.placeEvents?.length)extra.push('Sự kiện tại chỗ: '+task.placeEvents.join(', '));
+    if(task.detail?.country)extra.push('Quốc gia: '+task.detail.country);
+    if(task.detail?.terrain?.length)extra.push('Địa hình: '+task.detail.terrain.join(', '));
+    if(N(task.remaining)&&N(task.travel)&&task.canArrive){
+      const slack=task.remaining-task.travel;
+      if(slack>=0)extra.push('Đến nơi còn khoảng '+fmtDuration(slack));
+    }
+    return`<article data-map-task="${E(task.key)}" data-slot="${E(task.slot||'')}" class="${task.state==='unreachable'?'is-unreachable':''}"><div><div class="name">${E(task.name)}</div><div class="sub">${E(subParts.join(' · '))}</div><div class="tags">${tags.map(x=>`<span class="tag ${tagCls(x)}">${E(x)}</span>`).join('')}</div>${extra.length?`<div class="sub">${E(extra.join(' · '))}</div>`:''}${task.rewards?.length?`<div class="gain">Có thể được: ${E(task.rewards.join(' · '))}</div>`:''}${task.state==='unreachable'?`<div class="risk">Thời gian đi (${fmtDuration(task.travel)}) dài hơn hạn còn lại (${fmtDuration(task.remaining)}). Có thể hết hạn trước khi tới.</div>`:''}</div><div class="travel">${N(task.travel)?`<strong>${fmtDuration(task.travel)}</strong><span>${fmtDistance(task.distance)}</span>`:'<strong>—</strong><span>chưa rõ</span>'}</div><div><button class="red map-focus-act">Xem đích + đường</button><button class="ghost map-safe-route-act">Đường từ vị trí đứng</button></div></article>`;
+  }).join('')||'<p><strong>Không có mục nào đang mở trên bản đồ.</strong><br>Chỉ hiện sự kiện / bí cảnh / di tích / sào huyệt / khoáng mạch đã xuất hiện, còn hạn và không bị khóa mở lại. Treo thưởng, tông môn và dị bảo nằm ở tab riêng.</p>';
+}
+function renderPeopleBase(){
+  const alive=people.filter(x=>x.lifeState==='Còn sống').length;
+  const visible=people.filter(x=>x.location.source==='node').length;
+  const meet=people.filter(x=>x.canMeet).length;
+  const dead=people.length-alive;
+  sum.textContent=`${people.length} nhân mạch · ${meet} có thể gặp ngay · ${visible} đang xuất hiện · ${alive} còn sống · ${dead} đã khuất · gần → xa`;
+  list.innerHTML=people.map(person=>{
+    const tags=[person.lifeState,person.gender,person.relation,`Hảo cảm ${F(person.affection)}`];
+    if(person.debt)tags.push(`Nợ ${F(person.debt)}`);
+    if(person.romance)tags.push('Có tình ý');
+    if(person.canMeet)tags.push('Có thể gặp mặt');
+    if(person.location.source==='node')tags.push('Đang xuất hiện');
+    else if(person.location.source==='companion')tags.push('Đồng hành');
+    else if(person.location.confidence==='history')tags.push('Vị trí cũ');
+    if(N(person.remaining)&&person.remaining>=0)tags.push('Còn '+fmtDuration(person.remaining));
+    const tagCls=t=>{
+      if(t==='Đã khuất')return'bad';
+      if(t==='Có thể gặp mặt'||t==='Đang xuất hiện'||t==='Đồng hành')return'good';
+      if(t==='Vị trí cũ')return'warn';
+      return'';
+    };
+    const sub=[person.placeName,person.location.note,person.faction?('Thế lực: '+person.faction):null].filter(Boolean).join(' · ');
+    const extra=[];
+    if(person.giftLikeName||person.giftLike){
+      const gname=person.giftLikeName||person.giftLike;
+      extra.push(person.giftOwned>0?`Sở thích quà: ${gname} · đang có ${person.giftOwned} loại trong túi`:`Sở thích quà: ${gname}`);
+    }
+    if(person.seen)extra.push(`Gặp gần nhất: ${N(person.seen.year)?'năm '+F(person.seen.year):'?'}${person.seen.slot?' · '+safePlaceName(person.seen.slot):''}`);
+    if(person.home&&W.hasSlot(person.home))extra.push('Nhà: '+safePlaceName(person.home));
+    if(person.hometown&&W.hasSlot(person.hometown))extra.push('Quê: '+safePlaceName(person.hometown));
+    const acts=person.interactions.filter(x=>x!=='Có thể gặp mặt');
+    let buttons='';
+    if(person.slot&&person.lifeState==='Còn sống'){
+      buttons=`<button class="red person-focus-act">Xem đích + đường</button><button class="ghost person-route-act">Đường từ vị trí đứng</button>`;
+    }
+    if(person.giftLikeName||person.giftLike)buttons+=`<button class="ghost person-gift-act">Tìm quà phù hợp</button>`;
+    return`<article data-person="${E(person.key)}" data-slot="${E(person.slot||'')}"><div><div class="name">${E(person.name)}</div><div class="sub">${E(sub||'Chưa rõ tung tích')}</div><div class="tags">${tags.map(x=>`<span class="tag ${tagCls(x)}">${E(x)}</span>`).join('')}</div>${acts.length?`<div class="sub">Tương tác: ${E(acts.join(' · '))}</div>`:''}${extra.map(x=>`<div class="sub">${E(x)}</div>`).join('')}</div><div class="travel">${N(person.travel)?`<strong>${fmtDuration(person.travel)}</strong><span>${fmtDistance(person.distance)}</span>`:'<strong>—</strong><span>chưa rõ vị trí</span>'}</div><div>${buttons}</div></article>`;
+  }).join('')||'<p>Chưa có Nhân mạch đã gặp / có quan hệ.</p>';
+}
+
+function sectDirectoryRecords(run=g.state.run){
+  const out=[],now=Number(run?.nam)||0;
+  for(const slot of W.slots||[]){
+    let info;try{info=W.info(slot.id)}catch{continue}
+    const place=info?.diaDanh;if(place?.loai!=='tong_mon')continue;
+    const chosen=run?.noiChon?.[slot.id]||{};
+    const destroyed=N(chosen.biDiet)&&+chosen.biDiet<=now;
+    const travel=+g.travelYears(slot.id),distance=+g.distanceLi(slot.id);
+    const joined=run?.tongMon?.slot===slot.id||run?.flags?.mon_phai===slot.id;
+    const alignRaw=place.chinh_ma??place.chinhMa??place.dao??null;
+    const alignment=alignRaw==='ma'||alignRaw==='ta'||alignRaw===1?'Ma đạo':alignRaw==='chinh'||alignRaw==='chính'||alignRaw===0?'Chính đạo':alignRaw?T(String(alignRaw)):null;
+    const school=T(place.phai||place.school||'');
+    const tier=T(place.tang||place.tier||'tông môn').replaceAll('_',' ');
+    const country=info?.quocGia||place.quocGia||null;
+    const he=A(place.he||info?.he);
+    out.push({
+      key:`sect|${slot.id}`,slot:slot.id,name:T(place.ten||info?.ten||slot.id),
+      tier,school,alignment,country,he,joined,destroyed,travel,distance,
+      baseLevel:N(info?.capNen)?+info.capNen:N(place.capNen)?+place.capNen:null,
+      discovered:A(run?.daKhamPha).includes(slot.id),
+      destroyedYear:N(chosen.biDiet)?+chosen.biDiet:null,
+      raw:place,info
+    });
+  }
+  return out.sort((a,b)=>(a.destroyed?1:0)-(b.destroyed?1:0)||(a.joined?-1:0)-(b.joined?-1:0)||(a.travel??Infinity)-(b.travel??Infinity)||(a.distance??Infinity)-(b.distance??Infinity)||a.name.localeCompare(b.name,'vi'));
+}
+
+function playerSectProfile(run=g.state.run){
+  const membership=run?.tongMon||Runtime.character()?.tongMon||null;
+  const slot=membership?.slot||run?.flags?.mon_phai||null;
+  const record=slot?sectDirectoryRecords(run).find(x=>x.slot===slot):null;
+  const nv=Runtime.character()||{};
+  const rank=T(membership?.capBac||membership?.cap_bac||membership?.factionRank||membership?.rank||membership?.danhPhan||nv.capBacTongMon||'').replaceAll('_',' ');
+  const school=T(membership?.phai||membership?.loai||record?.school||'');
+  return{
+    membership,slot,record,school,
+    contribution:N(membership?.congHien)?+membership.congHien:N(nv?.congHien)?+nv.congHien:null,
+    rank,trial:Boolean(membership?.trial||membership?.thuThach),
+    joined:Boolean(slot&&record&&!record.destroyed)
+  };
+}
+
+function renderSectBase(){
+  const run=g.state.run,profile=playerSectProfile(run),directory=sectDirectoryRecords(run);
+  const accepted=quests.filter(r=>r.status==='active'&&r.source==='Nhiệm vụ đã nhận').sort((a,b)=>(a.travelYears??Infinity)-(b.travelYears??Infinity)||(a.distanceLi??Infinity)-(b.distanceLi??Infinity));
+  const slips=hallOpen()?quests.filter(r=>r.source==='Ngọc giản tông môn'&&r.status==='active').sort((a,b)=>(a.travelYears??Infinity)-(b.travelYears??Infinity)):[];
+  const activeN=directory.filter(x=>!x.destroyed).length;
+  sum.textContent=`${directory.length} tông môn · ${activeN} đang tồn tại · ${profile.joined?'đã gia nhập '+(profile.record?.name||''):'chưa gia nhập'} · gần → xa`;
+  const questCard=(r,acceptedMode)=>`<article data-quest="${E(r.key)}"><div><div class="name">${E(r.name)}</div><div class="tags"><span class="tag">${acceptedMode?'Đã nhận':'Ngọc giản'}</span>${N(r.remainingYears)?`<span class="tag ${r.remainingYears<=0?'bad':r.canArrive===false?'warn':'good'}">${r.remainingYears<=0?'Đã hết hạn':r.canArrive===false?'Không đến kịp':`Còn ${fmtDuration(r.remainingYears)}`}</span>`:''}</div>${N(r.contribution)?`<div class="gain">${F(r.contribution)} cống hiến</div>`:''}</div><div class="travel">${N(r.travelYears)?`<strong>${fmtDuration(r.travelYears)}</strong><span>${fmtDistance(r.distanceLi)}</span>`:'<strong>—</strong><span>vị trí</span>'}</div><div>${r.slot?'<button class="red quest-act">Xem nơi làm</button>':''}</div></article>`;
+  const sectCard=r=>{
+    const tags=[r.tier];
+    if(r.school)tags.push('Phái '+r.school);
+    if(r.alignment)tags.push(r.alignment);
+    if(r.country)tags.push(r.country);
+    if(N(r.baseLevel))tags.push('Cấp nền '+F(r.baseLevel));
+    if(r.joined)tags.push('Tông môn hiện tại');
+    if(r.destroyed)tags.push('Đã bị tiêu diệt');
+    else tags.push('Đang tồn tại');
+    if(r.discovered===false)tags.push('Chưa khám phá');
+    const tagCls=t=>t==='Tông môn hiện tại'||t==='Đang tồn tại'?'good':t==='Đã bị tiêu diệt'?'bad':t==='Ma đạo'?'warn':'';
+    const sub=[r.he?.length?('Hệ: '+r.he.join(', ')):null,r.destroyed&&N(r.destroyedYear)?('Diệt năm '+F(r.destroyedYear)):null].filter(Boolean).join(' · ');
+    return`<article data-sect-slot="${E(r.slot)}"><div><div class="name">${E(r.name)}</div><div class="tags">${tags.map(x=>`<span class="tag ${tagCls(x)}">${E(x)}</span>`).join('')}</div>${sub?`<div class="sub">${E(sub)}</div>`:''}</div><div class="travel"><strong>${fmtDuration(r.travel)}</strong><span>${fmtDistance(r.distance)}</span></div><div>${!r.destroyed?`<button class="red sect-focus-act">Xem đích + đường</button><button class="ghost sect-route-act">Đường từ vị trí đứng</button>`:''}</div></article>`;
+  };
+  const profileHtml=profile.joined
+    ?`<div class="tags"><span class="tag good">${E(profile.record?.name||profile.slot)}</span>${profile.rank?`<span class="tag">${E(profile.rank)}</span>`:''}${profile.school?`<span class="tag">Phái ${E(profile.school)}</span>`:''}${N(profile.contribution)?`<span class="tag">${F(profile.contribution)} cống hiến</span>`:''}${profile.trial?'<span class="tag warn">Đang thử thách</span>':''}${profile.record?.alignment?`<span class="tag">${E(profile.record.alignment)}</span>`:''}</div>${profile.record?`<div class="sub">${E([profile.record.country,N(profile.record.travel)?('cách '+fmtDuration(profile.record.travel)):null].filter(Boolean).join(' · '))}</div><div>${!profile.record.destroyed?`<button class="red sect-focus-act" data-slot="${E(profile.slot)}">Xem đích + đường</button><button class="ghost sect-route-act" data-slot="${E(profile.slot)}">Đường từ vị trí đứng</button>`:''}</div>`:''}`
+    :'<div class="sub">Nhân vật chưa gia nhập tông môn.</div>';
+  list.innerHTML=`<article class="section-card" data-sect-slot="${E(profile.slot||'')}"><div class="name">Tông môn của nhân vật</div>${profileHtml}</article><div class="section-title">Danh bạ tông môn · gần → xa</div>${directory.map(sectCard).join('')||'<p>Không tìm thấy tông môn trên bản đồ.</p>'}<div class="section-title">Nhiệm vụ đã nhận</div>${accepted.map(r=>questCard(r,true)).join('')||'<p>Chưa có nhiệm vụ đã nhận.</p>'}<div class="section-title">Ngọc giản tại Điện nhiệm vụ</div>${hallOpen()?(slips.map(r=>questCard(r,false)).join('')||'<p>Điện đang mở nhưng chưa đọc được Ngọc giản.</p>'):'<p>Mở Điện nhiệm vụ để đọc Ngọc giản. Ngọc giản đầy đủ nằm ở tab Treo Thưởng.</p>'}`;
+}
 
 let breakthroughToken=0,bountyBusy=false,bountyCache=null,bountyCacheSig='',bountyScanSeq=0,bountyConsumed=new Set();try{const saved=JSON.parse(sessionStorage.getItem('vk-bounty-plan')||'null');if(Array.isArray(saved?.rows))bountyCache=saved.rows;if(Array.isArray(saved?.consumed))bountyConsumed=new Set(saved.consumed)}catch{}
 const safePlaceName=slot=>{if(!slot||!W.hasSlot(slot))return slot||'Chưa rõ';try{return W.info(slot)?.ten||slot}catch{return slot}};
@@ -603,41 +1362,270 @@ async function scanBountyBoards(maxYears=1.2,withSect=true,onProgress=()=>{}){aw
 function renderBountyRows(data){syncBountyPlan();const onlyWin=Boolean(p.querySelector('#bounty-win')?.checked),filtered=A(data).filter(r=>!bountyConsumed.has(bountyWorkKey(r))).filter(r=>!onlyWin||['good','warn'].includes(threatLabel(r.th)[1])),groups=new Map(),box=p.querySelector('#bounty-results');if(!box)return;for(const r of filtered){if(!groups.has(r.board))groups.set(r.board,[]);groups.get(r.board).push(r)}box.innerHTML=[...groups].sort((a,b)=>a[1][0].boardTravel-b[1][0].boardTravel).map(([board,xs])=>`<details class="bounty-group" open><summary><span><strong>${E(safePlaceName(board))}</strong><small>${fmtDuration(xs[0].boardTravel)} · ${xs.length} nhiệm vụ${xs.length>=3?' · có thể nhận 3':''}</small></span><button class="red bounty-receive-map" data-slot="${E(board)}">Xem đường đến nơi nhận</button></summary><div class="bounty-group-body">${xs.sort((a,b)=>{const rank={good:0,warn:1,bad:2};return rank[threatLabel(a.th)[1]]-rank[threatLabel(b.th)[1]]}).map(r=>{const [label,cls]=threatLabel(r.th),late=N(r.v.han)&&r.targetTravel>r.v.han;return`<div class="bounty-job"><strong>${E(cleanPrivateText(r.v.ten||r.v.id||r.v.enc||'Treo thưởng'))}</strong><div class="tags"><span class="tag ${cls}">${E(label)}</span>${late?'<span class="tag bad">Không kịp hạn</span>':''}</div><div class="sub">Làm tại ${E(safePlaceName(r.v.slot))} · ${fmtDuration(r.targetTravel)}${N(r.v.han)?' · hạn '+fmtDuration(r.v.han):''}</div><div class="gain">${N(r.v.thuong)?F(r.v.thuong)+' linh thạch':''}${N(r.v.congHien)?' · '+F(r.v.congHien)+' cống hiến':''}</div></div>`}).join('')}</div></details>`).join('')||'<div class="empty-state"><strong>Không có việc phù hợp</strong></div>'}
 function renderBounties(){itemTools.style.display='none';head.style.display='none';syncBountyPlan();const taken=quests.filter(r=>r.status==='active'&&r.source==='Nhiệm vụ đã nhận');sum.textContent=`${taken.length} việc đang nhận · ${bountyCache?bountyCache.length+' việc còn lại từ lần quét đã lưu':'chưa có kế hoạch quét đã lưu'}`;list.innerHTML=`<article class="section-card"><div class="name">Đã nhận</div>${taken.map(r=>`<div class="sub option-row"><span><strong>${E(r.name)}</strong> · ${N(r.remainingYears)?'còn '+fmtDuration(r.remainingYears):'không rõ hạn'}</span>${r.slot?`<button class="red bounty-work-map" data-slot="${E(r.slot)}">Xem đường đến nơi làm</button>`:''}</div>`).join('')||'<div class="sub">Chưa nhận việc nào.</div>'}</article><article class="section-card bounty-controls"><div class="name">Bảng treo thưởng quanh đây</div><div class="control-grid"><label>Bán kính<select id="bounty-range"><option value="0.6">6 tháng đường</option><option value="1.2" selected>1,2 năm đường</option><option value="2.5">2,5 năm đường</option></select></label><label class="check-row"><input type="checkbox" id="bounty-sect" checked>Gồm bảng sư môn</label><label class="check-row"><input type="checkbox" id="bounty-win">Chỉ việc thắng được</label></div><div class="inline-actions"><button class="red" id="bounty-scan">Quét bảng</button><button class="ghost" id="bounty-stop" ${bountyBusy?'':'disabled'}>Dừng</button></div><div class="scan-status sub" id="bounty-status">${bountyCache?'Đang dùng kết quả hợp lệ gần nhất.':'Chưa quét bảng.'}</div></article><div id="bounty-results"></div>`;if(bountyCache)renderBountyRows(bountyCache);p.querySelector('#bounty-win').onchange=()=>bountyCache&&renderBountyRows(bountyCache);p.querySelector('#bounty-stop').onclick=()=>{bountyScanSeq++;bountyBusy=false;const st=p.querySelector('#bounty-status');if(st)st.textContent='Đã dừng quét.'};p.querySelector('#bounty-scan').onclick=async e=>{if(bountyBusy)return;const btn=e.currentTarget,stop=p.querySelector('#bounty-stop'),st=p.querySelector('#bounty-status');bountyBusy=true;btn.disabled=true;stop.disabled=false;btn.textContent='Đang quét…';try{const result=await scanBountyBoards(+p.querySelector('#bounty-range').value,p.querySelector('#bounty-sect').checked,(f,msg)=>{if(st){st.textContent=`${msg} · ${Math.round(f*100)}%`;st.style.setProperty('--scan',`${Math.round(f*100)}%`)}});bountyCache=result;bountyCacheSig='saved';bountyConsumed.clear();syncBountyPlan();persistBountyPlan();if(tab==='bounties'){sum.textContent=`${result.length} việc tìm thấy · sắp theo khả năng thắng và hiệu quả phần thưởng`;renderBountyRows(result)}}catch(err){if(!String(err?.message||err).includes('Đã dừng'))alert('Lỗi quét treo thưởng: '+(err?.message||err))}finally{bountyBusy=false;if(btn?.isConnected){btn.disabled=false;btn.textContent='Quét bảng';stop.disabled=true}}}}
 const BUILD_PATHS=[['tu_do','Tự do'],['kiem','Kiếm'],['the','Thể'],['phat','Phật'],['ma','Ma / Nghịch'],['doc','Độc / Cổ'],['hop_hoan','Hợp Hoan'],['thi','Luyện Thi'],['quy','Quỷ'],['ngu_thu','Ngự Thú'],['khoi_loi','Khôi Lỗi'],['phu','Phù'],['tran','Trận'],['dan','Đan'],['khi','Luyện Bảo']],BUILD_ELEMENTS=[['auto','Tự động'],['kim','Kim'],['moc','Mộc'],['thuy','Thủy'],['hoa','Hỏa'],['tho','Thổ'],['bang','Băng'],['loi','Lôi'],['phong','Phong'],['vo_sac','Vô sắc']];
-let buildState={busy:false,results:null,pref:{root:'current',body:'current',mainElement:'auto',subs:[],school:'tu_do',alignment:'auto'},iters:500};
+let buildState={busy:false,results:null,pref:{root:'current',body:'current',mainElement:'auto',subs:[],school:'tu_do',alignment:'auto',pathWeight:2,ratioTarget:0.5},iters:500};
 function buildOptions(a,v){return a.map(([k,n])=>`<option value="${k}" ${k===v?'selected':''}>${n}</option>`).join('')}
 function runtimeTraitOptions(kind){const nv=Runtime.character(),current=kind==='root'?(nv.linhCan??nv.linh_can??nv.canLinh):(nv.theChat??nv.the_chat??nv.theChatId),col=kind==='root'?(C.linhCan||C.linhCanList||C.linhCanDefinitions):(C.theChat||C.theChats||C.theChatDefinitions),out=[['current',current?`Hiện tại · ${T(col?.get?.(current)?.ten||current)}`:'Theo nhân vật hiện tại']];if(col instanceof Map)for(const[id,r]of col)if(id!==current)out.push([id,T(r?.ten||id)]);return out}
 function alignmentPaths(){return[['auto','Theo phái đã chọn'],['chinh','Chính phái'],['ta','Tà phái']]}
-function buildCard(mode,title,slot,r){if(!r)return'';const b=r.best,c=r.current,R=b.R||{},P=b.P||{},delta=(b.score||0)-(c.score||0),rules=b.rules||{},pieces=A(rules.pieces),gen=pieces.filter(x=>N(x.generation)&&x.generation>1).length,conflict=pieces.filter(x=>N(x.generation)&&x.generation<1).length;let grid='';try{grid=BuildEngine.drawGrid(BuildEngine.nvNow(),b.manh).replace('class="vk-img"','class="build-grid"')}catch{}return`<article class="build-card"><div class="name">${E(title)} · Bộ ${slot+1}</div><div class="tags"><span class="tag ${delta>0?'good':''}">${b.same?'Cách hiện tại đã tốt':'Tăng '+F(delta)+' điểm'}</span><span class="tag">${b.wins}/${b.n} trận</span><span class="tag ${rules.dead?'bad':'good'}">${rules.dead||0} đứt mạch</span><span class="tag">Sinh ${gen} · khắc ${conflict}</span>${rules.evilTotal?`<span class="tag ${rules.evilActive===rules.evilTotal?'good':'bad'}">Tà công vận hành ${rules.evilActive}/${rules.evilTotal}</span>`:''}</div><div class="build-stats"><span>Tu luyện<br><b>+${F((R.biDong?.toc_do||0)*100)}%</b></span><span>Đột phá<br><b>+${F((R.biDong?.dot_pha||0)*100)}%</b></span><span>Linh lực/lượt<br><b>${F(P.linhLucMoiLuot||0)}</b></span><span>Điểm nghịch<br><b>${R.diemNghich||0}</b></span><span>Thông mạch<br><b>${b.mq?.connected||0}/${b.manh.length}</b></span><span>Khí huyết<br><b>${F(P.khiHuyetToiDa||0)}</b></span></div>${grid}<details><summary>Kiểm toán mảnh theo lõi game</summary>${pieces.map(x=>`<div class="sub option-row"><span>${E(x.name)} · ${E(x.elements.map(h=>ELEMENT_NAMES[h]||h).join('/'))} · ${x.alignment==='ta'?'Tà':'Chính'}</span><strong class="${x.connected?'safe':'danger'}">${x.connected?'Thông':'Đứt'}</strong></div>`).join('')}</details><div class="build-actions"><button class="red apply-build" data-mode="${mode}" data-slot="${slot}">Tự xếp vào Bộ ${slot+1}</button></div></article>`}
-function renderBuild(){itemTools.style.display='none';head.style.display='none';const baseCount=Math.min(30,C.enemies.size),variantCount=baseCount*2,subOptions=BUILD_ELEMENTS.filter(([k])=>k!=='auto'&&!buildState.pref.subs.includes(k)&&k!==buildState.pref.mainElement);sum.textContent=`${variantCount} trận trọng điểm · Rt/Vr và rule Kinh mạch thật của game`;list.innerHTML=`<article class="build-card"><div class="name">Build & Kinh mạch</div><div class="sub">Lõi game quyết định ô hợp lệ, dòng linh khí, huyệt, hợp màu, tương sinh–tương khắc, Tà công, Kinh lộ, nội tại, điểm nghịch và trần chiêu. Tool chỉ tìm kiếm bố cục và không cộng lặp hệ số.</div><div class="build-controls"><label>Linh căn<select id="build-root">${buildOptions(runtimeTraitOptions('root'),buildState.pref.root)}</select></label><label>Thể chất<select id="build-body">${buildOptions(runtimeTraitOptions('body'),buildState.pref.body)}</select></label><label>Hệ chính<select id="build-main-element">${buildOptions(BUILD_ELEMENTS,buildState.pref.mainElement)}</select></label><label>Phái<select id="build-path">${buildOptions(BUILD_PATHS,buildState.pref.school)}</select></label><label>Chính / Tà<select id="build-alignment">${buildOptions(alignmentPaths(),buildState.pref.alignment)}</select></label><label>Mức tính<select id="build-it"><option value="250">Nhanh</option><option value="500" ${buildState.iters===500?'selected':''}>Cân bằng</option><option value="900" ${buildState.iters===900?'selected':''}>Tính kỹ</option></select></label></div><div class="name" style="margin-top:10px">Hệ phụ · tối đa 5</div><div class="tags" id="build-subs">${buildState.pref.subs.map((h,i)=>`<button class="ghost remove-sub" data-i="${i}">${E(ELEMENT_NAMES[h]||h)} ×</button>`).join('')||'<span class="sub">Chưa chọn hệ phụ.</span>'}</div><div class="build-actions"><select id="build-sub-add" ${buildState.pref.subs.length>=5?'disabled':''}><option value="">Chọn hệ phụ…</option>${subOptions.map(([k,n])=>`<option value="${k}">${n}</option>`).join('')}</select><button id="build-add-sub" ${buildState.pref.subs.length>=5?'disabled':''}>Thêm hệ phụ</button></div><div class="build-actions"><button class="red" id="build-go" ${buildState.busy?'disabled':''}>${buildState.busy?'Đang tính…':'Phân tích và sắp xếp 3 bộ'}</button><button id="build-stop" ${buildState.busy?'':'disabled'}>Dừng</button>${buildState.results?'<button id="build-all">Tự xếp cả 3 bộ</button>':''}</div><div class="build-progress"><i id="build-bar"></i></div><div class="sub" id="build-msg">${BuildEngine.core?'Lõi tính toán đã sẵn sàng.':'Lần đầu sẽ tải và nhận diện lõi game hiện hành.'}</div></article>${buildState.results?buildCard('danh','Chiến đấu',0,buildState.results.danh)+buildCard('tu','Tu luyện / Đột phá',1,buildState.results.tu)+buildCard('can','Cân bằng Đánh và Tu luyện',2,buildState.results.can):''}`;
-const readPref=()=>{buildState.pref={...buildState.pref,root:list.querySelector('#build-root').value,body:list.querySelector('#build-body').value,mainElement:list.querySelector('#build-main-element').value,school:list.querySelector('#build-path').value,alignment:list.querySelector('#build-alignment').value}};list.querySelector('#build-add-sub').onclick=()=>{readPref();const h=list.querySelector('#build-sub-add').value;if(h&&buildState.pref.subs.length<5&&!buildState.pref.subs.includes(h)&&h!==buildState.pref.mainElement)buildState.pref.subs.push(h);renderBuild()};list.querySelectorAll('.remove-sub').forEach(x=>x.onclick=()=>{buildState.pref.subs.splice(+x.dataset.i,1);renderBuild()});list.querySelector('#build-go').onclick=async()=>{readPref();buildState.iters=+list.querySelector('#build-it').value;buildState.busy=true;renderBuild();const msg=list.querySelector('#build-msg'),bar=list.querySelector('#build-bar');try{await BuildEngine.ensureCore(x=>{if(msg)msg.textContent=x});buildState.results=await BuildEngine.optimizeThree(buildState.pref,buildState.iters,(f,m,l)=>{if(bar)bar.style.width=Math.round(f*100)+'%';if(msg)msg.textContent=`${m==='danh'?'Chiến đấu':m==='tu'?'Tu luyện / Đột phá':'Cân bằng'} · ${l} · ${Math.round(f*100)}%`})}catch(e){console.error(e);alert('Lỗi Build: '+(e?.message||e))}finally{buildState.busy=false;renderBuild()}};list.querySelector('#build-stop').onclick=()=>BuildEngine.stop();list.querySelector('#build-all')?.addEventListener('click',()=>{const rs=BuildEngine.applyAll();alert(rs.map((x,i)=>`Bộ ${i+1}: ${x.msg}`).join('\n'));refresh()});list.querySelectorAll('.apply-build').forEach(x=>x.onclick=()=>{const r=BuildEngine.apply(x.dataset.mode,+x.dataset.slot);alert(r.msg);refresh()})}
+function buildCard(mode,title,slot,r){
+  if(!r)return'';
+  const b=r.best,c=r.current,R=b.R||{},P=b.P||{},delta=(b.score||0)-(c.score||0);
+  const rules=b.rules||{},pieces=A(rules.pieces);
+  const gen=pieces.filter(x=>N(x.generation)&&x.generation>1).length;
+  const conflict=pieces.filter(x=>N(x.generation)&&x.generation<1).length;
+  const path=b.path||{},share=b.share||{},audit=b.audit||{},roles=audit.roles||{};
+  let grid='';
+  try{grid=BuildEngine.drawGrid(BuildEngine.nvNow(),b.manh).replace('class="vk-img"','class="build-grid"')}catch{}
+  const pathTags=[];
+  if(path.school&&path.school!=='tu_do'){
+    pathTags.push(`Phái khớp ${path.match||0}/${path.thong||0}`);
+    for(const req of A(path.req))pathTags.push((req.ok?'✓ ':'✗ ')+req.txt);
+  }
+  if(share.tot){
+    const pct=Math.round((share.pct||0)*100);
+    pathTags.push(`Tâm ${share.tam||0} · Chiến ${share.chien||0} (${pct}% tâm)`);
+  }
+  const roleLine=[roles.tam!=null?`Tâm pháp ${roles.tam||0}`:null,roles.dau!=null?`Đấu pháp ${roles.dau||0}`:null,roles.phap!=null?`Pháp khí ${roles.phap||0}`:null,roles.bao!=null?`Bảo vật ${roles.bao||0}`:null].filter(Boolean).join(' · ');
+  const tagCls=t=>{
+    if(String(t).startsWith('✓'))return'good';
+    if(String(t).startsWith('✗'))return'bad';
+    return'';
+  };
+  return`<article class="build-card"><div class="name">${E(title)} · Bộ ${slot+1}</div><div class="tags"><span class="tag ${delta>0?'good':''}">${b.same?'Cách hiện tại đã tốt':'Tăng '+F(delta)+' điểm'}</span><span class="tag">${b.wins}/${b.n} trận</span><span class="tag ${(rules.dead||0)?'bad':'good'}">${rules.dead||0} đứt mạch</span><span class="tag">Sinh ${gen} · khắc ${conflict}</span>${rules.evilTotal?`<span class="tag ${rules.evilActive===rules.evilTotal?'good':'warn'}">Tà ${rules.evilActive}/${rules.evilTotal} thông</span>`:''}${pathTags.map(x=>`<span class="tag ${tagCls(x)}">${E(x)}</span>`).join('')}</div><div class="build-stats"><span>Tu luyện<br><b>+${F((R.biDong?.toc_do||0)*100)}%</b></span><span>Đột phá<br><b>+${F((R.biDong?.dot_pha||0)*100)}%</b></span><span>Linh lực/lượt<br><b>${F(P.linhLucMoiLuot||0)}</b></span><span>Điểm nghịch<br><b>${R.diemNghich||0}</b></span><span>Thông mạch<br><b>${b.mq?.connected||0}/${b.manh.length}</b></span><span>Khí huyết<br><b>${F(P.khiHuyetToiDa||0)}</b></span></div>${roleLine?`<div class="sub">Cơ cấu món: ${E(roleLine)}${N(path.taRatio)?` · Tỉ lệ tà ~${F(path.taRatio*100)}%`:''}</div>`:''}${grid}<div class="build-actions"><button class="red apply-build" data-mode="${E(mode)}" data-slot="${slot}">Áp dụng vào Bộ ${slot+1}</button></div><details><summary>Kiểm toán mảnh theo lõi game</summary>${pieces.map(x=>`<div class="sub option-row"><span>${E(x.name)} · ${E((x.elements||[]).map(e=>ELEMENT_NAMES[e]||e).join('/')||'')}${x.isEvil?' · tà':''}</span><span>${x.connected?'Thông':'Đứt'} · sinh-khắc ×${F(x.generation||1)} · huyệt ×${F(x.acupoint||1)}</span></div>`).join('')||'<div class="sub">Không có mảnh.</div>'}</details></article>`;
+}
+
+function renderBuild(){itemTools.style.display='none';head.style.display='none';const baseCount=Math.min(30,C.enemies.size),variantCount=baseCount*2,subOptions=BUILD_ELEMENTS.filter(([k])=>k!=='auto'&&!buildState.pref.subs.includes(k)&&k!==buildState.pref.mainElement);sum.textContent=`${variantCount} trận trọng điểm · Rt/Vr và rule Kinh mạch thật của game`;list.innerHTML=`<article class="build-card"><div class="name">Build & Kinh mạch</div><div class="sub">Dùng Rt/Vr/eJ của game. Ép phái (huuhoang): điều kiện bắt buộc + lọc túi khi ép mạnh. Tỉ lệ Tâm:Chiến (611, mặc định 5:5). 3 bộ · hệ phụ tối đa 5 · áp dụng bằng hàm game.</div><div class="build-controls"><label>Linh căn<select id="build-root">${buildOptions(runtimeTraitOptions('root'),buildState.pref.root)}</select></label><label>Thể chất<select id="build-body">${buildOptions(runtimeTraitOptions('body'),buildState.pref.body)}</select></label><label>Hệ chính<select id="build-main-element">${buildOptions(BUILD_ELEMENTS,buildState.pref.mainElement)}</select></label><label>Phái<select id="build-path">${buildOptions(BUILD_PATHS,buildState.pref.school)}</select></label><label>Chính / Tà<select id="build-alignment">${buildOptions(alignmentPaths(),buildState.pref.alignment)}</select></label><label>Ép phái<select id="build-path-w"><option value="0" ${Number(buildState.pref.pathWeight)===0?'selected':''}>Không ép</option><option value="1" ${Number(buildState.pref.pathWeight)===1?'selected':''}>Ưu tiên</option><option value="2" ${Number(buildState.pref.pathWeight)===2?'selected':''}>Ép mạnh</option><option value="3" ${Number(buildState.pref.pathWeight)===3?'selected':''}>Ép + lọc túi</option></select></label><label>Tâm : Chiến<select id="build-ratio"><option value="0.5" ${Number(buildState.pref.ratioTarget)===0.5?'selected':''}>5 : 5</option><option value="0.6" ${Number(buildState.pref.ratioTarget)===0.6?'selected':''}>6 : 4</option><option value="0.4" ${Number(buildState.pref.ratioTarget)===0.4?'selected':''}>4 : 6</option><option value="" ${buildState.pref.ratioTarget===''||buildState.pref.ratioTarget==null?'selected':''}>Không ép</option></select></label><label>Mức tính<select id="build-it"><option value="250">Nhanh</option><option value="500" ${buildState.iters===500?'selected':''}>Cân bằng</option><option value="900" ${buildState.iters===900?'selected':''}>Tính kỹ</option></select></label></div><div class="name" style="margin-top:10px">Hệ phụ · tối đa 5</div><div class="tags" id="build-subs">${buildState.pref.subs.map((h,i)=>`<button class="ghost remove-sub" data-i="${i}">${E(ELEMENT_NAMES[h]||h)} ×</button>`).join('')||'<span class="sub">Chưa chọn hệ phụ.</span>'}</div><div class="build-actions"><select id="build-sub-add" ${buildState.pref.subs.length>=5?'disabled':''}><option value="">Chọn hệ phụ…</option>${subOptions.map(([k,n])=>`<option value="${k}">${n}</option>`).join('')}</select><button id="build-add-sub" ${buildState.pref.subs.length>=5?'disabled':''}>Thêm hệ phụ</button></div><div class="build-actions"><button class="red" id="build-go" ${buildState.busy?'disabled':''}>${buildState.busy?'Đang tính…':'Phân tích và sắp xếp 3 bộ'}</button><button id="build-stop" ${buildState.busy?'':'disabled'}>Dừng</button>${buildState.results?'<button id="build-all">Tự xếp cả 3 bộ</button>':''}</div><div class="build-progress"><i id="build-bar"></i></div><div class="sub" id="build-msg">${BuildEngine.core?'Lõi tính toán đã sẵn sàng.':'Lần đầu sẽ tải và nhận diện lõi game hiện hành.'}</div></article>${buildState.results?buildCard('danh','Chiến đấu',0,buildState.results.danh)+buildCard('tu','Tu luyện / Đột phá',1,buildState.results.tu)+buildCard('can','Cân bằng Đánh và Tu luyện',2,buildState.results.can):''}`;
+const readPref=()=>{const rv=list.querySelector('#build-ratio').value;buildState.pref={...buildState.pref,root:list.querySelector('#build-root').value,body:list.querySelector('#build-body').value,mainElement:list.querySelector('#build-main-element').value,school:list.querySelector('#build-path').value,alignment:list.querySelector('#build-alignment').value,pathWeight:+list.querySelector('#build-path-w').value,ratioTarget:rv===''?null:+rv}};list.querySelector('#build-add-sub').onclick=()=>{readPref();const h=list.querySelector('#build-sub-add').value;if(h&&buildState.pref.subs.length<5&&!buildState.pref.subs.includes(h)&&h!==buildState.pref.mainElement)buildState.pref.subs.push(h);renderBuild()};list.querySelectorAll('.remove-sub').forEach(x=>x.onclick=()=>{buildState.pref.subs.splice(+x.dataset.i,1);renderBuild()});list.querySelector('#build-go').onclick=async()=>{readPref();buildState.iters=+list.querySelector('#build-it').value;buildState.busy=true;renderBuild();const msg=list.querySelector('#build-msg'),bar=list.querySelector('#build-bar');try{await BuildEngine.ensureCore(x=>{if(msg)msg.textContent=x});buildState.results=await BuildEngine.optimizeThree(buildState.pref,buildState.iters,(f,m,l)=>{if(bar)bar.style.width=Math.round(f*100)+'%';if(msg)msg.textContent=`${m==='danh'?'Chiến đấu':m==='tu'?'Tu luyện / Đột phá':'Cân bằng'} · ${l} · ${Math.round(f*100)}%`})}catch(e){console.error(e);alert('Lỗi Build: '+(e?.message||e))}finally{buildState.busy=false;renderBuild()}};list.querySelector('#build-stop').onclick=()=>BuildEngine.stop();list.querySelector('#build-all')?.addEventListener('click',()=>{const rs=BuildEngine.applyAll();alert(rs.map((x,i)=>`Bộ ${i+1}: ${x.msg}`).join('\n'));refresh()});list.querySelectorAll('.apply-build').forEach(x=>x.onclick=()=>{const r=BuildEngine.apply(x.dataset.mode,+x.dataset.slot);alert(r.msg);refresh()})}
 function renderPeople(){renderPeopleBase();const relations=[...new Set(people.map(x=>x.relation).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'vi'));list.insertAdjacentHTML('afterbegin',`<article class="section-card"><div class="control-grid"><label>Tìm kiếm<input id="people-search" value="${E(peopleQuery)}" placeholder="Tên, quan hệ, vị trí, sở thích"></label><label>Trạng thái<select id="people-life"><option value="all">Tất cả</option><option value="Còn sống" ${peopleLife==='Còn sống'?'selected':''}>Còn sống</option><option value="Đã khuất" ${peopleLife==='Đã khuất'?'selected':''}>Đã khuất</option></select></label><label>Giới tính<select id="people-gender"><option value="all">Tất cả</option><option value="Nam" ${peopleGender==='Nam'?'selected':''}>Nam</option><option value="Nữ" ${peopleGender==='Nữ'?'selected':''}>Nữ</option><option value="Chưa rõ" ${peopleGender==='Chưa rõ'?'selected':''}>Chưa rõ</option></select></label><label>Vị trí<select id="people-where"><option value="all">Tất cả</option><option value="near" ${peopleWhere==='near'?'selected':''}>Có thể tương tác ngay</option><option value="runtime" ${peopleWhere==='runtime'?'selected':''}>Đang xuất hiện</option><option value="known" ${peopleWhere==='known'?'selected':''}>Có vị trí</option><option value="unknown" ${peopleWhere==='unknown'?'selected':''}>Chưa rõ tung tích</option></select></label><label>Quan hệ<select id="people-relation"><option value="all">Tất cả</option>${relations.map(x=>`<option value="${E(x)}" ${peopleRelation===x?'selected':''}>${E(x)}</option>`).join('')}</select></label></div><button class="ghost" id="people-reset">Xóa bộ lọc</button></article>`);const apply=()=>{const q=norm(peopleQuery);let shown=0;list.querySelectorAll('article[data-person]').forEach(el=>{const r=people.find(x=>x.key===el.dataset.person),ok=r&&(!q||norm([r.name,r.relation,r.gender,r.location.note,r.giftLikeName,r.giftLike].join(' ')).includes(q))&&(peopleLife==='all'||r.lifeState===peopleLife)&&(peopleGender==='all'||r.gender===peopleGender)&&(peopleWhere==='all'||peopleWhere==='near'&&r.interactions.includes('Có thể gặp mặt')||peopleWhere==='runtime'&&r.location.source==='node'||peopleWhere==='known'&&!!r.slot||peopleWhere==='unknown'&&!r.slot)&&(peopleRelation==='all'||r.relation===peopleRelation);el.style.display=ok?'':'none';if(ok)shown++});sum.textContent=`${shown}/${people.length} nhân mạch · ưu tiên có thể tương tác, sau đó gần đến xa`};apply();const search=list.querySelector('#people-search');search.oninput=()=>{peopleQuery=search.value;apply()};for(const [id,set]of[['#people-life',v=>peopleLife=v],['#people-gender',v=>peopleGender=v],['#people-where',v=>peopleWhere=v],['#people-relation',v=>peopleRelation=v]])list.querySelector(id).onchange=e=>{set(e.target.value);apply()};list.querySelector('#people-reset').onclick=()=>{peopleQuery='';peopleLife=peopleGender=peopleWhere=peopleRelation='all';renderPeople()}}
-function renderSect(){renderSectBase();const directory=sectDirectoryRecords(),tiers=[...new Set(directory.map(x=>x.tier))].sort((a,b)=>a.localeCompare(b,'vi'));const title=[...list.querySelectorAll('.section-title')].find(x=>x.textContent.includes('Danh bạ tông môn'));title?.insertAdjacentHTML('beforebegin',`<article class="section-card"><div class="control-grid"><label>Tìm kiếm<input id="sect-search" value="${E(sectQuery)}" placeholder="Tên tông môn, tầng, phái"></label><label>Trạng thái<select id="sect-state"><option value="active" ${sectState==='active'?'selected':''}>Đang tồn tại</option><option value="all" ${sectState==='all'?'selected':''}>Tất cả</option><option value="joined" ${sectState==='joined'?'selected':''}>Tông môn hiện tại</option><option value="destroyed" ${sectState==='destroyed'?'selected':''}>Đã bị tiêu diệt</option></select></label><label>Quy mô<select id="sect-tier"><option value="all">Tất cả</option>${tiers.map(x=>`<option value="${E(x)}" ${sectTier===x?'selected':''}>${E(x)}</option>`).join('')}</select></label></div><button class="ghost" id="sect-reset">Xóa bộ lọc</button></article>`);const apply=()=>{const q=norm(sectQuery);let shown=0;list.querySelectorAll('article[data-sect-slot]').forEach(el=>{const r=directory.find(x=>x.slot===el.dataset.sectSlot),ok=r&&(!q||norm([r.name,r.tier,r.school].join(' ')).includes(q))&&(sectState==='all'||sectState==='active'&&!r.destroyed||sectState==='destroyed'&&r.destroyed||sectState==='joined'&&r.joined)&&(sectTier==='all'||r.tier===sectTier);el.style.display=ok?'':'none';if(ok)shown++});sum.textContent=`${shown}/${directory.length} tông môn · gần đến xa`};apply();const search=list.querySelector('#sect-search');search.oninput=()=>{sectQuery=search.value;apply()};list.querySelector('#sect-state').onchange=e=>{sectState=e.target.value;apply()};list.querySelector('#sect-tier').onchange=e=>{sectTier=e.target.value;apply()};list.querySelector('#sect-reset').onclick=()=>{sectQuery='';sectState='active';sectTier='all';renderSect()}}
-function treasureRecords(){
-  const now=Number(Runtime.run()?.nam)||0,out=[];
-  for(const [eventId,guide] of TREASURE_GUIDE){
-    const enc=C.encounters?.get?.(eventId)||null,item=guide?.relic?C.items?.get?.(guide.relic):null,inventory=guide?.relic?inventoryState(guide.relic):null;
-    const nodes=activeEncounterSlots(eventId).filter(x=>x.expires===null||x.expires>now).filter(x=>W.hasSlot(x.slot));
-    if(nodes.length){
-      for(const x of nodes){const travel=+g.travelYears(x.slot),distance=+g.distanceLi(x.slot),remaining=x.expires===null?null:x.expires-now;out.push({key:`runtime|${eventId}|${x.slot}`,group:'runtime',eventId,itemId:guide.relic,itemName:T(item?.ten||guide.relic||guide.ten),eventName:T(enc?.ten||guide.ten||eventId),owned:Boolean(inventory?.owned),inventory,slot:x.slot,travel,distance,remaining,expires:x.expires,guide,enc,confidence:'runtime',routeTask:{type:'encounter',slot:x.slot,encounter:eventId}})}
-    }else{
-      const slot=guide?.diaDanh&&W.hasSlot(guide.diaDanh)?guide.diaDanh:null,travel=slot?+g.travelYears(slot):null,distance=slot?+g.distanceLi(slot):null,availability=encounterAvailability(enc||eventId);
-      out.push({key:`catalog|${eventId}`,group:inventory?.owned?'owned':'possible',eventId,itemId:guide.relic,itemName:T(item?.ten||guide.relic||guide.ten),eventName:T(enc?.ten||guide.ten||eventId),owned:Boolean(inventory?.owned),inventory,slot,travel,distance,remaining:null,expires:null,guide,enc,availability,confidence:enc?'content':'guide'})
+function renderSect(){renderSectBase();const directory=sectDirectoryRecords(),tiers=[...new Set(directory.map(x=>x.tier))].sort((a,b)=>a.localeCompare(b,'vi'));const title=[...list.querySelectorAll('.section-title')].find(x=>x.textContent.includes('Danh bạ tông môn'));title?.insertAdjacentHTML('beforebegin',`<article class="section-card"><div class="control-grid"><label>Tìm kiếm<input id="sect-search" value="${E(sectQuery)}" placeholder="Tên tông môn, tầng, phái"></label><label>Trạng thái<select id="sect-state"><option value="active" ${sectState==='active'?'selected':''}>Đang tồn tại</option><option value="all" ${sectState==='all'?'selected':''}>Tất cả</option><option value="joined" ${sectState==='joined'?'selected':''}>Tông môn hiện tại</option><option value="destroyed" ${sectState==='destroyed'?'selected':''}>Đã bị tiêu diệt</option></select></label><label>Quy mô<select id="sect-tier"><option value="all">Tất cả</option>${tiers.map(x=>`<option value="${E(x)}" ${sectTier===x?'selected':''}>${E(x)}</option>`).join('')}</select></label></div><button class="ghost" id="sect-reset">Xóa bộ lọc</button></article>`);const apply=()=>{const q=norm(sectQuery);let shown=0;list.querySelectorAll('article[data-sect-slot]').forEach(el=>{const r=directory.find(x=>x.slot===el.dataset.sectSlot),ok=r&&(!q||norm([r.name,r.tier,r.school,r.alignment,r.country].join(' ')).includes(q))&&(sectState==='all'||sectState==='active'&&!r.destroyed||sectState==='destroyed'&&r.destroyed||sectState==='joined'&&r.joined)&&(sectTier==='all'||r.tier===sectTier);el.style.display=ok?'':'none';if(ok)shown++});sum.textContent=`${shown}/${directory.length} tông môn · gần đến xa`};apply();const search=list.querySelector('#sect-search');search.oninput=()=>{sectQuery=search.value;apply()};list.querySelector('#sect-state').onchange=e=>{sectState=e.target.value;apply()};list.querySelector('#sect-tier').onchange=e=>{sectTier=e.target.value;apply()};list.querySelector('#sect-reset').onclick=()=>{sectQuery='';sectState='active';sectTier='all';renderSect()}}
+function treasureRecords(){return TickCache.get("treasureRecords",__raw_treasureRecords)}
+function treasureResolveSlot(guide){
+  if(guide?.diaDanh&&W.hasSlot(guide.diaDanh))return guide.diaDanh;
+  const ten=guide?.dia?.ten||null;
+  if(ten){
+    const hit=nearestSlot(info=>info?.ten===ten||info?.diaDanh?.ten===ten);
+    if(hit)return hit;
+  }
+  if(guide?.tocYeu){
+    const hit=nearestSlot(info=>info?.tocYeu===guide.tocYeu);
+    if(hit)return hit;
+  }
+  const x=guide?.dia?.x,y=guide?.dia?.y;
+  if(N(x)&&N(y)){
+    let best=null,bd=Infinity;
+    for(const sl of W.slots||[]){
+      if(sl.an||!W.hasSlot(sl.id))continue;
+      const d=Math.hypot((sl.x||0)-x,(sl.y||0)-y);
+      if(d<bd){bd=d;best=sl.id}
     }
+    if(best&&bd<80)return best;
   }
+  return null;
+}
+function treasureScanSave(run=Runtime.run(),meta=g.state?.meta){
+  /* Quét flag di_bao_xong_*, relics[], history.namCuoi — cùng hướng với tab Dị Bảo của bản 611 */
+  const flags=new Set(),relics=new Set(),history=new Map();
+  const visit=(o,d)=>{
+    if(!o||typeof o!=='object'||d>8)return;
+    if(Array.isArray(o)){if(o.length<8000)for(const x of o)visit(x,d+1);return}
+    for(const[k,v]of Object.entries(o)){
+      if(typeof k==='string'&&k.startsWith('di_bao_xong_'))flags.add(k.slice('di_bao_xong_'.length));
+      if(Array.isArray(v)&&(k==='relics'||k==='newRelics')){
+        for(const r of v)if(typeof r==='string'&&r.startsWith('item.'))relics.add(r);
+      }else if(v&&typeof v==='object'&&!Array.isArray(v)&&N(v.namCuoi)){
+        history.set(k,v);
+      }
+    }
+    for(const v of Object.values(o))visit(v,d+1);
+  };
+  try{visit(run,0)}catch{}
+  try{if(meta)visit(meta,0)}catch{}
+  return{flags,relics,history};
+}
+function treasureOwned(itemId,scan,inventory){
+  if(!itemId)return false;
+  if(inventory?.owned)return true;
+  if(scan?.relics?.has(itemId))return true;
+  const short=itemId.replace(/^item\./,'');
+  if(scan?.flags?.has(short)||scan?.flags?.has(itemId))return true;
+  return false;
+}
+const TREASURE_STAT_VI={than_thuc:'Thần thức',ngo_tinh:'Ngộ tính',dao_tam:'Đạo tâm',khi_van:'Khí vận',can_cot:'Căn cốt',than_phap:'Thân pháp'};
+function treasureCheckLabel(chk){
+  if(!chk)return null;
+  return String(chk).replace(/^[a-z_]+/,m=>TREASURE_STAT_VI[m]||m);
+}
+function treasureItemMeta(itemId){
+  const it=itemId?C.items?.get?.(itemId):null;if(!it)return null;
+  const loai=TYPE_NAMES[it.loai]||it.loai||null;
+  const pham=GRADE_NAMES[it.pham_cap||it.phamCap]||null;
+  const gia=N(it.gia)?+it.gia:null;
+  const bd=it.theo_kiep||it.theoKiep?'Có':(it.bi_dong||it.biDong)?'Bị động':null;
+  return{ten:it.ten,loai,pham,gia,bd,he:A(it.he)};
+}
+function __raw_treasureRecords(){
+  const now=Number(Runtime.run()?.nam)||0,run=Runtime.run()||{},nv=Runtime.character()||{};
+  const scan=treasureScanSave(run,g.state?.meta);
+  const selfRealm=Number(nv.canhGioi??nv.canh_gioi??0);
+  const out=[];
+
+  for(const[eventId,guide]of TREASURE_GUIDE){
+    const enc=C.encounters?.get?.(eventId)||null;
+    const itemId=guide?.relic||null;
+    const inventory=itemId?inventoryState(itemId):null;
+    const owned=treasureOwned(itemId,scan,inventory);
+    const randomLoot=!itemId;
+    const meta=treasureItemMeta(itemId);
+    const gate=guide?.gate||null;
+    const gateOk=!gate||!N(gate[0])||selfRealm>=Number(gate[0]);
+    const hc=N(guide?.hoiChieu)?Number(guide.hoiChieu):null;
+    const hist=scan.history.get(eventId)||scan.history.get(String(eventId))||null;
+    let cdLeft=null;
+    if(hist&&hc!=null&&N(hist.namCuoi)&&now<Number(hist.namCuoi)+hc){
+      cdLeft=Number(hist.namCuoi)+hc-now;
+    }
+
+    const nodes=activeEncounterSlots(eventId)
+      .filter(x=>W.hasSlot(x.slot))
+      .filter(x=>{
+        const node=run.nodes?.[x.slot];
+        if(node?.viec)return false;
+        if(x.expires!==null&&x.expires<=now)return false;
+        return true;
+      });
+
+    const base={
+      eventId,itemId,itemName:T(meta?.ten||guide?.ten||eventId),
+      eventName:T(enc?.ten||guide?.ten||eventId),
+      owned,inventory,guide,enc,randomLoot,meta,gate,gateOk,cdLeft,
+      checkLabel:treasureCheckLabel(guide?.check),
+      chance:N(guide?.chance)?Number(guide.chance):null,
+      hoiChieu:hc,baoVe:guide?.baoVe||null,noi:guide?.noi||null
+    };
+
+    if(owned&&!nodes.length){
+      out.push({...base,key:`owned|${eventId}`,group:'owned',slot:null,travel:null,distance:null,remaining:null,expires:null,canArrive:null,state:'owned',confidence:enc?'content':'guide',placeName:null,routeTask:null});
+      continue;
+    }
+    if(nodes.length){
+      for(const x of nodes){
+        const travel=+g.travelYears(x.slot),distance=+g.distanceLi(x.slot);
+        const remaining=x.expires===null?null:x.expires-now;
+        const canArrive=remaining===null||!N(travel)?true:travel<=remaining;
+        out.push({...base,key:`runtime|${eventId}|${x.slot}`,group:'runtime',slot:x.slot,travel,distance,remaining,expires:x.expires,canArrive,state:canArrive?'feasible':'unreachable',confidence:'runtime',placeName:safePlaceName(x.slot),routeTask:{type:'encounter',slot:x.slot,encounter:eventId}});
+      }
+      continue;
+    }
+    if(cdLeft!=null){
+      const slot=treasureResolveSlot(guide);
+      out.push({...base,key:`cd|${eventId}`,group:'cooldown',slot,travel:slot?+g.travelYears(slot):null,distance:slot?+g.distanceLi(slot):null,remaining:cdLeft,expires:null,canArrive:null,state:'cooldown',confidence:enc?'content':'guide',placeName:slot?safePlaceName(slot):(guide?.dia?.ten||null),routeTask:null});
+      continue;
+    }
+    if(!gateOk){
+      const slot=treasureResolveSlot(guide);
+      out.push({...base,key:`lock|${eventId}`,group:'locked',slot,travel:slot?+g.travelYears(slot):null,distance:slot?+g.distanceLi(slot):null,remaining:null,expires:null,canArrive:null,state:'locked',confidence:enc?'content':'guide',placeName:slot?safePlaceName(slot):(guide?.dia?.ten||null),routeTask:null});
+      continue;
+    }
+    const slot=treasureResolveSlot(guide);
+    const travel=slot?+g.travelYears(slot):null,distance=slot?+g.distanceLi(slot):null;
+    out.push({...base,key:`catalog|${eventId}`,group:randomLoot?'random':'possible',slot,travel,distance,remaining:null,expires:null,canArrive:null,state:'catalog',confidence:enc?'content':'guide',placeName:slot?safePlaceName(slot):(guide?.dia?.ten||null),routeTask:slot?{type:'encounter',slot,encounter:eventId}:null});
+  }
+
   for(const state of specialTreasureStates()){
-    const item=C.items?.get?.(state.itemId),special=SPECIAL_TREASURES.get(state.itemId);out.push({key:`special|${state.itemId}`,group:state.state==='owned'?'owned':'hint',eventId:null,itemId:state.itemId,itemName:T(item?.ten||state.itemId),eventName:T(special?.hint||'Nguồn nhận đặc biệt'),owned:state.state==='owned',inventory:state.inventory,slot:null,travel:null,distance:null,remaining:null,guide:special,confidence:state.confidence,sources:state.sources})
+    const item=C.items?.get?.(state.itemId),special=SPECIAL_TREASURES.get(state.itemId);
+    const inv=state.inventory,owned=treasureOwned(state.itemId,scan,inv);
+    out.push({key:`special|${state.itemId}`,group:owned?'owned':'hint',eventId:null,itemId:state.itemId,itemName:T(item?.ten||state.itemId),eventName:T(special?.hint||'Nguồn nhận đặc biệt'),owned,inventory:inv,slot:null,travel:null,distance:null,remaining:null,expires:null,canArrive:null,state:owned?'owned':'hint',guide:special,confidence:state.confidence,randomLoot:false,sources:state.sources,placeName:null,routeTask:null,meta:treasureItemMeta(state.itemId),gate:null,gateOk:true,cdLeft:null,checkLabel:null,chance:null,hoiChieu:null,baoVe:null,noi:null});
   }
-  const rank={runtime:0,possible:1,hint:2,owned:3};return out.sort((a,b)=>(rank[a.group]??9)-(rank[b.group]??9)||(a.travel??Infinity)-(b.travel??Infinity)||(a.remaining??Infinity)-(b.remaining??Infinity)||a.itemName.localeCompare(b.itemName,'vi'))
+
+  const rank={runtime:0,possible:1,random:2,cooldown:3,locked:4,hint:5,owned:6};
+  return out.sort((a,b)=>{
+    const ra=rank[a.group]??9,rb=rank[b.group]??9;if(ra!==rb)return ra-rb;
+    if(a.group==='runtime'){
+      const ua=a.state==='unreachable'?1:0,ub=b.state==='unreachable'?1:0;if(ua!==ub)return ua-ub;
+      const ta=N(a.travel)?+a.travel:Infinity,tb=N(b.travel)?+b.travel:Infinity;if(ta!==tb)return ta-tb;
+      const da=N(a.distance)?+a.distance:Infinity,db=N(b.distance)?+b.distance:Infinity;if(da!==db)return da-db;
+      const ma=a.remaining==null?Infinity:+a.remaining,mb=b.remaining==null?Infinity:+b.remaining;if(ma!==mb)return ma-mb;
+    }else if(a.group==='cooldown'){
+      return (a.remaining??Infinity)-(b.remaining??Infinity);
+    }else{
+      const ta=N(a.travel)?+a.travel:Infinity,tb=N(b.travel)?+b.travel:Infinity;if(ta!==tb)return ta-tb;
+    }
+    return String(a.itemName||'').localeCompare(String(b.itemName||''),'vi');
+  });
 }
-function treasureStateLabel(r){if(r.group==='runtime')return r.owned?'Đang xuất hiện · đã sở hữu':'Đang xuất hiện';if(r.group==='owned')return'Đã sở hữu';if(r.group==='possible')return'Chưa xuất hiện';if(r.group==='hint')return'Nguồn gợi ý';return'Chưa xác định'}
+function treasureStateLabel(r){
+  if(r.group==='runtime')return r.owned?'Đang xuất hiện · đã sở hữu':'Đang xuất hiện';
+  if(r.group==='owned')return'Đã nhận';
+  if(r.group==='possible')return'Đủ điều kiện · chưa xuất hiện';
+  if(r.group==='random')return'Loot ngẫu nhiên';
+  if(r.group==='cooldown')return'Chờ hồi chiêu';
+  if(r.group==='locked')return'Chưa đủ cảnh giới';
+  if(r.group==='hint')return'Nguồn gợi ý';
+  return'Chưa xác định';
+}
 function renderTreasures(){
-  const records=treasureRecords(),runtime=records.filter(x=>x.group==='runtime').length,owned=records.filter(x=>x.owned).length;
-  sum.textContent=`${records.length} dị bảo · ${runtime} encounter đang xuất hiện · ${owned} đã sở hữu · runtime trước, sau đó vị trí có thể xuất hiện và nguồn khác`;
-  list.innerHTML=records.map(r=>{const tags=[treasureStateLabel(r)];if(r.confidence==='runtime')tags.push('Runtime xác nhận');else if(r.confidence==='content')tags.push('Content xác nhận');else if(r.confidence==='guide')tags.push('Registry hướng dẫn');else if(r.confidence==='item-source-hint-only')tags.push('Chỉ là gợi ý');if(N(r.remaining))tags.push(`Còn ${fmtDuration(r.remaining)}`);if(r.guide?.chance)tags.push(`Tỉ lệ ${F(r.guide.chance*100)}%`);if(r.guide?.hoiChieu)tags.push(`Hồi chiêu ${F(r.guide.hoiChieu)} năm`);const requirements=[];if(r.guide?.gate)requirements.push(`Cảnh giới ${r.guide.gate.join('–')}`);if(r.guide?.check)requirements.push(r.guide.check);if(r.guide?.baoVe)requirements.push(`Bảo vệ: ${r.guide.baoVe.ten} · cảnh giới ${r.guide.baoVe.cg}`);const place=r.slot?safePlaceName(r.slot):r.guide?.dia?.ten||r.guide?.diaDanh||'Chưa xác định';return`<article data-treasure="${E(r.key)}" data-slot="${E(r.slot||'')}"><div><div class="name">${E(r.itemName)}</div><div class="sub">${E(r.eventName)} · ${E(place)}</div><div class="tags">${tags.map(x=>`<span class="tag ${x==='Đang xuất hiện'?'good':x==='Chưa xuất hiện'?'warn':''}">${E(x)}</span>`).join('')}</div>${requirements.length?`<div class="sub">Yêu cầu: ${E(requirements.join(' · '))}</div>`:''}${r.group==='possible'?'<div class="risk">Chưa có node trong runtime. Đây là địa điểm có thể xuất hiện theo content/registry, không phải Dị bảo đang hiện hữu.</div>':''}${r.group==='hint'?`<div class="risk">${E(r.guide?.evidence||'Source hiện tại chưa có liên kết runtime trực tiếp.')}</div>`:''}</div><div class="travel">${N(r.travel)?`<strong>${fmtDuration(r.travel)}</strong><span>${fmtDistance(r.distance)}</span>`:'<strong>—</strong><span>không có node</span>'}</div><div>${r.group==='runtime'?`<button class="red treasure-focus-act">Xem trên bản đồ</button><button class="ghost treasure-route-act">Đường an toàn</button>`:r.slot?'<button class="ghost treasure-location-act">Xem địa điểm có thể xuất hiện</button>':''}</div></article>`}).join('')||'<p>Không tìm thấy dữ liệu Dị bảo trong content hiện tại.</p>'
+  const records=treasureRecords();
+  const runtime=records.filter(x=>x.group==='runtime');
+  const ownedN=records.filter(x=>x.owned).length;
+  const totalUnique=new Set(records.map(x=>x.itemId||x.eventId).filter(Boolean)).size;
+  const feasible=runtime.filter(x=>x.state!=='unreachable').length;
+  sum.textContent=`Đã nhận ${ownedN}/${totalUnique} · ${runtime.length} đang trên bản đồ (${feasible} đến kịp) · gần → xa · ẩn hết hạn · có hồi chiêu & khóa cảnh giới`;
+  list.innerHTML=records.map(r=>{
+    const tags=[treasureStateLabel(r)];
+    if(r.confidence==='runtime')tags.push('Runtime');
+    else if(r.confidence==='content')tags.push('Content');
+    else if(r.confidence==='guide')tags.push('Registry');
+    if(r.randomLoot)tags.push('Không bảo vật cố định');
+    if(r.meta?.loai)tags.push(r.meta.loai);
+    if(r.meta?.pham)tags.push(r.meta.pham);
+    if(N(r.remaining)&&r.group==='runtime'){
+      if(r.state==='unreachable')tags.push('Không đến kịp');
+      else if(r.remaining<0.25)tags.push('Sắp hết · còn '+fmtDuration(r.remaining));
+      else tags.push('Còn '+fmtDuration(r.remaining));
+    }
+    if(r.group==='cooldown'&&N(r.remaining))tags.push('Còn '+fmtDuration(r.remaining));
+    if(N(r.chance))tags.push('Tỉ lệ '+F(r.chance*100)+'%');
+    if(N(r.hoiChieu))tags.push('Hồi chiêu '+F(r.hoiChieu)+' năm');
+    if(r.gate)tags.push('Cần CG '+r.gate.join('–'));
+    const req=[];
+    if(r.checkLabel)req.push('Kiểm định: '+r.checkLabel);
+    if(r.baoVe)req.push('Canh giữ: '+r.baoVe.ten+(N(r.baoVe.cg)?' · CG '+r.baoVe.cg:''));
+    if(N(r.meta?.gia))req.push('Giá ~'+F(r.meta.gia));
+    if(r.meta?.bd)req.push('Theo hồn/bị động: '+r.meta.bd);
+    const place=r.placeName||(r.slot?safePlaceName(r.slot):null)||r.guide?.dia?.ten||null;
+    const sub=[r.eventName,place,r.noi?('Địa hình: '+r.noi):null].filter(Boolean).join(' · ');
+    const extra=[];
+    if(N(r.remaining)&&N(r.travel)&&r.canArrive&&r.group==='runtime')extra.push('Đến nơi còn khoảng '+fmtDuration(r.remaining-r.travel));
+    if(r.inventory?.locations?.length)extra.push('Đang giữ: '+r.inventory.locations.map(x=>x.label).join(', '));
+    const tagCls=t=>{
+      if(t==='Đang xuất hiện'||t.startsWith('Đang xuất hiện')||t.startsWith('Đủ điều kiện'))return'good';
+      if(t==='Đã nhận')return'good';
+      if(t==='Không đến kịp'||t.startsWith('Sắp hết')||t==='Chờ hồi chiêu'||t==='Chưa đủ cảnh giới')return'bad';
+      if(t==='Loot ngẫu nhiên')return'warn';
+      return'';
+    };
+    let actions='';
+    if(r.group==='runtime'&&r.slot){
+      actions=`<button class="red treasure-focus-act">Xem đích + đường</button><button class="ghost treasure-route-act">Đường từ vị trí đứng</button>`;
+    }else if(r.slot&&(r.group==='possible'||r.group==='random'||r.group==='locked'||r.group==='cooldown')){
+      actions=`<button class="ghost treasure-location-act">Xem vị trí</button>`;
+    }
+    const note=r.group==='possible'?'<div class="risk">Chưa có node runtime. Đủ điều kiện theo registry nhưng game chưa gieo sự kiện trên bản đồ.</div>'
+      :r.group==='random'?'<div class="risk">Sự kiện loot ngẫu nhiên — không gắn một bảo vật cố định (theo ghi chú content/611).</div>'
+      :r.group==='cooldown'?`<div class="risk">Đã gặp gần đây. Hồi chiêu còn ${fmtDuration(r.remaining)}.</div>`
+      :r.group==='locked'?`<div class="risk">Cảnh giới hiện tại chưa đạt mốc ${r.gate?r.gate[0]:'?'}. </div>`
+      :r.group==='hint'?`<div class="risk">${E(r.guide?.hint||r.guide?.evidence||'Chỉ rơi từ boss / nguồn đặc biệt — không có encounter cố định.')}</div>`
+      :r.state==='unreachable'?`<div class="risk">Thời gian đi (${fmtDuration(r.travel)}) dài hơn hạn còn lại (${fmtDuration(r.remaining)}).</div>`
+      :'';
+    return`<article data-treasure="${E(r.key)}" data-slot="${E(r.slot||'')}"><div><div class="name">${E(r.itemName)}</div><div class="sub">${E(sub)}</div><div class="tags">${tags.map(x=>`<span class="tag ${tagCls(x)}">${E(x)}</span>`).join('')}</div>${req.length?`<div class="sub">${E(req.join(' · '))}</div>`:''}${extra.length?`<div class="sub">${E(extra.join(' · '))}</div>`:''}${note}</div><div class="travel">${N(r.travel)?`<strong>${fmtDuration(r.travel)}</strong><span>${fmtDistance(r.distance)}</span>`:'<strong>—</strong><span>không có node</span>'}</div><div>${actions}</div></article>`;
+  }).join('')||'<p>Không tìm thấy dữ liệu Dị bảo.</p>';
 }
+
 function render(){const itemMode=tab==='items';itemTools.style.display=itemMode?'flex':'none';head.style.display=itemMode?'none':'';if(itemMode)return renderItems();if(tab==='build')return renderBuild();if(tab==='breakthrough')return void renderBreakthrough();if(tab==='bounties')return renderBounties();if(tab==='maptasks')return renderMapTasks();if(tab==='treasure')return renderTreasures();if(tab==='people')return renderPeople();if(tab==='sect')return renderSect();const run=g.state.run,seen=A(run.daKhamPha);const a=rows.filter(r=>r.groups.has(tab)).sort(sorter);sum.textContent=`${a.length} mục · gần nhất trước · mục không đến kịp nằm cuối · năm ${F(run.nam)} · ${W.info(run.viTri).ten}${lastScan?` · vừa quét lúc ${lastScan.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}`:''}`;list.innerHTML=a.map(r=>{const pow=strength(r),sts=[...r.tags,seen.includes(r.slot)?'Đã khám phá':'Chưa khám phá'];if(r.x.catalog)sts.unshift('Chưa xuất hiện');else sts.unshift('Đang xuất hiện');if(r.rare){sts.unshift(r.x.catalog?'Chưa xuất hiện':'Dị bảo đang xuất hiện');if(r.x.catalog)sts.unshift('Có thể xuất hiện tại đây');if(r.rare.chance.length)sts.push('Tỉ lệ '+r.rare.chance.map(x=>F(x*100)+'%').join('/'));else if(N(r.rare.guide?.chance))sts.push('Khả năng xuất hiện khoảng '+F(r.rare.guide.chance*100)+'%');if(r.rare.cooldown)sts.push('Có thể thử lại sau '+F(r.rare.cooldown)+' năm');if(r.rare.guide?.baoVe)sts.push('Bảo vệ: '+r.rare.guide.baoVe.ten+' · cảnh giới '+r.rare.guide.baoVe.cg);if(r.rare.guide?.check)sts.push('Yêu cầu: '+r.rare.guide.check)}if(r.expires!==null)sts.push(r.remain>0?'Đến kịp':'Không kịp');const gain=[...r.meta.gain];if(r.x.rareItem?.length)for(const id of r.x.rareItem)gain.unshift(C.items.get(id)?.ten||id);for(let i=gain.length-1;i>=0;i--)if(gain.indexOf(gain[i])!==i)gain.splice(i,1);if(N(r.x.congHien))gain.push(`${F(r.x.congHien)} cống hiến`);if(r.rare?.items?.length)for(const id of r.rare.items)gain.unshift(C.items.get(id)?.ten||id);const risk=[...r.meta.risk],time=r.expires===null?'':r.remain>0?`Còn ${fmtDuration(r.remain)} khi đến`:`Trễ ${fmtDuration(-r.remain)}`,cls=r.remain===null?'':r.remain<=0?'bad':r.remain<.25?'warn':'good',act=r.src==='Ngọc giản tông môn'?'Nhận nhiệm vụ':r.x.catalog?'Xem địa điểm':'Xem trên bản đồ';return`<article data-k="${E([r.slot,r.x.id||'',r.src].join('|'))}"><div><div class="name">${E(T(r.x.ten||r.e.ten||r.enc))}</div><div class="tags">${sts.map(x=>`<span class="tag ${x==='Đến kịp'?'good':x==='Không kịp'?'bad':''}">${E(x)}</span>`).join('')}${time?`<span class="tag ${cls}">${E(time)}</span>`:''}</div><div class="sub">${E(r.info.ten)} · ${E(r.src)} · ${fmtDistance(r.dist)}</div>${r.x.catalog?'<div class="risk">Chưa xuất hiện trong runtime. Địa điểm này chỉ là gợi ý từ catalog game.</div>':''}<div class="sub">${E(repeat(r))}</div>${r.rare?.checks?.length?`<div class="sub">Yêu cầu: ${E(r.rare.checks.map(x=>x.stat+' '+x.difficulty).join(', '))}</div>`:''}<div class="gain">Có thể được: ${E(gain.join(', ')||'Chưa xác định')}</div>${risk.length?`<div class="risk">Có thể mất: ${E(risk.join(', '))}</div>`:''}</div><div class="travel"><strong>${fmtDuration(r.travel)}</strong><span>${fmtDistance(r.dist)}</span></div><div><div class="${pow[1]}">${E(pow[0])}</div><button class="red act">${act}</button></div></article>`}).join('')||(tab==='treasure'?'<p><strong>Không tìm thấy địa điểm dị bảo phù hợp trong bản đồ hiện tại.</strong></p>':'<p>Không có mục phù hợp.</p>')}
-let lastScan=null;function refresh(){if(refreshing){refreshQueued=true;return}refreshing=true;try{if(hallOpen())syncSect();rows=addRows();places=collectPlaceRecords();randoms=collectRandomRecords();quests=collectQuestRecords();people=collectPeopleRecords();itemInventoryIndex=inventorySnapshot();lastScan=new Date();updateTabCounts();render()}finally{refreshing=false;if(refreshQueued){refreshQueued=false;scheduleRefresh(40)}}}function scheduleRefresh(delay=90){clearTimeout(refreshTimer);refreshTimer=setTimeout(refresh,Math.max(0,delay))}function hide(){savePos?.();p.style.display='none';b.style.display='block'}function show(){b.style.display='none';p.style.display='flex';render();if(pendingRefresh)scheduleRefresh(0)}
-p.addEventListener('pointerdown',e=>{if(e.target.closest('button,select,input'))e.stopPropagation()});p.addEventListener('pointerup',e=>{if(e.target.closest('button,select,input'))e.stopPropagation()});p.addEventListener('touchend',e=>{if(e.target.closest('button,select,input'))e.stopPropagation()},{passive:true});nav.onclick=e=>{const x=e.target.closest('[data-t]');if(!x)return;tab=x.dataset.t;sessionStorage.setItem('veh3-tab',tab);nav.querySelectorAll('.tab').forEach(y=>y.classList.toggle('on',y===x));render()};[itemType,itemGrade,itemElement,itemSchool].forEach(x=>x.onchange=render);let itemInputTimer=null;itemSearch.oninput=()=>{clearTimeout(itemInputTimer);itemInputTimer=setTimeout(render,250)};itemSearchClear.onclick=()=>{itemSearch.value='';itemSearch.focus();render()};itemFilterToggle.onclick=()=>{const open=itemFilterDrawer.classList.toggle('open');itemFilterToggle.setAttribute('aria-expanded',String(open))};p.querySelector('#item-filter-reset').onclick=()=>{[itemType,itemGrade,itemElement,itemSchool].forEach(x=>x.value='all');render()};p.querySelector('#item-filter-done').onclick=()=>{itemFilterDrawer.classList.remove('open');itemFilterToggle.setAttribute('aria-expanded','false');itemSearch.focus()};const isMobile=()=>matchMedia('(max-width:600px)').matches;const posKey='vktool-mobile-pos',launcherKey='vktool-launcher-pos';let mobileMax=false;const clamp=(v,a,z)=>Math.max(a,Math.min(z,v));function applySavedPos(){if(!isMobile()||mobileMax)return;try{const o=JSON.parse(sessionStorage.getItem(posKey)||'null');if(!o)return;const r=p.getBoundingClientRect(),x=clamp(Number(o.x)||0,0,Math.max(0,innerWidth-r.width)),y=clamp(Number(o.y)||0,Math.max(0,envTop()),Math.max(0,innerHeight-r.height));p.style.left=x+'px';p.style.top=y+'px'}catch{}}function envTop(){return 0}function savePos(){if(!isMobile()||mobileMax)return;const r=p.getBoundingClientRect();sessionStorage.setItem(posKey,JSON.stringify({x:Math.round(r.left),y:Math.round(r.top)}))}function toggleMobileSize(){if(!isMobile())return;mobileMax=!mobileMax;p.classList.toggle('mobile-max',mobileMax);const bt=p.querySelector('#mobile-size');bt.textContent=mobileMax?'Thu':'Phóng';bt.setAttribute('aria-label',mobileMax?'Thu nhỏ cửa sổ':'Phóng to cửa sổ');if(!mobileMax)requestAnimationFrame(applySavedPos)}function makeDraggable(el,handle,key,isPanel){let drag=null,moved=false,suppressTimer=null;const down=e=>{if(e.button!==0||(isPanel&&e.target.closest('button,input,select,summary,a'))||(!isPanel&&e.target.closest('input,select,summary,a'))||(isPanel&&(!isMobile()||mobileMax)))return;const r=el.getBoundingClientRect();drag={id:e.pointerId,dx:e.clientX-r.left,dy:e.clientY-r.top,w:r.width,h:r.height};moved=false;el.classList.add('dragging');handle.setPointerCapture?.(e.pointerId);e.preventDefault()},move=e=>{if(!drag||e.pointerId!==drag.id)return;const x=clamp(e.clientX-drag.dx,0,Math.max(0,innerWidth-drag.w)),y=clamp(e.clientY-drag.dy,0,Math.max(0,innerHeight-drag.h));el.style.left=x+'px';el.style.top=y+'px';if(!isPanel){el.style.right='auto';el.style.bottom='auto'}moved=true;e.preventDefault()},end=e=>{if(!drag||e.pointerId!==drag.id)return;el.classList.remove('dragging');try{handle.releasePointerCapture?.(e.pointerId)}catch{}if(moved){const r=el.getBoundingClientRect();sessionStorage.setItem(key,JSON.stringify({x:Math.round(r.left),y:Math.round(r.top)}));el.dataset.suppressClick='1';clearTimeout(suppressTimer);suppressTimer=setTimeout(()=>delete el.dataset.suppressClick,80)}drag=null};handle.addEventListener('pointerdown',down);handle.addEventListener('pointermove',move);handle.addEventListener('pointerup',end);handle.addEventListener('pointercancel',end);return()=>{clearTimeout(suppressTimer);for(const[type,listener]of[['pointerdown',down],['pointermove',move],['pointerup',end],['pointercancel',end]])handle.removeEventListener(type,listener)}}const cleanupPanelDrag=makeDraggable(p,p.querySelector('header'),posKey,true),cleanupLauncherDrag=makeDraggable(b,b,launcherKey,false);const oldLauncherClick=show;b.onclick=e=>{if(b.dataset.suppressClick)return;e?.preventDefault?.();oldLauncherClick()};p.querySelector('#mobile-size').onclick=toggleMobileSize;p.querySelector('#hide').onclick=hide;const onResize=()=>{if(!isMobile()){p.style.left='';p.style.top='';p.classList.remove('mobile-max');mobileMax=false}else requestAnimationFrame(applySavedPos)};addEventListener('resize',onResize);requestAnimationFrame(()=>{applySavedPos();try{const o=JSON.parse(sessionStorage.getItem(launcherKey)||'null');if(o){const r=b.getBoundingClientRect();b.style.left=clamp(o.x,0,Math.max(0,innerWidth-r.width))+'px';b.style.top=clamp(o.y,0,Math.max(0,innerHeight-r.height))+'px';b.style.right='auto';b.style.bottom='auto'}}catch{}});
-p.onclick=e=>{if(e.target.classList.contains('bounty-receive-map')||e.target.classList.contains('bounty-work-map')){e.preventDefault();e.stopPropagation();const slot=e.target.dataset.slot;if(!slot||!W.hasSlot(slot))return alert('Vị trí treo thưởng không còn hợp lệ.');const ok=showSafeRoute(slot);setTimeout(()=>{if(ok)hide();else alert('Không thể đặt tâm bản đồ vào vị trí này.')},120);return}if(e.target.classList.contains('item-source-act')){e.preventDefault();e.stopPropagation();const id=e.target.dataset.id,box=e.target.parentElement?.querySelector('.item-source-box');if(!id||!box)return;box.textContent='Đang quét nguồn…';setTimeout(()=>{const lines=compactItemSources(buildItemSources([id]).get(id)||[]);box.innerHTML=lines.map(x=>'• '+E(x)).join('<br>')||'Chưa tìm thấy nguồn rõ ràng.'},0);return}if(e.target.classList.contains('treasure-focus-act')||e.target.classList.contains('treasure-route-act')||e.target.classList.contains('treasure-location-act')){e.preventDefault();e.stopPropagation();const key=e.target.closest('article')?.dataset.treasure,r=treasureRecords().find(x=>x.key===key),slot=r?.slot;if(!r||!slot||!W.hasSlot(slot))return alert('Vị trí Dị bảo không còn hợp lệ.');if(e.target.classList.contains('treasure-route-act')){if(r.group!=='runtime')return alert('Dị bảo chưa xuất hiện trong runtime.');if(!showSafeRoute(slot,r.routeTask))alert('Không tìm được đường an toàn.');return}clearRouteOverlay();const ok=focusMap(slot);if(ok)setTimeout(hide,120);else alert('Không thể lia bản đồ tới vị trí Dị bảo.');return}if(e.target.classList.contains('map-focus-act')||e.target.classList.contains('map-safe-route-act')){e.preventDefault();e.stopPropagation();const key=e.target.closest('article')?.dataset.mapTask,task=mapTaskRecords().find(x=>x.key===key),slot=task?.slot;if(!task||!slot||!W.hasSlot(slot)||!mapTaskRouteAlive(task.routeTask))return alert('Mục tiêu bản đồ không còn tồn tại.');if(e.target.classList.contains('map-focus-act')){clearRouteOverlay();const ok=focusMap(slot);if(ok)setTimeout(hide,120);else alert('Không thể lia bản đồ tới điểm cuối.');return}if(!showSafeRoute(slot,task.routeTask))alert('Không tìm được tuyến đường an toàn tới mục tiêu.');return}if(e.target.classList.contains('safe-route-act')){e.preventDefault();e.stopPropagation();const slot=e.target.closest('article')?.dataset.slot;if(slot&&!showSafeRoute(slot))alert('Không tìm được tuyến đường an toàn.');return}if(e.target.classList.contains('quest-act')){e.preventDefault();e.stopPropagation();const key=e.target.closest('article')?.dataset.quest,quest=quests.find(x=>x.key===key),slot=quest?.slot;if(!slot||!W.hasSlot(slot))return alert('Vị trí nhiệm vụ không còn hợp lệ.');const ok=focusMap(slot);if(ok)setTimeout(hide,120);else alert('Không thể lia bản đồ tới nhiệm vụ.');return}if(e.target.classList.contains('gift-act')){e.preventDefault();e.stopPropagation();const key=e.target.closest('article')?.dataset.person,person=people.find(x=>x.key===key);if(!person?.giftLike||!person.giftKnown)return;tab='items';sessionStorage.setItem('veh3-tab',tab);nav.querySelectorAll('.tab').forEach(button=>button.classList.toggle('on',button.dataset.t===tab));const exact=['dan_duoc','phap_khi','cong_phap','phu_luc'].includes(person.giftLike);itemType.value=exact&&[...itemType.options].some(option=>option.value===person.giftLike)?person.giftLike:'all';itemSearch.value=exact?'':person.giftLikeName||person.giftLike;render();return}if(e.target.classList.contains('sect-focus-act')||e.target.classList.contains('sect-route-act')){e.preventDefault();e.stopPropagation();const slot=e.target.closest('article')?.dataset.sectSlot,r=sectDirectoryRecords().find(x=>x.slot===slot);if(!r||r.destroyed||!W.hasSlot(slot))return alert('Tông môn không còn vị trí hoạt động hợp lệ.');if(e.target.classList.contains('sect-route-act')){if(!showSafeRoute(slot))alert('Không tìm được đường an toàn tới tông môn.');return}clearRouteOverlay();const ok=focusMap(slot);if(ok)setTimeout(hide,120);else alert('Không thể lia bản đồ tới tông môn.');return}if(e.target.classList.contains('person-focus-act')||e.target.classList.contains('person-route-act')||e.target.classList.contains('person-gift-act')){e.preventDefault();e.stopPropagation();const key=e.target.closest('article')?.dataset.person,person=collectPeopleRecords().find(x=>x.key===key);if(!person)return alert('Thông tin Nhân mạch không còn hợp lệ.');if(e.target.classList.contains('person-gift-act')){tab='items';sessionStorage.setItem('veh3-tab',tab);nav.querySelectorAll('.tab').forEach(y=>y.classList.toggle('on',y.dataset.t===tab));const exact=['dan_duoc','phap_khi','cong_phap','phu_luc'].includes(person.giftLike);itemType.value=exact&&[...itemType.options].some(option=>option.value===person.giftLike)?person.giftLike:'all';itemSearch.value=exact?'':person.giftLikeName||person.giftLike||'';render();return}const slot=person.slot;if(person.lifeState!=='Còn sống'||!slot||!W.hasSlot(slot))return alert('Người này không có vị trí hoạt động hợp lệ.');if(e.target.classList.contains('person-route-act')){if(!showSafeRoute(slot))alert('Không tìm được đường an toàn.');return}clearRouteOverlay();const ok=focusMap(slot);if(ok)setTimeout(hide,120);else alert('Không thể lia bản đồ tới vị trí Nhân mạch.');return}if(e.target.classList.contains('random-act')){e.preventDefault();e.stopPropagation();const key=e.target.closest('article')?.dataset.random,r=randoms.find(x=>x.key===key),slot=r?.slot;if(!slot||!W.hasSlot(slot))return alert('Vị trí sự kiện không còn hợp lệ.');const ok=showSafeRoute(slot);setTimeout(()=>{if(ok)hide();else alert('Không thể đặt tâm bản đồ vào sự kiện.')},180);return}if(e.target.classList.contains('place-act')){e.preventDefault();e.stopPropagation();const slot=e.target.closest('article')?.dataset.place;if(!slot||!W.hasSlot(slot))return alert('Địa điểm không còn hợp lệ.');const ok=showSafeRoute(slot);setTimeout(()=>{if(ok)hide();else alert('Không thể đặt tâm bản đồ vào địa điểm.')},180);return}if(!e.target.classList.contains('act'))return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();const art=e.target.closest('article'),key=art.dataset.k,r=rows.find(x=>[x.slot,x.x.id||'',x.src].join('|')===key);if(!r)return;if(r.src==='Ngọc giản tông môn'){if(!g.state.run.tongMon)return alert('Nhân vật chưa gia nhập tông môn.');if(!hallOpen())return alert('Hãy mở Điện nhiệm vụ → Xem ngọc giản nhiệm vụ để nhận.');g.nhanViec(r.x.id);setTimeout(refresh,120);return}if(!W.hasSlot(r.slot))return alert('Địa điểm không còn hợp lệ.');const ok=showSafeRoute(r.slot);setTimeout(()=>{if(ok)hide();else alert('Không thể đặt tâm bản đồ vào mục tiêu.')},180)};
-let syncTimer=null,lastSect='';const autoSync=()=>{clearTimeout(syncTimer);syncTimer=setTimeout(()=>{if(!hallOpen())return;const list=syncSect(),sig=list.map(x=>x.id).join('|');if(list.length&&sig!==lastSect){lastSect=sig;scheduleRefresh(40)}},120)};const observer=new MutationObserver(autoSync);observer.observe(document.body,{childList:true,subtree:true});autoSync();let pendingRefresh=false;const unsub=g.store.subscribe((n,o)=>{if(n.run!==o.run&&document.getElementById(ID)){syncSafeRoute(n.run);syncBountyPlan(n.run);autoSync();if(p.style.display==='none')pendingRefresh=true;else scheduleRefresh(80)}});const originalShow=show;show=()=>{originalShow();pendingRefresh=false};window.__VK_EVENT_HUNTER__={version:V,buildId:BUILD,loadedAt:new Date().toISOString(),Runtime,evalCondition,inventoryLocations,inventoryState,encounterAvailability,treasureState,treasureStates,acquisitionState,specialTreasureStates,allTreasureStates,activeEncounterSlots,mapEventType,placeType,placeRecord,collectPlaceRecords,placeTimeState,collectRandomRecords,questRecord,collectQuestRecords,npcLocation,collectPeopleRecords,giftItemMatch,giftItems,BuildEngine,routeSafe,drawRouteOverlay,clearRouteOverlay,itemCategory,itemGameData,capabilities:{mobileLayout:true,draggableMobile:true,runtimeAdapter:true,conditionEngine:true,conditionRecursion:true,sectCondition:true,variableCondition:true,nodeFlagCondition:true,probabilityCondition:true,realmDifferenceCondition:true,scopedFlags:true,locationCondition:true,professionLevelCondition:true,encounterAvailability:true,treasureStateEngine:true,acquisitionRegistry:true,specialTreasureRegistry:true,inventoryAdapter:true,equipmentSchemaAdapter:true,inventoryReferenceDedup:true,verifiedStorageOnly:true,auctionHistoryFilter:true,treasureGuide:true,questModel:true,peopleModel:true,peopleRenderer:true,giftItemLink:true,itemSearch:true,itemGameDataIndex:true,lazyItemGroups:true,onDemandItemSources:true,safeRoute:true,mapRouteOverlay:true,thinDashedRoute:true,routeInsideMapCanvas:true,routeStopCircles:true,allTabsSafeRoute:true,svgRouteFallback:true,routeAutoProgress:true,routeEncounterHide:true,routeAutoCleanup:true,mapTaskDedup:true,mapTasksRuntimeNodesOnly:true,karmicSeedsExcluded:true,specialPlacesIncluded:true,specialPlaceExpiryIgnored:true,deadlineAbsoluteYear:true,bountyGroups:true,lazyReopen:true,buildOptimizer:true,focusedEnemyRoster:true,peerAndNextRealmOnly:true,responsiveBuildSearch:true,threeBuildModes:true,multiElementBuild:true,maxFiveSubElements:true,alignmentAwareBuild:true,gameCoreElementRules:true,balancedThirdBuild:true,breakthroughPlanner:true,lifespanPlanner:true,bountyBoardScan:true,bountyMapFocus:true,bountyCacheValidation:true,bountyScanCancellation:true,safePlaceNames:true,smallScreenUX:true,deadCodeCleanup:true,autoApplyLayout:true,autoRefresh:true,derivedDataCache:true,debouncedRefresh:true,conservativeMapTaskModel:true,completeMapEventScan:true,specialPlaceScan:true,placeRecordModel:true,placeTimeState:true,randomEventModel:true},refresh,show,hide,close:()=>{try{unsub();observer.disconnect();removeEventListener('resize',onResize);cleanupPanelDrag();cleanupLauncherDrag();clearTimeout(syncTimer);clearTimeout(refreshTimer);clearTimeout(itemInputTimer);clearRouteOverlay();BuildEngine.stop()}catch{}p.remove();b.remove()}};console.info(`[VKTool] Đã nạp ${BUILD}. Kiểm tra: __VK_EVENT_HUNTER__.buildId`);refresh();syncSafeRoute();
+let lastScan=null;function refresh(){if(refreshing){refreshQueued=true;return}refreshing=true;try{TickCache.begin((typeof runtimeSignature==='function'?runtimeSignature():null)||(String(g.state.run?.nam)+'|'+g.state.run?.viTri+'|'+Object.keys(g.state.run?.nodes||{}).length));if(hallOpen())syncSect();rows=addRows();places=collectPlaceRecords();randoms=collectRandomRecords();quests=collectQuestRecords();people=collectPeopleRecords();itemInventoryIndex=inventorySnapshot();lastScan=new Date();updateTabCounts();render()}finally{refreshing=false;if(refreshQueued){refreshQueued=false;scheduleRefresh(40)}}}function scheduleRefresh(delay=90){clearTimeout(refreshTimer);refreshTimer=setTimeout(refresh,Math.max(0,delay))}function hide(){savePos?.();p.style.display='none';b.style.display='block'}function show(){b.style.display='none';p.style.display='flex';render();if(pendingRefresh)scheduleRefresh(0)}
+p.addEventListener('pointerdown',e=>{if(e.target.closest('button,select,input'))e.stopPropagation()});p.addEventListener('pointerup',e=>{if(e.target.closest('button,select,input'))e.stopPropagation()});p.addEventListener('touchend',e=>{if(e.target.closest('button,select,input'))e.stopPropagation()},{passive:true});nav.onclick=e=>{const x=e.target.closest('[data-t]');if(!x)return;tab=x.dataset.t;sessionStorage.setItem('veh3-tab',tab);nav.querySelectorAll('.tab').forEach(y=>y.classList.toggle('on',y===x));render()};[itemType,itemGrade,itemElement,itemSchool].forEach(x=>x.onchange=render);let itemInputTimer=null;itemSearch.oninput=()=>{clearTimeout(itemInputTimer);itemInputTimer=setTimeout(render,250)};itemSearchClear.onclick=()=>{itemSearch.value='';itemSearch.focus();render()};itemFilterToggle.onclick=()=>{const open=itemFilterDrawer.classList.toggle('open');itemFilterToggle.setAttribute('aria-expanded',String(open))};p.querySelector('#item-filter-reset').onclick=()=>{[itemType,itemGrade,itemElement,itemSchool].forEach(x=>x.value='all');render()};p.querySelector('#item-filter-done').onclick=()=>{itemFilterDrawer.classList.remove('open');itemFilterToggle.setAttribute('aria-expanded','false');itemSearch.focus()};const isMobile=()=>matchMedia('(max-width:699px)').matches;const posKey='vktool-mobile-pos',launcherKey='vktool-launcher-pos';let mobileMax=true;const clamp=(v,a,z)=>Math.max(a,Math.min(z,v));function applySavedPos(){if(!isMobile()||mobileMax)return;try{const o=JSON.parse(sessionStorage.getItem(posKey)||'null');if(!o)return;const r=p.getBoundingClientRect(),x=clamp(Number(o.x)||0,0,Math.max(0,innerWidth-r.width)),y=clamp(Number(o.y)||0,Math.max(0,envTop()),Math.max(0,innerHeight-r.height));p.style.left=x+'px';p.style.top=y+'px'}catch{}}function envTop(){return 0}function savePos(){if(!isMobile()||mobileMax)return;const r=p.getBoundingClientRect();sessionStorage.setItem(posKey,JSON.stringify({x:Math.round(r.left),y:Math.round(r.top)}))}function toggleMobileSize(){if(!isMobile())return;mobileMax=!mobileMax;p.classList.toggle('mobile-max',mobileMax);const bt=p.querySelector('#mobile-size');bt.textContent=mobileMax?'Thu':'Phóng';bt.setAttribute('aria-label',mobileMax?'Thu nhỏ cửa sổ':'Phóng to cửa sổ');if(!mobileMax)requestAnimationFrame(applySavedPos)}function makeDraggable(el,handle,key,isPanel){let drag=null,moved=false,suppressTimer=null;const down=e=>{if(e.button!==0||(isPanel&&e.target.closest('button,input,select,summary,a'))||(!isPanel&&e.target.closest('input,select,summary,a'))||(isPanel&&(!isMobile()||mobileMax)))return;const r=el.getBoundingClientRect();drag={id:e.pointerId,dx:e.clientX-r.left,dy:e.clientY-r.top,w:r.width,h:r.height};moved=false;el.classList.add('dragging');handle.setPointerCapture?.(e.pointerId);e.preventDefault()},move=e=>{if(!drag||e.pointerId!==drag.id)return;const x=clamp(e.clientX-drag.dx,0,Math.max(0,innerWidth-drag.w)),y=clamp(e.clientY-drag.dy,0,Math.max(0,innerHeight-drag.h));el.style.left=x+'px';el.style.top=y+'px';if(!isPanel){el.style.right='auto';el.style.bottom='auto'}moved=true;e.preventDefault()},end=e=>{if(!drag||e.pointerId!==drag.id)return;el.classList.remove('dragging');try{handle.releasePointerCapture?.(e.pointerId)}catch{}if(moved){const r=el.getBoundingClientRect();sessionStorage.setItem(key,JSON.stringify({x:Math.round(r.left),y:Math.round(r.top)}));el.dataset.suppressClick='1';clearTimeout(suppressTimer);suppressTimer=setTimeout(()=>delete el.dataset.suppressClick,80)}drag=null};handle.addEventListener('pointerdown',down);handle.addEventListener('pointermove',move);handle.addEventListener('pointerup',end);handle.addEventListener('pointercancel',end);return()=>{clearTimeout(suppressTimer);for(const[type,listener]of[['pointerdown',down],['pointermove',move],['pointerup',end],['pointercancel',end]])handle.removeEventListener(type,listener)}}const cleanupPanelDrag=makeDraggable(p,p.querySelector('header'),posKey,true),cleanupLauncherDrag=makeDraggable(b,b,launcherKey,false);const oldLauncherClick=show;b.onclick=e=>{if(b.dataset.suppressClick)return;e?.preventDefault?.();oldLauncherClick()};p.querySelector('#mobile-size').onclick=toggleMobileSize;p.querySelector('#hide').onclick=hide;const onResize=()=>{if(!isMobile()){p.style.left='';p.style.top='';p.classList.remove('mobile-max');mobileMax=false}else requestAnimationFrame(applySavedPos)};addEventListener('resize',onResize);requestAnimationFrame(()=>{applySavedPos();try{const o=JSON.parse(sessionStorage.getItem(launcherKey)||'null');if(o){const r=b.getBoundingClientRect();b.style.left=clamp(o.x,0,Math.max(0,innerWidth-r.width))+'px';b.style.top=clamp(o.y,0,Math.max(0,innerHeight-r.height))+'px';b.style.right='auto';b.style.bottom='auto'}}catch{}});
+p.onclick=e=>{if(e.target.classList.contains('bounty-receive-map')||e.target.classList.contains('bounty-work-map')){e.preventDefault();e.stopPropagation();const slot=e.target.dataset.slot;if(!slot||!W.hasSlot(slot))return alert('Vị trí treo thưởng không còn hợp lệ.');const ok=showSafeRoute(slot);setTimeout(()=>{if(ok)hide();else alert('Không thể đặt tâm bản đồ vào vị trí này.')},120);return}if(e.target.classList.contains('item-source-act')){e.preventDefault();e.stopPropagation();const id=e.target.dataset.id,box=e.target.parentElement?.querySelector('.item-source-box');if(!id||!box)return;box.textContent='Đang quét nguồn…';setTimeout(()=>{const lines=compactItemSources(buildItemSources([id]).get(id)||[]);box.innerHTML=lines.map(x=>'• '+E(x)).join('<br>')||'Chưa tìm thấy nguồn rõ ràng.'},0);return}if(e.target.classList.contains('treasure-focus-act')||e.target.classList.contains('treasure-route-act')||e.target.classList.contains('treasure-location-act')){e.preventDefault();e.stopPropagation();const key=e.target.closest('article')?.dataset.treasure,r=treasureRecords().find(x=>x.key===key),slot=r?.slot;if(!r||!slot||!W.hasSlot(slot))return alert('Vị trí Dị bảo không còn hợp lệ.');if(e.target.classList.contains('treasure-focus-act')){if(!showSafeRoute(slot,r.routeTask,{focus:'target'}))alert('Không tìm được tuyến đường tới Dị bảo.');return}if(e.target.classList.contains('treasure-route-act')){if(r.group!=='runtime')return alert('Dị bảo chưa xuất hiện trong runtime.');if(!showSafeRoute(slot,r.routeTask,{focus:'start'}))alert('Không tìm được đường an toàn.');return}/* location-act: chỉ focus vị trí catalog */clearRouteOverlay();const ok=focusMap(slot);if(ok)setTimeout(hide,120);else alert('Không thể lia bản đồ tới vị trí Dị bảo.');return}if(e.target.classList.contains('map-focus-act')||e.target.classList.contains('map-safe-route-act')){e.preventDefault();e.stopPropagation();const key=e.target.closest('article')?.dataset.mapTask,task=mapTaskRecords().find(x=>x.key===key),slot=task?.slot;if(!task||!slot||!W.hasSlot(slot))return alert('Mục tiêu bản đồ không còn tồn tại.');if(task.routeTask&&!mapTaskRouteAlive(task.routeTask))return alert('Mục tiêu bản đồ không còn tồn tại.');if(e.target.classList.contains('map-focus-act')){/* Vẽ đường an toàn + focus điểm đích */if(!showSafeRoute(slot,task.routeTask,{focus:'target'}))alert('Không tìm được tuyến đường tới mục tiêu (có thể hai điểm không nối được trên bản đồ).');return}/* Đường an toàn: vẽ đường + focus vị trí nhân vật đang đứng */if(!showSafeRoute(slot,task.routeTask,{focus:'start'}))alert('Không tìm được tuyến đường an toàn tới mục tiêu.');return}if(e.target.classList.contains('safe-route-act')){e.preventDefault();e.stopPropagation();const slot=e.target.closest('article')?.dataset.slot;if(slot&&!showSafeRoute(slot))alert('Không tìm được tuyến đường an toàn.');return}if(e.target.classList.contains('quest-act')){e.preventDefault();e.stopPropagation();const key=e.target.closest('article')?.dataset.quest,quest=quests.find(x=>x.key===key),slot=quest?.slot;if(!slot||!W.hasSlot(slot))return alert('Vị trí nhiệm vụ không còn hợp lệ.');const ok=focusMap(slot);if(ok)setTimeout(hide,120);else alert('Không thể lia bản đồ tới nhiệm vụ.');return}if(e.target.classList.contains('gift-act')){e.preventDefault();e.stopPropagation();const key=e.target.closest('article')?.dataset.person,person=people.find(x=>x.key===key);if(!person?.giftLike||!person.giftKnown)return;tab='items';sessionStorage.setItem('veh3-tab',tab);nav.querySelectorAll('.tab').forEach(button=>button.classList.toggle('on',button.dataset.t===tab));const exact=['dan_duoc','phap_khi','cong_phap','phu_luc'].includes(person.giftLike);itemType.value=exact&&[...itemType.options].some(option=>option.value===person.giftLike)?person.giftLike:'all';itemSearch.value=exact?'':person.giftLikeName||person.giftLike;render();return}if(e.target.classList.contains('sect-focus-act')||e.target.classList.contains('sect-route-act')){e.preventDefault();e.stopPropagation();const slot=e.target.closest('article')?.dataset.sectSlot||e.target.dataset.slot;const r=slot?sectDirectoryRecords().find(x=>x.slot===slot):null;if(!r||r.destroyed||!W.hasSlot(slot))return alert('Tông môn không còn vị trí hoạt động hợp lệ.');if(e.target.classList.contains('sect-route-act')){if(!showSafeRoute(slot,null,{focus:'start'}))alert('Không tìm được đường an toàn tới tông môn.');return}if(!showSafeRoute(slot,null,{focus:'target'}))alert('Không tìm được đường tới tông môn.');return}if(e.target.classList.contains('person-focus-act')||e.target.classList.contains('person-route-act')||e.target.classList.contains('person-gift-act')){e.preventDefault();e.stopPropagation();const key=e.target.closest('article')?.dataset.person,person=collectPeopleRecords().find(x=>x.key===key);if(!person)return alert('Thông tin Nhân mạch không còn hợp lệ.');if(e.target.classList.contains('person-gift-act')){tab='items';sessionStorage.setItem('veh3-tab',tab);nav.querySelectorAll('.tab').forEach(y=>y.classList.toggle('on',y.dataset.t===tab));const exact=['dan_duoc','phap_khi','cong_phap','phu_luc'].includes(person.giftLike);itemType.value=exact&&[...itemType.options].some(option=>option.value===person.giftLike)?person.giftLike:'all';itemSearch.value=exact?'':person.giftLikeName||person.giftLike||'';render();return}const slot=person.slot;if(person.lifeState!=='Còn sống'||!slot||!W.hasSlot(slot))return alert('Người này không có vị trí hoạt động hợp lệ.');if(e.target.classList.contains('person-route-act')){if(!showSafeRoute(slot,null,{focus:'start'}))alert('Không tìm được đường an toàn.');return}if(!showSafeRoute(slot,null,{focus:'target'}))alert('Không tìm được đường tới Nhân mạch.');return}
+if(e.target.classList.contains('random-act')){e.preventDefault();e.stopPropagation();const key=e.target.closest('article')?.dataset.random,r=randoms.find(x=>x.key===key),slot=r?.slot;if(!slot||!W.hasSlot(slot))return alert('Vị trí sự kiện không còn hợp lệ.');const ok=showSafeRoute(slot,null,{focus:'target'});setTimeout(()=>{if(ok)hide();else alert('Không thể đặt tâm bản đồ vào sự kiện.')},180);return}
+if(e.target.classList.contains('place-act')){e.preventDefault();e.stopPropagation();const slot=e.target.closest('article')?.dataset.place;if(!slot||!W.hasSlot(slot))return alert('Địa điểm không còn hợp lệ.');const ok=showSafeRoute(slot,null,{focus:'target'});setTimeout(()=>{if(ok)hide();else alert('Không thể đặt tâm bản đồ vào địa điểm.')},180);return}
+if(!e.target.classList.contains('act'))return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();const art=e.target.closest('article'),key=art.dataset.k,r=rows.find(x=>[x.slot,x.x.id||'',x.src].join('|')===key);if(!r)return;if(r.src==='Ngọc giản tông môn'){if(!g.state.run.tongMon)return alert('Nhân vật chưa gia nhập tông môn.');if(!hallOpen())return alert('Hãy mở Điện nhiệm vụ → Xem ngọc giản nhiệm vụ để nhận.');g.nhanViec(r.x.id);setTimeout(refresh,120);return}if(!W.hasSlot(r.slot))return alert('Địa điểm không còn hợp lệ.');const ok=showSafeRoute(r.slot,null,{focus:'target'});setTimeout(()=>{if(ok)hide();else alert('Không thể đặt tâm bản đồ vào mục tiêu.')},180)};
+let syncTimer=null,lastSect='';const autoSync=()=>{clearTimeout(syncTimer);syncTimer=setTimeout(()=>{if(!hallOpen())return;const list=syncSect(),sig=list.map(x=>x.id).join('|');if(list.length&&sig!==lastSect){lastSect=sig;scheduleRefresh(40)}},120)};const observer=new MutationObserver(autoSync);observer.observe(document.body,{childList:true,subtree:true});autoSync();let pendingRefresh=false;const unsub=g.store.subscribe((n,o)=>{if(n.run!==o.run&&document.getElementById(ID)){syncSafeRoute(n.run);syncBountyPlan(n.run);autoSync();if(p.style.display==='none')pendingRefresh=true;else scheduleRefresh(80)}});const originalShow=show;show=()=>{originalShow();pendingRefresh=false};window.__VK_EVENT_HUNTER__={version:V,buildId:BUILD,loadedAt:new Date().toISOString(),Runtime,evalCondition,inventoryLocations,inventoryState,encounterAvailability,treasureState,treasureStates,acquisitionState,specialTreasureStates,allTreasureStates,activeEncounterSlots,mapEventType,placeType,placeRecord,collectPlaceRecords,placeTimeState,collectRandomRecords,questRecord,collectQuestRecords,npcLocation,collectPeopleRecords,giftItemMatch,giftItems,BuildEngine,routeSafe,drawRouteOverlay,clearRouteOverlay,itemCategory,itemGameData,capabilities:{mobileLayout:true,draggableMobile:true,runtimeAdapter:true,conditionEngine:true,treasureGuide:true,questModel:true,peopleModel:true,peopleRenderer:true,giftItemLink:true,itemSearch:true,safeRoute:true,mapRouteOverlay:true,sectDirectory:true,tickCache:true,treasureStatusModel:true,peopleSectOptimize:true},refresh,show,hide,close:()=>{try{unsub();observer.disconnect();removeEventListener('resize',onResize);cleanupPanelDrag();cleanupLauncherDrag();clearTimeout(syncTimer);clearTimeout(refreshTimer);clearTimeout(itemInputTimer);clearRouteOverlay();BuildEngine.stop();TickCache.clear()}catch{}p.remove();b.remove()}};console.info(`[VKTool] Đã nạp ${BUILD}. Kiểm tra: __VK_EVENT_HUNTER__.buildId`);refresh();syncSafeRoute();
 })();
