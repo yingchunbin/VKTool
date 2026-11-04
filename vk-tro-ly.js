@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261104-autofarm-v27',ID='vkt2',g=window.game;
+const BUILD='20261104-autofarm-v29',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -1186,23 +1186,48 @@ const AutoFarm={
       if(ban[slot]&&ban[slot]>now)continue;
       const travel=travelTo(slot);
       if(N(travel)&&travel>maxY&&slot!==r.viTri)continue;
-      // —— Trước mắt (su_kien / contextual / standing) — hết hạn ~vài năm, ưu tiên cao
+      // —— Trước mắt (game Vk: standing+contextual+suKien)
+      // lam_moi: thoang_qua (sắp mất) | ngu_canh | thuong_tru — không lấy tien_ich
       try{
         const nc=r.noiChon?.[slot];
-        const ids=[...new Set([...(nc?.suKien||[]),...(nc?.contextual||[]),...(nc?.standing||[])])];
-        for(const id of ids){
-          if(!id||!C.encounters?.has?.(id))continue;
-          if(String(id)==='ev.san_yeu')continue;
-          const key=slot+'|'+id;if(seen.has(key))continue;
-          seen.add(key);
-          const encDef=C.encounters.get(id);
-          const dg=danger(slot);
-          if(this.opts.skipTuDia&&dg.rank>=3)continue;
-          out.push({
-            slot,enc:id,title:T(encDef?.ten||id),
-            travel,miles:milesTo(slot),danger:dg,
-            left:null,mode:'activity',prio:0 // trước mắt
-          });
+        const packs=[[nc?.suKien||[],-1],[nc?.contextual||[],0],[nc?.standing||[],1]];
+        for(const [ids,basePrio] of packs){
+          for(const id of ids){
+            if(!id||!C.encounters?.has?.(id))continue;
+            if(String(id)==='ev.san_yeu')continue;
+            const encDef=C.encounters.get(id);
+            if(encDef?.tien_ich)continue;
+            const key=slot+'|'+id;if(seen.has(key))continue;
+            seen.add(key);
+            const dg=danger(slot);
+            if(this.opts.skipTuDia&&dg.rank>=3)continue;
+            const lm=encDef?.lam_moi||'thoang_qua';
+            let prio=basePrio;
+            if(lm==='thoang_qua')prio=Math.min(prio,-1);
+            if(lm==='thuong_tru')prio=Math.max(prio,1);
+            out.push({slot,enc:id,title:T(encDef?.ten||id),travel,miles:milesTo(slot),danger:dg,left:null,mode:'activity',prio,kind:lm});
+          }
+        }
+      }catch{}
+      // Node map có hạn (hetHanNam)
+      try{
+        const node=r.nodes?.[slot];
+        if(node?.encounter&&node.hetHanNam!=null){
+          const remain=node.hetHanNam-(+r.nam||0);
+          if(remain>0){
+            const id=String(node.encounter);
+            if(id!=='ev.san_yeu'){
+              const key=slot+'|'+id;
+              if(!seen.has(key)){
+                seen.add(key);
+                const encDef=C.encounters?.get?.(id);
+                const dg=danger(slot);
+                if(!(this.opts.skipTuDia&&dg.rank>=3)){
+                  out.push({slot,enc:id,title:T(encDef?.ten||id)+(remain<5?' · sắp hết':''),travel,miles:milesTo(slot),danger:dg,left:null,mode:'node',prio:remain<5?-2:0,hetHan:node.hetHanNam});
+                }
+              }
+            }
+          }
         }
       }catch{}
       const node=r.nodes?.[slot];
@@ -1235,15 +1260,32 @@ const AutoFarm={
       }
     }
     // Gần → xa (travelYears, rồi miles)
+    try{
+      for(const v of A(r.viecNhan)){
+        if(!v?.slot||!hasSlot(v.slot))continue;
+        if(v.hetHanNam!=null&&v.hetHanNam<=(+r.nam||0))continue;
+        const travel=travelTo(v.slot);
+        const maxY=(N(this.opts.radiusYears)?+this.opts.radiusYears:0.12)*(1+Math.min(3,Math.floor((this.emptyScans||0)/3))*0.5);
+        if(N(travel)&&travel>maxY&&v.slot!==r.viTri)continue;
+        const enc=v.encounter||v.enc||v.id;
+        const key=v.slot+'|viec:'+(v.id||enc);
+        if(seen.has(key))continue;seen.add(key);
+        const remain=v.hetHanNam!=null?v.hetHanNam-(+r.nam||0):99;
+        out.push({slot:v.slot,enc:enc,title:T(v.ten||enc)+(remain<5?' · việc sắp hết':''),travel,miles:milesTo(v.slot),danger:danger(v.slot),left:null,mode:'node',prio:remain<5?-3:-1,viec:v.id});
+      }
+    }catch{}
+    // Ưu tiên SỐ 1: gần nhân vật (tiết thọ) — đụng đâu làm đó
+    // Cùng khoảng cách mới xét loại (trước mắt / việc hạn / săn yêu)
     const here=run().viTri;
     return out.sort((a,b)=>{
-      const pa=a.prio??1,pb=b.prio??1;
-      if(pa!==pb)return pa-pb; // 0 Trước mắt trước
       const ha=a.slot===here?0:1,hb=b.slot===here?0:1;
-      if(ha!==hb)return ha-hb;
-      const da=N(a.miles)?a.miles:(a.travel||1e9)*1e4;
-      const db=N(b.miles)?b.miles:(b.travel||1e9)*1e4;
-      return da-db||(a.travel||0)-(b.travel||0);
+      if(ha!==hb)return ha-hb; // đang đứng → làm ngay
+      const da=N(a.miles)?a.miles:(N(a.travel)?a.travel*1e4:1e9);
+      const db=N(b.miles)?b.miles:(N(b.travel)?b.travel*1e4:1e9);
+      if(Math.abs(da-db)>1e-6)return da-db;
+      const ta=N(a.travel)?a.travel:1e9,tb=N(b.travel)?b.travel:1e9;
+      if(Math.abs(ta-tb)>1e-9)return ta-tb;
+      return (a.prio??2)-(b.prio??2); // gần bằng nhau mới xét loại sự kiện
     });
   },
   busy(){const r=run();return Boolean(r.active||r.tran||r.bienCo||r.thongBao||r.thongBaoDai)},
@@ -1275,12 +1317,16 @@ const AutoFarm={
       const t=strip(c.text).trim();
       return c.thoat===true||/^(thôi|hủy|đóng|bỏ qua)\s*$/i.test(t);
     };
-    const isHunt=c=>/săn |lùng |diệt |giết |đánh /i.test(strip(c.text));
-    const hunts=list.filter(c=>!isCancel(c)&&!BAN.has(this.riskLevel(c)));
+    const isHunt=c=>/săn |lùng |diệt |giết |đánh |ra tay|giúp|cứu|hỏi|nói|ngồi|kéo|lấy|lên hái|đánh thức|thần thức/i.test(strip(c.text));
+    const isLeave=c=>{
+      const t=strip(c.text).trim();
+      return /^(rời đi|bỏ đi|không làm|để đó)/i.test(t);
+    };
+    const hunts=list.filter(c=>!isCancel(c)&&!isLeave(c)&&!BAN.has(this.riskLevel(c)));
     if(!hunts.length){
-      const esc=list.find(isCancel);
-      if(esc){this.push('Không săn an toàn → Thôi','dbg');return esc}
-      this.push('Không lựa chọn săn được','err');
+      const leave=list.find(c=>isLeave(c)||isCancel(c));
+      if(leave){this.push('Không hướng xử lý → '+strip(leave.text).slice(0,28),'dbg');return leave}
+      this.push('Không lựa chọn khả dụng','err');
       return null;
     }
     const green=hunts.filter(c=>OK.has(this.riskLevel(c)));
@@ -1293,6 +1339,8 @@ const AutoFarm={
       else if(lv==='ngang_suc')score+=1.6;
       if(isHunt(c))score+=0.5;
       if(/đầu đàn|vương|chúa/i.test(text))score+=0.15;
+      if(/lên hái|dễ|an toàn|thần thức/i.test(text))score+=0.25;
+      if(/rời đi|bỏ chạy/i.test(text))score-=0.4;
       if(this.chanceScore(c.chance)>=0.7)score+=0.35;
       return{c,score,lv};
     }).sort((a,b)=>b.score-a.score||a.c.index-b.c.index);
@@ -1545,21 +1593,29 @@ const AutoFarm={
           if(run().active){this.schedule();return}
           this.startSanYeuHere(t.enc||'ev.san_yeu');
         }else if(t.mode==='activity'){
-          // Trước mắt / sự kiện nơi: vào nơi rồi chooseActivity
           if(run().thongBao||run().thongBaoDai){this.dismissNotices();this.schedule();return}
           if(!here){
             if(typeof g.travelTo==='function')g.travelTo(t.slot);
             else if(typeof g.enterNode==='function')g.enterNode(t.slot);
-            this.push('Đi tới sự kiện '+t.slot,'dbg');
+            this.push('Đi tới Trước mắt: '+t.title+' @ '+t.slot,'dbg');
             this.schedule();return;
           }
           if(run().active){this.schedule();return}
+          // enterNode → h$n → qA() làm mới danh sách sự kiện nơi
           try{g.reopenPlace?.()}catch{}
           try{if(typeof g.enterNode==='function')g.enterNode(t.slot)}catch{}
-          if(run().active){this.schedule();return}
+          if(run().active){this.push('Vào nơi dính overlay','dbg');this.schedule();return}
           if(typeof g.chooseActivity!=='function')throw new Error('Không có chooseActivity');
-          g.chooseActivity(t.enc);
-          this.push('chooseActivity('+t.enc+') Trước mắt','ok');
+          try{
+            g.chooseActivity(t.enc);
+            this.push('Trước mắt: '+t.title+' ('+t.enc+')','ok');
+            this.needInteractHere=false;
+          }catch(e){
+            this.banSlot(t.slot+'|'+t.enc,120000);
+            this.push('chooseActivity fail: '+(e.message||e),'err');
+            try{g.leavePlace?.()}catch{}
+            throw e;
+          }
         }else{
           if(!here||run().nodes?.[t.slot]?.encounter){
             if(typeof g.enterNode==='function')g.enterNode(t.slot);
@@ -1651,7 +1707,7 @@ VIEWS.auto=()=>{
   const list=AutoFarm.targets().slice(0,40);
   const o=AutoFarm.opts;
   body.innerHTML=`<div class="panel"><b style="color:var(--gold)">Auto Farm</b>
-    <div class="sub">Ưu tiên <b>Trước mắt</b> (sự kiện nơi, hết hạn ~5 năm) rồi mới săn yêu. Gần→xa. Tạm dừng/Dừng cạnh icon.</div></div>
+    <div class="sub">Ưu tiên <b>gần nhân vật</b> (tiết thọ) — đụng đâu làm đó. Cùng chỗ: Trước mắt → săn yêu. Story/combat theo xanh·vàng·%.</div></div>
   <div class="bar">
     <button class="btn pri" id="af-toggle">▶ Bắt đầu (thu panel)</button>
     <button class="btn" id="af-refresh">Quét lại</button>
