@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261105-kinhmach-v45',ID='vkt2',g=window.game;
+const BUILD='20261105-kinhmach-v47',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -67,7 +67,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
   const ANCHORS = {
     eJ:  [/\.doDung\)!=null&&/, 'mô phỏng trận'],
     Vr:  [/\{ten:[\w$]+\.ten,drugResistTran:\{\},drugRetention:/, 'chỉ số nhân vật khi đánh'],
-    Ga:  [/muc\?\?"thuong",\w=\w\.canh_gioi/, 'dựng quái'],
+    Ga:  [/const [\w$]+=[\w$]+\.muc\?\?[\w$]+\.muc\?\?"thuong",[\w$]+=[\w$]+\.canhGioi/, 'dựng quái'],
     Rt:  [/\(([\w$]+),([\w$]+),([\w$]+)\)\{const [\w$]+=\3\.dac_tinh\?\?\{\},[\w$]+=[\w$]+\(\3\)/, 'tính kinh mạch'],
     Tp:  ['.khuon.split(', 'khuôn kinh mạch'],
     al:  [/\(\w\.hinh\?\?\[\],\w\.xoay\)/, 'ô của mảnh'],
@@ -141,10 +141,8 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     const names = {}, missing = [];
     for (const [k, [a, label]] of Object.entries(ANCHORS)) { const n = findAny(src, a); if (n) names[k] = n; else missing.push(label); }
     for (const [k, [re, label]] of Object.entries(REGEX_NAMES)) { const m = re.exec(src); if (m) names[k] = m[1]; else missing.push(label); }
-    // Bản game hiện tại xuất hàm tính kinh mạch lõi (nhân vật, content, thể chất).
-    // Giữ tên hàm lõi và bọc tương thích 2 tham số khi export; không còn phụ thuộc hàm cache đã bị game bỏ/đổi dạng.
-    let rtInner3 = false;
-    if (names.Rt) rtInner3 = new RegExp('function ' + names.Rt.replace(/\$/g, '\\$') + '\\([\\w$]+,[\\w$]+,[\\w$]+\\)').test(src);
+    // Bundle hiện tại: hàm tính kinh mạch lõi nhận (nhân vật, content, thể chất).
+    const rtNeedsTheChat = !!names.Rt && new RegExp('function ' + names.Rt.replace(/\$/g, '\\$') + '\\([\\w$]+,[\\w$]+,[\\w$]+\\)').test(src);
     // Bản mới của game: kiểm tra món (t,n,e,i) tách khỏi hàm kiểm tra chỗ đặt (t,n,e,i=-1)
     if (names.Jh && !new RegExp('function ' + names.Jh.replace(/\$/g, '\\$') + '\\([\\w$]+,[\\w$]+,[\\w$]+,[\\w$]+=-1\\)').test(src)) {
       const m = new RegExp('function ([\\w$]+)\\([\\w$]+,[\\w$]+,[\\w$]+,[\\w$]+=-1\\)\\{(?:(?!function ).){0,400}?' + names.Jh.replace(/\$/g, '\\$') + '\\(', 's').exec(src);
@@ -183,7 +181,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
         if (seg2 !== seg) src = src.slice(0, fi) + seg2 + src.slice(fi + 2000);
       }
     }
-    src += `\n;export const __VKT={${Object.entries(names).map(([k, v]) => k === 'Rt' && rtInner3 ? `Rt:(e,t)=>${v}(e,t,t.theChat.get(e.theChat))` : k + ':' + v).join(',')}};`;
+    src += `\n;export const __VKT={${Object.entries(names).map(([k, v]) => k === 'Rt' && rtNeedsTheChat ? `Rt:(e,t)=>${v}(e,t,t.theChat.get(e.theChat))` : k + ':' + v).join(',')}};`;
     progress('Đang dựng bộ tính toán…');
     const blobUrl = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
     const mod = await import(blobUrl);
@@ -998,7 +996,7 @@ const MODES=[['danh','Chiến đấu'],['tu','Tu luyện'],['can','Cân bằng']
 const bld={pref:{body:'current',mainElement:'auto',subs:[],school:'tu_do',alignment:'auto'},iters:500,busy:false,results:null,mode:'danh',msg:''};
 const opt=(arr,v)=>arr.map(([k,n])=>`<option value="${E(k)}" ${k===v?'selected':''}>${E(n)}</option>`).join('');
 function rootText(){const lc=me().linhCan;if(!lc||typeof lc!=='object')return'—';return[({vo:'Vô linh căn',tap:'Tạp linh căn',song:'Song linh căn',thien:'Thiên linh căn',bien_di:'Biến dị linh căn'})[lc.pham]||lc.pham,A(lc.he).map(h=>ELEMENT_NAMES[h]||h).join(' · ')].filter(Boolean).join(' · ')}
-function bodyOptions(){const cur=me().theChat,col=C.theChat,out=[['current',`Hiện tại · ${T(col?.get?.(cur)?.ten||cur||'—')}`]];if(col instanceof Map)for(const[id,r] of col)if(id!==cur)out.push([id,T(r?.ten||id)]);return out}
+function bodyOptions(){const cur=me().theChat,col=C.theChat;return[['current',`Hiện tại · ${T(col?.get?.(cur)?.ten||cur||'—')}`]]}
 function buildResultHtml(){
   const res=bld.results?.[bld.mode];if(!res)return'';
   const b=res.best,c=res.current,R=b.R||{},P=b.P||{},delta=(b.s??b.score??0)-(c.s??c.score??0),rules=b.rules||{},pieces=A(rules.pieces);
