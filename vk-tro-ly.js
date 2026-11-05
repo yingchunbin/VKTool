@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261105-autofarm-v29',ID='vkt2',g=window.game;
+const BUILD='20261105-autofarm-v44',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -44,6 +44,19 @@ const PLACE_KIND={sao_huyet:'Sào huyệt yêu thú',di_tich:'Di tích',khoang_m
 const placeKind=i=>PLACE_KIND[String(i?.diaDanh?.loai||'')]||null;
 const KIND_ICON={su_kien:'事',chien_dau:'戰',tu_luyen:'修',cua_hang:'市',bi_canh:'秘',dot_pha:'破',tong_mon:'宗',linh_mach:'脈',di_tich:'跡',sao_huyet:'巢',khoang_mach:'礦',di_bao:'寶'};
 const KIND_NAME={su_kien:'Sự kiện',chien_dau:'Chiến đấu',tu_luyen:'Tu luyện',cua_hang:'Cửa hàng',bi_canh:'Bí cảnh',dot_pha:'Đột phá',tong_mon:'Tông môn',linh_mach:'Linh mạch'};
+
+const CG_TEN={0:'Phàm nhân',1:'Luyện khí',2:'Trúc cơ',3:'Kết đan',4:'Nguyên anh',5:'Hóa thần',6:'Luyện hư',7:'Hợp đạo',8:'Đại thừa',9:'Độ kiếp'};
+function cgTen(n){
+  if(n==null||n==='')return'';
+  const k=Math.floor(Number(n));
+  if(!Number.isFinite(k))return String(n);
+  return T(C.canhGioi?.get?.(k)?.ten||C.canhGioi?.get?.(String(k))?.ten||'')||CG_TEN[k]||('Cảnh '+k);
+}
+function cgRangeTen(a,b){
+  if(a==null&&b==null)return'';
+  if(b==null||a===b||Number(a)===Number(b))return cgTen(a);
+  return cgTen(a)+' – '+cgTen(b);
+}
 function danger(slot){const i=info(slot);if(!i)return{rank:1,label:'Chưa rõ'};const self=Number(me().canhGioi??0),base=Number(i.capNen??i.canhGioi??self),d=base-self;if(d>=2)return{rank:3,label:'Tử địa'};if(d>=1)return{rank:2,label:'Nguy hiểm'};if(d<=-1)return{rank:0,label:'An toàn'};return{rank:1,label:'Ngang sức'}}
 
 /* ───────── Dị bảo: danh mục đã đối chiếu với game ───────── */
@@ -506,7 +519,18 @@ function realmRows(){
     if(s.an)continue;
     const def=placeDef(s.id);if(!def?.khai_mo)continue;
     const isEx=explored(s.id),i=info(s.id),w=placeWindow(s.id),closed=closedYears(s.id),rc=reach(s.id),travel=rc.travel;
-    const row={key:`bc|${s.id}`,slot:s.id,title:slotLabel(s.id),kind:placeKind(i)||T(def.ten||'Bí cảnh'),icon:KIND_ICON.bi_canh,place:slotLabel(s.id),country:countryOf(i),travel,miles:rc.miles,est:rc.est,explored:isEx,danger:danger(s.id),tags:[]};
+    const dg=danger(s.id);
+    const capRaw=Number(i?.capNen??i?.canhGioi??NaN);
+    const selfCg=Math.floor(Number(me().canhGioi??0));
+    const CG_FALLBACK={0:'Phàm nhân',1:'Luyện khí',2:'Trúc cơ',3:'Kết đan',4:'Nguyên anh',5:'Hóa thần',6:'Luyện hư',7:'Hợp đạo',8:'Đại thừa',9:'Độ kiếp'};
+    const cgKey=N(capRaw)?Math.floor(capRaw):null;
+    let cgName=null;
+    if(cgKey!=null){
+      const fromC=T(C.canhGioi?.get?.(cgKey)?.ten||C.canhGioi?.get?.(String(cgKey))?.ten||'');
+      cgName=fromC||cgTen(cgKey);
+    }
+    const cgDiff=cgKey!=null?(cgKey-selfCg):null;
+    const row={key:`bc|${s.id}`,slot:s.id,title:slotLabel(s.id),kind:placeKind(i)||T(def.ten||'Bí cảnh'),icon:KIND_ICON.bi_canh,place:slotLabel(s.id),country:countryOf(i),travel,miles:rc.miles,est:rc.est,explored:isEx,danger:dg,capNen:cgKey,cgName,cgSelf:selfCg,cgDiff,tags:[]};
     row.openNow=closed<=0;row.opensIn=closed;row.winSpan=w?.span??null;row.period=w?.period??null;
     row.closesIn=row.openNow&&w?Math.max(0,w.closesAt-nowYear()):null;
     row.openYear=nowYear()+closed;
@@ -569,7 +593,7 @@ function treasureRows(){
   for(const [k,node] of Object.entries(r.nodes||{}))if(node?.encounter&&GUIDE.has(node.encounter)&&!node.viec)act.set(node.encounter,{node,slot:node.slot||k});
   for(const [id,gd] of GUIDE){
     const enc=C.encounters.get(id),relic=gd.relic?C.items.get(gd.relic):null,a=act.get(id);
-    const base={id,title:T(gd.ten||enc?.ten||id),relic:relic?T(relic.ten):null,boss:gd.baoVe?`${gd.baoVe.ten} (cảnh giới ${gd.baoVe.cg})`:null,gate:gd.gate,check:gd.check||null,cooldown:gd.hoiChieu||null,chance:gd.chance,terrain:gd.noi,placeName:gd.dia?.ten||null};
+    const base={id,title:T(gd.ten||enc?.ten||id),relic:relic?T(relic.ten):null,boss:gd.baoVe?`${gd.baoVe.ten} (${cgTen(gd.baoVe.cg)})`:null,gate:gd.gate,check:gd.check||null,cooldown:gd.hoiChieu||null,chance:gd.chance,terrain:gd.noi,placeName:gd.dia?.ten||null};
     if(a&&hasSlot(a.slot)){
       const row=makeRow({key:`db|${a.slot}|${id}`,slot:a.slot,title:base.title,kind:'Dị bảo',icon:KIND_ICON.di_bao,enc:{__han:a.node.hetHanNam},noGate:true});
       Object.assign(row,base,{group:'active'});active.push(row);continue;
@@ -827,7 +851,7 @@ const CSS=`
 `;
 const styleEl=document.createElement('style');styleEl.id=ID+'-style';styleEl.textContent=CSS;document.head.appendChild(styleEl);
 
-const TABS=[['map','地','Bản đồ'],['realm','秘','Bí cảnh'],['auto','自','Auto Farm'],['bounty','賞','Treo thưởng'],['people','人','Nhân mạch'],['sect','宗','Tông môn'],['breakthrough','破','Đột phá'],['build','脈','Kinh mạch'],['items','寶','Vật phẩm'],['check','察','Kiểm tra']];
+const TABS=[['map','地','Bản đồ'],['realm','秘','Bí cảnh&Dị bảo'],['auto','自','Auto Farm'],['bounty','賞','Treo thưởng'],['people','人','Nhân mạch'],['sect','宗','Tông môn'],['breakthrough','破','Đột phá'],['build','脈','Kinh mạch'],['items','寶','Vật phẩm'],['check','察','Kiểm tra']];
 const panel=document.createElement('div');panel.id=ID;panel.setAttribute('role','dialog');
 panel.innerHTML=`<header><div class="seal">仙</div><div><h1>Vạn Kiếp Trợ Thủ</h1><small id="${ID}-sub"></small></div><button id="${ID}-x" aria-label="Thu gọn">✕</button></header><div class="body" id="${ID}-body"></div><nav>${TABS.map(([k,i,n])=>`<button data-t="${k}"><i>${i}</i>${n}</button>`).join('')}</nav>`;
 const fab=document.createElement('div');fab.id=ID+'-fab';fab.innerHTML='仙<b></b>';fab.title='Vạn Kiếp Trợ Thủ';
@@ -937,22 +961,33 @@ VIEWS.map=()=>{
 const realmCard=r=>{
   const big=r.openNow?(r.closesIn!==null?`Đóng sau ${fmtTime(r.closesIn)}`:'Đang mở'):`Mở sau ${fmtTime(r.opensIn)}`;
   const reachTag=r.ok?(r.openNow?'<span class="tag g">Tới kịp khi cửa còn mở</span>':(r.wait>0?`<span class="tag o">Nên khởi hành sau ${fmtTime(r.wait)} để tới đúng lúc mở</span>`:'<span class="tag g">Tới nơi vừa lúc mở cửa</span>')):`<span class="tag r">${E(r.why||'Không tới kịp')}</span>`;
-  return`<article class="card ${r.openNow?'':'late'}" data-slot="${E(r.slot)}" data-title="${E(r.title)}"><div class="ico">秘</div><div><b>${E(r.title)}</b><small>${E(r.kind)}${r.country?' · '+E(r.country):''}</small></div><div class="side" style="color:${r.openNow?'var(--jade)':'var(--amber)'}"><b style="color:inherit;font-size:14px">${E(big)}</b><small>${r.openNow?'':'năm '+Math.floor(r.openYear)}</small></div><div class="tags">${reachTag}${r.winSpan!==null?`<span class="tag">Mỗi lần mở ${fmtTime(r.winSpan)}</span>`:''}${r.period?`<span class="tag">Chu kỳ ${fmtTime(r.period)}</span>`:''}${N(r.travel)?`<span class="tag">Đi ${r.est?'khoảng ':''}${fmtTime(r.travel)} · ${r.est?'~':''}${fmtMiles(r.miles)}</span>`:''}${r.danger.rank>=1?`<span class="tag ${r.danger.rank>=2?'r':''}">${r.danger.label}</span>`:''}</div><div class="acts"><button class="btn" data-act="view">Xem bản đồ</button><button class="btn pri" data-act="go">Đường đi an toàn</button></div></article>`;
+  return`<article class="card ${r.openNow?'':'late'}" data-slot="${E(r.slot)}" data-title="${E(r.title)}"><div class="ico">秘</div><div><b>${E(r.title)}</b><small>${E(r.kind)}${r.country?' · '+E(r.country):''}</small></div><div class="side" style="color:${r.openNow?'var(--jade)':'var(--amber)'}"><b style="color:inherit;font-size:14px">${E(big)}</b><small>${r.openNow?'':'năm '+Math.floor(r.openYear)}</small></div><div class="tags">${reachTag}${r.cgName?`<span class="tag ${r.cgDiff>=2?'r':r.cgDiff>=1?'o':r.cgDiff<=-1?'g':''}">Cấp nền: ${E(r.cgName)}${r.cgDiff!=null?(r.cgDiff>0?' · cao hơn ngươi '+r.cgDiff+' cảnh':r.cgDiff<0?' · thấp hơn ngươi '+(-r.cgDiff)+' cảnh':' · ngang cảnh giới'):''}</span>`:''}${r.danger?`<span class="tag ${r.danger.rank>=2?'r':r.danger.rank>=1?'o':'g'}">${E(r.danger.label||'')}</span>`:''}${r.winSpan!==null?`<span class="tag">Mỗi lần mở ${fmtTime(r.winSpan)}</span>`:''}${r.period?`<span class="tag">Chu kỳ ${fmtTime(r.period)}</span>`:''}${N(r.travel)?`<span class="tag">Đi ${r.est?'khoảng ':''}${fmtTime(r.travel)} · ${r.est?'~':''}${fmtMiles(r.miles)}</span>`:''}${r.danger.rank>=1?`<span class="tag ${r.danger.rank>=2?'r':''}">${r.danger.label}</span>`:''}</div><div class="acts"><button class="btn" data-act="view">Xem bản đồ</button><button class="btn pri" data-act="go">Đường đi an toàn</button></div></article>`;
 };
 const STAT_VN={than_thuc:'thần thức',ngo_tinh:'ngộ tính',dao_tam:'đạo tâm',khi_van:'khí vận',can_cot:'căn cốt',than_phap:'thân pháp'},TERRAIN_VN={di_tich:'Di tích',son_thuy:'Sơn thủy',hoang_da:'Hoang dã'};
 const checkVn=s=>String(s||'').replace(/[a-z_]+/g,m=>STAT_VN[m]||m.replace(/_/g,' '));
 const treasureWaitCard=r=>{
   const state=r.done?'Đã lấy':r.exhausted?'Hết lượt':r.cd>0?`Mở lại sau ${fmtTime(r.cd)}`:'Chưa xuất hiện';
   const col=r.cd>0?'var(--amber)':'var(--mute)';
-  return`<article class="card late" ${r.slot?`data-slot="${E(r.slot)}" data-title="${E(r.title)}"`:''}><div class="ico">寶</div><div><b>${E(r.title)}</b><small>${E(r.placeName||'')}${r.terrain?' · '+E(TERRAIN_VN[r.terrain]||r.terrain.replace(/_/g,' ')):''}</small></div><div class="side" style="color:${col}"><b style="color:inherit;font-size:14px">${E(state)}</b>${r.cd>0?`<small>năm ${Math.floor(nowYear()+r.cd)}</small>`:''}</div><div class="tags">${r.relic?`<span class="tag o">Dị bảo: ${E(r.relic)}</span>`:''}${r.boss?`<span class="tag r">Canh giữ: ${E(r.boss)}</span>`:''}${r.gate?`<span class="tag">Cảnh giới ${r.gate[0]===r.gate[1]?r.gate[0]:r.gate.join('–')}</span>`:''}${r.check?`<span class="tag">Cần: ${E(checkVn(r.check))}</span>`:''}${r.chance&&!r.done?`<span class="tag">Khoảng ${F(r.chance*100)}% mỗi lần xuất hiện</span>`:''}${r.cooldown?`<span class="tag">Hồi chiêu ${r.cooldown} năm</span>`:''}${N(r.travel)?`<span class="tag">Đi ${r.est?'khoảng ':''}${fmtTime(r.travel)} · ${r.est?'~':''}${fmtMiles(r.miles)}</span>`:''}</div>${treasureHow(r.id)}${r.slot&&!r.done?'<div class="acts"><button class="btn" data-act="view">Xem bản đồ</button><button class="btn pri" data-act="go">Đường đi an toàn</button></div>':''}</article>`;
+  return`<article class="card late" ${r.slot?`data-slot="${E(r.slot)}" data-title="${E(r.title)}"`:''}><div class="ico">寶</div><div><b>${E(r.title)}</b><small>${E(r.placeName||'')}${r.terrain?' · '+E(TERRAIN_VN[r.terrain]||r.terrain.replace(/_/g,' ')):''}</small></div><div class="side" style="color:${col}"><b style="color:inherit;font-size:14px">${E(state)}</b>${r.cd>0?`<small>năm ${Math.floor(nowYear()+r.cd)}</small>`:''}</div><div class="tags">${r.relic?`<span class="tag o">Dị bảo: ${E(r.relic)}</span>`:''}${r.boss?`<span class="tag r">Canh giữ: ${E(r.boss)}</span>`:''}${r.gate?`<span class="tag">Cảnh giới: ${E(cgRangeTen(r.gate[0],r.gate[1]))}</span>`:''}${r.check?`<span class="tag">Cần: ${E(checkVn(r.check))}</span>`:''}${r.chance&&!r.done?`<span class="tag">Khoảng ${F(r.chance*100)}% mỗi lần xuất hiện</span>`:''}${r.cooldown?`<span class="tag">Hồi chiêu ${r.cooldown} năm</span>`:''}${N(r.travel)?`<span class="tag">Đi ${r.est?'khoảng ':''}${fmtTime(r.travel)} · ${r.est?'~':''}${fmtMiles(r.miles)}</span>`:''}</div>${treasureHow(r.id)}${r.slot&&!r.done?'<div class="acts"><button class="btn" data-act="view">Xem bản đồ</button><button class="btn pri" data-act="go">Đường đi an toàn</button></div>':''}</article>`;
 };
 VIEWS.realm=()=>{
+  const sub=ui.tabState.realmSub||'bi_canh';
   const bc=realmRows(),tr=treasureRows(),act=[...tr.active].sort(SORTS.urgent.fn);
   const opened=bc.filter(r=>r.openNow).length;
-  const tCard=r=>cardHtml(r,{after:treasureHow(r.id),extra:[r.relic?`<span class="tag o">Dị bảo: ${E(r.relic)}</span>`:'',r.boss?`<span class="tag r">Canh giữ: ${E(r.boss)}</span>`:'',r.gate?`<span class="tag">Cảnh giới ${r.gate[0]===r.gate[1]?r.gate[0]:r.gate.join('–')}</span>`:'',r.check?`<span class="tag">Cần: ${E(checkVn(r.check))}</span>`:'',r.cooldown?`<span class="tag">Hồi chiêu ${r.cooldown} năm</span>`:''].join('')});
-  body.innerHTML=`<h3>Bí cảnh · ${bc.length} (đang mở ${opened}) · xếp theo giờ mở cửa</h3>${bc.map(realmCard).join('')||'<div class="empty">Chưa có bí cảnh nào.</div>'}
-  <h3>Dị bảo đang xuất hiện · ${act.length}</h3>${act.map(tCard).join('')||'<div class="empty">Chưa có dị bảo nào xuất hiện.</div>'}
-  <h3>Các dị bảo khác · ${tr.waiting.length}</h3>${tr.waiting.map(treasureWaitCard).join('')}`;
+  const tCard=r=>cardHtml(r,{after:treasureHow(r.id),extra:[r.relic?`<span class="tag o">Dị bảo: ${E(r.relic)}</span>`:'',r.boss?`<span class="tag r">Canh giữ: ${E(r.boss)}</span>`:'',r.gate?`<span class="tag">Cảnh giới: ${E(cgRangeTen(r.gate[0],r.gate[1]))}</span>`:'',r.check?`<span class="tag">Cần: ${E(checkVn(r.check))}</span>`:'',r.cooldown?`<span class="tag">Hồi chiêu ${r.cooldown} năm</span>`:''].join('')});
+  const subNav=`<div class="row" style="gap:6px;margin:0 0 10px;flex-wrap:wrap">
+    <button type="button" class="btn ${sub==='bi_canh'?'on':''}" data-realm-sub="bi_canh">Bí cảnh · ${bc.length}${opened?` · mở ${opened}`:''}</button>
+    <button type="button" class="btn ${sub==='di_bao'?'on':''}" data-realm-sub="di_bao">Dị bảo · ${act.length+tr.waiting.length}${act.length?` · hiện ${act.length}`:''}</button>
+  </div>`;
+  let main='';
+  if(sub==='di_bao'){
+    main=`<h3>Dị bảo đang xuất hiện · ${act.length}</h3>${act.map(tCard).join('')||'<div class="empty">Chưa có dị bảo nào xuất hiện.</div>'}
+    <h3>Các dị bảo khác · ${tr.waiting.length}</h3>${tr.waiting.map(treasureWaitCard).join('')||'<div class="empty">Không có.</div>'}`;
+  }else{
+    main=`<h3>Bí cảnh · ${bc.length} (đang mở ${opened}) · xếp theo giờ mở cửa</h3>${bc.map(realmCard).join('')||'<div class="empty">Chưa có bí cảnh nào.</div>'}`;
+  }
+  body.innerHTML=subNav+main;
+  $$(body,'[data-realm-sub]').forEach(b=>b.onclick=()=>{ui.tabState.realmSub=b.dataset.realmSub;VIEWS.realm()});
 };
 
 /* ───────── Tab: Kinh mạch (Build) ───────── */
@@ -1119,10 +1154,33 @@ VIEWS.breakthrough=()=>{
 
 /* ───────── Tab: Auto Farm (API game: enterNode / tocChienTran / leavePlace) ───────── */
 const AutoFarm={
-  running:false,timer:null,stepN:0,
-  opts:{onlySanYeu:true,tocChien:true,skipTuDia:true,autoChoose:true,xuTri:'tha',radiusWorld:40,radiusYears:0.12,delayMs:800},
-  stats:{ok:0,skip:0,err:0},
+  running:false,timer:null,stepN:0,paused:false,emptyScans:0,needInteractHere:false,
+  opts:{
+    onlySanYeu:false,
+    includeWildSan:true,
+    includeMapNodes:true,
+    includePlaceActs:true,
+    includeNearPlaces:true,
+    includeHaiThuoc:false,
+    preferNear:true,
+    tocChien:true,
+    skipTuDia:true,
+    autoChoose:true,
+    autoHeal:true,
+    healMinLevel:1,
+    pauseIfNoHeal:true,
+    pursuit:'release',
+    xuTri:'tha',
+    radiusWorld:55,
+    radiusYears:0.25,
+    delayMs:800
+  },
+  stats:{ok:0,skip:0,err:0,heal:0},
   log:[],
+  slotBan:null,
+  recentSlots:null,
+  /* ── Ghi hành động tay (để học pattern farm) ── */
+  rec:{on:false,events:[],hooks:null,unsub:null,lastSnap:null},
   push(msg,kind='',extra){
     const line={
       t:new Date().toISOString(),
@@ -1133,10 +1191,11 @@ const AutoFarm={
       viTri:run().viTri||null,
       active:run().active?.id||null,
       waiting:run().active?.waiting?.kind||null,
+      thuongThe:Number(me().thuongThe||0),
       extra:extra||null
     };
     this.log.push(line);
-    if(this.log.length>200)this.log.shift();
+    if(this.log.length>250)this.log.shift();
     try{console.log('[AutoFarm]',line.kind||'info',line.msg,line)}catch{}
     this.refreshLogOnly();
   },
@@ -1146,21 +1205,269 @@ const AutoFarm={
     try{view=typeof g.encounterView==='function'?g.encounterView():null}catch(e){viewErr=String(e.message||e)}
     const st={
       tag,nam:r.nam,viTri:r.viTri,ketThuc:!!r.ketThuc,
+      thuongThe:Number(r.nhanVat?.thuongThe||0),
       active:a?{id:a.id,slot:a.slot,done:!!a.done,waiting:a.waiting?.kind||null,scene:a.scene||null}:null,
-      viewErr,viewChoices:A(view?.choices).map(c=>({index:c.index,available:c.available,chance:c.chance,text:String(c.text||'').slice(0,60),thoat:!!c.thoat})),
-      targets:this.targets().slice(0,12).map(t=>({slot:t.slot,enc:t.enc,travel:t.travel,left:t.left,mode:t.mode})),nodeSample:this.nodeEncounterSample(20),
-      opts:{...this.opts},stats:{...this.stats},stepN:this.stepN,running:this.running
+      truyDuoi:r.truyDuoi?{ten:r.truyDuoi.ten,den:r.truyDuoi.den}:null,
+      viewErr,viewChoices:A(view?.choices).map(c=>({index:c.index,available:c.available,chance:c.chance,text:String(c.text||'').slice(0,60),thoat:!!c.thoat,risk:c.risk?.level||null})),
+      targets:this.targets().slice(0,12).map(t=>({slot:t.slot,enc:t.enc,travel:t.travel,left:t.left,mode:t.mode})),
+      nodeSample:this.nodeEncounterSample(20),
+      healPick:this.pickHealItem(),
+      opts:{...this.opts},stats:{...this.stats},stepN:this.stepN,running:this.running,paused:this.paused
     };
     this.push('STATE '+tag,'dbg',st);
     return st;
   },
-  exportLog(){
+  recSnap(){
+    const r=run(),a=r.active;
+    let view=null,noi=null,hunts=null,block=null,pursuit=null,xutri=null,placeInfo=null;
+    try{view=typeof g.encounterView==='function'?g.encounterView():null}catch{}
+    try{noi=typeof g.noiView==='function'?g.noiView():null}catch{}
+    try{hunts=typeof g.huntTargets==='function'?g.huntTargets():null}catch{}
+    try{block=typeof g.targetHuntBlock==='function'?g.targetHuntBlock():null}catch{}
+    try{pursuit=typeof g.pursuitOptions==='function'?g.pursuitOptions():null}catch{}
+    try{xutri=typeof g.cachXuTri==='function'?g.cachXuTri():null}catch{}
+    try{placeInfo=typeof g.placeInfo==='function'?g.placeInfo():null}catch{}
+    const node=r.nodes?.[r.viTri];
+    const bag=A(r.nhanVat?.tui||r.tui);
+    const healIds=['item.hoi_xuan_dan','item.kim_sang_duoc','item.sinh_co_dan','item.tai_tao_dan','item.bat_tu_dan'];
+    const healBag=bag.filter(it=>{
+      const id=String(it?.id||it||'');
+      return healIds.some(h=>id.startsWith(h))||/hoi_xuan|kim_sang|sinh_co|tai_tao|bat_tu|tri_thuong|hoi_mau/i.test(id);
+    }).map(it=>({id:it.id||it,so:it.so||it.qty||1})).slice(0,12);
+    // Node gần (map encounters) — chỉ id
+    const nearNodes=[];
+    try{
+      const nodes=r.nodes||{};
+      for(const [slot,n] of Object.entries(nodes)){
+        if(!n||!n.encounter)continue;
+        const m=milesTo(slot);
+        if(N(m)&&m<=30)nearNodes.push({slot,enc:n.encounter,miles:m});
+      }
+      nearNodes.sort((a,b)=>(a.miles||9)-(b.miles||9));
+    }catch{}
+    return {
+      nam:r.nam,
+      viTri:r.viTri,
+      oNoi:r.oNoi||null,
+      thuongThe:Number(r.nhanVat?.thuongThe||0),
+      canhGioi:r.nhanVat?.canhGioi??null,
+      active:a?{
+        id:a.id,slot:a.slot,done:!!a.done,
+        waiting:a.waiting?.kind||null,
+        waitingData:a.waiting?.data?JSON.parse(JSON.stringify(a.waiting.data,(k,v)=>typeof v==='function'?undefined:v)):null
+      }:null,
+      tran:r.tran?{
+        ketThuc:!!r.tran.ketThuc,
+        phe:r.tran.phe||null,
+        luot:r.tran.luot??null
+      }:null,
+      bienCo:r.bienCo?{encounter:r.bienCo.encounter||r.bienCo.id||true,slot:r.bienCo.slot||null}:null,
+      thongBao:r.thongBao?{text:String(r.thongBao.text||r.thongBao||'').slice(0,120)}:null,
+      thongBaoDai:!!r.thongBaoDai,
+      nodeEnc:node?.encounter||null,
+      sanYeuLeft:this.sanYeuLeft(r.viTri),
+      sanYeuRaw:r.sanYeu?.[r.viTri]??null,
+      huntBlock:block?String(block):null,
+      huntTargets:A(hunts).slice(0,15).map(h=>({
+        id:h.id||h.enemyId||h.beastId||null,
+        ten:T(h.ten||h.name||''),
+        risk:h.risk?.level||h.nguyHiem||null
+      })),
+      noiActs:A(noi?.hoatDong).map(x=>({
+        id:x.id,loai:x.loai,ten:T(x.ten||''),locked:x.lockedReason||null
+      })).slice(0,40),
+      placeTabs:A(noi?.tabs||noi?.tab).slice(0,10),
+      placeBeasts:A(placeInfo?.beasts||placeInfo?.yeuThu).slice(0,10).map(b=>({id:b.id||b,ten:T(b.ten||'')})),
+      choices:A(view?.choices).map(c=>({
+        index:c.index,
+        text:String(c.text||'').slice(0,100),
+        chance:c.chance,
+        risk:c.risk?.level||null,
+        thoat:!!c.thoat,
+        available:c.available!==false,
+        effect:c.effect||null
+      })).slice(0,25),
+      pursuit:A(pursuit).map(p=>({id:p.id||p.value||p,text:T(p.ten||p.text||p)})).slice(0,8),
+      xuTriOpts:A(xutri).map(x=>({id:x.id||x.value||x,text:T(x.ten||x.text||x)})).slice(0,8),
+      healBag:healBag,
+      nearNodes:nearNodes.slice(0,12)
+    };
+  },
+  recSerialize(args){
+    try{
+      return JSON.parse(JSON.stringify(args,(k,v)=>{
+        if(typeof v==='function')return undefined;
+        if(typeof v==='bigint')return Number(v);
+        if(v&&typeof v==='object'){
+          // cắt object quá sâu
+        }
+        return v;
+      }));
+    }catch{
+      try{return args.map(a=>{try{return typeof a==='object'?JSON.stringify(a).slice(0,200):a}catch{return String(a)}})}catch{return [String(args)]}
+    }
+  },
+  recPush(kind,detail,extra){
+    if(!this.rec.on)return;
+    const ev={
+      t:new Date().toISOString(),
+      tShow:new Date().toLocaleTimeString('vi-VN',{hour12:false}),
+      kind,
+      detail:detail===undefined?null:detail,
+      extra:extra||null,
+      snap:this.recSnap()
+    };
+    this.rec.events.push(ev);
+    if(this.rec.events.length>2000)this.rec.events.splice(0,this.rec.events.length-2000);
+    try{console.log('[AF-REC]',kind,detail)}catch{}
+    this.refreshRecOnly();
+  },
+  refreshRecOnly(){
+    if(!ui.isOpen||ui.tab!=='auto')return;
+    const el=$(body,'#af-rec-log');if(!el)return;
+    const n=this.rec.events.length;
+    el.innerHTML=(this.rec.on?`<div class="sub g">Đang ghi · ${n} sự kiện</div>`:`<div class="sub">Đã ghi ${n} sự kiện</div>`)+
+      this.rec.events.slice().reverse().slice(0,50).map(x=>{
+        let d='';
+        try{d=typeof x.detail==='string'?x.detail:JSON.stringify(x.detail??'').slice(0,140)}catch{d=''}
+        return `<div class="sub">[${E(x.tShow)}] <b>${E(x.kind)}</b> ${E(d)}</div>`;
+      }).join('');
+  },
+  startRecord(){
+    if(this.rec.on)return;
+    this.rec.on=true;
+    this.rec.events=[];
+    this.rec.lastSnap=this.recSnap();
+    this.recPush('record_start','Bắt đầu ghi — thao tác trên game như bình thường; mọi API + đổi state sẽ được lưu');
+    // Hook rộng các API game (act + đọc liên quan farm)
+    const names=[
+      'travelTo','enterNode','chooseActivity','leavePlace','reopenPlace','doAction','choose',
+      'xuTri','choosePursuit','closeEncounter','resume','tocChienTran','hanhDongTran','xongTran',
+      'useItem','targetedHunt','turnOnPursuer','dongThongBao','closeLongNotice','ngoiDoi','beQuan',
+      'luyenChe','dotPha','nhapDinh','xungKich'
+    ];
+    this.rec.hooks=this.rec.hooks||{};
+    for(const name of names){
+      if(typeof g[name]!=='function')continue;
+      if(this.rec.hooks[name])continue;
+      const orig=g[name].bind(g);
+      this.rec.hooks[name]=orig;
+      g[name]=(...args)=>{
+        let ret,err;
+        const ser=this.recSerialize(args);
+        try{ret=orig(...args)}catch(e){err=String(e&&e.message||e);try{this.recPush('api:'+name+':err',{args:ser,error:err})}catch{}throw e}
+        try{this.recPush('api:'+name,{args:ser,ret:ret===undefined?null:(typeof ret==='object'?this.recSerialize(ret):ret)})}catch{}
+        return ret;
+      };
+    }
+    // Hook g.act nếu có — bắt mọi action nội bộ
+    if(typeof g.act==='function'&&!this.rec.hooks.act){
+      const origAct=g.act.bind(g);
+      this.rec.hooks.act=origAct;
+      g.act=(fn,label)=>{
+        try{this.recPush('api:act',{label:label||null,fn:String(fn).slice(0,80)})}catch{}
+        return origAct(fn,label);
+      };
+    }
+    // Subscribe state — diff đầy đủ hơn
+    try{
+      this.rec.unsub=g.store?.subscribe?.(()=>{
+        if(!this.rec.on)return;
+        const cur=this.recSnap();
+        const prev=this.rec.lastSnap||{};
+        const diffs=[];
+        const keys=['viTri','oNoi','thuongThe','nodeEnc','sanYeuLeft','huntBlock','thongBaoDai'];
+        for(const k of keys){
+          const a=prev[k],b=cur[k];
+          if(JSON.stringify(a)!==JSON.stringify(b))diffs.push([k,a,b]);
+        }
+        if((prev.active?.id||null)!==(cur.active?.id||null)||(prev.active?.waiting||null)!==(cur.active?.waiting||null)||(prev.active?.done||null)!==(cur.active?.done||null))
+          diffs.push(['active',prev.active||null,cur.active||null]);
+        if(JSON.stringify(prev.tran)!==JSON.stringify(cur.tran))diffs.push(['tran',prev.tran||null,cur.tran||null]);
+        if(JSON.stringify(prev.bienCo)!==JSON.stringify(cur.bienCo))diffs.push(['bienCo',prev.bienCo||null,cur.bienCo||null]);
+        if(JSON.stringify(prev.thongBao)!==JSON.stringify(cur.thongBao))diffs.push(['thongBao',prev.thongBao||null,cur.thongBao||null]);
+        // noiActs id list đổi
+        const pa=A(prev.noiActs).map(x=>x.id).join(','),ca=A(cur.noiActs).map(x=>x.id).join(',');
+        if(pa!==ca)diffs.push(['noiActs',A(prev.noiActs).map(x=>x.id),A(cur.noiActs).map(x=>x.id)]);
+        // choices text
+        const pc=A(prev.choices).map(c=>c.index+':'+c.text).join('|'),cc=A(cur.choices).map(c=>c.index+':'+c.text).join('|');
+        if(pc!==cc)diffs.push(['choices',A(prev.choices),A(cur.choices)]);
+        if(diffs.length)this.recPush('state',diffs);
+        this.rec.lastSnap=cur;
+      });
+    }catch(e){this.recPush('warn','subscribe: '+(e.message||e))}
+    toast('Đang ghi đầy đủ thao tác game — xong bấm Dừng ghi + Xuất ghi','ok',4500);
+    this.push('Ghi hành động: BẬT (full)','ok');
+    if(ui.isOpen&&ui.tab==='auto')VIEWS.auto();
+  },
+  stopRecord(){
+    if(!this.rec.on&&!this.rec.hooks)return;
+    const n=this.rec.events.length;
+    this.rec.events.push({
+      t:new Date().toISOString(),
+      tShow:new Date().toLocaleTimeString('vi-VN',{hour12:false}),
+      kind:'record_stop',detail:'Dừng ghi · '+n+' sự kiện',snap:this.recSnap(),extra:null
+    });
+    this.rec.on=false;
+    if(this.rec.hooks){
+      for(const [name,orig] of Object.entries(this.rec.hooks)){
+        try{g[name]=orig}catch{}
+      }
+      this.rec.hooks=null;
+    }
+    try{this.rec.unsub?.()}catch{}
+    this.rec.unsub=null;
+    toast('Đã dừng ghi ('+this.rec.events.length+' sự kiện). Bấm Xuất ghi để tải file.','ok',4000);
+    this.push('Ghi hành động: TẮT · '+this.rec.events.length+' events','ok');
+    if(ui.isOpen&&ui.tab==='auto')VIEWS.auto();
+  },
+  exportRecord(){
+    // Tóm tắt để inspect nhanh
+    const apis={},acts={},slots={},choices=[];
+    for(const e of this.rec.events){
+      if(String(e.kind).startsWith('api:')){
+        const k=e.kind;
+        apis[k]=(apis[k]||0)+1;
+        const args=e.detail?.args;
+        if(k==='api:chooseActivity'&&args?.[0])acts[args[0]]=(acts[args[0]]||0)+1;
+        if(k==='api:enterNode'&&args?.[0])slots[args[0]]=(slots[args[0]]||0)+1;
+        if(k==='api:choose'){
+          const idx=args?.[0];
+          const ch=A(e.snap?.choices).find(c=>c.index===idx);
+          choices.push({idx,text:ch?.text||null,risk:ch?.risk||null,active:e.snap?.active?.id||null,viTri:e.snap?.viTri});
+        }
+      }
+    }
     const payload={
       build:BUILD,
       at:new Date().toISOString(),
-      state:this.dumpState('export'),
-      log:this.log
+      kind:'autofarm-action-record',
+      note:'Full record: mọi API game + diff state (noiActs, choices, combat, bag thuốc…)',
+      count:this.rec.events.length,
+      summary:{
+        apiCounts:apis,
+        chooseActivityCounts:acts,
+        enterNodeCounts:slots,
+        chooses:choices.slice(0,80)
+      },
+      endSnap:this.recSnap(),
+      events:this.rec.events
     };
+    const text=JSON.stringify(payload,null,2);
+    try{
+      const blob=new Blob([text],{type:'application/json'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download=`autofarm-record-${Date.now()}.json`;
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),20_000);
+    }catch{}
+    try{navigator.clipboard?.writeText?.(text)}catch{}
+    toast('Đã tải + copy bản ghi ('+this.rec.events.length+' sự kiện)','ok',3500);
+    this.push('Xuất bản ghi hành động ('+this.rec.events.length+')','ok');
+  },
+  exportLog(){
+    const payload={build:BUILD,at:new Date().toISOString(),state:this.dumpState('export'),log:this.log,record:this.rec.events.slice(-50)};
     const text=JSON.stringify(payload,null,2);
     try{
       const blob=new Blob([text],{type:'application/json'});
@@ -1183,17 +1490,118 @@ const AutoFarm={
       const t=x.tShow||x.t||'';
       return `<div class="sub${cls}">[${E(t)}]${k?` <b>${E(k)}</b>`:''} ${E(x.msg)}</div>`;
     }).join('')||'<div class="sub">Chưa có nhật ký.</div>';
-    const st=$(body,'#af-stats');if(st)st.textContent=`OK ${this.stats.ok} · bỏ ${this.stats.skip} · lỗi ${this.stats.err}${this.running?(this.paused?' · TẠM DỪNG':' · ĐANG CHẠY'):''}`;
+    const st=$(body,'#af-stats');
+    if(st)st.textContent=`OK ${this.stats.ok} · bỏ ${this.stats.skip} · lỗi ${this.stats.err} · chữa ${this.stats.heal||0}${this.running?(this.paused?' · TẠM DỪNG':' · ĐANG CHẠY'):''}`;
   },
-  sanYeuLeft(slot){
-    // Game: dS=3, iun=2; Rm=max(0, used0-(nam-t0)/2); còn lại = floor(3-Rm)
-    const r=run(),row=r.sanYeu?.[slot];
-    if(!row||!Array.isArray(row))return 3;
-    const used0=+row[0]||0,t0=+row[1]||0;
-    const rm=Math.max(0, used0-((+r.nam||0)-t0)/2);
-    return Math.max(0,Math.floor(3-rm+1e-9));
+
+  /* ── Thương thế & chữa trị ── */
+  injuryLevel(){return Math.max(0,Math.min(3,Number(me().thuongThe||0)))},
+  injuryName(lv){return ['Lành lặn','Thương nhẹ','Thương nặng','Trọng thương'][Math.max(0,Math.min(3,lv|0))]||'?'},
+  itemHealPower(it){
+    if(!it)return 0;
+    let t=0;
+    for(const e of A(it.dung)){
+      if(typeof e?.thuong_the==='number')return 0;
+      if(typeof e?.heal==='number')t+=e.heal;
+    }
+    return t;
   },
-  /* Nơi chốn cố định (không săn yêu hoang dã được theo san_yeu_duoc) */
+  pickHealItem(){
+    const nv=me(),need=this.injuryLevel();
+    if(need<=0)return null;
+    const bag=nv.tuiDo||{};
+    const cand=[];
+    for(const [id,qty] of Object.entries(bag)){
+      if(!(qty>0))continue;
+      const it=C.items?.get?.(id);
+      const heal=this.itemHealPower(it);
+      if(heal<=0)continue;
+      // Đan yếu hơn cảnh giới quá nhiều thường vô dụng — game cũng chặn
+      const slack=Number(it.canh_gioi??0);
+      if(Number.isFinite(slack)&&nv.canhGioi>slack+2)continue;
+      cand.push({id,heal,gia:Number(it.gia||0),ten:it.ten||id});
+    }
+    if(!cand.length)return null;
+    // Ưu tiên đủ chữa hết, rẻ nhất; không đủ thì heal cao nhất
+    const full=cand.filter(x=>x.heal>=need).sort((a,b)=>a.gia-b.gia||a.id.localeCompare(b.id));
+    if(full.length)return full[0];
+    return cand.sort((a,b)=>b.heal-a.heal||a.gia-b.gia)[0];
+  },
+  tryHeal(reason){
+    if(!this.opts.autoHeal)return 'off';
+    const lv=this.injuryLevel();
+    const min=Math.max(1,Number(this.opts.healMinLevel||1));
+    if(lv<min)return 'ok';
+    if(run().active||run().tran||run().bienCo)return 'busy';
+    const pick=this.pickHealItem();
+    if(!pick){
+      this.push(`Thương thế: ${this.injuryName(lv)} — túi không có đan chữa`,'err',{reason});
+      if(this.opts.pauseIfNoHeal&&lv>=2){
+        this.paused=true;this.syncFab();
+        toast('Auto tạm dừng: bị '+this.injuryName(lv)+' mà không có thuốc','',4000);
+        return 'no-item-pause';
+      }
+      return 'no-item';
+    }
+    try{
+      if(typeof g.useItem!=='function')throw new Error('Không có useItem');
+      g.useItem(pick.id);
+      this.stats.heal=(this.stats.heal||0)+1;
+      const after=this.injuryLevel();
+      this.push(`Chữa thương: ${pick.ten} (−${pick.heal}) · còn ${this.injuryName(after)}`,'ok',{reason,before:lv,after});
+      return after>0?'partial':'healed';
+    }catch(e){
+      this.push('useItem chữa lỗi: '+(e.message||e),'err');
+      return 'err';
+    }
+  },
+  ensureHealthy(beforeFight){
+    let guard=0;
+    while(this.injuryLevel()>=Math.max(1,Number(this.opts.healMinLevel||1))&&guard++<4){
+      const st=this.tryHeal(beforeFight?'pre-fight':'tick');
+      if(st==='healed'||st==='ok'||st==='off')break;
+      if(st==='no-item-pause'||st==='busy'||st==='err'||st==='no-item')return st;
+      if(st==='partial')continue;
+      break;
+    }
+    const lv=this.injuryLevel();
+    // Trọng thương: không nên đánh tiếp
+    if(lv>=3){
+      this.push('Trọng thương — tạm dừng để tránh tử vong','err');
+      this.paused=true;this.syncFab();
+      toast('Auto tạm dừng: Trọng thương','',3500);
+      return 'critical';
+    }
+    // Thương nặng trước trận → cảnh báo, vẫn cho đánh nếu user tắt pause
+    if(beforeFight&&lv>=2&&this.opts.pauseIfNoHeal&&!this.pickHealItem()){
+      this.push('Thương nặng + hết thuốc — tạm dừng','err');
+      this.paused=true;this.syncFab();
+      return 'no-item-pause';
+    }
+    return 'ok';
+  },
+
+  /* ── Mục tiêu farm ── */
+  nearSlots(){
+    const r=run(),here=r.viTri,out=[];
+    const R=Number(this.opts.radiusWorld)||55;
+    try{
+      const slots=A(W.slots);
+      for(const s of slots){
+        const id=s?.id||s;if(!id)continue;
+        let d=NaN;
+        try{d=milesTo(id)}catch{}
+        if(id===here||(N(d)&&d<=R)||explored(id))out.push(typeof s==='object'?s:{id});
+      }
+    }catch{
+      for(const id of A(r.daKhamPha))out.push({id});
+      if(here)out.push({id:here});
+    }
+    // Ưu tiên đã khám phá + gần
+    const uniq=new Map();
+    for(const s of out){const id=s?.id||s;if(id)uniq.set(id,s)}
+    return [...uniq.values()];
+  },
   isNoiChon(slot){
     try{
       if(run().noiChon?.[slot]?.chuNhan)return true;
@@ -1202,98 +1610,305 @@ const AutoFarm={
     }catch{}
     return false;
   },
+  sanYeuLeft(slot){
+    try{
+      const r=run(),row=r.sanYeu?.[slot];
+      // Không có dữ liệu săn tại chỗ (thành thị…) → 0, KHÔNG mặc định 3
+      if(row==null)return 0;
+      // Game: sanYeu[slot] = [count, nam]; used = count - (namNow-nam)/2 ; max 3
+      let used=0;
+      if(Array.isArray(row)){
+        const c=Number(row[0])||0, y=Number(row[1])||0;
+        used=Math.max(0,c-(Number(r.nam||0)-y)/2);
+      }else if(typeof row==='object'){
+        used=Number(row.lan||0);
+      }else{
+        used=Number(row)||0;
+      }
+      return Math.max(0,Math.floor(3-used));
+    }catch{return 0}
+  },
+  huntBlockedHere(){
+    try{
+      if(typeof g.targetHuntBlock==='function'){
+        const b=g.targetHuntBlock();
+        if(b)return String(b);
+      }
+    }catch(e){return String(e.message||e)}
+    if(this.sanYeuLeft(run().viTri)<=0)return 'Yêu thú quanh đây đã bị săn cạn';
+    return null;
+  },
+  listHuntBeasts(){
+    // Ưu tiên API huntTargets (đúng game); fallback placeInfo.beasts
+    let list=[];
+    try{
+      if(typeof g.huntTargets==='function')list=A(g.huntTargets());
+    }catch{}
+    if(!list.length){
+      try{
+        const pi=typeof g.placeInfo==='function'?g.placeInfo():null;
+        list=A(pi?.beasts);
+      }catch{}
+    }
+    return list.map(b=>({id:b.id||b,ten:b.ten||b.id||b,chance:b.chance,local:b.local,raw:b}));
+  },
+  isFarmEncounter(id){
+    const s=String(id||'');
+    if(!s)return false;
+    if(s==='ev.san_yeu')return true;
+    if(this.opts.onlySanYeu)return false;
+    return /san_yeu|doi_dau|tru_ma|yeu_|chien|bao_vay|cuop|tan_tu|phe_tich|di_tich|than_thu|dao_boi|khoang|bi_canh|tham_hiem|hang_yeu|sao_huyet|linh_thu|luyen_the|thach_dau|bat_cuop|hai_thuoc|thuoc_dai|dao_khoang|nhat_linh|linh_thach|bao_thu|oan_duoc/i.test(s);
+  },
+  SKIP_PLACE_ACTS:new Set([
+    'ev.khai_phu','ev.tiem_tap_hoa','ev.bang_treo_thuong','ev.tra_lau_nghe_tin','ev.khach_diem',
+    'ev.tham_ban_cu','ev.public_teleport','ev.hoc_duong_tang_thu','ev.dau_gia_hanh','ev.bc_ung_van_phong',
+    'ev.bc_ung_kiem_phoi','ev.lr_lo_ren','ev.co_tu_thien_duong','ev.bc_ung_te_khi','ev.mieu_tho_thap_huong',
+    'ev.bc_thu_mua_hang_xa','ev.tinh_that_thue','ev.tram_dich_quay','ev.the_gia_phu_de','ev.hop_hoan_lau_huong_phong',
+    'ev.van_bao_phan_hoi_ngoai','ev.phuong_thi_cho_tu_si','ev.kl_sap_tho_khoi','ev.kl_lau_co_quan',
+    'ev.dau_gia_hoi','ev.dau_gia_lau','ev.song_bac_chieu_bac','ev.cd_an_tuc_phuong','ev.cd_hac_thi',
+    'ev.cung_duong_dao_quan','ev.cung_duong_cao_tang'
+  ]),
+  /* Không farm: đấu giá, sòng bạc, cúng dường, tiện ích xã hội — không tăng tu vi/tài nguyên farm */
+  isNonFarmEnc(id){
+    const s=String(id||'');
+    if(!s)return false;
+    if(this.SKIP_PLACE_ACTS.has(s))return true;
+    return /dau_gia|song_bac|cung_duong|thap_huong|teleport|khach_diem|tra_lau|tham_ban|tinh_that|phuong_thi|hoc_duong|van_bao|an_tuc|hac_thi|lau_co_quan|sap_tho_khoi|tiem_tap|bang_treo|khai_phu|loi_dai|cho_am|cho_phien|cho_|sap_|lo_ren|thu_mua|mua_ban|cua_hang/i.test(s);
+  },
+  isFarmPlaceAct(act){
+    if(!act||act.lockedReason)return false;
+    const id=String(act.id||'');
+    if(!id||this.isNonFarmEnc(id))return false;
+    if(this.opts.onlySanYeu)return id==='ev.san_yeu';
+    const loai=String(act.loai||'');
+    if(id==='ev.san_yeu'){
+      if(this.sanYeuLeft(run().viTri)<=0)return false;
+      const b=this.huntBlockedHere();
+      if(b&&/săn cạn|hoang dã|lần theo dấu/i.test(String(b)))return false;
+      return this.placeActs().some(a=>a&&a.id==='ev.san_yeu'&&!a.lockedReason);
+    }
+    // su_kien / the_cuc / overlay: chỉ nhận nếu giống farm (chiến, săn, trừ ma…) hoặc chưa biết — loại non-farm đã lọc ở trên
+    if(loai==='su_kien'||loai==='the_cuc'||loai==='overlay'){
+      // Còn lại: cho phép (user từng làm nhiều su_kien farm); non-farm đã chặn
+      return true;
+    }
+    if(loai==='tien_ich'){
+      if(/hai_thuoc|thuoc_dai/i.test(id)&&!this.opts.includeHaiThuoc)return false;
+      return this.isFarmEncounter(id);
+    }
+    if(/hai_thuoc|thuoc_dai/i.test(id)&&!this.opts.includeHaiThuoc)return false;
+    return this.isFarmEncounter(id);
+  },
+  placeFarmActs(){
+    const acts=this.placeActs().filter(a=>this.isFarmPlaceAct(a));
+    const rank=a=>{
+      const l=String(a.loai||'');
+      if(l==='overlay')return 0;
+      if(l==='su_kien')return 1;
+      if(l==='the_cuc')return 2;
+      if(a.id==='ev.san_yeu')return 3;
+      return 4;
+    };
+    return acts.sort((a,b)=>rank(a)-rank(b)||String(a.id).localeCompare(String(b.id)));
+  },
+  goEnter(slot){
+    if(!slot)return false;
+    try{
+      if(typeof g.enterNode!=='function')throw new Error('Không có enterNode');
+      g.enterNode(slot);
+      this.push('enterNode('+slot+')','ok');
+      return true;
+    }catch(e){
+      this.push('enterNode fail: '+(e.message||e),'err');
+      return false;
+    }
+  },
+
   nodeEncounterSample(limit=15){
     const r=run(),out=[];
     for(const [key,node] of Object.entries(r.nodes||{})){
-      if(!node?.encounter)continue;
-      out.push({slot:node.slot||key,enc:node.encounter,viec:!!node.viec});
+      if(!node?.encounter||node.viec)continue;
+      out.push({key,slot:node.slot||key,enc:node.encounter});
       if(out.length>=limit)break;
     }
     return out;
   },
-  /* Quét quanh nhân vật: world.slotsNear — không duyệt cả daKhamPha (xa → tốn thọ nguyên) */
-  nearSlots(){
-    const r=run(),here=r.viTri;
-    const base=Math.max(20,Number(this.opts.radiusWorld)||40);
-    const boost=Math.min(3, Math.floor((this.emptyScans||0)/3));
-    const rad=base*(1+boost*0.5);
-    let slots=[];
-    try{
-      if(typeof W.slotsNear==='function')slots=W.slotsNear(here,rad)||[];
-    }catch(e){this.push?.('slotsNear: '+(e.message||e),'dbg')}
-    const extra=new Set(Object.keys(r.nodes||{}));
-    for(const s of A(r.daKhamPha))extra.add(s);
-    extra.add(here);
-    const maxY=0.12*(1+boost*0.5);
-    for(const id of extra){
-      if(!hasSlot(id))continue;
-      try{
-        const tr=travelTo(id);
-        if(id!==here&&N(tr)&&tr>maxY)continue;
-        const sl=W.slot?.(id);
-        if(sl&&!slots.some(x=>(x.id||x)===id))slots.push(sl);
-      }catch{}
+  // Việc treo thưởng / nhiệm vụ ngắn hạn trên map (biến mất ~5 năm)
+  urgentJobTargets(maxY){
+    const r=run(),out=[],ban=this.slotBan||{},now=Date.now();
+    for(const v of A(r.viecNhan)){
+      if(!v||!v.slot||!hasSlot(v.slot))continue;
+      if(ban[v.slot]&&ban[v.slot]>now)continue;
+      const left=N(v.hetHanNam)?+v.hetHanNam-nowYear():null;
+      // Chỉ ưu tiên việc sắp hết hạn (≤5 năm) hoặc không rõ hạn nhưng gần
+      if(left!==null&&left>5.5)continue;
+      const travel=travelTo(v.slot);
+      if(N(travel)&&travel>maxY&&v.slot!==r.viTri)continue;
+      const dg=danger(v.slot);
+      if(this.opts.skipTuDia&&dg.rank>=3)continue;
+      const enc=v.enc||null;
+      out.push({
+        slot:v.slot,
+        enc:enc||'job',
+        title:T(v.ten||C.encounters?.get?.(enc)?.ten||'Việc treo thưởng'),
+        travel,miles:milesTo(v.slot),danger:dg,
+        left:left,mode:enc?'node':'enter',priority:left!==null?100-left*10:40
+      });
     }
-    try{
-      const self=W.slot?.(here);
-      if(self&&!slots.some(s=>s.id===here))slots=[self,...slots];
-    }catch{}
-    return slots;
+    return out;
   },
   targets(){
     const r=run(),out=[],seen=new Set();
-    const boost=Math.min(3, Math.floor((this.emptyScans||0)/3));
-    const maxY=(N(this.opts.radiusYears)?+this.opts.radiusYears:0.12)*(1+boost*0.5);
+    const boost=Math.min(3,Math.floor((this.emptyScans||0)/3));
+    const maxY=(N(this.opts.radiusYears)?+this.opts.radiusYears:0.18)*(1+boost*0.55);
     const near=this.nearSlots();
     const ban=this.slotBan||(this.slotBan=Object.create(null));
     const now=Date.now();
+
+    // 1) Việc sắp hết hạn — ưu tiên cao
+    if(!this.opts.onlySanYeu){
+      for(const t of this.urgentJobTargets(maxY)){
+        const key=t.slot+'|job|'+(t.enc||'');
+        if(seen.has(key))continue;
+        seen.add(key);
+        out.push(t);
+      }
+    }
+
     for(const s of near){
       const slot=s?.id||s;if(!slot||!hasSlot(slot))continue;
       if(ban[slot]&&ban[slot]>now)continue;
       const travel=travelTo(slot);
       if(N(travel)&&travel>maxY&&slot!==r.viTri)continue;
       const node=r.nodes?.[slot];
-      // Node combat/săn trên map trong bán kính
-      if(node?.encounter&&!node.viec){
-        const enc=node.encounter,id=String(enc),isSan=id==='ev.san_yeu';
-        if(!(this.opts.onlySanYeu?isSan:/san_yeu|doi_dau|tru_ma|yeu_|chien|bao_vay|cuop|tan_tu|phe_tich|di_tich|than_thu/i.test(id)||isSan)){
-          /* skip non-farm */
-        }else{
-          const dg=danger(slot);if(!(this.opts.skipTuDia&&dg.rank>=3)){
-            if(!(isSan&&this.sanYeuLeft(slot)<=0)){
-              const key=slot+'|'+id;
-              if(!seen.has(key)){
-                seen.add(key);
-                const encDef=C.encounters?.get?.(enc);
-                out.push({slot,enc,title:T(encDef?.ten||enc),travel,miles:milesTo(slot),danger:dg,left:isSan?this.sanYeuLeft(slot):null,mode:'node'});
-              }
+      const dg=danger(slot);
+      if(this.opts.skipTuDia&&dg.rank>=3&&slot!==r.viTri)continue;
+
+      // 2) Node combat/săn trên map
+      if(this.opts.includeMapNodes!==false&&node?.encounter&&!node.viec){
+        const enc=node.encounter,id=String(enc);
+        if(this.isFarmEncounter(id)){
+          const isSan=id==='ev.san_yeu';
+          if(!(isSan&&this.sanYeuLeft(slot)<=0)){
+            const key=slot+'|'+id;
+            if(!seen.has(key)){
+              seen.add(key);
+              const encDef=C.encounters?.get?.(enc);
+              if(this.isNodeBanned(slot,id))continue;
+              out.push({slot,enc,title:T(encDef?.ten||enc),travel,miles:milesTo(slot),danger:dg,left:isSan?this.sanYeuLeft(slot):null,mode:'node',priority:isSan?20:22});
             }
           }
         }
       }
-      // Hoang dã gần: còn lượt săn, không nơi chốn
-      if(this.opts.onlySanYeu||this.opts.includeWildSan!==false){
-        if(this.isNoiChon(slot))continue;
-        const left=this.sanYeuLeft(slot);if(left<=0)continue;
-        const key=slot+'|ev.san_yeu';if(seen.has(key))continue;
-        const dg=danger(slot);if(this.opts.skipTuDia&&dg.rank>=3)continue;
-        seen.add(key);
-        out.push({slot,enc:'ev.san_yeu',title:'Săn yêu (gần)',travel,miles:milesTo(slot),danger:dg,left,mode:'doAction'});
+
+      // 3) Hoang dã: săn yêu còn lượt
+      if(this.opts.includeWildSan!==false&&(this.opts.onlySanYeu||!this.opts.onlySanYeu)){
+        if(!this.isNoiChon(slot)){
+          const left=this.sanYeuLeft(slot);
+          if(left>0){
+            const key=slot+'|ev.san_yeu';
+            if(!seen.has(key)){
+              seen.add(key);
+              out.push({slot,enc:'ev.san_yeu',title:'Săn yêu (hoang dã)',travel,miles:milesTo(slot),danger:dg,left,mode:'doAction',priority:36});
+            }
+          }
+        }
+      }
+
+      // 4) Săn thú tại chỗ đang đứng — chỉ khi còn lượt & không bị block
+      if(!this.opts.onlySanYeu&&this.opts.includePlaceActs&&slot===r.viTri){
+        const block=this.huntBlockedHere();
+        if(!block){
+          for(const b of this.listHuntBeasts()){
+            const id=b.id;
+            if(this.isBeastBanned(slot,id))continue;
+            const key=slot+'|hunt|'+id;
+            if(seen.has(key))continue;
+            seen.add(key);
+            // Ưu tiên thấp hơn việc gấp / node map; cao hơn một chút so với hoang dã xa
+            out.push({slot,enc:String(id),title:T(b.ten||id),travel:0,miles:0,danger:dg,left:this.sanYeuLeft(slot),mode:'hunt',priority:28,beast:b});
+          }
+        }
       }
     }
-    // Gần → xa (travelYears, rồi miles)
-    const here=run().viTri;
+
+    // 5) Mọi node encounter trên run.nodes trong bán kính năm (không chỉ nearSlots)
+    if(this.opts.includeMapNodes!==false){
+      for(const [key,node] of Object.entries(r.nodes||{})){
+        if(!node?.encounter||node.viec)continue;
+        const slot=node.slot||key;
+        if(!hasSlot(slot))continue;
+        if(ban[slot]&&ban[slot]>now)continue;
+        const enc=node.encounter,id=String(enc);
+        if(!this.isFarmEncounter(id))continue;
+        const travel=travelTo(slot);
+        if(N(travel)&&travel>maxY&&slot!==r.viTri)continue;
+        const dg=danger(slot);
+        if(this.opts.skipTuDia&&dg.rank>=3&&slot!==r.viTri)continue;
+        const isSan=id==='ev.san_yeu';
+        if(isSan&&this.sanYeuLeft(slot)<=0)continue;
+        if(this.isNodeBanned(slot,id))continue;
+        const k=slot+'|'+id;
+        if(seen.has(k))continue;
+        seen.add(k);
+        const encDef=C.encounters?.get?.(enc);
+        // Node "Chuyện lớn" (overlay) ưu tiên thấp hơn săn hoang dã — tránh kẹt menu nơi
+        out.push({slot,enc,title:T(encDef?.ten||enc),travel,miles:milesTo(slot),danger:dg,left:isSan?this.sanYeuLeft(slot):null,mode:'node',priority:isSan?20:22});
+      }
+    }
+
+    // 6) Nơi chốn gần (thôn/trấn/di tích…) — vào check hoạt động, không chỉ săn hoang dã
+    if(!this.opts.onlySanYeu&&this.opts.includeNearPlaces!==false){
+      for(const s of near){
+        const slot=s?.id||s;if(!slot||!hasSlot(slot)||slot===r.viTri)continue;
+        if(ban[slot]&&ban[slot]>now)continue;
+        if(!this.isNoiChon(slot)&&!placeDef(slot))continue;
+        const travel=travelTo(slot);
+        if(N(travel)&&travel>maxY)continue;
+        const dg=danger(slot);
+        if(this.opts.skipTuDia&&dg.rank>=3)continue;
+        const key=slot+'|visit';
+        if(seen.has(key))continue;
+        seen.add(key);
+        const title=T(info(slot)?.diaDanh?.ten||slotLabel(slot)||slot);
+        const leftHere=this.sanYeuLeft(slot);
+        const hasNode=!!(r.nodes?.[slot]?.encounter);
+        // Không dùng sanYeuLeft để boost (thành thị hay =3 dù không săn được)
+        let pri=8;
+        if(hasNode)pri=40;
+        else if(this.isNoiChon(slot)||placeDef(slot))pri=10; // thấp hơn săn yêu còn lượt
+        out.push({slot,enc:hasNode?r.nodes[slot].encounter:'visit',title:'Ghé '+title,travel,miles:milesTo(slot),danger:dg,left:null,mode:'visit',priority:pri});
+      }
+    }
+
+    const here=r.viTri;
+    const hereLeft=this.sanYeuLeft(here);
+    const hereBlocked=!!this.huntBlockedHere();
+    const preferNear=this.opts.preferNear!==false;
+    const score=t=>{
+      const pri=Number(t.priority||0);
+      const mi=N(t.miles)?t.miles:(N(t.travel)?t.travel*8000:1e6);
+      // Ưu tiên loại có việc thật: doAction/hunt/node >> visit trống
+      let modeBoost=0;
+      if(t.mode==='doAction'||t.mode==='hunt')modeBoost=50;
+      else if(t.mode==='node'||t.mode==='enter')modeBoost=40;
+      else if(t.mode==='visit')modeBoost=0;
+      // preferNear: gần vẫn quan trọng nhưng không để visit trống thắng săn còn lượt
+      // score cao hơn = tốt hơn
+      if(preferNear)return (pri+modeBoost)*20 - mi;
+      return (pri+modeBoost)*1000 - mi;
+    };
     return out.sort((a,b)=>{
-      // Ô đang đứng còn lượt → ưu tiên tuyệt đối
-      const ha=a.slot===here?0:1,hb=b.slot===here?0:1;
-      if(ha!==hb)return ha-hb;
-      const da=N(a.miles)?a.miles:(a.travel||1e9)*1e4;
-      const db=N(b.miles)?b.miles:(b.travel||1e9)*1e4;
-      return da-db||(a.travel||0)-(b.travel||0);
+      if(a.slot===here&&a.mode==='hunt'&&hereBlocked)return 1;
+      if(b.slot===here&&b.mode==='hunt'&&hereBlocked)return -1;
+      // Đang đứng + còn săn/node → trước
+      const aHere=a.slot===here&&(hereLeft>0||a.mode==='node'||a.mode==='doAction'||a.mode==='hunt')?0:1;
+      const bHere=b.slot===here&&(hereLeft>0||b.mode==='node'||b.mode==='doAction'||b.mode==='hunt')?0:1;
+      if(aHere!==bHere)return aHere-bHere;
+      return score(b)-score(a);
     });
   },
   busy(){const r=run();return Boolean(r.active||r.tran||r.bienCo||r.thongBao||r.thongBaoDai)},
-  /* % gợi ý game: encounterView().choices[].chance (MMn/cU) — "95%" | dễ | vừa sức | khó */
   chanceScore(ch){
     if(ch==null||ch==='')return 0.45;
     const s=String(ch);
@@ -1305,41 +1920,97 @@ const AutoFarm={
     if(/phó mặc|pho mac|vận may/i.test(s))return 0.4;
     return 0.45;
   },
-  /* Màu nguy hiểm game (Gm): an_toan=#3d8a4a xanh, ngang_suc=#c9a032 vàng, hiem=#c4472c đỏ, tu_dia=#6a1b7a tím */
   riskLevel(c){
     const lv=c?.risk?.level;
     return lv?String(lv):'';
   },
+  stripText(t){return String(t||'').replace(/[\uE000-\uF8FF]/g,'').replace(/<[^>]+>/g,'')},
   pickChoice(choices){
     const list=A(choices).filter(c=>c&&c.available!==false&&c.index!=null);
     if(!list.length)return null;
-    // Chỉ cấm đỏ/tím — unknown = chưa dò, vẫn cho săn (Săn Bạch Hạc Linh…)
-    const BAN=new Set(['hiem','tu_dia']);
-    const OK=new Set(['an_toan','ngang_suc']);
-    const strip=t=>String(t||'').replace(/[\uE000-\uF8FF]/g,'');
+    const BAN=new Set(['hiem','tu_dia','kho','khó','nguy_hiem']);
+    const OK=new Set(['an_toan']);
+    const strip=t=>this.stripText(t).trim();
     const isCancel=c=>{
-      const t=strip(c.text).trim();
-      return c.thoat===true||/^(thôi|hủy|đóng|bỏ qua)\s*$/i.test(t);
+      const t=strip(c.text);
+      return c.thoat===true||/^(thôi|hủy|đóng|bỏ qua)\s*$/i.test(t)||/đi qua|rời đi|rời chợ|rời khỏi|bỏ đi|không quan tâm|không muốn|đường vòng|vái chào|không mua/i.test(t);
     };
-    const isHunt=c=>/săn |lùng |diệt |giết |đánh /i.test(strip(c.text));
-    const hunts=list.filter(c=>!isCancel(c)&&!BAN.has(this.riskLevel(c)));
+    const isBuy=c=>{
+      const t=strip(c.text);
+      return /^mua\b/i.test(t)||/\(\s*\d+\s*linh thạch\s*\)/i.test(t);
+    };
+    const activeId=run().active?.id||'';
+    // Chợ / cửa hàng / đấu giá… → luôn Rời, không mua
+    if(this.isNonFarmEnc(activeId)||list.some(isBuy)&&list.some(c=>c.thoat||/rời/i.test(strip(c.text)))){
+      const esc=list.find(isCancel)||list.find(c=>c.thoat)||list.find(c=>/rời/i.test(strip(c.text)));
+      if(esc){this.push('Rời chỗ mua bán → '+strip(esc.text),'ok');return esc}
+      // Không có nút rời rõ: vẫn không chọn mua
+      if(list.every(isBuy)||list.filter(c=>!isBuy(c)).length===0){
+        this.push('Chợ/cửa hàng không có nút rời — bỏ qua tick','dbg');
+        return null;
+      }
+    }
+    const isHunt=c=>/săn |lùng |diệt |giết |đánh |trừ |chiến /i.test(strip(c.text));
+    const isChase=c=>/đuổi theo|truy đuổi|đuổi tiếp/i.test(strip(c.text));
+    const isRelease=c=>/buông tha|tha mạng|bỏ qua|không đuổi|thôi đuổi/i.test(strip(c.text));
+    const injured=this.injuryLevel()>=1;
+    const preferRelease=this.opts.pursuit==='release'||(this.opts.pursuit==='auto'&&injured)||injured&&this.injuryLevel()>=2;
+
+    // Ưu tiên xử lý đuổi theo / buông tha ngay trong choices thường
+    const chaseOpts=list.filter(c=>!isCancel(c)&&(isChase(c)||isRelease(c)));
+    if(chaseOpts.length){
+      const rel=chaseOpts.find(isRelease);
+      const ch=chaseOpts.find(isChase);
+      if(preferRelease&&rel)return rel;
+      if(!preferRelease&&ch&&!BAN.has(this.riskLevel(ch)))return ch;
+      if(rel)return rel;
+    }
+
+    const hunts=list.filter(c=>!isCancel(c)&&!isBuy(c)&&!BAN.has(this.riskLevel(c)));
     if(!hunts.length){
       const esc=list.find(isCancel);
       if(esc){this.push('Không săn an toàn → Thôi','dbg');return esc}
       this.push('Không lựa chọn săn được','err');
       return null;
     }
-    const green=hunts.filter(c=>OK.has(this.riskLevel(c)));
-    const use=green.length?green:hunts;
+    // Đang thương: chỉ lấy an_toan nếu có
+    let use=hunts;
+    if(injured){
+      const safe=hunts.filter(c=>this.riskLevel(c)==='an_toan'||this.chanceScore(c.chance)>=0.7);
+      if(safe.length)use=safe;
+      else if(this.injuryLevel()>=2){
+        const esc=list.find(isCancel);
+        if(esc){this.push('Đang thương nặng — chọn Thôi','dbg');return esc}
+      }
+    }
+    // Chỉ an_toan nếu có; không chọn hiem/tử địa; ngang_suc chỉ khi hết an_toan và không phải đánh tiếp
+    const safeOnly=use.filter(c=>this.riskLevel(c)==='an_toan');
+    if(safeOnly.length)use=safeOnly;
+    else{
+      const mid=use.filter(c=>{
+        const lv=this.riskLevel(c);
+        const t=strip(c.text);
+        if(BAN.has(lv))return false;
+        if(/đánh tiếp|trận cuối|đánh tiếp tục|lên đài/i.test(t)&&lv!=='an_toan')return false;
+        return lv==='ngang_suc'||lv==='none'||!lv;
+      });
+      if(mid.length)use=mid;
+      else{
+        const esc=list.find(isCancel);
+        if(esc){this.push('Không có lựa chọn an toàn → thoát','dbg');return esc}
+      }
+    }
     const scored=use.map(c=>{
       const lv=this.riskLevel(c);
       const text=strip(c.text);
       let score=this.chanceScore(c.chance);
-      if(lv==='an_toan')score+=2.2;
-      else if(lv==='ngang_suc')score+=1.6;
-      if(isHunt(c))score+=0.5;
-      if(/đầu đàn|vương|chúa/i.test(text))score+=0.15;
+      if(lv==='an_toan')score+=3.5;
+      else if(lv==='ngang_suc')score+=0.3;
+      else score-=1;
+      if(isHunt(c)&&lv==='an_toan')score+=0.5;
+      if(/lùng con đầu đàn|đầu đàn/i.test(text)&&lv==='an_toan')score+=3.5;
       if(this.chanceScore(c.chance)>=0.7)score+=0.35;
+      if(/đánh tiếp|trận cuối/i.test(text)&&lv!=='an_toan')score-=5;
       return{c,score,lv};
     }).sort((a,b)=>b.score-a.score||a.c.index-b.c.index);
     const best=scored[0]?.c||null;
@@ -1356,18 +2027,15 @@ const AutoFarm={
   startSanYeuHere(enc){
     enc=enc||'ev.san_yeu';
     const slot=run().viTri;
-    this.push('Tương tác lại ô đang đứng để săn yêu @ '+slot,'dbg');
-    // 1) Vào lại địa điểm / hoang dã tại chỗ (chặn đường xong chưa vào nơi)
+    this.push('Tương tác lại ô đang đứng @ '+slot+' · '+enc,'dbg');
     try{
       if(typeof g.reopenPlace==='function'){g.reopenPlace();this.push('reopenPlace','dbg')}
     }catch(e){this.push('reopenPlace: '+(e.message||e),'dbg')}
     if(run().active){this.push('reopenPlace mở encounter','ok');return true}
     try{
-      // Bấm lại vị trí nhân vật — enterNode(self) → h$n set oNoi
       if(typeof g.enterNode==='function'){g.enterNode(slot);this.push('enterNode(self) '+slot,'dbg')}
     }catch(e){this.push('enterNode self: '+(e.message||e),'dbg')}
     if(run().active){this.push('enterNode(self) mở encounter','ok');return true}
-    // 2) Chọn hoạt động săn yêu trong nơi
     try{
       if(typeof g.chooseActivity==='function'){
         g.chooseActivity(enc);
@@ -1376,7 +2044,6 @@ const AutoFarm={
       }
     }catch(e){this.push('chooseActivity: '+(e.message||e),'dbg')}
     if(run().active)return true;
-    // 3) doAction trực tiếp
     try{
       g.doAction(enc);
       this.push('doAction('+enc+') @ '+slot,'ok');
@@ -1386,58 +2053,300 @@ const AutoFarm={
       throw e;
     }
   },
+  startHuntHere(beastId){
+    const slot=run().viTri;
+    const block=this.huntBlockedHere();
+    if(block){
+      this.push('Không săn được tại chỗ: '+block,'dbg');
+      this.banSlot(slot,120000);
+      this.markHuntFail(slot,beastId,block);
+      return false;
+    }
+    try{
+      if(typeof g.targetedHunt==='function'){
+        g.targetedHunt(beastId);
+        this.push('targetedHunt('+beastId+')','ok');
+        // Đánh dấu đã thử — nếu tick sau không có active thì coi như cạn/thất bại
+        this._pendingHunt={slot,beastId,at:Date.now(),nam:nowYear()};
+        return true;
+      }
+    }catch(e){
+      this.push('targetedHunt: '+(e.message||e),'dbg');
+      this.markHuntFail(slot,beastId,e.message||e);
+      return false;
+    }
+    return this.startSanYeuHere('ev.san_yeu');
+  },
+  markHuntFail(slot,beastId,reason){
+    this.huntFail=this.huntFail||Object.create(null);
+    const k=(slot||'')+'|'+(beastId||'*');
+    const n=(this.huntFail[k]||0)+1;
+    this.huntFail[k]=n;
+    if(n>=2){
+      this.banBeast=this.banBeast||Object.create(null);
+      this.banBeast[k]=Date.now()+180000;
+      this.push('Bỏ mục tiêu săn '+k+' (fail ×'+n+')','dbg',{reason:String(reason||'')});
+    }
+    // Nhiều fail tại cùng ô → tạm rời
+    const slotFails=Object.entries(this.huntFail).filter(([key,v])=>key.startsWith((slot||'')+'|')&&v>0).reduce((a,[,v])=>a+v,0);
+    if(slotFails>=3||this.sanYeuLeft(slot)<=0){
+      this.banSlot(slot,90000);
+      this.needInteractHere=false;
+    }
+  },
+  isBeastBanned(slot,beastId){
+    const k=(slot||'')+'|'+(beastId||'*');
+    return !!(this.banBeast&&this.banBeast[k]>Date.now());
+  },
+  clearPendingHuntIfStale(){
+    const p=this._pendingHunt;
+    if(!p)return;
+    if(run().active||run().tran){this._pendingHunt=null;return}
+    if(run().thongBao||run().thongBaoDai)return;
+    if(Date.now()-p.at<600)return;
+    this.markHuntFail(p.slot,p.beastId,'không vào được encounter');
+    this._pendingHunt=null;
+  },
+  /* Đang trong UI nơi chốn (oNoi) — tab Chuyện lớn / Thời thế / Trước mắt */
+  inPlace(){
+    try{
+      const r=run();
+      return !!(r.oNoi&&r.oNoi===r.viTri);
+    }catch{return false}
+  },
+  placeActs(){
+    try{
+      const v=typeof g.noiView==='function'?g.noiView():null;
+      return A(v?.hoatDong);
+    }catch{return []}
+  },
+  markNodeFail(slot,enc,reason){
+    this.nodeFail=this.nodeFail||Object.create(null);
+    const k=(slot||'')+'|'+(enc||'*');
+    const n=(this.nodeFail[k]||0)+1;
+    this.nodeFail[k]=n;
+    this.push('Node fail ×'+n+': '+k+(reason?(' · '+reason):''),'dbg');
+    if(n>=2){
+      this.banBeast=this.banBeast||Object.create(null);
+      this.banBeast[k]=Date.now()+300000; // 5 phút bỏ encounter này
+      this.banSlot(slot,45000);
+      try{if(this.inPlace())g.leavePlace?.()}catch{}
+      this.needInteractHere=false;
+    }
+  },
+  isNodeBanned(slot,enc){
+    const k=(slot||'')+'|'+(enc||'*');
+    return !!(this.banBeast&&this.banBeast[k]>Date.now());
+  },
+  /* Vào encounter node / hoạt động nơi — không spam enterNode */
+  startNodeHere(enc,slot){
+    slot=slot||run().viTri;
+    enc=enc||null;
+    if(this.isNodeBanned(slot,enc))return false;
+    // 1) Đang trong menu nơi → chooseActivity (Chuyện lớn = overlay → bz)
+    if(this.inPlace()&&enc){
+      try{
+        if(typeof g.chooseActivity==='function'){
+          g.chooseActivity(enc);
+          this.push('chooseActivity('+enc+') trong nơi','ok');
+          this._pendingNode={slot,enc,at:Date.now()};
+          return true;
+        }
+      }catch(e){
+        this.push('chooseActivity: '+(e.message||e),'dbg');
+        this.markNodeFail(slot,enc,e.message||e);
+        return false;
+      }
+    }
+    // 2) Chưa vào nơi → enterNode / reopenPlace
+    try{
+      if(typeof g.enterNode==='function'){
+        g.enterNode(slot);
+        this.push('enterNode('+slot+')','dbg');
+        this._pendingNode={slot,enc,at:Date.now()};
+        return true;
+      }
+    }catch(e){this.push('enterNode: '+(e.message||e),'dbg')}
+    try{
+      if(typeof g.reopenPlace==='function'){
+        g.reopenPlace();
+        this.push('reopenPlace','dbg');
+        this._pendingNode={slot,enc,at:Date.now()};
+        return true;
+      }
+    }catch(e){this.push('reopenPlace: '+(e.message||e),'dbg')}
+    // 3) doAction fallback
+    if(enc){
+      try{
+        g.doAction(enc);
+        this.push('doAction('+enc+')','ok');
+        this._pendingNode={slot,enc,at:Date.now()};
+        return true;
+      }catch(e){
+        this.push('doAction node: '+(e.message||e),'dbg');
+        this.markNodeFail(slot,enc,e.message||e);
+        return false;
+      }
+    }
+    this.markNodeFail(slot,enc,'không mở được');
+    return false;
+  },
+  clearPendingNodeIfStale(){
+    const p=this._pendingNode;
+    if(!p)return;
+    // Đã vào encounter/trận → thành công, xóa pending (không báo fail)
+    if(run().active||run().tran||run().bienCo){
+      this._pendingNode=null;
+      if(run().active&&this.nodeFail)this.nodeFail[(p.slot||'')+'|'+(p.enc||'*')]=0;
+      return;
+    }
+    if(run().thongBao||run().thongBaoDai)return;
+    if(Date.now()-p.at<900)return;
+    // Hết lượt farm tại nơi (vd. san_yeu cạn sau 1 trận) → không phải fail node
+    if(this.inPlace()){
+      const left=this.placeFarmActs();
+      if(!left.length){
+        this._pendingNode=null;
+        return;
+      }
+      // Còn việc khác / cùng enc → thử 1 lần
+      if(p.enc&&!p.retried){
+        p.retried=true;p.at=Date.now();
+        try{
+          g.chooseActivity?.(p.enc);
+          this.push('retry chooseActivity('+p.enc+')','dbg');
+          return;
+        }catch(e){this.push('retry chooseActivity: '+(e.message||e),'dbg')}
+      }
+      this._pendingNode=null;
+      return;
+    }
+    // Đã rời nơi mà vẫn pending → bỏ, không ban
+    this._pendingNode=null;
+  },
   dismissNotices(){
     let n=0;
     try{if(run().thongBao){g.dongThongBao?.();n++;this.push('Đóng thông báo thưởng','ok')}}catch(e){this.push('dongThongBao: '+(e.message||e),'err')}
     try{if(run().thongBaoDai){g.closeLongNotice?.();n++;this.push('Đóng thông báo dài','ok')}}catch(e){this.push('closeLongNotice: '+(e.message||e),'err')}
     return n;
   },
-  /* Hầu hết trận không tốc chiến được → Enter giao_chien. Chỉ tốc khi duocTocChien. */
+  handlePursuitPanel(){
+    // API riêng: pursuitOptions + choosePursuit('chase'|'release')
+    let opts=null;
+    try{opts=typeof g.pursuitOptions==='function'?g.pursuitOptions():null}catch{}
+    const list=A(opts);
+    if(!list.length)return false;
+    const injured=this.injuryLevel()>=1;
+    const preferRelease=this.opts.pursuit==='release'||this.opts.pursuit==='auto'&&injured||this.injuryLevel()>=2;
+    let id=preferRelease?'release':'chase';
+    if(!list.some(x=>(x.id||x)===id))id=list[0].id||list[0];
+    try{
+      g.choosePursuit(id);
+      this.push('Pursuit: '+id+(preferRelease?' (ưu tiên an toàn)':''),'ok');
+      return true;
+    }catch(e){
+      this.push('choosePursuit: '+(e.message||e),'err');
+      return false;
+    }
+  },
   handleCombat(){
     const tran=run().tran;
-    // Trận đã kết thúc → Enter = xongTran
     if(tran?.ketThuc){
+      this._combatStarted=null;
       try{g.xongTran();this.push('xongTran (Enter sau trận)','ok');return 'combat-end'}
       catch(e){this.push('xongTran: '+(e.message||e),'err');return 'stuck'}
     }
+    // Đã bấm Giao chiến / tốc chiến rồi → chỉ chờ, KHÔNG spam mỗi tick
+    if(tran&&this._combatStarted){
+      return 'combat-wait';
+    }
+    if(!tran&&this.injuryLevel()>=1)this.ensureHealthy(true);
+
     let dk=null;
     try{dk=typeof g.duKienTran==='function'?g.duKienTran():null}catch{}
-    // Chỉ tốc chiến khi game cho phép + user bật
-    if(this.opts.tocChien&&dk?.duocTocChien){
-      try{g.tocChienTran();this.push('Tốc chiến (duocTocChien)','ok');return 'combat-fast'}
-      catch(e){this.push('Tốc chiến fail: '+(e.message||e)+' → Enter','dbg')}
+    const allowFast=this.opts.tocChien&&dk?.duocTocChien&&this.injuryLevel()<2;
+    if(allowFast){
+      try{
+        g.tocChienTran();
+        this._combatStarted=true;
+        this.push('Tốc chiến (duocTocChien)','ok');
+        return 'combat-fast';
+      }catch(e){this.push('Tốc chiến fail: '+(e.message||e)+' → Enter','dbg')}
     }else if(this.opts.tocChien&&dk&&dk.duocTocChien===false){
       this.push('Game không cho tốc chiến → Enter giao chiến','dbg');
+    }else if(this.injuryLevel()>=2){
+      this.push('Thương nặng — không tốc chiến','dbg');
     }
-    // Enter / nút Giao chiến
+    // Không chủ động đánh khi dự kiến khó / không thắng (trừ khi đã vào trận bắt buộc)
+    if(dk&&dk.thang===false&&this.opts.skipTuDia!==false){
+      this.push('Bỏ giao chiến — dự kiến khó/không thắng','dbg');
+      // thử thoát encounter nếu có
+      try{
+        const ch=this.viewChoices();
+        const esc=this.pickChoice(ch);
+        if(esc&&(esc.thoat||/thôi|đóng|rời|bỏ/i.test(String(esc.text||'')))){
+          g.choose?.(esc.index);
+          this.push('Thoát thay vì đánh khó','ok');
+          return 'combat-skip';
+        }
+      }catch{}
+    }
     try{
       if(typeof g.hanhDongTran!=='function')throw new Error('Không có hanhDongTran');
       g.hanhDongTran({loai:'giao_chien'});
+      this._combatStarted=true;
       const tip=dk?(dk.thang?'dự kiến thắng':'dự kiến khó')+', hiệp~'+(dk.nHiep??'?'):'manual';
       this.push('Enter giao_chien ('+tip+')','ok');
       return 'combat-manual';
     }catch(e){
-      // Có thể chưa vào trạng thái tran — thử lần sau
       this.push('giao_chien: '+(e.message||e),'dbg');
       return 'wait';
     }
+  },
+  _combatKey(tran){
+    if(!tran)return 'x';
+    try{return String(tran.id||tran.ten||'')+'|'+String(tran.nHiep??tran.hiep??'')+'|'+String(!!tran.ketThuc)}catch{return 'x'}
   },
   tryEncounter(){
     if(run().thongBao||run().thongBaoDai){this.dismissNotices();return 'notice'}
     const a=run().active;if(!a)return 'idle';
     const w=a.waiting;
-    // Combat: tốc chiến nếu được; không được nhưng đánh được → Enter giao chiến; xong → xongTran
+    // Đấu giá / không farm: chọn thoát ngay nếu có choice
+    if(!w&&this.isNonFarmEnc(a.id)){
+      let view=null;try{view=g.encounterView?.()}catch{}
+      const ch=this.pickChoice(view?.choices||[]);
+      if(ch){
+        try{g.choose(ch.index);this.push('Thoát non-farm: '+a.id,'ok');return 'choose'}catch(e){this.push('choose non-farm: '+(e.message||e),'err')}
+      }
+      // Không chọn được → đóng / resume
+      try{if(a.done)g.closeEncounter?.();else g.resume?.(null)}catch{}
+    }
+
+    // Panel đuổi theo / buông tha (API riêng)
+    if(w?.kind==='pursuit'||/pursuit|truy/i.test(String(w?.kind||''))){
+      if(this.handlePursuitPanel())return 'pursuit';
+    }
+    // Thử pursuitOptions ngay cả khi kind khác (một số bản gắn vào choice)
+    try{
+      const po=typeof g.pursuitOptions==='function'?g.pursuitOptions():null;
+      if(A(po).length&&this.handlePursuitPanel())return 'pursuit';
+    }catch{}
+
     if(w?.kind==='combat'||run().tran){
       return this.handleCombat();
     }
-    // Một số waiting khác: resume null / leave nếu đóng được
     if(w?.kind==='xu_tri'){
-      const id=this.opts.xuTri||'tha';
+      let id=this.opts.xuTri||'tha';
+      try{
+        const opts=typeof g.cachXuTri==='function'?g.cachXuTri():null;
+        const ids=A(opts).map(x=>x.id||x);
+        if(ids.length&&!ids.includes(id))id=ids.includes('tha')?'tha':ids[0];
+      }catch{}
       try{
         if(typeof g.xuTri!=='function')throw new Error('Không có xuTri');
         g.xuTri(id);
-        this.push('Xử tù binh: '+id+' (xuTri)','ok');
-        if(this.sanYeuLeft(run().viTri)>0)this.needInteractHere=true;
+        this.push('Xử tù binh: '+id,'ok');
+        this.needInteractHere=false;
         return 'xu_tri';
       }catch(e){
         this.push('xuTri lỗi: '+(e.message||e),'err');
@@ -1445,11 +2354,12 @@ const AutoFarm={
       }
     }
     if(w?.kind==='enemy_escape'){
+      // Thường chuyển sang đuổi/tha — thử pursuit trước
+      if(this.handlePursuitPanel())return 'pursuit';
       this.push('Địch tháo chạy — dừng để chọn tay','err');
       return 'stuck';
     }
     if(w){
-      // cố resume null nếu là panel đóng
       try{g.resume?.(null)}catch{}
       if(run().active?.waiting){this.push('Chờ UI: '+w.kind+' — dừng','err');return 'stuck'}
       return 'wait';
@@ -1460,17 +2370,15 @@ const AutoFarm={
         if(typeof g.closeEncounter==='function')g.closeEncounter();
         else g.resume?.(null);
         this.push('Đóng encounter (Tiếp tục)','ok');
-        // Chỉ tương tác lại nếu còn lượt săn tại ô này
-        if(this.sanYeuLeft(run().viTri)>0)this.needInteractHere=true;
-        else this.needInteractHere=false;
       }catch(e){
         try{g.resume?.(null)}catch{}
-        try{g.leavePlace?.()}catch{}
         this.push('closeEncounter: '+(e.message||e),'err');
       }
+      // Bản ghi: closeEncounter xong vẫn ở trong nơi → tick sau chooseActivity tiếp (san_yeu còn lượt / sự kiện khác)
+      this.needInteractHere=false;
+      this.ensureHealthy(false);
       return run().active?'wait':'idle';
     }
-    // Lựa chọn thường: game.encounterView() + game.choose(index)
     let view=null;
     try{view=typeof g.encounterView==='function'?g.encounterView():null}catch(e){this.push('encounterView: '+(e.message||e),'err');return 'stuck'}
     const choices=A(view?.choices);
@@ -1481,7 +2389,7 @@ const AutoFarm={
     if(!this.opts.autoChoose){this.push('Có lựa chọn — tắt auto chọn, dừng tay');return 'stuck'}
     const pick=this.pickChoice(choices);
     if(!pick){
-      const strip=t=>String(t||'').replace(/[\uE000-\uF8FF]/g,'');
+      const strip=t=>this.stripText(t);
       const cancel=choices.find(c=>c&&(c.thoat||/^(thôi|hủy)/i.test(strip(c.text).trim())));
       try{
         if(cancel&&typeof g.choose==='function'){g.choose(cancel.index);this.push('Chọn Thôi để rời menu','ok')}
@@ -1494,12 +2402,12 @@ const AutoFarm={
       this.push('Rời chỗ, tìm farm khác','ok');
       return 'idle';
     }
-    const label=T(String(pick.text||'').replace(/<[^>]+>/g,'')).slice(0,80);
+    const label=T(this.stripText(pick.text)).slice(0,80);
     const ch=pick.chance!=null?` · ${pick.chance}`:'';
     const rk=this.riskLevel(pick);
     const rkShow=rk?` · risk:${rk}`:'';
     try{
-      const isCancel=/^(thôi|hủy|đóng|bỏ qua)/i.test(String(pick.text||'').trim());
+      const isCancel=/^(thôi|hủy|đóng|bỏ qua)/i.test(this.stripText(pick.text).trim());
       g.choose(pick.index);
       this.push(`Chọn [${pick.index+1}] ${label}${ch}${rkShow}`,'ok');
       if(isCancel){
@@ -1521,91 +2429,162 @@ const AutoFarm={
     if(this.paused){this.schedule();return}
     try{
       if(run().ketThuc){this.stop('kiếp đã kết thúc');return}
+
+      // Ưu tiên chữa thương khi rảnh
+      if(!this.busy()&&this.injuryLevel()>=Math.max(1,Number(this.opts.healMinLevel||1))){
+        const hs=this.ensureHealthy(false);
+        if(hs==='no-item-pause'||hs==='critical'){this.schedule();return}
+      }
+
+      // Đang bị truy đuổi trên world: có thể cần quay đầu
+      if(run().truyDuoi&&!run().active&&!run().tran){
+        try{
+          const block=typeof g.turnBackBlock==='function'?g.turnBackBlock():null;
+          if(!block&&typeof g.turnOnPursuer==='function'){
+            // Chỉ chủ động quay đầu nếu user muốn đuổi / không prefer release
+            if(this.opts.pursuit==='chase'){
+              g.turnOnPursuer();
+              this.push('Quay đầu đón kẻ truy đuổi','ok');
+              this.schedule();return;
+            }
+          }
+        }catch(e){this.push('truyDuoi: '+(e.message||e),'dbg')}
+      }
+
       if(this.busy()){
-        this.push('Đang bận encounter/trận — xử lý…','dbg',{active:run().active?.id,waiting:run().active?.waiting?.kind});
+        const waiting=run().active?.waiting?.kind;
+        // combat-wait: giảm spam log
+        if(waiting==='combat'||run().tran){
+          const st=this.tryEncounter();
+          if(st==='stuck'){this.stats.err++;this.push('Kẹt encounter — tạm dừng, xử tay rồi Tiếp tục','err');this.paused=true;this.syncFab();toast('Auto tạm dừng (kẹt encounter)','',3500);return}
+          this.schedule();return;
+        }
+        this.push('Đang bận encounter/trận — xử lý…','dbg',{active:run().active?.id,waiting});
         const st=this.tryEncounter();
         if(st==='stuck'){this.stats.err++;this.push('Kẹt encounter — tạm dừng, xử tay rồi Tiếp tục','err');this.paused=true;this.syncFab();toast('Auto tạm dừng (kẹt encounter)','',3500);return}
         this.schedule();return;
       }
-      // Sau chặn đường / đóng encounter: bấm lại ô đang đứng rồi mới săn
-      if(this.needInteractHere&&!run().active){
-        this.needInteractHere=false;
-        try{
-          this.startSanYeuHere('ev.san_yeu');
-          this.stats.ok++;
-          this.schedule();return;
-        }catch(e){
-          this.push('Tương tác tại chỗ fail: '+(e.message||e)+' — thử target khác','err');
+
+      this.clearPendingHuntIfStale();
+      this.clearPendingNodeIfStale();
+      this.needInteractHere=false;
+
+      const ban=this.slotBan||(this.slotBan=Object.create(null));
+      const here=run().viTri;
+      const now=Date.now();
+      const isBanned=s=>!!(ban[s]&&ban[s]>now);
+
+      /* 1) Đang trong nơi → làm việc farm; không có thì leavePlace và ĐI CHỖ KHÁC (không enter lại cùng ô) */
+      if(this.inPlace()&&!run().active){
+        let acts=this.placeFarmActs();
+        const leftSy=this.sanYeuLeft(here);
+        const block=this.huntBlockedHere();
+        const rawSan=this.placeActs().find(a=>a&&a.id==='ev.san_yeu'&&!a.lockedReason);
+        const blockedSan=!!(block&&/săn cạn|hoang dã|lần theo dấu/i.test(String(block)));
+        // Chỉ săn khi có act thật + còn lượt + không bị chặn (thành thị/hoang dã)
+        const canSan=!!rawSan&&leftSy>0&&!blockedSan;
+        if(canSan){
+          if(!acts.some(a=>a.id==='ev.san_yeu'))acts=[rawSan,...acts];
+          acts=[...acts].sort((a,b)=>(a.id==='ev.san_yeu'?0:1)-(b.id==='ev.san_yeu'?0:1));
         }
-      }
-      const list=this.targets();
-      // Ưu tiên săn đúng ô đang đứng nếu còn lượt
-      const ban=this.slotBan||{};
-      const hereSan=list.find(t=>t.slot===run().viTri&&(t.enc==='ev.san_yeu'||t.mode==='doAction')&&!(ban[t.slot]>Date.now()));
-      if(hereSan&&!run().active){
-        this.push('Săn tại chỗ đang đứng '+hereSan.slot,'dbg');
-        try{this.startSanYeuHere(hereSan.enc||'ev.san_yeu');this.stats.ok++;this.schedule();return}
-        catch(e){this.push('Săn tại chỗ: '+(e.message||e),'err')}
-      }
-      if(!list.length){
-        this.emptyScans=(this.emptyScans||0)+1;
-        this.needInteractHere=false;
-        try{g.leavePlace?.()}catch{}
-        if(this.emptyScans===1||this.emptyScans%5===0){
-          this.push('0 mục tiêu trong tầm — mở rộng quét #'+this.emptyScans+' (không đứng chờ)','dbg');
-        }
-        try{
-          const ban=this.slotBan||{},here=run().viTri;
-          const recent=this.recentSlots||(this.recentSlots=[]);
-          const cand=A(run().daKhamPha).filter(s=>s&&s!==here&&hasSlot(s)&&!(ban[s]>Date.now())&&!recent.includes(s));
-          cand.sort((a,b)=>(milesTo(a)||travelTo(a)*100||9)-(milesTo(b)||travelTo(b)*100||9));
-          // Nếu lọc recent hết → xả bớt recent
-          const pool=cand.length?cand:A(run().daKhamPha).filter(s=>s&&s!==here&&hasSlot(s)&&!(ban[s]>Date.now()))
-            .sort((a,b)=>(milesTo(a)||9)-(milesTo(b)||9));
-          if(pool.length&&this.emptyScans%2===1){
-            // Không luôn lấy [0] — xoay vòng theo emptyScans để tránh 2 ô ping-pong
-            const next=pool[Math.min(pool.length-1, Math.floor((this.emptyScans-1)/2)%pool.length)];
-            recent.push(next);if(recent.length>6)recent.shift();
-            this.push('Đổi chỗ → '+next+' (#'+this.emptyScans+')','ok');
-            if(typeof g.travelTo==='function')g.travelTo(next);
-            else if(typeof g.enterNode==='function')g.enterNode(next);
-          }
-        }catch(e){this.push('Đổi chỗ: '+(e.message||e),'dbg')}
-        clearTimeout(this.timer);
-        this.timer=setTimeout(()=>this.tick(),Math.max(1200,this.opts.delayMs));
-        return;
-      }
-      this.emptyScans=0;
-      const t=list[0];
-      this.push(`Đến ${t.title} · ${t.enc} · ${t.slot} · mode=${t.mode||'node'}${N(t.travel)?' · '+fmtTime(t.travel):''}`);
-      try{
-        const here=run().viTri===t.slot;
-        if(t.mode==='doAction'){
-          if(run().thongBao||run().thongBaoDai){this.dismissNotices();this.schedule();return}
-          // Chỉ travelTo tới ô — không enterNode (tránh sự kiện chặn đường khác)
-          if(!here){
-            if(typeof g.travelTo!=='function')throw new Error('Không có travelTo');
-            g.travelTo(t.slot);
-            this.push('travelTo '+t.slot,'dbg');
+        if(acts.length){
+          const act=acts[0];
+          this.push('Tại nơi: chooseActivity('+act.id+' · '+(act.loai||'')+')'+(act.id==='ev.san_yeu'?' · còn '+leftSy:'') ,'ok');
+          try{
+            g.chooseActivity(act.id);
+            const tb=run().thongBao||run().thongBaoDai;
+            const tbText=String(tb?.text||tb||'');
+            if(tbText&&/không còn|không thể|không làm/i.test(tbText)){
+              this.push('Act hết ('+act.id+'): '+tbText.slice(0,40)+' → bỏ','dbg');
+              this.markNodeFail(here,act.id,'không còn');
+              try{g.dongThongBao?.()}catch{}
+              this.schedule();return;
+            }
+            this._pendingNode={slot:here,enc:act.id,at:Date.now()};
+            this.stats.ok++;
+            this.schedule();return;
+          }catch(e){
+            this.push('chooseActivity: '+(e.message||e),'err');
+            this.markNodeFail(here,act.id,e.message||e);
             this.schedule();return;
           }
-          // Đã đứng đúng ô: săn yêu tại chỗ (bấm lại vị trí nhân vật)
-          if(run().active){this.schedule();return}
-          this.startSanYeuHere(t.enc||'ev.san_yeu');
-        }else{
-          if(!here||run().nodes?.[t.slot]?.encounter){
-            if(typeof g.enterNode==='function')g.enterNode(t.slot);
-            else if(window.map?.goTo)window.map.goTo(t.slot);
-            else throw new Error('Không có enterNode/goTo');
-          }
         }
-      }catch(e){
-        this.stats.err++;this.stats.skip++;
-        this.push('Vào/start lỗi: '+(e.message||e),'err',{slot:t.slot,enc:t.enc,mode:t.mode});
+        // Hết việc thật sự — rời, ban
+        const actIds=this.placeActs().map(a=>a.id).slice(0,8);
+        this.push('Nơi hết việc farm → leavePlace @ '+here,'dbg',{syLeft:leftSy,block:block||null,noiActs:actIds,thongBao:run().thongBao||run().thongBaoDai||null});
+        try{g.leavePlace?.()}catch{}
+        this.banSlot(here,300000); // 5 phút — nơi trống
+        // Chọn nơi khác ngay trong tick này
+        const listHere=this.targets().filter(t=>t.slot!==here&&!isBanned(t.slot)&&!(t.mode==='node'&&this.isNodeBanned(t.slot,t.enc)));
+        // Farm thật trước, trong đó chọn cái GẦN nhất (tiết kiệm thọ nguyên)
+        const farm=listHere.filter(t=>t.mode==='doAction'||t.mode==='hunt'||t.mode==='node');
+        const byNear=(a,b)=>{
+          const da=N(a.miles)?a.miles:(N(a.travel)?a.travel*8000:1e9);
+          const db=N(b.miles)?b.miles:(N(b.travel)?b.travel*8000:1e9);
+          return da-db||Number(b.priority||0)-Number(a.priority||0);
+        };
+        const nx=(farm.length?farm:listHere).slice().sort(byNear)[0];
+        if(nx){
+          this.push('Đến nơi · '+nx.title+' · '+nx.slot+(N(nx.travel)?' · '+fmtTime(nx.travel):''),'ok');
+          this.goEnter(nx.slot);
+          this.stats.ok++;
+          this.schedule();return;
+        }
+        // Không còn target — quét daKhamPha gần, bỏ ô đã ban
+        try{
+          const recent=this.recentSlots||(this.recentSlots=[]);
+          const pool=A(run().daKhamPha).filter(s=>s&&s!==here&&hasSlot(s)&&!isBanned(s)&&!recent.includes(s))
+            .sort((a,b)=>(milesTo(a)||9)-(milesTo(b)||9));
+          if(pool[0]){
+            recent.push(pool[0]);if(recent.length>10)recent.shift();
+            this.push('Đổi chỗ → '+pool[0],'ok');
+            this.goEnter(pool[0]);
+            this.stats.ok++;
+            this.schedule();return;
+          }
+        }catch(e){this.push('Đổi chỗ: '+(e.message||e),'dbg')}
+        this.push('Không còn nơi khác trong tầm','dbg');
         this.schedule();return;
       }
-      this.stats.ok++;
-      this.schedule();
+
+      /* 2) Ngoài nơi: chỉ enter lại CHÍNH ô hiện tại khi còn node/sự kiện hoặc san_yeu thật sự có trong nơi */
+      if(!this.inPlace()&&!run().active&&!isBanned(here)){
+        const nodeEnc=run().nodes?.[here]?.encounter;
+        if(nodeEnc&&!this.isNodeBanned(here,nodeEnc)){
+          this.goEnter(here);
+          this.stats.ok++;
+          this.schedule();return;
+        }
+        // Không enter nơi chỉ vì sanYeuLeft>0 (thành thị hay báo left=3 nhưng không có act san_yeu)
+        // Chỉ enter nếu đã biết nơi có farm (recent placeFarm hint) — bỏ nhánh tự enter "để săn"
+      }
+
+      /* 3) Đi tới target gần khác ô hiện tại */
+      const list=this.targets().filter(t=>!isBanned(t.slot)&&!(t.mode==='node'&&this.isNodeBanned(t.slot,t.enc))&&!(t.mode==='hunt'&&this.isBeastBanned(t.slot,t.enc)));
+      const next=list.find(t=>t.slot!==here)||null;
+      if(next){
+        this.push('Đến nơi · '+next.title+' · '+next.slot+(N(next.travel)?' · '+fmtTime(next.travel):''),'ok');
+        if(this.inPlace()){try{g.leavePlace?.()}catch{}}
+        this.goEnter(next.slot);
+        this.stats.ok++;
+        this.schedule();return;
+      }
+
+      this.emptyScans=(this.emptyScans||0)+1;
+      if(this.emptyScans===1||this.emptyScans%5===0)this.push('0 mục tiêu trong tầm — quét #'+this.emptyScans,'dbg');
+      try{
+        const recent=this.recentSlots||(this.recentSlots=[]);
+        const pool=A(run().daKhamPha).filter(s=>s&&s!==here&&hasSlot(s)&&!isBanned(s)&&!recent.includes(s))
+          .sort((a,b)=>(milesTo(a)||9)-(milesTo(b)||9));
+        if(pool[0]){
+          recent.push(pool[0]);if(recent.length>10)recent.shift();
+          this.push('Đổi chỗ → '+pool[0],'ok');
+          this.goEnter(pool[0]);
+        }
+      }catch(e){this.push('Đổi chỗ: '+(e.message||e),'dbg')}
+      clearTimeout(this.timer);
+      this.timer=setTimeout(()=>this.tick(),Math.max(1000,this.opts.delayMs));
+      return;
     }catch(e){
       this.stats.err++;this.push('tick exception: '+(e.message||e),'err');this.stop('exception');
     }
@@ -1618,9 +2597,14 @@ const AutoFarm={
   start(){
     if(this.running&&!this.paused)return;
     if(!g?.state?.run){toast('Chưa có kiếp.');return}
-    this.running=true;this.paused=false;this.stepN=0;this.emptyScans=0;this.stats={ok:0,skip:0,err:0};
-    try{const x=store.get('xuTri',null);if(x)this.opts.xuTri=x}catch{}
-    this.push('Bắt đầu Auto Farm','ok',{opts:{...this.opts}});
+    this.running=true;this.paused=false;this.stepN=0;this.emptyScans=0;this.stats={ok:0,skip:0,err:0,heal:0};
+    try{
+      const x=store.get('xuTri',null);if(x)this.opts.xuTri=x;
+      const p=store.get('afPursuit',null);if(p)this.opts.pursuit=p;
+      const h=store.get('afAutoHeal',null);if(h!==null&&h!==undefined)this.opts.autoHeal=!!h;
+      const ht=store.get('afHaiThuoc',null);if(typeof ht==='boolean')this.opts.includeHaiThuoc=ht;
+    }catch{}
+    this.push('Bắt đầu Auto Farm','ok',{opts:{...this.opts},thuong:this.injuryName(this.injuryLevel())});
     this.dumpState('start');
     if(!this.targets().length)this.push('Cảnh báo: 0 mục tiêu lúc start','err');
     toast('Auto Farm chạy. Tạm dừng/Dừng cạnh icon tool.','ok',3000);
@@ -1672,7 +2656,7 @@ const AutoFarm={
     try{
       const fr=fab.getBoundingClientRect();
       const w=40;
-      bar.style.left=Math.max(4, fr.left+fr.width/2-w/2)+'px';
+      bar.style.left=Math.max(4,fr.left+fr.width/2-w/2)+'px';
       bar.style.top='auto';
       bar.style.bottom=(window.innerHeight-fr.top+8)+'px';
     }catch{}
@@ -1680,23 +2664,45 @@ const AutoFarm={
 };
 
 VIEWS.auto=()=>{
+  try{const h=store.get('afHaiThuoc');if(typeof h==='boolean')AutoFarm.opts.includeHaiThuoc=h}catch{}
   const list=AutoFarm.targets().slice(0,40);
   const o=AutoFarm.opts;
+  const inj=AutoFarm.injuryLevel();
+  const heal=AutoFarm.pickHealItem();
+  const injLine=inj>0
+    ? `<div class="panel" style="border-color:var(--red,#c4472c)"><b class="r">Thương thế: ${E(AutoFarm.injuryName(inj))}</b><div class="sub">${heal?`Sẽ dùng: ${E(heal.ten)} (heal ${heal.heal})`:'Túi không có đan chữa — nên mua Hồi Xuân Đan / Kim Sang Dược / Sinh Cơ Đan'}</div></div>`
+    : '';
   body.innerHTML=`<div class="panel"><b style="color:var(--gold)">Auto Farm</b>
-    <div class="sub">Bắt đầu → thu panel. Nút <b>Tạm dừng / Dừng</b> cạnh icon. Farm quanh nhân vật, gần→xa.</div></div>
+    <div class="sub">Tự đi quanh vùng: săn yêu, làm việc trên bản đồ, ghé nơi gần có việc. Bấm Bắt đầu sẽ thu panel; tạm dừng/dừng ở nút cạnh icon tiên.</div></div>
+  ${injLine}
   <div class="bar">
     <button class="btn pri" id="af-toggle">▶ Bắt đầu (thu panel)</button>
     <button class="btn" id="af-refresh">Quét lại</button>
     <button class="btn" id="af-export">Xuất log</button>
   </div>
+  <div class="panel"><b style="color:var(--gold)">Ghi hành động tay</b>
+    <div class="sub">Bật ghi → thao tác trên game như thường (đi, vào nơi, chọn activity, săn, combat, thuốc…) → Dừng ghi → <b>Xuất ghi</b>. File gồm mọi API + state (noiActs, choices, combat, bag thuốc, node gần) + summary để đối chiếu source.</div>
+    <div class="bar">
+      <button class="btn ${AutoFarm.rec.on?'':'pri'}" id="af-rec-toggle">${AutoFarm.rec.on?'■ Dừng ghi':'● Bắt đầu ghi'}</button>
+      <button class="btn" id="af-rec-export" ${AutoFarm.rec.events.length?'':'disabled'}>Xuất ghi (${AutoFarm.rec.events.length})</button>
+    </div>
+    <div class="panel" style="max-height:18vh;overflow:auto;font-size:12px" id="af-rec-log">${AutoFarm.rec.events.length?AutoFarm.rec.events.slice().reverse().slice(0,20).map(x=>`<div class="sub">[${E(x.tShow||'')}] <b>${E(x.kind)}</b> ${E(typeof x.detail==='string'?x.detail:JSON.stringify(x.detail||{}).slice(0,100))}</div>`).join(''):'<div class="sub">Chưa ghi gì.</div>'}</div>
+  </div>
   <div class="bar" style="flex-wrap:wrap;gap:8px">
-    <label class="sub"><input type="checkbox" id="af-san" ${o.onlySanYeu?'checked':''}> Chỉ <b>ev.san_yeu</b></label>
-    <label class="sub"><input type="checkbox" id="af-toc" ${o.tocChien?'checked':''}> Tốc chiến khi được</label>
-    <label class="sub"><input type="checkbox" id="af-tudia" ${o.skipTuDia?'checked':''}> Bỏ tử địa</label>
-    <label class="sub"><input type="checkbox" id="af-choose" ${o.autoChoose?'checked':''}> Auto chọn (% gợi ý)</label>
+    <label class="sub"><input type="checkbox" id="af-san" ${o.onlySanYeu?'checked':''}> Chỉ săn yêu</label>
+    <label class="sub"><input type="checkbox" id="af-near" ${o.preferNear!==false?'checked':''}> Ưu tiên nơi gần</label>
+    <label class="sub"><input type="checkbox" id="af-places" ${o.includeNearPlaces!==false?'checked':''}> Ghé thành thị / trấn gần</label>
+    <label class="sub"><input type="checkbox" id="af-nodes" ${o.includeMapNodes!==false?'checked':''}> Việc trên bản đồ</label>
+    <label class="sub"><input type="checkbox" id="af-wild" ${o.includeWildSan!==false?'checked':''}> Săn yêu hoang dã</label>
+    <label class="sub"><input type="checkbox" id="af-herb" ${o.includeHaiThuoc?'checked':''}> Hái thuốc dại</label>
+    <label class="sub"><input type="checkbox" id="af-toc" ${o.tocChien?'checked':''}> Tốc chiến (khi game cho phép)</label>
+    <label class="sub"><input type="checkbox" id="af-tudia" ${o.skipTuDia?'checked':''}> Tránh tử địa / khó thắng</label>
+    <label class="sub"><input type="checkbox" id="af-choose" ${o.autoChoose?'checked':''}> Tự chọn lựa chọn</label>
+    <label class="sub"><input type="checkbox" id="af-heal" ${o.autoHeal?'checked':''}> Tự dùng thuốc chữa thương</label>
+    <label class="sub"><input type="checkbox" id="af-pauseheal" ${o.pauseIfNoHeal?'checked':''}> Dừng nếu hết thuốc (nặng+)</label>
   </div>
   <div class="bar">
-    <label class="sub grow">Sau khi thắng (xử tù binh)
+    <label class="sub grow">Sau thắng (tù binh)
       <select id="af-xutri">
         <option value="tha" ${o.xuTri==='tha'?'selected':''}>Tha mạng</option>
         <option value="ket_lieu" ${o.xuTri==='ket_lieu'?'selected':''}>Kết liễu</option>
@@ -1704,25 +2710,43 @@ VIEWS.auto=()=>{
         <option value="suu_hon" ${o.xuTri==='suu_hon'?'selected':''}>Sưu hồn (nếu có)</option>
       </select>
     </label>
+    <label class="sub grow">Đuổi theo / buông tha
+      <select id="af-pursuit">
+        <option value="release" ${o.pursuit==='release'?'selected':''}>Buông tha (an toàn)</option>
+        <option value="chase" ${o.pursuit==='chase'?'selected':''}>Đuổi theo</option>
+        <option value="auto" ${o.pursuit==='auto'?'selected':''}>Tự động (tha nếu đang thương)</option>
+      </select>
+    </label>
   </div>
-  <div class="sum" id="af-stats">OK ${AutoFarm.stats.ok} · bỏ ${AutoFarm.stats.skip} · lỗi ${AutoFarm.stats.err}${AutoFarm.running?(AutoFarm.paused?' · TẠM DỪNG':' · ĐANG CHẠY'):''}</div>
+  <div class="sum" id="af-stats">OK ${AutoFarm.stats.ok} · bỏ ${AutoFarm.stats.skip} · lỗi ${AutoFarm.stats.err} · chữa ${AutoFarm.stats.heal||0}${AutoFarm.running?(AutoFarm.paused?' · TẠM DỪNG':' · ĐANG CHẠY'):''}</div>
   <div class="panel" style="max-height:32vh;overflow:auto;font-size:12px" id="af-log">${AutoFarm.log.slice().reverse().map(x=>`<div class="sub${x.kind==='err'?' r':x.kind==='ok'?' g':''}">[${E(x.tShow||x.t||'')}] ${E(x.msg)}</div>`).join('')||'<div class="sub">Chưa có nhật ký. Bấm Bắt đầu rồi gửi file log nếu lỗi.</div>'}</div>
   <div class="sum">${list.length} mục tiêu gần → xa</div>
   ${list.map(t=>`<article class="card ${t.danger.rank>=2?'d'+t.danger.rank:''}" data-slot="${E(t.slot)}" data-title="${E(t.title)}">
     <div class="ico">戰</div>
-    <div><b>${E(t.title)}</b><small>${E(t.enc)} · ${E(t.slot)}</small></div>
+    <div><b>${E(t.title)}</b><small>${E(t.enc)} · ${E(t.slot)} · ${E(t.mode||'')}</small></div>
     <div class="side">${N(t.travel)?fmtTime(t.travel):'—'}<small>${N(t.miles)?fmtMiles(t.miles):''}</small></div>
-    <div class="tags"><span class="tag">${E(t.danger.label)}</span>${t.left!=null?`<span class="tag g">Còn ${t.left}/3 lần săn</span>`:''}</div>
+    <div class="tags"><span class="tag">${E(t.danger.label)}</span>${t.left!=null?`<span class="tag g">Còn ${t.left}/3 lần săn</span>`:''}${t.priority>=40?`<span class="tag o">Việc gấp</span>`:''}</div>
     <div class="acts"><button class="btn" data-act="view">Xem</button><button class="btn pri" data-act="go">Đường</button></div>
-  </article>`).join('')||'<div class="empty">Không có node săn/trận phù hợp trên map hiện tại.<br>Hãy đi khám phá thêm rồi quét lại.</div>'}`;
+  </article>`).join('')||'<div class="empty">Không có mục tiêu phù hợp trên map hiện tại.<br>Hãy đi khám phá thêm rồi quét lại. Tắt «Chỉ ev.san_yeu» để cày rộng hơn.</div>'}`;
   $(body,'#af-toggle').onclick=()=>AutoFarm.start();
   $(body,'#af-refresh').onclick=()=>VIEWS.auto();
   $(body,'#af-export').onclick=()=>AutoFarm.exportLog();
+  $(body,'#af-rec-toggle').onclick=()=>{AutoFarm.rec.on?AutoFarm.stopRecord():AutoFarm.startRecord()};
+  $(body,'#af-rec-export').onclick=()=>AutoFarm.exportRecord();
   $(body,'#af-san').onchange=e=>{o.onlySanYeu=e.target.checked;VIEWS.auto()};
+  $(body,'#af-near').onchange=e=>{o.preferNear=e.target.checked;VIEWS.auto()};
+  $(body,'#af-places').onchange=e=>{o.includeNearPlaces=e.target.checked;VIEWS.auto()};
+  $(body,'#af-nodes').onchange=e=>{o.includeMapNodes=e.target.checked;VIEWS.auto()};
+  $(body,'#af-wild').onchange=e=>{o.includeWildSan=e.target.checked;VIEWS.auto()};
+  $(body,'#af-herb').onchange=e=>{o.includeHaiThuoc=e.target.checked;store.set('afHaiThuoc',o.includeHaiThuoc);VIEWS.auto()};
+  $(body,'#af-herb').onchange=e=>{o.includeHaiThuoc=e.target.checked;store.set('afHaiThuoc',o.includeHaiThuoc);VIEWS.auto()};
   $(body,'#af-toc').onchange=e=>{o.tocChien=e.target.checked};
   $(body,'#af-tudia').onchange=e=>{o.skipTuDia=e.target.checked;VIEWS.auto()};
   $(body,'#af-choose').onchange=e=>{o.autoChoose=e.target.checked};
+  $(body,'#af-heal').onchange=e=>{o.autoHeal=e.target.checked;store.set('afAutoHeal',o.autoHeal)};
+  $(body,'#af-pauseheal').onchange=e=>{o.pauseIfNoHeal=e.target.checked};
   $(body,'#af-xutri').onchange=e=>{o.xuTri=e.target.value;store.set('xuTri',o.xuTri);toast('Đã nhớ: xử tù binh = '+o.xuTri,'ok',2200)};
+  $(body,'#af-pursuit').onchange=e=>{o.pursuit=e.target.value;store.set('afPursuit',o.pursuit);toast('Đuổi/tha = '+o.pursuit,'ok',2000)};
 };
 
 /* ───────── Tab: Treo thưởng (việc đã nhận) ───────── */
@@ -1838,6 +2862,6 @@ iv=setInterval(tick,5000);
 /* Không tự vẽ đường khi mở tool */
 try{Route.clear()}catch{try{stopDrawing()}catch{}}
 Alerts.check();ui.syncRouteChip();
-window.__VKT2__={destroy(){try{AutoFarm.stop()}catch{}try{document.getElementById(ID+'-afbar')?.remove()}catch{}clearInterval(iv);clearTimeout(timer);try{unsub?.()}catch{}stopDrawing();panel.remove();fab.remove();chip.remove();toasts.remove();styleEl.remove()},ui,Route,build:BUILD,VIEWS,BuildEngine,hooks:{realmRows,eventRows,treasureRows,jobRows,peopleRows,sectRows,checks,safePath,placeWindow,closedYears,openOnArrival,focusMap,startDrawing,stopDrawing,mapRoot,addItemToBag,coreContext,Alerts,AutoFarm}};
+window.__VKT2__={destroy(){try{AutoFarm.stopRecord()}catch{}try{AutoFarm.stop()}catch{}try{document.getElementById(ID+'-afbar')?.remove()}catch{}clearInterval(iv);clearTimeout(timer);try{unsub?.()}catch{}stopDrawing();panel.remove();fab.remove();chip.remove();toasts.remove();styleEl.remove()},ui,Route,build:BUILD,VIEWS,BuildEngine,hooks:{realmRows,eventRows,treasureRows,jobRows,peopleRows,sectRows,checks,safePath,placeWindow,closedYears,openOnArrival,focusMap,startDrawing,stopDrawing,mapRoot,addItemToBag,coreContext,Alerts,AutoFarm}};
 
 })();
