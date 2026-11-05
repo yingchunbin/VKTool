@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261105-kinhmach-v48',ID='vkt2',g=window.game;
+const BUILD='20261105-kinhmach-v49',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -141,7 +141,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     const names = {}, missing = [];
     for (const [k, [a, label]] of Object.entries(ANCHORS)) { const n = findAny(src, a); if (n) names[k] = n; else missing.push(label); }
     for (const [k, [re, label]] of Object.entries(REGEX_NAMES)) { const m = re.exec(src); if (m) names[k] = m[1]; else missing.push(label); }
-    // Bundle hiện tại: hàm tính kinh mạch lõi nhận (nhân vật, content, thể chất).
+    // Hàm kinh mạch lõi nhận (nhân vật, content, thể chất).
     const rtNeedsTheChat = !!names.Rt && new RegExp('function ' + names.Rt.replace(/\$/g, '\\$') + '\\([\\w$]+,[\\w$]+,[\\w$]+\\)').test(src);
     // Bản mới của game: kiểm tra món (t,n,e,i) tách khỏi hàm kiểm tra chỗ đặt (t,n,e,i=-1)
     if (names.Jh && !new RegExp('function ' + names.Jh.replace(/\$/g, '\\$') + '\\([\\w$]+,[\\w$]+,[\\w$]+,[\\w$]+=-1\\)').test(src)) {
@@ -170,8 +170,8 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     // Không cho bản sao khởi động lại giao diện game
     let ok1 = false, ok2 = false;
     src = src.replace(/((?:[\w$]+\(\);)*)const ([\w$]+)=[\w$]+\.createRoot\(document\.getElementById\("hud"\)\)/, (_, __, v) => { ok1 = true; return `const ${v}={render(){}}`; });
-    src = src.replace(/(__tuTienReady:!0\}\)\})([\w$]+)\(\)\.catch\(/, (_, a) => { ok2 = true; return a + 'Promise.resolve().catch('; });
-    if (!ok1 || !ok2) throw new Error('Game vừa đổi cách khởi động nên tool chưa chạy được. Hãy chụp màn hình này gửi Claude để sửa tool.');
+    src = src.replace(/(\})([\w$]+)\(\)\.catch\(/, (_, a) => { ok2 = true; return a + 'Promise.resolve().catch('; });
+    if (!ok1 || !ok2) throw new Error('Không nhận diện được đoạn khởi động bundle game hiện tại.');
     src = src.replace(/window\.addEventListener\("contextmenu",/, 'void("contextmenu",');
     if (names.Uen) {
       const fi = src.indexOf('function ' + names.Uen + '(');
@@ -1099,7 +1099,7 @@ VIEWS.check=()=>{
   body.innerHTML=`<div class="panel"><b style="color:var(--gold)">${bad.length?`${bad.length} mục chưa khớp với bản game hiện tại`:'Mọi mục đều khớp với bản game'}</b><div class="sub">Phiên bản trợ thủ ${E(BUILD)}. Game vừa cập nhật mà có chức năng không chạy thì bấm kiểm tra lại, rồi sao chép báo cáo gửi cho người làm.</div><div class="acts" style="margin-top:8px"><button class="btn pri" id="c-run">Kiểm tra lại</button><button class="btn" id="c-copy">Sao chép báo cáo</button></div><div class="sub" id="c-msg"></div></div>
   ${groups.map(gr=>`<h3>${E(gr)}</h3><div class="panel">${rows.filter(x=>x.group===gr).map(x=>`<div class="row"><span>${x.ok===true?'<b class="ok">✔</b>':x.ok===false?'<b class="bad">✘</b>':'…'} ${E(x.name)}</span><small>${E(x.note)}</small></div>`).join('')}</div>`).join('')}`;
   $(body,'#c-run').onclick=async e=>{e.target.disabled=true;const m=$(body,'#c-msg');BuildEngine.reset();try{await BuildEngine.ensureCore(x=>{m.textContent=x})}catch(err){m.textContent='Chưa chuẩn bị được: '+(err.message||err)}render()};
-  $(body,'#c-copy').onclick=async()=>{const rep=JSON.stringify({ban:BUILD,gio:new Date().toISOString(),game:BuildEngine.core?.bundle||null,thieu:BuildEngine.core?.lost||null,khoiTaoLoi:BuildEngine.coreError||null,loi:rows.filter(x=>x.ok===false).map(x=>`${x.group}: ${x.name}${x.note?' — '+x.note:''}`),dat:rows.filter(x=>x.ok===true).length},null,2),m=$(body,'#c-msg');try{await navigator.clipboard.writeText(rep);m.textContent='Đã sao chép báo cáo.'}catch{m.textContent=rep}};
+  $(body,'#c-copy').onclick=async()=>{const rep=JSON.stringify({ban:BUILD,gio:new Date().toISOString(),game:BuildEngine.core?.bundle||null,thieu:BuildEngine.core?.lost||null,khoiTaoLoi:BuildEngine.coreError||null,loi:rows.filter(x=>x.ok===false).map(x=>`${x.group}: ${x.name}`),dat:rows.filter(x=>x.ok===true).length},null,2),m=$(body,'#c-msg');try{await navigator.clipboard.writeText(rep);m.textContent='Đã sao chép báo cáo.'}catch{m.textContent=rep}};
 };
 
 /* ───────── Tab: Đột phá & Thọ ───────── */
