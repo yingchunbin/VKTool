@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261105-kinhmach-v49',ID='vkt2',g=window.game;
+const BUILD='20261105-kinhmach-v50',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -67,7 +67,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
   const ANCHORS = {
     eJ:  [/\.doDung\)!=null&&/, 'mô phỏng trận'],
     Vr:  [/\{ten:[\w$]+\.ten,drugResistTran:\{\},drugRetention:/, 'chỉ số nhân vật khi đánh'],
-    Ga:  [/const [\w$]+=[\w$]+\.muc\?\?[\w$]+\.muc\?\?"thuong",[\w$]+=[\w$]+\.canhGioi/, 'dựng quái'],
+    Ga:  [/const [\w$]+=[\w$]+\.muc\?\?[\w$]+\.muc\?\?"thuong",[\w$]+=[\w$]+\.canh_gioi/, 'dựng quái'],
     Rt:  [/\(([\w$]+),([\w$]+),([\w$]+)\)\{const [\w$]+=\3\.dac_tinh\?\?\{\},[\w$]+=[\w$]+\(\3\)/, 'tính kinh mạch'],
     Tp:  ['.khuon.split(', 'khuôn kinh mạch'],
     al:  [/\(\w\.hinh\?\?\[\],\w\.xoay\)/, 'ô của mảnh'],
@@ -87,7 +87,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
   const REGEX_NAMES = {
     rn: [/function ([\w$]+)\(([\w$]+)\)\{return [\w$]+\[Math\.max\(0,Math\.min\([\w$]+,\2\)\)\]\}/, 'bảng cảnh giới'],
     fn: [/class ([\w$]+)\{constructor\(([\w$]+)\)\{this\.state=\2\}static fromSeed/, 'bộ số ngẫu nhiên'],
-    No: [/const ([\w$]+)=\["Tạp dịch","Ngoại môn"/, 'tên cấp bậc tông môn'],
+    No: [/[;,]([\w$]+)=\["Tạp dịch","Ngoại môn"/, 'tên cấp bậc tông môn'],
     E1: [/function ([\w$]+)\(([\w$]+),([\w$]+),([\w$]+),([\w$]+)=0\)\{return [\w$]+\(\2,\3,\4,[\w$]+\(\2,\3,"buy",\5\)\)\}/, 'giá mua'],
     gP: [/if\(!([\w$]+)\([\w$]+,[\w$]+\)\)throw new Error\("Nơi đó còn phủ mây/, 'vùng đã khám phá'],
   };
