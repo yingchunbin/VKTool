@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261105-kinhmach-v47',ID='vkt2',g=window.game;
+const BUILD='20261105-kinhmach-v45',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -67,8 +67,8 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
   const ANCHORS = {
     eJ:  [/\.doDung\)!=null&&/, 'mô phỏng trận'],
     Vr:  [/\{ten:[\w$]+\.ten,drugResistTran:\{\},drugRetention:/, 'chỉ số nhân vật khi đánh'],
-    Ga:  [[/muc\?\?"thuong",\w=\w\.canh_gioi/, /muc\?\?e\.muc\?\?"thuong"/, /n\.muc\?\?e\.muc\?\?"thuong".{0,30}e\.canh_gioi/, 'function Xa('], 'dựng quái'],
-    Rt:  [['generators:0,restrainers:0,weakGenerators:0', /\(([\w$]+),([\w$]+),([\w$]+)\)\{const [\w$]+=\3\.dac_tinh\?\?\{\},[\w$]+=[\w$]+\(\3\),[\w$]+=\1\.kinhMach/, /\(([\w$]+),([\w$]+),([\w$]+)\)\{const [\w$]+=\3\.dac_tinh\?\?\{\},[\w$]+=[\w$]+\(\3\)/], 'tính kinh mạch'],
+    Ga:  [/muc\?\?"thuong",\w=\w\.canh_gioi/, 'dựng quái'],
+    Rt:  [/\(([\w$]+),([\w$]+),([\w$]+)\)\{const [\w$]+=\3\.dac_tinh\?\?\{\},[\w$]+=[\w$]+\(\3\)/, 'tính kinh mạch'],
     Tp:  ['.khuon.split(', 'khuôn kinh mạch'],
     al:  [/\(\w\.hinh\?\?\[\],\w\.xoay\)/, 'ô của mảnh'],
     Jh:  ['Món này đã có trên kinh mạch', 'kiểm tra chỗ đặt'],
@@ -78,7 +78,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     Kn:  [/\.flags\.mon_phai;if\(typeof \w=="string"\)/, 'sư môn'],
     ke:  [/\.thoNguyen;return \w\+Math\.round\(\w\*\(\w\.lifespanBonusPct/, 'thọ nguyên'],
     Rsn: ['"inner_disciple":"core_disciple";', 'đối thủ khảo hạch'],
-    ko:  [[/return \w\.run\.tamMa;/, /if\(\w===\w\)return \w\.run\.tamMa/, /return e\.run\.tamMa;const /], 'quái từ nhân vật'],
+    ko:  [/return \w\.run\.tamMa;/, 'quái từ nhân vật'],
     Qn:  [/\[0\]\.ten:`\$\{/, 'tên cảnh giới'],
     mf:  [/\.world\.distance\(\w\.run\.viTri,\w\)\*\w\.yearsPerUnit/, 'thời gian đi đường'],
     Nin: [[/\.qua_cua\|\|\w\.treo_thuong\|\|\w\.bien_co\|\|/, /\.tien_ich\|\|![\w$]+\.dia_diem\|\|/, /\.tien_ich\|\|![\w$]+\.dia_diem\|\|[\w$]+\.an\|\|/], 'tiện ích ở một nơi'],
@@ -141,11 +141,10 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     const names = {}, missing = [];
     for (const [k, [a, label]] of Object.entries(ANCHORS)) { const n = findAny(src, a); if (n) names[k] = n; else missing.push(label); }
     for (const [k, [re, label]] of Object.entries(REGEX_NAMES)) { const m = re.exec(src); if (m) names[k] = m[1]; else missing.push(label); }
-    // Bản mới của game: hàm tính kinh mạch tách thành hàm trong (t,n,e) + hàm bọc có cache (t,n)
-    if (names.Rt && new RegExp('function ' + names.Rt.replace(/\$/g, '\\$') + '\\([\\w$]+,[\\w$]+,[\\w$]+\\)').test(src)) {
-      const m = new RegExp('function ([\\w$]+)\\(([\\w$]+),([\\w$]+)\\)\\{(?:(?!function ).){0,900}?=' + names.Rt.replace(/\$/g, '\\$') + '\\(\\2,\\3,[\\w$]+\\)', 's').exec(src);
-      if (m) names.Rt = m[1]; else missing.push('tính kinh mạch (bọc)');
-    }
+    // Bản game hiện tại xuất hàm tính kinh mạch lõi (nhân vật, content, thể chất).
+    // Giữ tên hàm lõi và bọc tương thích 2 tham số khi export; không còn phụ thuộc hàm cache đã bị game bỏ/đổi dạng.
+    let rtInner3 = false;
+    if (names.Rt) rtInner3 = new RegExp('function ' + names.Rt.replace(/\$/g, '\\$') + '\\([\\w$]+,[\\w$]+,[\\w$]+\\)').test(src);
     // Bản mới của game: kiểm tra món (t,n,e,i) tách khỏi hàm kiểm tra chỗ đặt (t,n,e,i=-1)
     if (names.Jh && !new RegExp('function ' + names.Jh.replace(/\$/g, '\\$') + '\\([\\w$]+,[\\w$]+,[\\w$]+,[\\w$]+=-1\\)').test(src)) {
       const m = new RegExp('function ([\\w$]+)\\([\\w$]+,[\\w$]+,[\\w$]+,[\\w$]+=-1\\)\\{(?:(?!function ).){0,400}?' + names.Jh.replace(/\$/g, '\\$') + '\\(', 's').exec(src);
@@ -184,7 +183,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
         if (seg2 !== seg) src = src.slice(0, fi) + seg2 + src.slice(fi + 2000);
       }
     }
-    src += `\n;export const __VKT={${Object.entries(names).map(([k, v]) => k + ':' + v).join(',')}};`;
+    src += `\n;export const __VKT={${Object.entries(names).map(([k, v]) => k === 'Rt' && rtInner3 ? `Rt:(e,t)=>${v}(e,t,t.theChat.get(e.theChat))` : k + ':' + v).join(',')}};`;
     progress('Đang dựng bộ tính toán…');
     const blobUrl = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
     const mod = await import(blobUrl);
@@ -204,7 +203,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
   const clone = (x) => structuredClone(x);
   const sleep0 = () => new Promise((r) => setTimeout(r, 0));
   const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const HE = { kim: 'Kim', moc: 'Mộc', thuy: 'Thủy', hoa: 'Hỏa', tho: 'Thổ', bang: 'Băng', loi: 'Lôi', phong: 'Phong', vo_sac: 'Vô sắc' };
+  const HE = { kim: 'Kim', moc: 'Mộc', thuy: 'Thủy', hoa: 'Hỏa', tho: 'Thổ', bang: 'Băng', loi: 'Lôi', phong: 'Phong', am: 'Ám', vo_sac: 'Vô sắc' };
   const heTen = (h) => HE[h] ?? h;
 
   const nvNow = () => clone(G().state.run.nhanVat);
@@ -235,7 +234,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
 
   // ───────────────────────── 4. Tối ưu kinh mạch ─────────────────────────
 
-  const BUILD_TAGS={tu_do:[],kiem:['kiem'],the:['the'],am:['am'],phat:['phat'],ma:['ma','nghich'],doc:['doc','co'],hop_hoan:['hop_hoan'],thi:['thi'],quy:['quy'],ngu_thu:['ngu_thu'],khoi_loi:['khoi_loi'],phu:['phu'],tran:['tran'],dan:['dan'],khi:['khi']};
+  const BUILD_TAGS={tu_do:[],am:['am'],kiem:['kiem'],the:['the'],phat:['phat'],ma:['ma','nghich'],doc:['doc','co'],hop_hoan:['hop_hoan'],thi:['thi'],quy:['quy'],ngu_thu:['ngu_thu'],khoi_loi:['khoi_loi'],phu:['phu'],tran:['tran'],dan:['dan'],khi:['khi']};
   const NL_BUILD={ngu_thu:'thu',khoi_loi:'khoi_loi',doc:'trung',thi:'thi',quy:'hon'};
   const schoolMatch=(school,tags,raw,it)=>tags.some(t=>raw.includes(t))||(NL_BUILD[school]!==undefined&&it?.ngu_linh?.loai===NL_BUILD[school]);
   function itemElements(it){const hs=A(it?.he);return hs.length?hs:['vo_sac']}
@@ -351,8 +350,8 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
   }
 
   // ───────────────────────── 5. Vẽ kinh mạch ─────────────────────────
-  const BASE = { thuy: ['#3f6fb5', '#5a8fd6', '#2c5592', '#6f9fd0'], bang: ['#5fb8c9', '#86cfdc', '#3e9db0'], am: ['#5a4a7a', '#7a6a9a', '#3d3258', '#8b7aad'], vo_sac: ['#7d7a76', '#9a958e', '#5f5c58'], hoa: ['#c0392b', '#d9622b', '#a8321f'], tho: ['#8a6a2e', '#a07a3a', '#6e5524'], kim: ['#c9a227', '#8f7a2a', '#e0b84a', '#a8892c', '#d4a017'], moc: ['#3f8f4a', '#5aa865', '#2f6f38'], loi: ['#7a4fb5', '#9a6fd0'], phong: ['#3fa08f', '#5cbfae'] };
-  const TINT = { thuy: '#cfdcef', bang: '#d3ecf0', vo_sac: '#dcd6cc', hoa: '#efc2b4', kim: '#f1e3b0', tho: '#e3d2b0', moc: '#cfe6c8', loi: '#ddd0ef', phong: '#cdebe5' };
+  const BASE = { am: ['#34224f', '#51346f', '#241936'], thuy: ['#3f6fb5', '#5a8fd6', '#2c5592', '#6f9fd0'], bang: ['#5fb8c9', '#86cfdc', '#3e9db0'], vo_sac: ['#7d7a76', '#9a958e', '#5f5c58'], hoa: ['#c0392b', '#d9622b', '#a8321f'], tho: ['#8a6a2e', '#a07a3a', '#6e5524'], kim: ['#c9a227', '#8f7a2a', '#e0b84a', '#a8892c', '#d4a017'], moc: ['#3f8f4a', '#5aa865', '#2f6f38'], loi: ['#7a4fb5', '#9a6fd0'], phong: ['#3fa08f', '#5cbfae'] };
+  const TINT = { am: '#c9bddb', thuy: '#cfdcef', bang: '#d3ecf0', vo_sac: '#dcd6cc', hoa: '#efc2b4', kim: '#f1e3b0', tho: '#e3d2b0', moc: '#cfe6c8', loi: '#ddd0ef', phong: '#cdebe5' };
 
   function drawGrid(nv, manh, mark) {
     const K = S.core, c = C();
@@ -991,20 +990,14 @@ VIEWS.realm=()=>{
 };
 
 /* ───────── Tab: Kinh mạch (Build) ───────── */
-const BUILD_PATHS=[['tu_do','Tự do'],['kiem','Kiếm'],['the','Thể'],['am','Âm đạo'],['phat','Phật'],['ma','Ma / Nghịch'],['doc','Độc / Cổ'],['hop_hoan','Hợp Hoan'],['thi','Luyện Thi'],['quy','Quỷ'],['ngu_thu','Ngự Thú'],['khoi_loi','Khôi Lỗi'],['phu','Phù'],['tran','Trận'],['dan','Đan'],['khi','Luyện Bảo']];
-const ELEMS=[['kim','Kim'],['moc','Mộc'],['thuy','Thủy'],['hoa','Hỏa'],['tho','Thổ'],['bang','Băng'],['loi','Lôi'],['phong','Phong'],['am','Ám'],['vo_sac','Vô sắc']];
-const ELEMENT_NAMES=Object.fromEntries(ELEMS);
+const BUILD_PATHS=[['tu_do','Tự do'],['kiem','Kiếm'],['the','Thể'],['phat','Phật'],['ma','Ma / Nghịch'],['doc','Độc / Cổ'],['hop_hoan','Hợp Hoan'],['thi','Luyện Thi'],['quy','Quỷ'],['am','Âm / Ám'],['ngu_thu','Ngự Thú'],['khoi_loi','Khôi Lỗi'],['phu','Phù'],['tran','Trận'],['dan','Đan'],['khi','Luyện Bảo']];
+const ELEMS=[['kim','Kim'],['moc','Mộc'],['thuy','Thủy'],['hoa','Hỏa'],['tho','Thổ'],['bang','Băng'],['loi','Lôi'],['phong','Phong'],['vo_sac','Vô sắc']];
+const BUILD_ELEMS=[...ELEMS.slice(0,-1),['am','Ám'],ELEMS.at(-1)];
+const ELEMENT_NAMES={...Object.fromEntries(ELEMS),am:'Ám'};
 const MODES=[['danh','Chiến đấu'],['tu','Tu luyện'],['can','Cân bằng']];
 const bld={pref:{body:'current',mainElement:'auto',subs:[],school:'tu_do',alignment:'auto'},iters:500,busy:false,results:null,mode:'danh',msg:''};
 const opt=(arr,v)=>arr.map(([k,n])=>`<option value="${E(k)}" ${k===v?'selected':''}>${E(n)}</option>`).join('');
-function rootText(){
-  const lc=me().linhCan;if(!lc||typeof lc!=='object')return'—';
-  const FALL={vo:'Vô linh căn',tap:'Tạp linh căn',song:'Song linh căn',thien:'Thiên linh căn',bien_di:'Biến dị linh căn',ngu_hanh:'Ngũ hành linh căn'};
-  const id=lc.pham?('linh_can.'+String(lc.pham).replace(/^linh_can\./,'')):'';
-  const ten=T(C.linhCan?.get?.(id)?.ten||C.linhCan?.get?.(lc.pham)?.ten||FALL[lc.pham]||lc.pham||'');
-  const he=A(lc.he).map(h=>ELEMENT_NAMES[h]||h).join(' · ');
-  return [ten,he].filter(Boolean).join(' · ');
-}
+function rootText(){const lc=me().linhCan;if(!lc||typeof lc!=='object')return'—';return[({vo:'Vô linh căn',tap:'Tạp linh căn',song:'Song linh căn',thien:'Thiên linh căn',bien_di:'Biến dị linh căn'})[lc.pham]||lc.pham,A(lc.he).map(h=>ELEMENT_NAMES[h]||h).join(' · ')].filter(Boolean).join(' · ')}
 function bodyOptions(){const cur=me().theChat,col=C.theChat,out=[['current',`Hiện tại · ${T(col?.get?.(cur)?.ten||cur||'—')}`]];if(col instanceof Map)for(const[id,r] of col)if(id!==cur)out.push([id,T(r?.ten||id)]);return out}
 function buildResultHtml(){
   const res=bld.results?.[bld.mode];if(!res)return'';
@@ -1018,9 +1011,9 @@ function buildResultHtml(){
   <div class="acts" style="margin-top:8px"><button class="btn pri" data-b="apply" data-slot="${slot}">Xếp vào Bộ ${slot+1}</button><button class="btn" data-b="all">Xếp cả 3 bộ</button></div></div>`;
 }
 VIEWS.build=()=>{
-  const p=bld.pref,subs=ELEMS.filter(([k])=>k!==p.mainElement);
-  body.innerHTML=`<div class="panel"><div class="sub" style="margin-bottom:8px">Linh căn hiện tại: <b style="color:var(--gold)">${E(rootText())}</b> · Cảnh giới ${E(me().canhGioi??'?')}. Xếp theo quy tắc game (lưới theo thể chất, hệ Kim→Ám, chỗ đặt từ code). Đủ thể chất mới + hệ Ám, so với ${Math.min(30,C.enemies.size)*2} trận trọng điểm.</div>
-  <div class="form"><label>Thể chất<select id="b-body">${opt(bodyOptions(),p.body)}</select></label><label>Phái<select id="b-school">${opt(BUILD_PATHS,p.school)}</select></label><label>Hệ chính<select id="b-main">${opt([['auto','Tự động'],...ELEMS],p.mainElement)}</select></label><label>Chính / Tà<select id="b-align">${opt([['auto','Theo phái đã chọn'],['chinh','Chính phái'],['ta','Tà phái']],p.alignment)}</select></label><label>Mức tính<select id="b-it">${opt([['250','Nhanh'],['500','Cân bằng'],['900','Tính kỹ']],String(bld.iters))}</select></label></div>
+  const p=bld.pref,subs=BUILD_ELEMS.filter(([k])=>k!==p.mainElement);
+  body.innerHTML=`<div class="panel"><div class="sub" style="margin-bottom:8px">Linh căn hiện tại: <b style="color:var(--gold)">${E(rootText())}</b> · Cảnh giới ${E(me().canhGioi??'?')}. Tự tìm cách xếp công pháp, pháp khí lên kinh mạch theo đúng quy tắc của game, so với ${Math.min(30,C.enemies.size)*2} trận trọng điểm.</div>
+  <div class="form"><label>Thể chất<select id="b-body">${opt(bodyOptions(),p.body)}</select></label><label>Phái<select id="b-school">${opt(BUILD_PATHS,p.school)}</select></label><label>Hệ chính<select id="b-main">${opt([['auto','Tự động'],...BUILD_ELEMS],p.mainElement)}</select></label><label>Chính / Tà<select id="b-align">${opt([['auto','Theo phái đã chọn'],['chinh','Chính phái'],['ta','Tà phái']],p.alignment)}</select></label><label>Mức tính<select id="b-it">${opt([['250','Nhanh'],['500','Cân bằng'],['900','Tính kỹ']],String(bld.iters))}</select></label></div>
   <div class="sub" style="margin:8px 0 4px">Hệ phụ (tối đa 5)</div><div class="chips" style="flex-wrap:wrap">${subs.map(([k,n])=>`<button class="chip ${p.subs.includes(k)?'on':''}" data-sub="${k}">${n}</button>`).join('')}</div>
   <div class="acts"><button class="btn pri" id="b-go" ${bld.busy?'disabled':''}>${bld.busy?'Đang tính…':'Phân tích & sắp xếp'}</button><button class="btn" id="b-stop" ${bld.busy?'':'disabled'}>Dừng</button></div>
   <div class="bar2"><i id="b-bar"></i></div><div class="sub" id="b-msg">${E(bld.msg)}</div></div>
