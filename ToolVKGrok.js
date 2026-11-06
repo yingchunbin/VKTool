@@ -2712,7 +2712,7 @@ const AutoFarm={
         return null;
       }
     }
-    const isHunt=c=>/săn |lùng |diệt |giết |đánh |trừ |chiến /i.test(strip(c.text));
+    const isHunt=c=>/săn\b|lùng\b|diệt\b|giết\b|đánh\b|trừ\b|chiến\b|giao chiến|tranh đoạt/i.test(strip(c.text));
     const isChase=c=>/đuổi theo|truy đuổi|đuổi tiếp/i.test(strip(c.text));
     const isRelease=c=>/buông tha|tha mạng|bỏ qua|không đuổi|thôi đuổi/i.test(strip(c.text));
     const injured=this.injuryLevel()>=1;
@@ -2767,11 +2767,14 @@ const AutoFarm={
       const text=strip(c.text);
       let score=this.chanceScore(c.chance);
       if(lv==='an_toan')score+=5.5;
-      else if(lv==='ngang_suc')score-=0.4; // chỉ chọn khi không còn an_toan
-      else if(lv==='hiem'||lv==='tu_dia')score-=8;
-      else score-=2;
-      if(isHunt(c)&&lv==='an_toan')score+=1.2;
-      if(isHunt(c)&&lv==='ngang_suc')score-=0.2;
+      else if(lv==='ngang_suc')score+=0.8; // vẫn vào trận khi không có an_toan
+      else if(lv==='hiem'||lv==='tu_dia')score-=6;
+      else score-=1;
+      // Nút vào trận rõ ràng
+      if(/giao chiến/i.test(text))score+=4.5;
+      if(/tranh đoạt|đánh tiếp|trận cuối/i.test(text)&&lv==='an_toan')score+=2;
+      if(isHunt(c)&&lv==='an_toan')score+=1.5;
+      if(isHunt(c)&&lv==='ngang_suc')score+=0.5;
       if(/lùng con đầu đàn|đầu đàn/i.test(text)&&lv==='an_toan')score+=3.5;
       if(this.chanceScore(c.chance)>=0.7)score+=0.35;
       if(/đánh tiếp|trận cuối/i.test(text)&&lv!=='an_toan')score-=5;
@@ -3015,12 +3018,15 @@ const AutoFarm={
   },
   handleCombat(){
     const tran=run().tran;
+    const waitingCombat=run().active?.waiting?.kind==='combat';
+    // Trận mới (waiting combat mà chưa có tran / tran mới): reset cờ
+    if(waitingCombat&&!tran)this._combatStarted=null;
     if(tran?.ketThuc){
       this._combatStarted=null;
       try{g.xongTran();this.push('xongTran (Enter sau trận)','ok');return 'combat-end'}
       catch(e){this.push('xongTran: '+(e.message||e),'err');return 'stuck'}
     }
-    // Đã bấm Giao chiến / tốc chiến rồi → chỉ chờ, KHÔNG spam mỗi tick
+    // Đã bấm Giao chiến / tốc chiến rồi → chơi lượt hoặc chờ
     if(tran&&this._combatStarted&&!tran.ketThuc){
       // Tốc chiến đang resolve hoặc cần đánh tay từng lượt
       if(!this.opts.tocChien||!(typeof g.duKienTran==='function'&&g.duKienTran()?.duocTocChien)){
@@ -3033,27 +3039,29 @@ const AutoFarm={
 
     let dk=null;
     try{dk=typeof g.duKienTran==='function'?g.duKienTran():null}catch{}
-    const allowFast=this.opts.tocChien&&dk?.duocTocChien&&this.injuryLevel()<2;
+    const allowFast=this.opts.tocChien&&this.injuryLevel()<2&&dk?.duocTocChien!==false;
     if(allowFast){
       try{
-        g.tocChienTran();
-        this._combatStarted=true;
-        this.push('Tốc chiến (duocTocChien)','ok');
-        return 'combat-fast';
-      }catch(e){this.push('Tốc chiến fail: '+(e.message||e)+' → Enter','dbg')}
+        if(typeof g.tocChienTran==='function'){
+          g.tocChienTran();
+          this._combatStarted=true;
+          this.push('Tốc chiến','ok');
+          return 'combat-fast';
+        }
+      }catch(e){this.push('Tốc chiến fail: '+(e.message||e)+' → Enter giao chiến','dbg')}
     }else if(this.opts.tocChien&&dk&&dk.duocTocChien===false){
       this.push('Game không cho tốc chiến → Enter giao chiến','dbg');
     }else if(this.injuryLevel()>=2){
       this.push('Thương nặng — không tốc chiến','dbg');
     }
-    // Không chủ động đánh khi dự kiến khó / không thắng (trừ khi đã vào trận bắt buộc)
-    if(dk&&dk.thang===false&&this.opts.skipTuDia!==false){
+    // Chỉ bỏ khi CHƯA bị buộc vào combat wait; nếu waiting=combat thì phải đánh
+    const forced=run().active?.waiting?.kind==='combat'||!!tran;
+    if(!forced&&dk&&dk.thang===false&&this.opts.skipTuDia!==false){
       this.push('Bỏ giao chiến — dự kiến khó/không thắng','dbg');
-      // thử thoát encounter nếu có
       try{
         const ch=this.viewChoices();
-        const esc=this.pickChoice(ch);
-        if(esc&&(esc.thoat||/thôi|đóng|rời|bỏ/i.test(String(esc.text||'')))){
+        const esc=A(ch).find(c=>c&&(c.thoat||/thôi|đóng|rời|bỏ|không/i.test(String(c.text||''))));
+        if(esc){
           g.choose?.(esc.index);
           this.push('Thoát thay vì đánh khó','ok');
           return 'combat-skip';
