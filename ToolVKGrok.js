@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261107-autofarm-v60',ID='vkt2',g=window.game;
+const BUILD='20261107-autofarm-v65',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -1943,6 +1943,8 @@ const AutoFarm={
     pauseIfNoHeal:true,
     pursuit:'release',
     apex:'fallback',
+    minLifeYears:3,
+    avoidBeasts:'Bạch Hạc Linh',
     xuTri:'tha',
     radiusWorld:55,
     radiusYears:0.25,
@@ -2003,6 +2005,26 @@ const AutoFarm={
   },
   STAT_KEYS:['than_thuc','ngo_tinh','khi_van','than_phap','can_cot','dao_tam','tam_ma'],
   STAT_LABELS:{than_thuc:'Thần thức',ngo_tinh:'Ngộ tính',khi_van:'Khí vận',than_phap:'Thân pháp',can_cot:'Căn cốt',dao_tam:'Đạo tâm',tam_ma:'Tâm ma'},
+  /* Tu vi TÍCH LŨY: lên tiểu cảnh giới thì nv.tuVi về 0 nên không thể trừ trực tiếp.
+     Cộng thêm tuViCan của mọi tiểu cảnh giới đã qua (hàm của game) để số đo liên tục. */
+  tuViCum(nv){
+    const raw=Number(nv.tuVi||0);
+    try{
+      const core=window.tuTien?.core||{};
+      const rl=core['kernel/realms']||core['index']||{};
+      const fn=rl.tuViCan;
+      if(typeof fn!=='function')return raw;
+      const cg=Number(nv.canhGioi||0),tc=Number(nv.tieuCanhGioi||0);
+      const tmax=Number(rl.TIEU_MAX);
+      const top=Number.isFinite(tmax)&&tmax>0?tmax:3;
+      let sum=0;
+      for(let c=0;c<=cg;c++){
+        const lim=c<cg?top:tc-1;
+        for(let t=0;t<=lim;t++){let v=0;try{v=Number(fn(c,t))}catch{}if(Number.isFinite(v)&&v>0)sum+=v}
+      }
+      return sum+raw;
+    }catch{return raw}
+  },
   charSnapshot(){
     const nv=me()||{};
     const bag=this.bagByPham();
@@ -2012,7 +2034,9 @@ const AutoFarm={
     return{
       nam:nowYear(),
       linhThach:Number(nv.linhThach||0),
-      tuVi:Number(nv.tuVi||0),
+      tuVi:this.tuViCum(nv),
+      tuViRaw:Number(nv.tuVi||0),
+      tieu:Number(nv.tieuCanhGioi||0),
       canhGioi:Number(nv.canhGioi||0),
       thuongThe:Number(nv.thuongThe||0),
       chiSo:chi,
@@ -2116,22 +2140,35 @@ const AutoFarm={
     try{view=typeof g.encounterView==='function'?g.encounterView():null}catch{}
     try{noi=typeof g.noiView==='function'?g.noiView():null}catch{}
     try{block=typeof g.targetHuntBlock==='function'?g.targetHuntBlock():null}catch{}
-    const acts=A(noi?.hoatDong).map(x=>({id:x.id,loai:x.loai,ten:T(x.ten||''),locked:x.lockedReason||null})).slice(0,20);
-    const choices=A(view?.choices).map(c=>({
-      index:c.index,text:String(c.text||'').slice(0,80),
-      risk:c.risk?.level||null,chance:c.chance,thoat:!!c.thoat,available:c.available!==false
-    })).slice(0,20);
+    const defInfo=id=>{try{const d=this.encDef(id);if(!d)return null;const tg=d.tags||{};return{kind:d.kind||null,nhom:d.nhom||null,tc:tg.tinh_chat||null,ten:T(d.ten||''),lamMoi:d.lam_moi||null,hoiChieu:d.limits?.hoi_chieu_nam??null}}catch{return null}};
+    const acts=A(noi?.hoatDong).map(x=>{
+      let farm=null,nonFarm=null;
+      try{farm=this.isFarmPlaceAct(x);nonFarm=this.isNonFarmEnc(x.id)}catch{}
+      return{id:x.id,loai:x.loai,ten:T(x.ten||''),locked:x.lockedReason||null,an:!!x.an,theCuc:x.theCuc||x.tenTheCuc||null,group:x.group||null,note:x.note||null,farm,nonFarm,def:defInfo(x.id)};
+    }).slice(0,30);
+    const choices=A(view?.choices).map(c=>{
+      let sp=null;try{const q=this.choiceSpendsResource(c);sp=q.spends?{lt:q.linhThach,ch:q.congHien,tho:q.thoNguyen||0,txt:q.textHint}:null}catch{}
+      return{
+        index:c.index,text:this.stripText(c.text).slice(0,120),
+        risk:c.risk?.level||null,riskRaw:c.risk&&typeof c.risk==='object'?c.risk:null,chance:c.chance,thoat:!!c.thoat,available:c.available!==false,
+        phucHet:!!c.phucHet,vat:A(c.vat).slice(0,4),lock:c.lockedReason||c.khoa||null,spends:sp
+      };
+    }).slice(0,20);
+    let life=null;try{life=this.lifeLeft()}catch{}
     return{
       nam:r.nam,viTri:r.viTri,oNoi:r.oNoi||null,
       thuongThe:Number(r.nhanVat?.thuongThe||0),
       canhGioi:Number(r.nhanVat?.canhGioi||0),
       linhThach:Number(r.nhanVat?.linhThach||0),
-      tuVi:Number(r.nhanVat?.tuVi||0),
+      tuVi:Number(r.nhanVat?.tuVi||0),tieu:Number(r.nhanVat?.tieuCanhGioi||0),tuViCum:this.tuViCum(r.nhanVat||{}),
       active:a?{id:a.id,slot:a.slot,done:!!a.done,waiting:a.waiting?.kind||null}:null,
       encKind:view?.kind||(this.encDef?this.encDef(a?.id)?.kind:null)||null,
       huntBlock:block?String(block):null,
       sanYeuLeft:this.sanYeuLeft?this.sanYeuLeft(r.viTri):null,
       noiActs:acts,
+      noiMeta:noi?{ten:T(noi.ten||''),loai:noi.loai||null,trangThai:A(noi.trangThai).map(x=>this.stripText(x)).slice(0,6),suKienConNam:noi.suKienConNam??null,theCuc:A(noi.theCuc).slice(0,4)}:null,
+      activeDef:a?defInfo(a.id):null,
+      lifeLeft:life,tuoi:r.nhanVat?.tuoi??null,
       choices,
       gains:this.gainsDelta()
     };
@@ -2445,12 +2482,61 @@ const AutoFarm={
     }).join('')||'<div class="sub">Chưa có nhật ký.</div>';
     const st=$(body,'#af-stats');
     if(st)st.textContent=`OK ${this.stats.ok} · bỏ ${this.stats.skip} · lỗi ${this.stats.err} · chữa ${this.stats.heal||0}${this.running?(this.paused?' · TẠM DỪNG':' · ĐANG CHẠY'):''}`;
-    const gn=$(body,'#af-gains');
-    if(gn)gn.innerHTML=`<b style="color:var(--gold)">Nhận được khi Auto</b>${this.gainsHtml()}`;
     this.syncGainsBar?.();
   },
 
   /* ── Thương thế & chữa trị ── */
+  /* ── Ngân sách thọ nguyên: mỗi bước đi tốn năm; cạn thọ = hết kiếp ── */
+  lifeLeft(){
+    try{
+      const nv=me();
+      const k=window.tuTien?.core?.['character/character'];
+      let life=null;
+      if(k&&typeof k.thoNguyenToiDa==='function')life=k.thoNguyenToiDa(nv);
+      else if(N(nv.thoNguyenToiDa))life=+nv.thoNguyenToiDa;
+      if(!N(life)||!N(nv.tuoi))return null;
+      return life-nv.tuoi;
+    }catch{return null}
+  },
+  avoidList(){
+    return String(this.opts.avoidBeasts||'').split(/[,;\n]/).map(x=>x.trim().toLowerCase()).filter(Boolean);
+  },
+  minLife(){return Math.max(0,Number(this.opts.minLifeYears)||0)},
+  /* Đi quãng travel (năm) có còn đủ thọ dự phòng không */
+  affordable(travel){
+    const lf=this.lifeLeft();
+    if(lf==null)return true;
+    return lf-(N(travel)?+travel:0)>this.minLife();
+  },
+  /* Có thể săn yêu thật tại ô này không (thành/thôn mặc định báo 3 lượt nhưng KHÔNG có act săn) */
+  canHuntHere(slot){
+    slot=slot||run().viTri;
+    if(this.sanYeuLeft(slot)<=0)return false;
+    const b=slot===run().viTri?this.huntBlockedHere():null;
+    if(b&&/săn cạn|hoang dã|lần theo dấu/i.test(String(b)))return false;
+    if(this.isNoiChon(slot)||placeDef(slot)){
+      return slot===run().viTri&&this.inPlace()&&!!this.placeActs().find(a=>a&&a.id==='ev.san_yeu'&&!a.lockedReason);
+    }
+    return true;
+  },
+  /* Ở lại săn nốt, có giới hạn thử để không đứng yên vô hạn */
+  tryStayHunt(here,left){
+    const key=here+'|'+left+'|'+nowYear().toFixed(3);
+    if(this._stayKey===key){
+      if(++this._stayN>=4){
+        this._stayKey=null;this._stayN=0;
+        this.push('Săn tại chỗ không tiến triển → bỏ ô '+here,'dbg');
+        this.banSlot(here,this.huntRecoveryYears());
+        return false;
+      }
+    }else{this._stayKey=key;this._stayN=0}
+    try{g.reopenPlace?.()}catch{}
+    try{
+      if(!run().active){g.chooseActivity?.('ev.san_yeu');this._lastEncAtPlace='ev.san_yeu';this._doneHere=true;this._pendingNode={slot:here,enc:'ev.san_yeu',at:Date.now()}}
+    }catch(e){this.push('stay hunt: '+(e.message||e),'dbg')}
+    this.push('Ở lại săn nốt · còn '+left,'dbg');
+    return true;
+  },
   injuryLevel(){return Math.max(0,Math.min(3,Number(me().thuongThe||0)))},
   injuryName(lv){return ['Lành lặn','Thương nhẹ','Thương nặng','Trọng thương'][Math.max(0,Math.min(3,lv|0))]||'?'},
   itemHealPower(it){
@@ -2462,6 +2548,16 @@ const AutoFarm={
     }
     return t;
   },
+  healTooWeakSafe(nv,it){
+    if(!it)return true;
+    try{
+      const core=window.tuTien?.core||{};
+      const fn=core['kernel/effects']?.healTooWeak||core['index']?.healTooWeak;
+      if(typeof fn==='function')return !!fn(nv,it);
+    }catch{}
+    const slack=Number(it.canh_gioi);
+    return Number.isFinite(slack)&&nv.canhGioi>slack+1;
+  },
   pickHealItem(){
     const nv=me(),need=this.injuryLevel();
     if(need<=0)return null;
@@ -2470,7 +2566,7 @@ const AutoFarm={
       const hi=window.tuTien?.core?.['character/heal_item'];
       if(hi&&typeof hi.pickHealItem==='function'){
         const p=hi.pickHealItem(nv,C.items,'cheapest',run().flags||nv.flags||{});
-        if(p&&p.id&&(nv.tuiDo?.[p.id]||0)>0){
+        if(p&&p.id&&(nv.tuiDo?.[p.id]||0)>0&&!this.healTooWeakSafe(nv,C.items?.get?.(p.id))){
           const it=C.items?.get?.(p.id);
           return{id:p.id,heal:Number(p.heal)||1,gia:Number(it?.gia||0),ten:T(it?.ten||p.id)};
         }
@@ -2483,9 +2579,8 @@ const AutoFarm={
       const it=C.items?.get?.(id);
       const heal=this.itemHealPower(it);
       if(heal<=0)continue;
-      // Đan yếu hơn cảnh giới quá nhiều thường vô dụng — game cũng chặn
-      const slack=Number(it.canh_gioi??0);
-      if(Number.isFinite(slack)&&nv.canhGioi>slack+2)continue;
+      // Đan yếu hơn cảnh giới (kể cả luật đạo lộ, vd. Nghịch Thiên cần đan cao hơn một bậc) — dùng đúng hàm của game
+      if(this.healTooWeakSafe(nv,it))continue;
       cand.push({id,heal,gia:Number(it.gia||0),ten:it.ten||id});
     }
     if(!cand.length)return null;
@@ -2502,7 +2597,7 @@ const AutoFarm={
     if(run().active||run().tran||run().bienCo)return 'busy';
     const pick=this.pickHealItem();
     if(!pick){
-      this.push(`Thương thế: ${this.injuryName(lv)} — túi không có đan chữa`,'err',{reason});
+      if(!this._noHealAt||Date.now()-this._noHealAt>15000){this._noHealAt=Date.now();this.push(`Thương thế: ${this.injuryName(lv)} — túi không có đan chữa dùng được`,'err',{reason})}
       if(this.opts.pauseIfNoHeal&&lv>=2){
         this.paused=true;this.syncFab();
         toast('Auto tạm dừng: bị '+this.injuryName(lv)+' mà không có thuốc','',4000);
@@ -2642,8 +2737,8 @@ const AutoFarm={
       const blob=(tc+' '+nhom+' '+s+' '+ten).toLowerCase();
       // Cửa hàng / tu luyện / đột phá / tông môn nội bộ — không farm ngoài
       if(kind==='cua_hang'||kind==='tu_luyen'||kind==='dot_pha')return false;
-      if(kind==='tong_mon')return false;
-      if(/giao_dich|mua_ban|song_bac|dau_gia|cho_am|cho_phien/.test(blob))return false;
+      if(kind==='tong_mon'&&this.isSectExcluded(s))return false;
+      if(/song_bac|dau_gia|cho_vay|vay_no/.test(blob))return false;
       // Phế tích chỉ để lập động phủ
       if(/phe_tich|lap_dong_phu|khai_phu/.test(blob))return false;
       // Tuyển đồ / nhận đệ tử tông môn
@@ -2676,16 +2771,28 @@ const AutoFarm={
     'ev.cung_duong_dao_quan','ev.cung_duong_cao_tang'
   ]),
   /* Không farm: đấu giá, sòng bạc, cúng dường, tiện ích xã hội — không tăng tu vi/tài nguyên farm */
+  /* Loại trừ theo yêu cầu: Tông môn tuyển đồ, Tông môn đại bỉ, Công phá sơn môn (chỉ theo id/tên) */
+  isSectExcluded(id){
+    const s=String(id||'');
+    if(/tuyen_do|tuyen_de|nhap_mon|nhan_do_de|dai_bi|cong_pha|pha_son_mon|cong_son_mon|son_mon_dai/i.test(s))return true;
+    try{
+      const ten=String(C.encounters?.get?.(s)?.ten||'');
+      if(/tuyển đồ|tuyển đệ|nhận đệ tử|nhập môn|đại bỉ|công phá|phá sơn môn|công sơn môn/i.test(ten))return true;
+    }catch{}
+    return false;
+  },
+  /* Không farm: cửa hàng/tiện ích mua bán, đấu giá, sòng bạc, cúng dường, vay nợ + 3 loại sự kiện tông môn.
+     Mọi sự kiện khác (Chuyện lớn / Thời thế / Trước mắt) đều làm — pickChoice tự né lựa chọn tốn tài nguyên. */
   isNonFarmEnc(id){
     const s=String(id||'');
     if(!s)return false;
+    if(this.isSectExcluded(s))return true;
     if(this.SKIP_PLACE_ACTS.has(s))return true;
-    // Theo content.kind trong source game
     try{
       const k=String(C.encounters?.get?.(s)?.kind||'');
       if(k==='cua_hang'||k==='tu_luyen'||k==='dot_pha')return true;
     }catch{}
-    return /dau_gia|song_bac|cung_duong|thap_huong|teleport|khach_diem|tra_lau|tham_ban|tinh_that|phuong_thi|hoc_duong|van_bao|an_tuc|hac_thi|lau_co_quan|sap_tho_khoi|tiem_tap|bang_treo|khai_phu|loi_dai|cho_am|cho_phien|cho_|sap_|lo_ren|thu_mua|mua_ban|cua_hang|tuyen_do|tuyen_de|nhap_mon|nhan_do/i.test(s);
+    return /dau_gia|song_bac|cung_duong|thap_huong|teleport|khach_diem|tra_lau|tinh_that|hoc_duong|an_tuc|hac_thi|lau_co_quan|tiem_tap|bang_treo|khai_phu|lo_ren|cho_vay|vay_no|tin_dung|thue_do|thinh_cang|thu_mua|thuong_hoi|van_bao_phan_hoi/i.test(s);
   },
   isFarmPlaceAct(act){
     if(!act||act.lockedReason)return false;
@@ -2693,7 +2800,7 @@ const AutoFarm={
     if(!id||this.isNonFarmEnc(id))return false;
     if(this.isActBanned(run().viTri,id))return false;
     // Phế tích / khai động phủ — không phải farm tài nguyên
-    if(/phe_tich|lap_dong_phu|khai_phu|dong_phu/i.test(id))return false;
+    if(/phe_tich|lap_dong_phu|khai_phu/i.test(id))return false;
     if(this.opts.onlySanYeu)return id==='ev.san_yeu';
     const loai=String(act.loai||'');
     if(id==='ev.san_yeu'){
@@ -2704,9 +2811,12 @@ const AutoFarm={
     }
     if(/hai_thuoc|thuoc_dai/i.test(id)&&!this.opts.includeHaiThuoc)return false;
     // su_kien / overlay / the_cuc / chien_dau / tien_ich tại chỗ → theo content
-    if(loai==='su_kien'||loai==='the_cuc'||loai==='overlay'||loai==='chien_dau'||loai==='tien_ich'||!loai){
-      return this.isFarmEncounter(id);
+    // Chuyện lớn (overlay) / Thời thế (the_cuc) / Trước mắt (su_kien): làm tất cả trừ tông môn tuyển đồ/đại bỉ/công phá & vay nợ/đấu giá…
+    if(loai==='su_kien'||loai==='the_cuc'||loai==='overlay'){
+      return !this.isNonFarmEnc(id);
     }
+    // Tiện ích: chỉ việc nghỉ chân/hoạt động (hd_*); cửa hàng, trà lâu, đấu giá… bỏ
+    if(loai==='tien_ich')return /^ev\.hd_/i.test(id);
     return this.isFarmEncounter(id);
   },
   placeFarmActs(){
@@ -2733,6 +2843,7 @@ const AutoFarm={
       }
       if(typeof g.enterNode!=='function')throw new Error('Không có enterNode');
       g.enterNode(slot);
+      this._doneHere=false;this._stayKey=null;this._stayN=0;this._visitActs=Object.create(null);
       this.push('enterNode('+slot+')','ok');
       return true;
     }catch(e){
@@ -2798,7 +2909,8 @@ const AutoFarm={
   targets(){
     const r=run(),out=[],seen=new Set();
     const boost=Math.min(3,Math.floor((this.emptyScans||0)/3));
-    const maxY=(N(this.opts.radiusYears)?+this.opts.radiusYears:0.18)*(1+boost*0.55);
+    let maxY=(N(this.opts.radiusYears)?+this.opts.radiusYears:0.18)*(1+boost*0.55);
+    {const lf=this.lifeLeft();if(lf!=null)maxY=Math.max(0,Math.min(maxY,lf-this.minLife()))}
     const near=this.nearSlots();
     const isBanned=s=>this.isSlotBanned(s);
 
@@ -2871,6 +2983,7 @@ const AutoFarm={
           for(const b of this.listHuntBeasts()){
             const id=b.id;
             if(this.isBeastBanned(slot,id))continue;
+            if(this.avoidList().some(n=>String(T(b.ten||id)).toLowerCase().includes(n)))continue;
             const key=slot+'|hunt|'+id;
             if(seen.has(key))continue;
             seen.add(key);
@@ -2966,6 +3079,9 @@ const AutoFarm={
       const aHere=a.slot===here&&(hereLeft>0||a.mode==='node'||a.mode==='doAction'||a.mode==='hunt')?0:1;
       const bHere=b.slot===here&&(hereLeft>0||b.mode==='node'||b.mode==='doAction'||b.mode==='hunt')?0:1;
       if(aHere!==bHere)return aHere-bHere;
+      // Tầng ưu tiên: việc gấp (sắp hết hạn) > việc thật (săn/node) > ghé nơi trống
+      const tier=t=>(Number(t.priority)>=70)?0:(t.mode==='visit'&&t.enc==='visit')?2:1;
+      if(tier(a)!==tier(b))return tier(a)-tier(b);
       // Khoảng cách là chính (gần nhất trước)
       const ma=N(a.miles)?a.miles:(N(a.travel)?a.travel*8000:1e6);
       const mb=N(b.miles)?b.miles:(N(b.travel)?b.travel*8000:1e6);
@@ -3017,6 +3133,9 @@ const AutoFarm={
               if(Number(v)<0)out.congHien+=Number(v);
             }
             if(eff.mua!=null)out.textHint=true;
+            for(const k of ['tho_nguyen','thoNguyen','tho_nguyen_mat']){
+              if(eff[k]!=null){const v=typeof eff[k]==='number'?eff[k]:(eff[k].nam??eff[k].so??0);if(Number(v)<0){out.thoNguyen=(out.thoNguyen||0)+Number(v);out.textHint=true}}
+            }
           }
         }
       }
@@ -3025,6 +3144,7 @@ const AutoFarm={
     if(/(nộp|nop|trả|tra|đưa|dua|thuê|thue|mãi lộ|mai lo|mua đường|cược|bồi thường|boi thuong).{0,28}(linh\s*thạch|lt\.)/i.test(t))out.textHint=true;
     if(/^(mua|trả|đặt cược|thuê)\b/i.test(t))out.textHint=true;
     if(/\{lt\./i.test(String(c.text||'')))out.textHint=true;
+    if(/(hao|mất|đốt|hiến|trả giá|đổi).{0,14}(thọ nguyên|tuổi thọ|năm thọ)/i.test(t))out.textHint=true;
     out.spends=out.linhThach<0||out.congHien<0||out.textHint;
     return out;
   },
@@ -3078,9 +3198,13 @@ const AutoFarm={
     if(safe.length)pool=safe;
     else{
       // Không an_toan: bỏ ngang_suc nếu còn lựa chọn không combat
+      const healthy=this.injuryLevel()===0;
       const soft=pool.filter(c=>!lv(c)||lv(c)==='ngang_suc');
       const noCombat=pool.filter(c=>!lv(c));
-      if(noCombat.length)pool=noCombat;
+      const even=pool.filter(c=>lv(c)==='ngang_suc');
+      // Chưa bị thương: ngang sức vẫn nhận (thưởng thường tốt hơn lui đi); đang bị thương: né
+      if(healthy&&even.length)pool=pool.filter(c=>!lv(c)||lv(c)==='ngang_suc');
+      else if(noCombat.length)pool=noCombat;
       else if(soft.length)pool=soft;
       else{
         const esc=list.find(isThoat);
@@ -3100,6 +3224,20 @@ const AutoFarm={
       if(esc){this.push('Chỉ còn lựa chọn tốn tài nguyên → thoát','dbg');return esc}
     }
 
+    // Né quái trong danh sách (vd. Bạch Hạc Linh: đánh bị trừ Khí Vận) — kể cả "Lùng con đầu đàn" của menu đó
+    {
+      const av=this.avoidList();
+      if(av.length){
+        const hit=c=>{const t=strip(c.text).toLowerCase();return av.some(n=>t.includes(n))};
+        if(list.some(hit)){
+          // Quái cần né xuất hiện ở ô này → bấm Thôi (không tốn lượt săn), rời ô và nhớ để không quay lại
+          const esc=list.find(isThoat)||list.find(c=>c.thoat);
+          if(esc){this._avoidReroll=true;this.push('Có quái cần né → Thôi, rời ô','dbg');return esc}
+          const keep=pool.filter(c=>!hit(c));
+          if(keep.length)pool=keep;
+        }
+      }
+    }
     const scored=pool.map(c=>{
       let score=0;
       const l=lv(c);
@@ -3107,17 +3245,22 @@ const AutoFarm={
       if(this.choiceSpendsResource(c).spends)score-=200;
       // Risk — nguồn zgt game
       if(l==='an_toan')score+=100;
-      else if(l==='ngang_suc')score+=30;
+      else if(l==='ngang_suc')score+=(this.injuryLevel()===0?70:30);
       else if(!l)score+=50; // không combat
       else score-=50;
       // Chance — nguồn Imt game (dễ / % )
       if(ch!=null){
-        if(ch>=0.7)score+=40;
-        else if(ch>=0.4)score+=15;
-        else score-=20;
+        score+=Math.round((ch-0.5)*90); // 90% → +36, 50% → 0, 20% → −27
+        if(ch<0.3&&l!=='an_toan')score-=30;
       }
       // Thoát: chỉ khi không còn việc
       if(isThoat(c))score-=80;
+      // Đang bị thương: tránh cửa có giao chiến
+      if(this.injuryLevel()>=1&&l&&l!=='an_toan')score-=60;
+      // Lui lấy phần thưởng đã có thì đáng giá hơn đánh tiếp
+      if(/lấy (tiền|thưởng|lời)|nhận thưởng|thu hoạch|rút lui/i.test(strip(c.text)))score+=45;
+      // Lui đi/bỏ đi tay không: kém hơn làm việc
+      if(/^(lặng lẽ lui|lui đi|bỏ đi|làm ngơ|mặc kệ|lờ đi)/i.test(strip(c.text)))score-=40;
       // Có vat / phần thưởng gợi ý trên nút
       if(A(c.vat).length)score+=8;
       if(c.phucHet)score-=60;
@@ -3125,9 +3268,9 @@ const AutoFarm={
       if(/^(mua|trả|đặt cược|thuê|cược)\b/i.test(strip(c.text)))score-=40;
       // Đầu đàn
       if(/đầu đàn|lùng con đầu đàn/i.test(strip(c.text))){
-        if(this.opts.apex==='always'&&l==='an_toan')score+=5;
-        else if(this.opts.apex==='never')score-=25;
-        else score-=5;
+        if((this.opts.apex==='prefer'||this.opts.apex==='always')&&(l==='an_toan'||l==='ngang_suc'))score+=25;
+        else if(this.opts.apex==='never')score-=60;
+        else score-=30; // fallback: săn thường trước
       }
       // Thứ tự content (index nhỏ = lựa chọn chính thường đứng trước)
       score+=Math.max(0,8-Number(c.index||0));
@@ -3137,7 +3280,7 @@ const AutoFarm={
     const best=scored[0]?.c||null;
     if(best){
       const ch=chanceOf(best);
-      this.push('pick → ['+(best.index+1)+'] '+strip(best.text).slice(0,42)+' risk='+(lv(best)||'none')+(ch!=null?(' ch='+ch):'')+' score='+scored[0].score.toFixed(1),'dbg');
+      this.push('pick → ['+(best.index+1)+'] '+strip(best.text).slice(0,42)+' risk='+(lv(best)||'none')+(ch!=null?(' ch='+ch):'')+' score='+scored[0].score.toFixed(1),'dbg',{scores:scored.slice(0,6).map(x=>({i:x.c.index,t:strip(x.c.text).slice(0,40),s:Math.round(x.score)})),poolSize:pool.length,listSize:list.length,enc:activeId,kind:encKind});
     }
     return best;
   },
@@ -3385,12 +3528,14 @@ const AutoFarm={
       if(p.enc&&!this.isNonFarmEnc(p.enc)){
         const leftSy=this.sanYeuLeft(run().viTri||p.slot);
         const still=this.placeFarmActs().some(a=>a.id===p.enc)
-          ||(p.enc==='ev.san_yeu'&&leftSy>0);
+          ||(p.enc==='ev.san_yeu'&&leftSy>0&&this.canHuntHere(run().viTri));
         if(still){
           p.at=Date.now();
           p.retries=(p.retries|0)+1;
           if(p.retries>8){
-            this.push('retry quá nhiều '+p.enc+' → bỏ pending','dbg');
+            this.push('retry quá nhiều '+p.enc+' → bỏ pending + tạm bỏ act','dbg');
+            this.banAct(run().viTri||p.slot,p.enc,p.enc==='ev.san_yeu'?this.huntRecoveryYears():1);
+            if(p.enc==='ev.san_yeu')this.banSlot(run().viTri||p.slot,this.huntRecoveryYears());
             this._pendingNode=null;
             return;
           }
@@ -3617,10 +3762,9 @@ const AutoFarm={
         else if(typeof g.closeEncounter==='function')g.closeEncounter();
         else g.resume?.(null);
       }catch(e){this.push('Rời menu: '+(e.message||e),'err')}
-      this.banSlot(run().viTri||a.slot,1);
-      try{g.leavePlace?.()}catch{}
+      if(a?.id)this.banAct(run().viTri||a.slot,a.id,1);
       this.needInteractHere=false;
-      this.push('Rời chỗ, tìm farm khác','ok');
+      this.push('Rời sự kiện '+(a?.id||'')+', làm việc tiếp theo','ok');
       return 'idle';
     }
     const label=T(this.stripText(pick.text)).slice(0,80);
@@ -3629,20 +3773,28 @@ const AutoFarm={
     const rkShow=rk?` · risk:${rk}`:'';
     try{
       const txt=this.stripText(pick.text).trim();
-      const isCancel=pick.thoat===true||/^(thôi|hủy|đóng|bỏ qua|đi)\s*$/i.test(txt)||/rời|xem rồi đi|lảng đi|không muốn/i.test(txt);
+      const isCancel=pick.thoat===true||/^(thôi|hủy|đóng|bỏ qua|đi|rời đi|rời|đi tiếp|cáo từ)\s*$/i.test(txt)||/^(xem rồi đi|lảng đi|không muốn|rời (đi|khỏi|chỗ))/i.test(txt);
       g.choose(pick.index);
       this.push(`Chọn [${pick.index+1}] ${label}${ch}${rkShow}`,'ok');
+      if(this._avoidReroll){
+        this._avoidReroll=false;
+        const slot=run().viTri||a.slot;
+        try{g.closeEncounter?.()}catch{}
+        this.banSlot(slot,10); // 10 năm game: không quay lại ô có quái này
+        this._pendingNode=null;
+        try{g.leavePlace?.()}catch{}
+        this.push('Rời ô '+slot+' (có quái cần né), ban 10 năm','ok');
+        return 'idle';
+      }
       if(isCancel){
         const slot=run().viTri||a.slot;
-        const actId=run().active?.id||a?.id||null;
-        this.banSlot(slot,1);
+        const actId=a?.id||null;
         if(actId)this.banAct(slot,actId,1);
         this.needInteractHere=false;
         this._pendingNode=null;
-        // Quan trọng: Rời đi trong activity KHÔNG tự thoát nơi — phải leavePlace
+        // Chỉ đóng sự kiện này (vd. lọt vào chợ mua bán); các sự kiện khác ở nơi vẫn làm tiếp, hết việc tick sau tự rời nơi
         try{g.closeEncounter?.()}catch{}
-        try{g.leavePlace?.()}catch{}
-        this.push('Đã chọn Thoát/Đi — rời nơi, tìm chỗ khác','dbg');
+        this.push('Đã Rời đi khỏi '+(actId||'sự kiện')+' — làm việc tiếp theo ở nơi','dbg');
         return 'idle';
       }
       return 'choice';
@@ -3711,6 +3863,18 @@ const AutoFarm={
       this.clearPendingHuntIfStale();
       this.clearPendingNodeIfStale();
       this.needInteractHere=false;
+      // clearPending* có thể vừa mở encounter (retry) → không được leavePlace/enterNode trong tick này
+      if(this.busy()){this.schedule();return}
+
+      // Thọ nguyên cạn dần: dừng sớm để người chơi quyết định (cạn thọ = hết kiếp)
+      {
+        const lf=this.lifeLeft();
+        if(lf!=null&&lf<=this.minLife()){
+          this.push('Thọ nguyên còn '+fmtTime(Math.max(0,lf))+' ≤ ngưỡng '+this.minLife()+' năm — Auto dừng','err');
+          this.paused=true;this.syncFab();toast('Auto dừng: sắp cạn thọ nguyên','',5000);
+          this.schedule();return;
+        }
+      }
 
       const ban=this.slotBan||(this.slotBan=Object.create(null));
       const here=run().viTri;
@@ -3725,14 +3889,16 @@ const AutoFarm={
         const rawSan=this.placeActs().find(a=>a&&a.id==='ev.san_yeu'&&!a.lockedReason);
         const blockedSan=!!(block&&/săn cạn|hoang dã|lần theo dấu/i.test(String(block)));
         // Chỉ săn khi có act thật + còn lượt + không bị chặn (thành thị/hoang dã)
-        const canSan=!!rawSan&&leftSy>0&&!blockedSan;
-        if(canSan){
-          if(!acts.some(a=>a.id==='ev.san_yeu'))acts=[rawSan,...acts];
-          acts=[...acts].sort((a,b)=>(a.id==='ev.san_yeu'?0:1)-(b.id==='ev.san_yeu'?0:1));
-        }
+        const canSan=!!rawSan&&leftSy>0&&!blockedSan&&!this.isActBanned(here,'ev.san_yeu');
+        if(canSan&&!acts.some(a=>a.id==='ev.san_yeu'))acts=[...acts,rawSan];
+        // Mỗi việc chỉ thử tối đa 2 lần/lượt ghé (săn yêu 6) — tránh lặp vô hạn một việc không biến mất
+        acts=acts.filter(a=>(this._visitActs?.[here+'|'+a.id]||0)<(a.id==='ev.san_yeu'?6:2));
         if(acts.length){
           const act=acts[0];
           this.push('Tại nơi: chooseActivity('+act.id+' · '+(act.loai||'')+')'+(act.id==='ev.san_yeu'?' · còn '+leftSy:'') ,'ok');
+          this._doneHere=true;
+          this._visitActs=this._visitActs||Object.create(null);
+          this._visitActs[here+'|'+act.id]=(this._visitActs[here+'|'+act.id]||0)+1;
           try{
             g.chooseActivity(act.id);
             const tb=run().thongBao||run().thongBaoDai;
@@ -3754,10 +3920,10 @@ const AutoFarm={
         }
         // Hết việc thật sự — rời, ban
         const actIds=this.placeActs().map(a=>a.id).slice(0,8);
+        let refreshY=null;
+        try{const v=g.noiView?.();if(v&&N(v.suKienConNam))refreshY=+v.suKienConNam}catch{}
         // Còn lượt săn mà không thấy act → không leave (thử reopen)
-        if(leftSy>0&&!blockedSan){
-          this.push('Còn '+leftSy+' lượt săn — reopenPlace @ '+here,'dbg');
-          try{g.reopenPlace?.()}catch{}
+        if(this.canHuntHere(here)&&this.tryStayHunt(here,leftSy)){
           this.schedule();return;
         }
         this.push('Nơi hết việc farm → leavePlace @ '+here,'dbg',{syLeft:leftSy,block:block||null,noiActs:actIds,thongBao:run().thongBao||run().thongBaoDai||null});
@@ -3771,9 +3937,10 @@ const AutoFarm={
         else if(leftAfter<=0&&!(this.isNoiChon(here)||placeDef(here)))
           banY=this.huntRecoveryYears();
         else if(this.isNoiChon(here)||placeDef(here))
-          banY=0.5;
+          banY=refreshY!=null?Math.min(3,Math.max(0.3,refreshY)):(this._doneHere?1.5:3); // thành/thôn: quay lại khi 'Trước mắt' đổi mới (suKienConNam), chống ping-pong
         else
-          banY=0.25;
+          banY=0.5;
+        this._doneHere=false;
         this.banSlot(here,banY);
         this._lastEncAtPlace=null;
         // Chọn nơi khác ngay trong tick này
@@ -3787,11 +3954,9 @@ const AutoFarm={
         };
         const nx=(farm.length?farm:listHere).slice().sort(byNear)[0];
         if(nx){
-          // Còn lượt săn tại chỗ → không đi
-          const leftNow=this.sanYeuLeft(here);
-          if(leftNow>0&&!this.huntBlockedHere()){
-            this.push('Ở lại săn nốt · còn '+leftNow,'dbg');
-            try{g.reopenPlace?.();g.chooseActivity?.('ev.san_yeu')}catch{}
+          if(!this.affordable(nx.travel)){
+            this.push('Không đủ thọ nguyên để đi '+nx.slot+' ('+fmtTime(nx.travel)+') — dừng','err');
+            this.paused=true;this.syncFab();toast('Auto dừng: không đủ thọ nguyên để di chuyển','',5000);
             this.schedule();return;
           }
           this.push('Đến nơi · '+nx.title+' · '+nx.slot+(N(nx.travel)?' · '+fmtTime(nx.travel):''),'ok');
@@ -3802,7 +3967,7 @@ const AutoFarm={
         // Không còn target — quét daKhamPha gần, bỏ ô đã ban
         try{
           const recent=this.recentSlots||(this.recentSlots=[]);
-          const pool=A(run().daKhamPha).filter(s=>s&&s!==here&&hasSlot(s)&&!isBanned(s)&&!recent.includes(s))
+          const pool=A(run().daKhamPha).filter(s=>s&&s!==here&&hasSlot(s)&&!isBanned(s)&&!recent.includes(s)&&this.affordable(travelTo(s)))
             .sort((a,b)=>(milesTo(a)||9)-(milesTo(b)||9));
           if(pool[0]){
             recent.push(pool[0]);if(recent.length>10)recent.shift();
@@ -3838,9 +4003,12 @@ const AutoFarm={
           this.schedule();return;
         }
         const leftHere=this.sanYeuLeft(run().viTri);
-        if(leftHere>0&&!this.huntBlockedHere()){
-          this.push('Ở lại săn nốt · còn '+leftHere,'dbg');
-          try{g.reopenPlace?.();g.chooseActivity?.('ev.san_yeu')}catch{}
+        if(this.canHuntHere(run().viTri)&&!this.isSlotBanned(here)&&this.tryStayHunt(here,leftHere)){
+          this.schedule();return;
+        }
+        if(!this.affordable(next.travel)){
+          this.push('Không đủ thọ nguyên để đi '+next.slot+' ('+fmtTime(next.travel)+') — dừng','err');
+          this.paused=true;this.syncFab();toast('Auto dừng: không đủ thọ nguyên để di chuyển','',5000);
           this.schedule();return;
         }
         this.push('Đến nơi · '+next.title+' · '+next.slot+(N(next.travel)?' · '+fmtTime(next.travel):''),'ok');
@@ -3854,7 +4022,7 @@ const AutoFarm={
       if(this.emptyScans===1||this.emptyScans%5===0)this.push('0 mục tiêu trong tầm — quét #'+this.emptyScans,'dbg');
       try{
         const recent=this.recentSlots||(this.recentSlots=[]);
-        const pool=A(run().daKhamPha).filter(s=>s&&s!==here&&hasSlot(s)&&!isBanned(s)&&!recent.includes(s))
+        const pool=A(run().daKhamPha).filter(s=>s&&s!==here&&hasSlot(s)&&!isBanned(s)&&!recent.includes(s)&&this.affordable(travelTo(s)))
           .sort((a,b)=>(milesTo(a)||9)-(milesTo(b)||9));
         if(pool[0]){
           recent.push(pool[0]);if(recent.length>10)recent.shift();
@@ -3889,6 +4057,8 @@ const AutoFarm={
       const x=store.get('xuTri',null);if(x)this.opts.xuTri=x;
       const p=store.get('afPursuit',null);if(p)this.opts.pursuit=p;
       const ap=store.get('afApex',null);if(ap)this.opts.apex=ap;
+      const av=store.get('afAvoid',null);if(typeof av==='string')this.opts.avoidBeasts=av;
+      const ml=store.get('afMinLife',null);if(ml!==null&&ml!==undefined&&N(+ml))this.opts.minLifeYears=+ml;
       const h=store.get('afAutoHeal',null);if(h!==null&&h!==undefined)this.opts.autoHeal=!!h;
       const ht=store.get('afHaiThuoc',null);if(typeof ht==='boolean')this.opts.includeHaiThuoc=ht;
     }catch{}
@@ -4061,9 +4231,6 @@ VIEWS.auto=()=>{
   body.innerHTML=`<div class="panel"><b style="color:var(--gold)">Auto Farm</b>
     <div class="sub">Tự đi quanh vùng: săn yêu, làm việc trên bản đồ, ghé nơi gần có việc. Bấm Bắt đầu sẽ thu panel; tạm dừng/dừng ở nút cạnh icon tiên.</div></div>
   ${injLine}
-  <div class="panel" id="af-gains"><b style="color:var(--gold)">Nhận được khi Auto</b>
-    ${AutoFarm.gainsHtml()}
-  </div>
   <div class="bar">
     <button class="btn pri" id="af-toggle">▶ Bắt đầu (thu panel)</button>
     <button class="btn" id="af-refresh">Quét lại</button>
@@ -4103,8 +4270,14 @@ VIEWS.auto=()=>{
       <select id="af-apex">
         <option value="fallback" ${o.apex==='fallback'?'selected':''}>Săn thường trước (khi hiểm mới lùng đầu đàn)</option>
         <option value="never" ${o.apex==='never'?'selected':''}>Không bao giờ</option>
-        <option value="prefer" ${o.apex==='prefer'?'selected':''}>Ưu tiên lùng đầu đàn</option>
+        <option value="prefer" ${(o.apex==='prefer'||o.apex==='always')?'selected':''}>Ưu tiên lùng đầu đàn</option>
       </select>
+    </label>
+    <label class="sub grow">Né săn quái (tên, cách nhau dấu phẩy)
+      <input id="af-avoid" type="text" value="${E(o.avoidBeasts||'')}">
+    </label>
+    <label class="sub grow">Dừng khi thọ nguyên còn ≤ (năm)
+      <input id="af-minlife" type="number" min="0" step="1" value="${o.minLifeYears??3}">
     </label>
     <label class="sub grow">Đuổi theo / buông tha
       <select id="af-pursuit">
@@ -4142,6 +4315,8 @@ VIEWS.auto=()=>{
   $(body,'#af-heal').onchange=e=>{o.autoHeal=e.target.checked;store.set('afAutoHeal',o.autoHeal)};
   $(body,'#af-pauseheal').onchange=e=>{o.pauseIfNoHeal=e.target.checked};
   $(body,'#af-xutri').onchange=e=>{o.xuTri=e.target.value;store.set('xuTri',o.xuTri);toast('Đã nhớ: xử tù binh = '+o.xuTri,'ok',2200)};
+  $(body,'#af-avoid').onchange=e=>{o.avoidBeasts=String(e.target.value||'');store.set('afAvoid',o.avoidBeasts);toast('Né: '+(o.avoidBeasts||'(trống)'),'ok',2000)};
+  $(body,'#af-minlife').onchange=e=>{o.minLifeYears=Math.max(0,+e.target.value||0);store.set('afMinLife',o.minLifeYears);toast('Dừng khi thọ ≤ '+o.minLifeYears+' năm','ok',2000)};
   $(body,'#af-apex').onchange=e=>{o.apex=e.target.value;store.set('afApex',o.apex);toast('Lùng đầu đàn = '+o.apex,'ok',2000)};
   $(body,'#af-pursuit').onchange=e=>{o.pursuit=e.target.value;store.set('afPursuit',o.pursuit);toast('Đuổi/tha = '+o.pursuit,'ok',2000)};
 };
