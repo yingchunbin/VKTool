@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261107-autofarm-v55',ID='vkt2',g=window.game;
+const BUILD='20261107-autofarm-v60',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -2752,25 +2752,46 @@ const AutoFarm={
   },
   // Việc treo thưởng / nhiệm vụ ngắn hạn trên map (biến mất ~5 năm)
   urgentJobTargets(maxY){
-    const r=run(),out=[],ban=this.slotBan||{},now=Date.now();
-    for(const v of A(r.viecNhan)){
-      if(!v||!v.slot||!hasSlot(v.slot))continue;
-      if(ban[v.slot]&&ban[v.slot]>now)continue;
-      const left=N(v.hetHanNam)?+v.hetHanNam-nowYear():null;
-      // Chỉ ưu tiên việc sắp hết hạn (≤5 năm) hoặc không rõ hạn nhưng gần
-      if(left!==null&&left>5.5)continue;
-      const travel=travelTo(v.slot);
-      if(N(travel)&&travel>maxY&&v.slot!==r.viTri)continue;
-      const dg=danger(v.slot);
-      if(this.opts.skipTuDia&&dg.rank>=3)continue;
-      const enc=v.enc||null;
+    const r=run(),out=[];
+    const pushJob=(slot,enc,title,hetHan,mode,basePri)=>{
+      if(!slot||!hasSlot(slot)||this.isSlotBanned(slot))return;
+      const left=N(hetHan)?+hetHan-nowYear():null;
+      if(left!==null&&left<0)return; // đã hết hạn
+      if(left!==null&&left>8)return; // còn lâu — không ưu tiên gấp
+      const travel=travelTo(slot);
+      if(N(travel)&&travel>maxY&&slot!==r.viTri)return;
+      const dg=danger(slot);
+      if(this.opts.skipTuDia&&dg.rank>=3&&slot!==r.viTri)return;
+      // Ưu tiên: sắp hết hạn (≤2 năm) rất cao
+      let pri=basePri;
+      if(left!==null){
+        if(left<=0.5)pri=120;
+        else if(left<=2)pri=90-left*8;
+        else if(left<=5)pri=55-left*3;
+        else pri=35;
+      }
       out.push({
-        slot:v.slot,
-        enc:enc||'job',
-        title:T(v.ten||C.encounters?.get?.(enc)?.ten||'Việc treo thưởng'),
-        travel,miles:milesTo(v.slot),danger:dg,
-        left:left,mode:enc?'node':'enter',priority:left!==null?100-left*10:40
+        slot,enc:enc||'job',title:T(title||enc||'Việc bản đồ'),
+        travel,miles:milesTo(slot),danger:dg,
+        left,mode:mode||(enc?'node':'enter'),priority:pri,hetHanNam:hetHan??null
       });
+    };
+    // Việc nhận (treo thưởng / nhiệm vụ)
+    for(const v of A(r.viecNhan)){
+      if(!v||!v.slot)continue;
+      pushJob(v.slot, v.enc||null, v.ten||C.encounters?.get?.(v.enc)?.ten||'Việc treo thưởng', v.hetHanNam, v.enc?'node':'enter', 50);
+    }
+    // Node bản đồ có hạn (hetHanNam) — sự kiện thành/thôn/hoang dã sắp hết
+    for(const [key,node] of Object.entries(r.nodes||{})){
+      if(!node?.encounter||node.viec)continue;
+      const slot=node.slot||key;
+      const enc=node.encounter;
+      if(!this.isFarmEncounter(enc))continue;
+      if(this.isNodeBanned(slot,enc))continue;
+      const het=node.hetHanNam;
+      if(!N(het))continue; // chỉ việc có hạn mới vào nhóm gấp
+      const def=C.encounters?.get?.(enc);
+      pushJob(slot, enc, def?.ten||enc, het, 'node', 45);
     }
     return out;
   },
@@ -2779,8 +2800,7 @@ const AutoFarm={
     const boost=Math.min(3,Math.floor((this.emptyScans||0)/3));
     const maxY=(N(this.opts.radiusYears)?+this.opts.radiusYears:0.18)*(1+boost*0.55);
     const near=this.nearSlots();
-    const ban=this.slotBan||(this.slotBan=Object.create(null));
-    const now=Date.now();
+    const isBanned=s=>this.isSlotBanned(s);
 
     // 1) Việc sắp hết hạn — ưu tiên cao
     if(!this.opts.onlySanYeu){
@@ -2794,7 +2814,7 @@ const AutoFarm={
 
     for(const s of near){
       const slot=s?.id||s;if(!slot||!hasSlot(slot))continue;
-      if(ban[slot]&&ban[slot]>now)continue;
+      if(isBanned(slot))continue;
       const travel=travelTo(slot);
       if(N(travel)&&travel>maxY&&slot!==r.viTri)continue;
       const node=r.nodes?.[slot];
@@ -2812,7 +2832,17 @@ const AutoFarm={
               seen.add(key);
               const encDef=C.encounters?.get?.(enc);
               if(this.isNodeBanned(slot,id))continue;
-              out.push({slot,enc,title:T(encDef?.ten||enc),travel,miles:milesTo(slot),danger:dg,left:isSan?this.sanYeuLeft(slot):null,mode:'node',priority:isSan?20:22});
+              {
+                const het=node.hetHanNam;
+                const yearsLeft=N(het)?+het-nowYear():null;
+                let pri=isSan?28:32;
+                if(yearsLeft!==null){
+                  if(yearsLeft<=0.5)pri=110;
+                  else if(yearsLeft<=2)pri=70;
+                  else if(yearsLeft<=5)pri=45;
+                }
+                out.push({slot,enc,title:T(encDef?.ten||enc),travel,miles:milesTo(slot),danger:dg,left:isSan?this.sanYeuLeft(slot):yearsLeft,mode:'node',priority:pri,hetHanNam:het??null});
+              }
             }
           }
         }
@@ -2857,7 +2887,7 @@ const AutoFarm={
         if(!node?.encounter||node.viec)continue;
         const slot=node.slot||key;
         if(!hasSlot(slot))continue;
-        if(ban[slot]&&ban[slot]>now)continue;
+        if(isBanned(slot))continue;
         const enc=node.encounter,id=String(enc);
         if(!this.isFarmEncounter(id))continue;
         const travel=travelTo(slot);
@@ -2872,7 +2902,17 @@ const AutoFarm={
         seen.add(k);
         const encDef=C.encounters?.get?.(enc);
         // Node "Chuyện lớn" (overlay) ưu tiên thấp hơn săn hoang dã — tránh kẹt menu nơi
-        out.push({slot,enc,title:T(encDef?.ten||enc),travel,miles:milesTo(slot),danger:dg,left:isSan?this.sanYeuLeft(slot):null,mode:'node',priority:isSan?20:22});
+        {
+                const het=node.hetHanNam;
+                const yearsLeft=N(het)?+het-nowYear():null;
+                let pri=isSan?28:32;
+                if(yearsLeft!==null){
+                  if(yearsLeft<=0.5)pri=110;
+                  else if(yearsLeft<=2)pri=70;
+                  else if(yearsLeft<=5)pri=45;
+                }
+                out.push({slot,enc,title:T(encDef?.ten||enc),travel,miles:milesTo(slot),danger:dg,left:isSan?this.sanYeuLeft(slot):yearsLeft,mode:'node',priority:pri,hetHanNam:het??null});
+              }
       }
     }
 
@@ -2880,7 +2920,7 @@ const AutoFarm={
     if(!this.opts.onlySanYeu&&this.opts.includeNearPlaces!==false){
       for(const s of near){
         const slot=s?.id||s;if(!slot||!hasSlot(slot)||slot===r.viTri)continue;
-        if(ban[slot]&&ban[slot]>now)continue;
+        if(isBanned(slot))continue;
         if(!this.isNoiChon(slot)&&!placeDef(slot))continue;
         const travel=travelTo(slot);
         if(N(travel)&&travel>maxY)continue;
@@ -2956,6 +2996,38 @@ const AutoFarm={
     return lv?String(lv):'';
   },
   stripText(t){return String(t||'').replace(/[\uE000-\uF8FF]/g,'').replace(/<[^>]+>/g,'')},
+  choiceSpendsResource(c){
+    /* effects content: linh_thach.bac < 0 = trừ LT (source ht "linh_thach") */
+    const out={linhThach:0,congHien:0,textHint:false,spends:false};
+    try{
+      const id=run().active?.id;
+      const def=id?(C.encounters?.get?.(id)||this.encDef?.(id)):null;
+      const raw=def&&A(def.choices)[c.index];
+      if(raw){
+        for(const sec of ['effects','success','partial','failure']){
+          for(const eff of A(raw[sec])){
+            if(!eff||typeof eff!=='object')continue;
+            const lt=eff.linh_thach;
+            if(lt!=null){
+              const bac=typeof lt==='number'?lt:(lt.bac??lt.so??0);
+              if(Number(bac)<0)out.linhThach+=Number(bac);
+            }
+            if(eff.cong_hien!=null){
+              const v=typeof eff.cong_hien==='number'?eff.cong_hien:(eff.cong_hien.bac??eff.cong_hien.so??0);
+              if(Number(v)<0)out.congHien+=Number(v);
+            }
+            if(eff.mua!=null)out.textHint=true;
+          }
+        }
+      }
+    }catch{}
+    const t=this.stripText(c.text||'');
+    if(/(nộp|nop|trả|tra|đưa|dua|thuê|thue|mãi lộ|mai lo|mua đường|cược|bồi thường|boi thuong).{0,28}(linh\s*thạch|lt\.)/i.test(t))out.textHint=true;
+    if(/^(mua|trả|đặt cược|thuê)\b/i.test(t))out.textHint=true;
+    if(/\{lt\./i.test(String(c.text||'')))out.textHint=true;
+    out.spends=out.linhThach<0||out.congHien<0||out.textHint;
+    return out;
+  },
   pickChoice(choices){
     /* Gợi ý game (encounterView): available, risk (zgt), chance (Imt), thoat, phucHet.
        Ưu tiên: an_toan / dễ / có phần thưởng; thoát khi hết việc hoặc không an toàn. */
@@ -3020,10 +3092,19 @@ const AutoFarm={
     const notHet=pool.filter(c=>!c.phucHet);
     if(notHet.length)pool=notHet;
 
+    // Không chọn lựa chọn làm giảm tài nguyên (nộp/trả LT…)
+    const free=pool.filter(c=>!this.choiceSpendsResource(c).spends);
+    if(free.length)pool=free;
+    else{
+      const esc=list.find(isThoat);
+      if(esc){this.push('Chỉ còn lựa chọn tốn tài nguyên → thoát','dbg');return esc}
+    }
+
     const scored=pool.map(c=>{
       let score=0;
       const l=lv(c);
       const ch=chanceOf(c);
+      if(this.choiceSpendsResource(c).spends)score-=200;
       // Risk — nguồn zgt game
       if(l==='an_toan')score+=100;
       else if(l==='ngang_suc')score+=30;
@@ -3060,21 +3141,59 @@ const AutoFarm={
     }
     return best;
   },
-  banSlot(slot,ms){
-    if(!slot)return;
-    this.slotBan=this.slotBan||Object.create(null);
-    this.slotBan[slot]=Date.now()+(ms||180000);
-    this.push('Tạm bỏ ô '+slot,'dbg');
+  /* Blacklist theo NĂM GAME (source: HUNT_RECOVERY_YEARS qit=2, HUNTS_PER_SLOT Qp=3)
+     Bp = count - (nam-stamp)/qit; còn lần = floor(Qp - Bp) */
+  encounterCooldownYears(encId){
+    try{
+      const lim=C.encounters?.get?.(encId)?.limits;
+      if(lim&&N(lim.hoi_chieu_nam))return Math.max(0.25,+lim.hoi_chieu_nam);
+    }catch{}
+    return null;
   },
-  banAct(slot,actId,ms){
+  huntRecoveryYears(){
+    try{
+      const v=g?.balance?.HUNT_RECOVERY_YEARS??g?.__modPrivate?.HUNT_RECOVERY_YEARS;
+      if(N(v)&&v>0)return +v;
+    }catch{}
+    return 2; // default source qit=2
+  },
+  huntsPerSlot(){
+    try{
+      const v=g?.balance?.HUNTS_PER_SLOT??g?.__modPrivate?.HUNTS_PER_SLOT;
+      if(N(v)&&v>0)return +v;
+    }catch{}
+    return 3;
+  },
+  banSlot(slot,years){
+    if(!slot)return;
+    const y=N(years)?+years:this.huntRecoveryYears();
+    // years game, không phải ms tường
+    const until=nowYear()+Math.max(0.05,y);
+    this.slotBanNam=this.slotBanNam||Object.create(null);
+    this.slotBanNam[slot]=Math.max(this.slotBanNam[slot]||0, until);
+    this.push('Tạm bỏ ô '+slot+' · đến năm '+until.toFixed(2)+' (còn ~'+y+' năm)','dbg');
+  },
+  isSlotBanned(slot){
+    if(!slot)return false;
+    const until=this.slotBanNam&&this.slotBanNam[slot];
+    if(until!=null&&until>nowYear())return true;
+    // legacy ms (phiên cũ) — bỏ qua nếu đã hết
+    const ms=this.slotBan&&this.slotBan[slot];
+    return !!(ms&&ms>Date.now());
+  },
+  banAct(slot,actId,years){
     if(!slot||!actId)return;
-    this.actBan=this.actBan||Object.create(null);
-    this.actBan[slot+'|'+actId]=Date.now()+(ms||600000);
+    const y=N(years)?+years:this.huntRecoveryYears();
+    const until=nowYear()+Math.max(0.05,y);
+    this.actBanNam=this.actBanNam||Object.create(null);
+    this.actBanNam[slot+'|'+actId]=Math.max(this.actBanNam[slot+'|'+actId]||0, until);
   },
   isActBanned(slot,actId){
     if(!slot||!actId)return false;
-    const t=this.actBan&&this.actBan[slot+'|'+actId];
-    return !!(t&&t>Date.now());
+    const until=this.actBanNam&&this.actBanNam[slot+'|'+actId];
+    if(until!=null&&until>nowYear())return true;
+    const ms=this.actBan&&this.actBan[slot+'|'+actId];
+    return !!(ms&&ms>Date.now());
   },
 
   startSanYeuHere(enc){
@@ -3111,7 +3230,7 @@ const AutoFarm={
     const block=this.huntBlockedHere();
     if(block){
       this.push('Không săn được tại chỗ: '+block,'dbg');
-      this.banSlot(slot,120000);
+      this.banSlot(slot,0.5);
       this.markHuntFail(slot,beastId,block);
       return false;
     }
@@ -3143,7 +3262,7 @@ const AutoFarm={
     // Nhiều fail tại cùng ô → tạm rời
     const slotFails=Object.entries(this.huntFail).filter(([key,v])=>key.startsWith((slot||'')+'|')&&v>0).reduce((a,[,v])=>a+v,0);
     if(slotFails>=3||this.sanYeuLeft(slot)<=0){
-      this.banSlot(slot,90000);
+      this.banSlot(slot,0.35);
       this.needInteractHere=false;
     }
   },
@@ -3182,7 +3301,7 @@ const AutoFarm={
     if(n>=2){
       this.banBeast=this.banBeast||Object.create(null);
       this.banBeast[k]=Date.now()+300000; // 5 phút bỏ encounter này
-      this.banSlot(slot,45000);
+      this.banSlot(slot,this.huntRecoveryYears());
       try{if(this.inPlace())g.leavePlace?.()}catch{}
       this.needInteractHere=false;
     }
@@ -3262,17 +3381,25 @@ const AutoFarm={
         this._pendingNode=null;
         return;
       }
-      // Còn việc khác / cùng enc → thử 1 lần
-      // Không retry activity vừa thoát/non-farm — tránh vòng luông_doi / chợ
-      if(p.enc&&!p.retried&&!this.isNonFarmEnc(p.enc)){
-        const still=this.placeFarmActs().some(a=>a.id===p.enc);
+      // Còn săn/act cùng chỗ → tiếp tục tại chỗ, không đi nơi khác
+      if(p.enc&&!this.isNonFarmEnc(p.enc)){
+        const leftSy=this.sanYeuLeft(run().viTri||p.slot);
+        const still=this.placeFarmActs().some(a=>a.id===p.enc)
+          ||(p.enc==='ev.san_yeu'&&leftSy>0);
         if(still){
-          p.retried=true;p.at=Date.now();
-          try{
-            g.chooseActivity?.(p.enc);
-            this.push('retry chooseActivity('+p.enc+')','dbg');
+          p.at=Date.now();
+          p.retries=(p.retries|0)+1;
+          if(p.retries>8){
+            this.push('retry quá nhiều '+p.enc+' → bỏ pending','dbg');
+            this._pendingNode=null;
             return;
-          }catch(e){this.push('retry chooseActivity: '+(e.message||e),'dbg')}
+          }
+          try{
+            if(p.enc==='ev.san_yeu'&&leftSy>0){try{g.reopenPlace?.()}catch{}}
+            g.chooseActivity?.(p.enc);
+            this.push('tiếp tục '+p.enc+(p.enc==='ev.san_yeu'?(' · còn '+leftSy):''),'dbg');
+            return;
+          }catch(e){this.push('tiếp tục act: '+(e.message||e),'dbg')}
         }
       }
       this._pendingNode=null;
@@ -3490,7 +3617,7 @@ const AutoFarm={
         else if(typeof g.closeEncounter==='function')g.closeEncounter();
         else g.resume?.(null);
       }catch(e){this.push('Rời menu: '+(e.message||e),'err')}
-      this.banSlot(run().viTri||a.slot,180000);
+      this.banSlot(run().viTri||a.slot,1);
       try{g.leavePlace?.()}catch{}
       this.needInteractHere=false;
       this.push('Rời chỗ, tìm farm khác','ok');
@@ -3508,8 +3635,8 @@ const AutoFarm={
       if(isCancel){
         const slot=run().viTri||a.slot;
         const actId=run().active?.id||a?.id||null;
-        this.banSlot(slot,600000);
-        if(actId)this.banAct(slot,actId,600000);
+        this.banSlot(slot,1);
+        if(actId)this.banAct(slot,actId,1);
         this.needInteractHere=false;
         this._pendingNode=null;
         // Quan trọng: Rời đi trong activity KHÔNG tự thoát nơi — phải leavePlace
@@ -3588,7 +3715,7 @@ const AutoFarm={
       const ban=this.slotBan||(this.slotBan=Object.create(null));
       const here=run().viTri;
       const now=Date.now();
-      const isBanned=s=>!!(ban[s]&&ban[s]>now);
+      const isBanned=s=>this.isSlotBanned(s);
 
       /* 1) Đang trong nơi → làm việc farm; không có thì leavePlace và ĐI CHỖ KHÁC (không enter lại cùng ô) */
       if(this.inPlace()&&!run().active){
@@ -3616,7 +3743,7 @@ const AutoFarm={
               try{g.dongThongBao?.()}catch{}
               this.schedule();return;
             }
-            this._pendingNode={slot:here,enc:act.id,at:Date.now()};
+            this._lastEncAtPlace=act.id;this._pendingNode={slot:here,enc:act.id,at:Date.now()};
             this.stats.ok++;
             this.schedule();return;
           }catch(e){
@@ -3635,8 +3762,20 @@ const AutoFarm={
         }
         this.push('Nơi hết việc farm → leavePlace @ '+here,'dbg',{syLeft:leftSy,block:block||null,noiActs:actIds,thongBao:run().thongBao||run().thongBaoDai||null});
         try{g.leavePlace?.()}catch{}
-        const banMs=(this.isNoiChon(here)||placeDef(here))?600000:45000;
-        this.banSlot(here,banMs);
+        // Blacklist theo năm game: săn qit=2; sự kiện limits.hoi_chieu_nam; thành 0.5
+        const leftAfter=this.sanYeuLeft(here);
+        let banY;
+        const lastEnc=this._lastEncAtPlace||null;
+        const cd=lastEnc?this.encounterCooldownYears(lastEnc):null;
+        if(cd!=null)banY=cd;
+        else if(leftAfter<=0&&!(this.isNoiChon(here)||placeDef(here)))
+          banY=this.huntRecoveryYears();
+        else if(this.isNoiChon(here)||placeDef(here))
+          banY=0.5;
+        else
+          banY=0.25;
+        this.banSlot(here,banY);
+        this._lastEncAtPlace=null;
         // Chọn nơi khác ngay trong tick này
         const listHere=this.targets().filter(t=>t.slot!==here&&!isBanned(t.slot)&&!(t.mode==='node'&&this.isNodeBanned(t.slot,t.enc)));
         // Farm thật trước, trong đó chọn cái GẦN nhất (tiết kiệm thọ nguyên)
@@ -3648,6 +3787,13 @@ const AutoFarm={
         };
         const nx=(farm.length?farm:listHere).slice().sort(byNear)[0];
         if(nx){
+          // Còn lượt săn tại chỗ → không đi
+          const leftNow=this.sanYeuLeft(here);
+          if(leftNow>0&&!this.huntBlockedHere()){
+            this.push('Ở lại săn nốt · còn '+leftNow,'dbg');
+            try{g.reopenPlace?.();g.chooseActivity?.('ev.san_yeu')}catch{}
+            this.schedule();return;
+          }
           this.push('Đến nơi · '+nx.title+' · '+nx.slot+(N(nx.travel)?' · '+fmtTime(nx.travel):''),'ok');
           this.goEnter(nx.slot);
           this.stats.ok++;
@@ -3686,6 +3832,17 @@ const AutoFarm={
       const list=this.targets().filter(t=>!isBanned(t.slot)&&t.slot!==here&&!(t.mode==='node'&&this.isNodeBanned(t.slot,t.enc))&&!(t.mode==='hunt'&&this.isBeastBanned(t.slot,t.enc)));
       const next=list[0]||null;
       if(next){
+        // Đang còn việc tại chỗ hoặc đang encounter → không chuyển nơi
+        if(run().active||run().tran){
+          this.push('Hoãn đi — đang encounter/trận','dbg');
+          this.schedule();return;
+        }
+        const leftHere=this.sanYeuLeft(run().viTri);
+        if(leftHere>0&&!this.huntBlockedHere()){
+          this.push('Ở lại săn nốt · còn '+leftHere,'dbg');
+          try{g.reopenPlace?.();g.chooseActivity?.('ev.san_yeu')}catch{}
+          this.schedule();return;
+        }
         this.push('Đến nơi · '+next.title+' · '+next.slot+(N(next.travel)?' · '+fmtTime(next.travel):''),'ok');
         if(this.inPlace()){try{g.leavePlace?.()}catch{}}
         this.goEnter(next.slot);
@@ -3810,6 +3967,8 @@ const AutoFarm={
       });
     }
     const body=panel.querySelector('.af-body')||panel;
+    // Snapshot lại mỗi lần vẽ — tránh miss delta giữa các tick
+    try{this.trackGains()}catch{}
     const d=this.gainsDelta();
     if(!d){
       body.innerHTML='<div class="af-sub">Đang bắt đầu…</div>';
