@@ -1,19 +1,52 @@
-/* Vạn Kiếp Tu Tiên Tool · Trợ Lý · Bản Mod 7.0.5
+/* Vạn Kiếp Tu Tiên Tool · Trợ Lý · Bản Mod 7.6.1
  * Viết bởi Minhndt3 cùng Kỹ Sư Claude. Mod cho Vạn Kiếp Tu Tiên (apiVersion 1): cài file .zip ở Cấu hình → Mods.
  * Toàn bộ phép tính gọi lõi game qua window.tuTien.core (tên hàm gốc, không dò regex). */
 (window.tuTienMods ??= []).push({
   id: 'van_kiep_tro_ly',
   name: 'Vạn Kiếp Tu Tiên Tool · Trợ Lý',
-  version: '7.0.5',
+  version: '7.6.1',
   author: 'Minhndt3 · Kỹ Sư Claude',
   apiVersion: 1,
   ready(tt, mod) {
     (function (TT, MOD) {
   var gWin = window;
   if (gWin.__vkxMerged) { try { gWin.__vkxMerged.open(); } catch (e) {} return; }
-  var TOOL_VER = '7.0.5';
+  var TOOL_VER = '7.6.1';
 var MOD_CSS_EXTRA = `
- 
+/* Nút bay nhanh và tay nắm đổi kích thước cửa sổ */
+#vkx-win { --vkx-quick-tele:#4ade80; }
+#vkx-win[data-vkx-theme="tuTieu"] { --vkx-quick-tele:#c4b5fd; }
+#vkx-win[data-vkx-theme="giayCo"] { --vkx-quick-tele:#2463a6; }
+#vkx-win[data-vkx-theme="huyenAnh"] { --vkx-quick-tele:#5eead4; }
+#vkx-win .vk-quick-tele { display:inline-flex; align-items:center; justify-content:center; gap:4px; margin:2px 0; padding:6px 10px; min-height:30px; border:1px solid color-mix(in srgb,var(--vkx-quick-tele) 65%,var(--line)); border-radius:9px; background:color-mix(in srgb,var(--vkx-quick-tele) 14%,var(--bg2)); color:var(--vkx-quick-tele); font:800 12px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif; cursor:pointer; white-space:nowrap; box-shadow:0 1px 5px color-mix(in srgb,var(--vkx-quick-tele) 13%,transparent); }
+#vkx-win .vk-quick-tele:hover { background:color-mix(in srgb,var(--vkx-quick-tele) 24%,var(--bg2)); filter:brightness(1.08); transform:translateY(-1px); }
+#vkx-win .vk-quick-tele:focus-visible { outline:2px solid var(--vkx-quick-tele); outline-offset:2px; }
+#vkx-win .vk-quick-tele:disabled { opacity:.55; cursor:not-allowed; }
+.vk-map-tele { width:1%; white-space:nowrap; text-align:center !important; vertical-align:middle !important; }
+.vk-map-tele .vk-quick-tele { max-width:100%; margin:0; }
+.vk-map-tele .vk-map-btns { display:flex; flex-direction:column; gap:4px; align-items:stretch; }
+#vkx-win .vk-guide-btn { display:inline-flex; align-items:center; justify-content:center; gap:4px; margin:0; padding:6px 10px; min-height:30px; border:1.5px dashed var(--acc); border-radius:9px; background:transparent; color:var(--acc); font:800 12px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif; cursor:pointer; white-space:nowrap; }
+#vkx-win .vk-guide-btn:hover { background:color-mix(in srgb,var(--acc) 16%,var(--bg2)); transform:translateY(-1px); }
+#vkx-win .vk-guide-btn:focus-visible { outline:2px solid var(--acc); outline-offset:2px; }
+#vkx-win .vk-guide-btn:disabled { opacity:.55; cursor:not-allowed; }
+#vkx-win .vk-guide svg { display:block; width:100%; height:auto; max-height:300px; margin:8px 0; border:1px dashed var(--line); border-radius:10px; background:var(--bg2); }
+#vkx-win .vk-guide-chain { font-size:13px; line-height:1.9; margin:4px 0; }
+#vkx-win .vk-guide-chain .vk-arr { color:var(--acc); letter-spacing:1px; padding:0 2px; }
+#vkx-win .vk-guide-acts { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px; }
+.vk-dibao-actions { margin-top:10px; display:flex; justify-content:flex-start; gap:8px; flex-wrap:wrap; }
+.vkx-resize { position:absolute; z-index:30; display:block; touch-action:none; user-select:none; -webkit-user-select:none; transition:background .12s ease; }
+#vkx-win:not(.vkx-m) .vkx-resize:hover { background:color-mix(in srgb,var(--acc) 24%,transparent); }
+.vkx-resize.n, .vkx-resize.s { left:14px; right:14px; height:7px; cursor:ns-resize; }
+.vkx-resize.n { top:0; } .vkx-resize.s { bottom:0; }
+.vkx-resize.e, .vkx-resize.w { top:14px; bottom:14px; width:7px; cursor:ew-resize; }
+.vkx-resize.e { right:0; } .vkx-resize.w { left:0; }
+.vkx-resize.ne, .vkx-resize.nw, .vkx-resize.se, .vkx-resize.sw { width:16px; height:16px; }
+.vkx-resize.ne { top:0; right:0; cursor:nesw-resize; }
+.vkx-resize.nw { top:0; left:0; cursor:nwse-resize; }
+.vkx-resize.se { bottom:0; right:0; cursor:nwse-resize; }
+.vkx-resize.sw { bottom:0; left:0; cursor:nesw-resize; }
+.vkx-resize.se::after { content:""; position:absolute; right:3px; bottom:3px; width:9px; height:9px; border-right:2px solid var(--mut); border-bottom:2px solid var(--mut); opacity:.8; }
+#vkx-win.vkx-m .vkx-resize { display:none !important; }
 .nk-nav { grid-template-columns:repeat(2,1fr); }
 .nk-nav button { flex-direction:row; justify-content:center; gap:6px; font-size:13px; padding:9px 4px; }
 .nk-nav button span { font-size:15px; }
@@ -128,18 +161,6 @@ table.vk-t tr:nth-child(even) td { background:color-mix(in srgb,var(--bg3) 60%,t
 #vkx-groups button, #vkx-tabs button { scroll-snap-align:none !important; }
 .vkx-scroll { touch-action:manipulation; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
 .vkx-ttl span { flex:0 1 auto; min-width:0; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-
-/* ═════ 7.0.5 · CỠ CỬA SỔ 1/3 · 1/2 · FULL (Fit gắn lớp vkx-part / vkx-sheet / vkx-full) ═════ */
-#vkx-win.vkx-part { border:1px solid var(--line); border-radius:18px; box-shadow:0 14px 48px var(--shade); }
-#vkx-win.vkx-part.vkx-sheet { border-radius:18px 18px 0 0; box-shadow:0 -10px 40px var(--shade); }
-#vkx-win.vkx-full { border-radius:0; border:0; box-shadow:none; }
-#vkx-win.vkx-full.vkx-wide .vkx-scroll { width:100%; max-width:1080px; justify-self:center; }
-/* cuộn / vuốt: mọi vùng cuộn tự giữ cử chỉ, không chuyền sang game; nút và tab không bị chữ chọn hay trình duyệt giành cử chỉ */
-#vkx-win { touch-action:manipulation; }
-#vkx-win .vkx-scroll, #vkx-win pre, #vkx-win .vk-tw { overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
-#vkx-win button, #vkx-win select, #vkx-win summary, #vkx-win label { touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
-#vkx-groups, #vkx-tabs { touch-action:pan-x pinch-zoom; }
-#vkx-win.vkx-wide #vkx-groups { touch-action:pan-y pinch-zoom; }
 `;
 var UI_V7_CSS = `
 /* ═════ GIAO DIỆN 6.20 · TIÊN MÔN CÁC (BẢN TRỢ LÝ) ═════ */
@@ -179,9 +200,10 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
 .tc-sb { display:flex; align-items:center; gap:8px; background:var(--bg2); border:1px solid var(--line); border-radius:999px; padding:0 6px 0 14px; }
 .tc-sb:focus-within { border-color:var(--acc); box-shadow:0 0 0 3px var(--glow); }
 .tc-sb-ic { font-size:15px; opacity:.75; }
-.tc-sb input#tc-q { flex:1; min-width:0; border:0 !important; background:none !important; box-shadow:none !important; padding:11px 0 !important; border-radius:0 !important; }
+.tc-sb input#tc-q, .tc-sb input.tc-shared-q { flex:1; min-width:0; width:100%; border:0 !important; background:none !important; box-shadow:none !important; padding:11px 0 !important; border-radius:0 !important; color:var(--txt) !important; }
 .tc-clear { border:0; background:var(--bg3); color:var(--mut); width:28px; height:28px; border-radius:50%; cursor:pointer; font-size:12px; }
-.tc-chips { display:flex; gap:6px; overflow-x:auto; padding:8px 0 2px; scrollbar-width:none; }
+.tc-chips { display:flex; gap:6px; overflow-x:auto; overflow-y:hidden; padding:8px 0 2px; scrollbar-width:none; overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch; cursor:grab; touch-action:pan-x pan-y; }
+.tc-chips.vkx-dragging { cursor:grabbing; user-select:none; }
 .tc-chips::-webkit-scrollbar { display:none; }
 .tc-chips .tc-gap { flex:0 0 1px; background:var(--line); margin:3px 2px; }
 .tc-chip { flex:0 0 auto; border:1px solid var(--line); background:var(--bg2); color:var(--mut); font-weight:700; font-size:12.5px; padding:6px 12px; border-radius:999px; cursor:pointer; white-space:nowrap; }
@@ -242,18 +264,26 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
         win.innerHTML =
             '<div class="vkx-hd" id="vkx-hd">' +
             '<div class="vkx-logo">☯</div>' +
-            '<div class="vkx-ttl"><b>Vạn Kiếp Tu Tiên Tool</b><span>Minhndt3 · Kỹ Sư Claude · Bản Mod · Trợ Lý</span><em class="vkx-ver">v7.0.5</em></div>' +
+            '<div class="vkx-ttl"><b>Vạn Kiếp Tu Tiên Tool</b><span>Minhndt3 · Kỹ Sư Claude · Bản Mod</span><em class="vkx-ver">v7.5.0</em></div>' +
             '<button class="vkx-ib" id="vkx-theme" title="Đổi giao diện">🎨</button>' +
-            '<button class="vkx-ib" id="vkx-zoom" title="Cỡ cửa sổ: Thu gọn 1/3 · Nửa 1/2 · Toàn màn hình">🔍</button>' +
+            '<button class="vkx-ib" id="vkx-zoom" title="Cỡ giao diện (Tự động · 85% … 150%)">🔍</button>' +
+            '<button class="vkx-ib" id="vkx-log" title="Nhật Ký Cập Nhật" aria-label="Nhật Ký Cập Nhật">📜</button>' +
             '<button class="vkx-ib x" id="vkx-close" title="Thu gọn">✕</button>' +
             '</div>' +
-            '<div class="vkx-seg"><button data-s="tl">🧭 Trợ Lý</button><button data-s="nk">📜 Nhật Ký Cập Nhật</button></div>' +
             '<div class="vkx-sec" id="vkx-sec-nk"><div class="vkx-scroll" id="vkx-nk-body"></div></div>' +
-            '<div class="vkx-sec" id="vkx-sec-tl">' +
+            '<div class="vkx-sec on" id="vkx-sec-tl">' +
             '<div class="vkx-tabbar"><div id="vkx-groups"></div><button class="vk-btn sec" id="vk-rf" style="margin:0;padding:8px 12px;font-size:13px">↻</button></div>' +
             '<div class="vkx-subbar"><div id="vkx-tabs"></div></div>' +
             '<div class="vkx-scroll" id="vkx-body"></div>' +
-            '</div>';
+            '</div>' +
+            '<div class="vkx-resize n" data-rz="n" aria-hidden="true"></div>' +
+            '<div class="vkx-resize e" data-rz="e" aria-hidden="true"></div>' +
+            '<div class="vkx-resize s" data-rz="s" aria-hidden="true"></div>' +
+            '<div class="vkx-resize w" data-rz="w" aria-hidden="true"></div>' +
+            '<div class="vkx-resize ne" data-rz="ne" aria-hidden="true"></div>' +
+            '<div class="vkx-resize nw" data-rz="nw" aria-hidden="true"></div>' +
+            '<div class="vkx-resize se" data-rz="se" aria-hidden="true"></div>' +
+            '<div class="vkx-resize sw" data-rz="sw" aria-hidden="true"></div>';
         document.body.appendChild(win);
 
         var fab = document.createElement('button');
@@ -371,6 +401,9 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
         for (var i = 0; i < segBtns.length; i++) {
             (function (b) { b.onclick = function () { api.setSection(b.dataset.s); }; })(segBtns[i]);
         }
+        win.querySelector('#vkx-log').onclick = function () {
+            api.setSection(api._section === 'nk' ? 'tl' : 'nk');
+        };
         win.querySelector('#vkx-close').onclick = api.close;
         fab.onclick = api.open;
 
@@ -434,30 +467,24 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
         [fab, toastEl].forEach(function (el) {
             ['wheel', 'touchmove', 'contextmenu'].forEach(function (t) { el.addEventListener(t, function (e) { e.stopPropagation(); }, { passive: true }); });
         });
-        /* 7.0.5: game còn gắn trình nghe pointerdown / pointermove cấp cửa sổ (kéo món ở Kinh Mạch, đóng tooltip, ghi lịch sử…). Cho chúng không thấy thao tác bên trong Tool
-           để bấm nút / đổi tab / vuốt không bị game giành trạng thái. Không chặn pointerup / pointercancel để game không kẹt trạng thái kéo. */
-        [win, fab, toastEl].forEach(function (el) {
-            ['pointerdown', 'pointermove'].forEach(function (t) { el.addEventListener(t, function (e) { e.stopPropagation(); }, { passive: true }); });
-        });
 
         /* ---- TỰ THÍCH NGHI MÀN HÌNH ----
            Đo lại mỗi khi xoay máy, đổi cỡ cửa sổ, hiện/ẩn bàn phím ảo hay thanh địa chỉ; tự chọn bố cục (điện thoại / ngang / bảng / máy tính),
            tự bù khi trang đang ở "chế độ trang máy tính" trên điện thoại hoặc màn hình rất lớn, tránh tai thỏ, và cho chỉnh cỡ tay bằng nút 🔍. */
         var Fit = (function () {
-            /* 🔍 nay đổi CỠ CỬA SỔ theo màn hình trình duyệt (không còn %): Thu Gọn = 1/3 · Nửa = 1/2 · Toàn Màn Hình.
-               Màn dọc (điện thoại): cửa sổ trượt từ đáy, 1/3 · 1/2 · full chiều CAO. Màn ngang (máy tính, điện thoại ngang): cửa sổ dính mép phải, 1/3 · 1/2 · full chiều RỘNG.
-               Cỡ chữ/giao diện luôn tự thích ứng (tự bù khi trang ở "chế độ máy tính" hoặc màn rất lớn). */
-            var SIZES = [['third', 'Thu Gọn', '1/3 màn hình'], ['half', 'Nửa Màn Hình', '1/2 màn hình'], ['full', 'Toàn Màn Hình', 'full màn']];
+            var SCALES = [['auto', 'Tự động'], ['0.85', '85%'], ['1', '100%'], ['1.15', '115%'], ['1.3', '130%'], ['1.5', '150%']];
             var canScale = !!(window.CSS && CSS.supports && CSS.supports('scale', '1.2'));
-            var mode = '', raf = 0, lastKey = '';
-            var F = { k: 1, comp: 1, lw: 0, lh: 0, vh: 0, vtop: 0, dpr: 1, coarse: false, land: false, phone: false, mode: 'full', portrait: true, winW: 0, winH: 0 };
-            (function () { var sv = ls('vkx_size'); for (var i = 0; i < SIZES.length; i++) if (SIZES[i][0] === sv) mode = sv; })();
+            var idx = 0, raf = 0, customRect = null;
+            var F = { k: 1, comp: 1, lw: 0, lh: 0, vh: 0, vtop: 0, dpr: 1, coarse: false, land: false, phone: false };
+            (function () {
+                var sv = ls('vkx_scale'); for (var i = 0; i < SCALES.length; i++) if (SCALES[i][0] === sv) idx = i;
+                try { var wr = JSON.parse(ls('vkx_win_rect') || 'null'); if (wr && ['width','height','right','top'].every(function (k) { return Number.isFinite(wr[k]); })) customRect = wr; } catch (e) {}
+            })();
             var probe = document.createElement('div');
             probe.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)';
             document.body.appendChild(probe);
             var mqC = window.matchMedia('(pointer:coarse)'), mqL = window.matchMedia('(orientation:landscape)'), mqF = window.matchMedia('(hover:hover) and (pointer:fine)');
             function clamp(v, lo, hi) { return Math.min(Math.max(v, lo), hi); }
-            function sizeOf(id) { for (var i = 0; i < SIZES.length; i++) if (SIZES[i][0] === id) return SIZES[i]; return SIZES[2]; }
             function measure() {
                 var vv = window.visualViewport, de = document.documentElement;
                 var lw = de.clientWidth || window.innerWidth, lh = window.innerHeight;
@@ -470,7 +497,8 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
                 if (coarse && dw > 0 && lw > dw * 1.25) comp = Math.min(3, lw / dw);      /* trang đang ở chế độ máy tính trên điện thoại/bảng: phóng giao diện cho đọc được */
                 else if (!coarse && lw >= 3200) comp = 1.5;
                 else if (!coarse && lw >= 2400) comp = 1.25;
-                var k = canScale ? comp : 1;
+                var pick = SCALES[idx][0], k = pick === 'auto' ? comp : parseFloat(pick);
+                if (!canScale) k = 1;
                 k = clamp(k, 0.7, Math.max(0.7, lw / 300));                               /* không phóng quá mức làm cửa sổ hẹp dưới 300 px */
                 var cs = getComputedStyle(probe);
                 return { k: k, comp: comp, lw: lw, lh: lh, vh: vh, vtop: vtop, dpr: window.devicePixelRatio || 1, coarse: coarse, land: land,
@@ -479,42 +507,35 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
             function run() {
                 raf = 0;
                 var m = measure(), k = m.k, effW = m.lw / k, effH = m.vh / k, ins = m.ins;
-                var portrait = effW < effH;
-                var mo = mode || (portrait ? 'full' : 'third');
-                /* bỏ qua nếu không có gì đổi: tránh dựng lại bố cục liên tục khi đang cuộn/vuốt (thanh địa chỉ co giãn, visualViewport báo scroll) */
-                var key = [m.lw, Math.round(m.vh), Math.round(m.vtop), k, mo, ins.t, ins.r, ins.b, ins.l, m.coarse ? 1 : 0].join('|');
-                if (key === lastKey) return;
-                lastKey = key;
-                var frac = mo === 'third' ? 1 / 3 : mo === 'half' ? 1 / 2 : 1, full = frac === 1;
-                var gap = full ? 0 : 8;                                                   /* lề (px thật) quanh cửa sổ khi chưa full */
-                var w, h, top, right, pt = 0, pb = 0, pl = 0, pr = 0;
-                if (portrait) {
-                    w = effW; h = full ? effH : clamp(effH * frac, Math.min(effH, 280), effH);
-                    right = 0; top = m.vtop + m.vh - h * k;                               /* dính đáy */
-                    pl = ins.l / k; pr = ins.r / k; pb = ins.b / k; pt = full ? ins.t / k : 0;
-                } else {
-                    h = full ? effH : Math.max(240, effH - (2 * gap + ins.t + ins.b) / k);
-                    w = full ? effW : clamp(effW * frac, Math.min(effW, 340), effW);
-                    right = full ? 0 : gap + ins.r; top = m.vtop + (full ? 0 : gap + ins.t); /* dính mép phải */
-                    if (full) { pt = ins.t / k; pb = ins.b / k; pl = ins.l / k; pr = ins.r / k; }
-                }
-                w = Math.round(w); h = Math.round(h);
-                var phone = w < 700, wide = !phone;
-                F.k = k; F.comp = m.comp; F.lw = m.lw; F.lh = m.lh; F.vh = m.vh; F.vtop = m.vtop; F.dpr = m.dpr; F.coarse = m.coarse; F.land = m.land;
-                F.phone = phone; F.mode = mo; F.portrait = portrait; F.winW = w; F.winH = h;
+                var phone = effW <= 720 || (m.coarse && effH <= 520);
+                F.k = k; F.comp = m.comp; F.lw = m.lw; F.lh = m.lh; F.vh = m.vh; F.vtop = m.vtop; F.dpr = m.dpr; F.coarse = m.coarse; F.land = m.land; F.phone = phone;
                 [win, fab, toastEl].forEach(function (el) { el.style.setProperty('--vkx-k', String(k)); });
                 win.classList.toggle('vkx-m', phone);
                 win.classList.toggle('vkx-t', m.coarse);
-                win.classList.toggle('vkx-xs', w < 370);
-                win.classList.toggle('vkx-land', phone && h <= 520);                          /* cửa sổ thấp (ngang hoặc 1/3 màn dọc): đầu trang và thanh nhóm gọn lại, nhường chỗ cho nội dung */
+                win.classList.toggle('vkx-xs', effW < 370);
+                win.classList.toggle('vkx-land', phone && effH <= 520 && effW > effH);
+                var wide = false, s = win.style;
+                s.boxSizing = 'border-box'; s.maxWidth = 'none'; s.maxHeight = 'none'; s.left = 'auto';
+                if (phone) {
+                    s.width = effW + 'px'; s.height = effH + 'px'; s.right = '0px'; s.top = m.vtop + 'px';
+                    s.paddingTop = ins.t / k + 'px'; s.paddingBottom = ins.b / k + 'px'; s.paddingLeft = ins.l / k + 'px'; s.paddingRight = ins.r / k + 'px';
+                } else {
+                    var wideOk = effW >= 1000;
+                    var w = wideOk ? Math.min(820, effW - 28) : Math.min(m.coarse ? 520 : 480, effW - 16);
+                    var h = wideOk ? Math.min(effH - 28, 900) : Math.min(effH * 0.88, 800), r = 16, t = 16;
+                    if (customRect) {
+                        var minW = Math.min(420, Math.max(240, effW - 16)), minH = Math.min(360, Math.max(220, effH - 16));
+                        w = clamp(customRect.width, minW, Math.max(minW, effW - 16));
+                        h = clamp(customRect.height, minH, Math.max(minH, effH - 16));
+                        r = clamp(customRect.right, 8, Math.max(8, effW - w - 8));
+                        t = clamp(customRect.top, 0, Math.max(0, effH - h - 8));
+                        customRect = { width: w, height: h, right: r, top: t };
+                    }
+                    s.width = w + 'px'; s.height = h + 'px'; s.right = r + 'px'; s.top = t + 'px';
+                    s.paddingTop = s.paddingBottom = s.paddingLeft = s.paddingRight = '0px';
+                    wide = w >= 760;
+                }
                 win.classList.toggle('vkx-wide', wide);
-                win.classList.toggle('vkx-full', full);
-                win.classList.toggle('vkx-part', !full);
-                win.classList.toggle('vkx-sheet', !full && portrait);
-                var s = win.style;
-                s.boxSizing = 'border-box'; s.maxWidth = 'none'; s.maxHeight = 'none'; s.left = 'auto'; s.bottom = 'auto';
-                s.width = w + 'px'; s.height = h + 'px'; s.right = right + 'px'; s.top = top + 'px';
-                s.paddingTop = pt + 'px'; s.paddingBottom = pb + 'px'; s.paddingLeft = pl + 'px'; s.paddingRight = pr + 'px';
                 if (!fab.style.left) {
                     fab.style.right = (14 + ins.r / k) + 'px';
                     fab.style.bottom = ((phone ? Math.max(14, Math.min(190, effH * 0.3)) : 24) + ins.b / k) + 'px';
@@ -522,8 +543,6 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
                 } else if (api.refitFab) api.refitFab();
                 toastEl.style.bottom = (26 + ins.b / k) + 'px';
                 toastEl.style.maxWidth = Math.min(0.92 * m.lw / k, 520) + 'px';
-                var zb = win.querySelector('#vkx-zoom'), z = sizeOf(mo);
-                if (zb) zb.title = 'Cỡ cửa sổ: ' + z[1] + ' (' + z[2] + ') · bấm để đổi: Thu gọn 1/3 → Nửa 1/2 → Toàn màn hình';
             }
             function sched() { if (!raf) raf = requestAnimationFrame(run); }
             window.addEventListener('resize', sched);
@@ -532,6 +551,85 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
             document.addEventListener('fullscreenchange', sched);
             if (window.visualViewport) { window.visualViewport.addEventListener('resize', sched); window.visualViewport.addEventListener('scroll', sched); }
             [mqC, mqL].forEach(function (q) { try { q.addEventListener('change', sched); } catch (e) { try { q.addListener(sched); } catch (x) {} } });
+
+            /* Kéo cửa sổ và đổi kích thước bằng viền/góc trên PC; kích thước được nhớ trong máy người chơi. */
+            var hd = win.querySelector('#vkx-hd'), drag = null;
+            function saveRect() {
+                if (F.phone) return;
+                customRect = {
+                    width: parseFloat(win.style.width) || 480,
+                    height: parseFloat(win.style.height) || 640,
+                    right: parseFloat(win.style.right) || 8,
+                    top: parseFloat(win.style.top) || 8
+                };
+                ls('vkx_win_rect', JSON.stringify(customRect));
+            }
+            hd.addEventListener('pointerdown', function (e) {
+                if (F.phone || e.target.closest('button')) return;
+                drag = { dx: e.clientX / F.k - (F.lw - (parseFloat(win.style.right) || 16) - (parseFloat(win.style.width) || 480)),
+                    dy: e.clientY / F.k - (parseFloat(win.style.top) || 16) };
+                try { hd.setPointerCapture(e.pointerId); } catch (x) {}
+            });
+            hd.addEventListener('pointermove', function (e) {
+                if (!drag) return;
+                var w = parseFloat(win.style.width) || 480, h = parseFloat(win.style.height) || 640;
+                var left = clamp(e.clientX / F.k - drag.dx, 8, Math.max(8, F.lw - w - 8));
+                var y = clamp(e.clientY / F.k - drag.dy, 0, Math.max(0, F.vh - 60));
+                customRect = { width: w, height: h, right: Math.max(8, F.lw - left - w), top: y };
+                win.style.right = customRect.right + 'px'; win.style.top = y + 'px';
+            });
+            function endDrag() { if (drag) saveRect(); drag = null; }
+            hd.addEventListener('pointerup', endDrag);
+            hd.addEventListener('pointercancel', endDrag);
+            hd.addEventListener('lostpointercapture', endDrag);
+
+            win.querySelectorAll('.vkx-resize').forEach(function (handle) {
+                var resize = null, dir = handle.dataset.rz || '';
+                handle.addEventListener('pointerdown', function (e) {
+                    if (F.phone || e.button !== undefined && e.button !== 0) return;
+                    e.preventDefault(); e.stopPropagation();
+                    resize = {
+                        x: e.clientX, y: e.clientY,
+                        width: parseFloat(win.style.width) || 480,
+                        height: parseFloat(win.style.height) || 640,
+                        right: parseFloat(win.style.right) || 16,
+                        top: parseFloat(win.style.top) || 16
+                    };
+                    try { handle.setPointerCapture(e.pointerId); } catch (x) {}
+                });
+                handle.addEventListener('pointermove', function (e) {
+                    if (!resize) return;
+                    e.preventDefault(); e.stopPropagation();
+                    var dx = (e.clientX - resize.x) / F.k, dy = (e.clientY - resize.y) / F.k;
+                    var minW = Math.min(420, Math.max(240, F.lw - 16));
+                    var minH = Math.min(360, Math.max(220, F.vh - 16));
+                    var left0 = F.lw - resize.right - resize.width;
+                    var left = left0, top = resize.top, width = resize.width, height = resize.height;
+                    if (dir.indexOf('w') >= 0) {
+                        left = clamp(left0 + dx, 8, left0 + resize.width - minW);
+                        width = resize.width - (left - left0);
+                    }
+                    if (dir.indexOf('e') >= 0) {
+                        width = clamp(resize.width + dx, minW, Math.max(minW, F.lw - resize.right - 8));
+                    }
+                    if (dir.indexOf('n') >= 0) {
+                        top = clamp(resize.top + dy, 0, resize.top + resize.height - minH);
+                        height = resize.height - (top - resize.top);
+                    }
+                    if (dir.indexOf('s') >= 0) {
+                        height = clamp(resize.height + dy, minH, Math.max(minH, F.vh - resize.top - 8));
+                    }
+                    var right = Math.max(8, F.lw - left - width);
+                    win.style.width = width + 'px'; win.style.height = height + 'px';
+                    win.style.right = right + 'px'; win.style.top = top + 'px';
+                    win.classList.toggle('vkx-wide', width >= 760);
+                    customRect = { width: width, height: height, right: right, top: top };
+                });
+                function endResize() { if (resize) saveRect(); resize = null; }
+                handle.addEventListener('pointerup', endResize);
+                handle.addEventListener('pointercancel', endResize);
+                handle.addEventListener('lostpointercapture', endResize);
+            });
 
             /* thanh tab: ngón tay vuốt (trình duyệt lo), con lăn chuột đổi thành cuộn ngang, chuột kéo được; không lỡ bấm nhầm sau khi kéo */
             function strip(el) {
@@ -559,19 +657,16 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
             }
             strip(win.querySelector('#vkx-groups')); strip(win.querySelector('#vkx-tabs'));
 
-            /* nút 🔍: Thu Gọn (1/3) → Nửa Màn Hình (1/2) → Toàn Màn Hình */
+            /* nút 🔍: Tự động → 85% → 100% → 115% → 130% → 150% */
             win.querySelector('#vkx-zoom').onclick = function () {
-                var cur = F.mode || 'full', i = 0;
-                for (var j = 0; j < SIZES.length; j++) if (SIZES[j][0] === cur) i = j;
-                mode = SIZES[(i + 1) % SIZES.length][0]; ls('vkx_size', mode); lastKey = ''; run();
-                var z = sizeOf(mode);
-                notify('🔍 Cỡ cửa sổ: ' + z[1] + ' (' + z[2] + ')');
+                if (!canScale) { notify('🔍 Trình duyệt này chưa hỗ trợ đổi cỡ giao diện'); return; }
+                idx = (idx + 1) % SCALES.length; ls('vkx_scale', SCALES[idx][0]); run();
+                notify('🔍 Cỡ giao diện: ' + SCALES[idx][1] + (idx === 0 ? ' (đang ' + Math.round(F.k * 100) + '%)' : ''));
             };
-            F.run = function () { lastKey = ''; run(); }; F.vp = function () { return [F.lw, F.vh]; };
+            F.run = run; F.vp = function () { return [F.lw, F.vh]; };
             F.info = function () {
-                var z = sizeOf(F.mode);
-                return F.lw + '×' + Math.round(F.vh) + ' px · DPR ' + (Math.round(F.dpr * 100) / 100) + ' · ' + (F.portrait ? 'màn dọc' : 'màn ngang') + ' · ' + (F.coarse ? 'cảm ứng' : 'chuột') +
-                    ' · cửa sổ ' + z[1] + ' (' + z[2] + ', ' + F.winW + '×' + F.winH + ')' + (F.comp > 1.01 ? ' · giao diện tự bù ×' + F.comp.toFixed(2) + ' vì trang đang ở chế độ máy tính hoặc màn hình rất lớn' : ' · giao diện tự thích ứng') + (canScale ? '' : ' · trình duyệt không hỗ trợ phóng');
+                return F.lw + '×' + Math.round(F.vh) + ' px · DPR ' + (Math.round(F.dpr * 100) / 100) + ' · ' + (F.phone ? (win.classList.contains('vkx-land') ? 'điện thoại ngang' : 'điện thoại') : (F.coarse ? 'máy tính bảng' : 'máy tính')) +
+                    ' · cỡ ' + Math.round(F.k * 100) + '%' + (idx === 0 ? ' (tự động' + (F.comp > 1.01 ? ', đã bù ×' + F.comp.toFixed(2) + ' vì trang đang ở chế độ máy tính hoặc màn hình rất lớn' : '') + ')' : ' (chọn tay)') + (canScale ? '' : ' · trình duyệt không hỗ trợ phóng');
             };
             api.fit = F;
             return F;
@@ -588,10 +683,10 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     })();
 
     /* ═══════════════ DỮ LIỆU NGỰ LINH (thư viện game mới nhất) ═══════════════ */
-    var NL_META = {"item.am_binh_lenh": ["phu_lieu", "hon"], "item.am_hon_cham": ["phap_khi", "hon"], "item.am_phach_chau": ["lieu", "hon"], "item.am_phu_chi": ["phu_lieu", "hon"], "item.am_thi_tho": ["lieu", "thi"], "item.am_thuy_chau": ["phu_lieu", "hon"], "item.au_trung_bich_hat": ["trung", "trung"], "item.au_trung_doc_ngo": ["trung", "trung"], "item.au_trung_hac_chu": ["trung", "trung"], "item.au_trung_huyet_co": ["trung", "trung"], "item.au_trung_kim_giap": ["trung", "trung"], "item.bach_co_phe_than": ["cong_phap", "trung"], "item.bach_co_sao": ["phap_khi", "trung"], "item.bach_cot_phan": ["phu_lieu", "thi"], "item.bach_khoi_tam_kinh": ["cong_phap", "khoi_loi"], "item.bach_mao_thi_quan": ["do_pho", "khoi_loi"], "item.bach_quy_chan_kinh": ["cong_phap", "hon"], "item.bach_quy_phien": ["phap_khi", "hon"], "item.bach_quy_vuong_phien": ["do_pho", "khoi_loi"], "item.bach_thu_cao": ["lieu", "thu"], "item.bach_thu_cuong_hong": ["cong_phap", "thu"], "item.bach_thu_linh_bai": ["phap_khi", "thu"], "item.bach_thu_thong_ngu": ["cong_phap", "thu"], "item.bach_trung_kinh": ["cong_phap", "trung"], "item.bat_hoa_dong_cot": ["do_pho", "khoi_loi"], "item.bat_hu_thi_kinh": ["cong_phap", "thi"], "item.bich_hat_vi": ["lieu", "trung"], "item.canh_kim_tinh": ["phu_lieu", "khoi_loi"], "item.chien_hon_phien": ["do_pho", "khoi_loi"], "item.chien_khoi_chan_do": ["do_pho", "khoi_loi"], "item.chieu_hon_linh": ["phap_khi", "hon"], "item.chu_doc_nang": ["lieu", "trung"], "item.chuong_doc_tinh": ["phu_lieu", "trung"], "item.co_dinh": ["phap_khi", "trung"], "item.co_huyet_phan_bo": ["cong_phap", "trung"], "item.co_huyet_tinh": ["lieu", "trung"], "item.co_khoi_hach": ["phu_lieu", "khoi_loi"], "item.co_khoi_tan_giap": ["phu_lieu", "khoi_loi"], "item.co_mau_tam_kinh": ["cong_phap", "trung"], "item.co_mo_bach_cot": ["do_pho", "khoi_loi"], "item.co_moc_tam": ["phu_lieu", "linh_thu"], "item.cuong_sat_tinh": ["lieu", "thi"], "item.cuong_thi_nha": ["phu_lieu", "thi"], "item.cuu_am_thi_quan": ["phap_khi", "thi"], "item.cuu_chuyen_khoi_dien": ["cong_phap", "khoi_loi"], "item.cuu_tu_hon_dang": ["do_pho", "hon"], "item.cuu_u_am_hoa": ["phu_lieu", "hon"], "item.cuu_u_hon_hach": ["lieu", "hon"], "item.cuu_u_thi_hach": ["lieu", "thi"], "item.cuu_u_thi_kinh": ["cong_phap", "thi"], "item.dang_trien_thi_hai": ["do_pho", "khoi_loi"], "item.do_pho_cu_khoi": ["do_pho", "khoi_loi"], "item.do_pho_dong_giap": ["do_pho", "khoi_loi"], "item.do_pho_dong_hac": ["do_pho", "khoi_loi"], "item.do_pho_khoi_binh": ["do_pho", "khoi_loi"], "item.do_pho_khoi_tuong": ["do_pho", "khoi_loi"], "item.do_pho_moc_hau": ["do_pho", "khoi_loi"], "item.do_pho_moc_khoi": ["do_pho", "khoi_loi"], "item.do_pho_moc_lang": ["do_pho", "khoi_loi"], "item.do_pho_moc_nhan": ["do_pho", "khoi_loi"], "item.do_pho_thiet_thi": ["do_pho", "khoi_loi"], "item.doc_co_chan_kinh": ["cong_phap", "trung"], "item.dong_khoi_hach": ["phu_lieu", "khoi_loi"], "item.dp_thu_linh_phu": ["don_phuong", ""], "item.dp_thu_thu_phu": ["don_phuong", ""], "item.duong_co_quyet": ["cong_phap", "trung"], "item.duong_co_ung": ["phap_khi", "trung"], "item.duong_hach_dang": ["phap_khi", "khoi_loi"], "item.duong_hon_moc": ["phap_khi", "hon"], "item.duong_hon_quyet": ["cong_phap", "hon"], "item.duong_quy_kinh": ["cong_phap", "hon"], "item.duong_thi_quan": ["phap_khi", "thi"], "item.duong_thi_quyet": ["cong_phap", "thi"], "item.duong_thu_quyet": ["cong_phap", "thu"], "item.han_bang_thi_quan": ["do_pho", "khoi_loi"], "item.han_bat_tan_khu": ["do_pho", "thi"], "item.han_thiet": ["phu_lieu", "khoi_loi"], "item.hat_doc_nang": ["phu_lieu", "trung"], "item.hoang_tuyen_quy_kinh": ["cong_phap", "hon"], "item.hoe_am_moc": ["phu_lieu", "hon"], "item.hon_nguyen_kim_tuy": ["lieu", "khoi_loi"], "item.hon_phach_tan": ["lieu", "hon"], "item.hon_phien_tan": ["do_pho", "khoi_loi"], "item.hong_y_le_phach": ["do_pho", "hon"], "item.huyen_am_thi_dinh": ["phap_khi", "thi"], "item.huyen_bang_co_quan": ["do_pho", "thi"], "item.huyen_co_lang_do": ["do_pho", "khoi_loi"], "item.huyen_ti_quyet": ["cong_phap", "khoi_loi"], "item.huyen_van_phan": ["lieu", "khoi_loi"], "item.huyet_anh_tinh": ["phu_lieu", "thi"], "item.huyet_linh_chi": ["phu_lieu", "linh_thu"], "item.huyet_ngoc_quan": ["do_pho", "khoi_loi"], "item.huyet_sat_chau": ["lieu", "thi"], "item.huyet_tinh_yeu_thu": ["phu_lieu", "thu"], "item.huyet_tri_cot": ["do_pho", "khoi_loi"], "item.khoi_loi_ban": ["phap_khi", "khoi_loi"], "item.khoi_loi_hien_than": ["cong_phap", "khoi_loi"], "item.khoi_loi_nang": ["phap_khi", "khoi_loi"], "item.khoi_ti_thoa": ["phap_khi", "khoi_loi"], "item.khu_khoi_thuat": ["cong_phap", "khoi_loi"], "item.khu_thi_linh": ["phap_khi", "thi"], "item.khu_yeu_tien": ["phap_khi", "thu"], "item.kim_giap_xac": ["lieu", "trung"], "item.kim_hac_bi_do": ["do_pho", "khoi_loi"], "item.kim_tinh_phien": ["lieu", "linh_thu"], "item.kim_trung_si": ["lieu", "trung"], "item.le_hon_phien": ["do_pho", "khoi_loi"], "item.le_phach_tinh": ["lieu", "hon"], "item.linh_giao_binh": ["phap_khi", "khoi_loi"], "item.linh_kim_vun": ["lieu", "khoi_loi"], "item.linh_nhuc_can": ["lieu", "thu"], "item.linh_thu_dai": ["phap_khi", "thu"], "item.luyen_hon_quyet": ["cong_phap", "hon"], "item.luyen_thi_bi_luc": ["cong_phap", "thi"], "item.mang_hon_chi": ["phu_lieu", "linh_thu"], "item.moc_khoi_hach": ["phu_lieu", "khoi_loi"], "item.moc_khoi_quyet": ["cong_phap", "khoi_loi"], "item.muc_yeu_kinh": ["cong_phap", "thu"], "item.ngan_ti_khien_hoan": ["phap_khi", "khoi_loi"], "item.ngo_cong_doc_nang": ["phu_lieu", "trung"], "item.ngu_doc_co_tam": ["lieu", "trung"], "item.ngu_doc_dich": ["lieu", "trung"], "item.ngu_thu_an": ["cong_phap", "thu"], "item.ngu_thu_hoan": ["phap_khi", "thu"], "item.nhiep_hach_thuat": ["cong_phap", "khoi_loi"], "item.nhiep_hon_thuat": ["cong_phap", "hon"], "item.oan_hon_tinh": ["lieu", "hon"], "item.oan_hon_ty": ["phu_lieu", "hon"], "item.pham_thi": ["do_pho", "khoi_loi"], "item.phan_than_khoi_an": ["phap_khi", "khoi_loi"], "item.phe_kim_nha": ["lieu", "trung"], "item.phong_thao_nho": ["lieu", "linh_thu"], "item.phuc_thu_an_quyet": ["cong_phap", "thu"], "item.quy_khoc_thuat": ["cong_phap", "hon"], "item.tang_hon_chung": ["phap_khi", "hon"], "item.tao_hoa_khoi_kinh": ["cong_phap", "khoi_loi"], "item.thai_co_thu_huyet": ["lieu", "thu"], "item.thanh_doc_nang": ["lieu", "trung"], "item.thanh_dong_khau": ["lieu", "khoi_loi"], "item.thao_khoi_quyet": ["cong_phap", "khoi_loi"], "item.that_thai_doc_nang": ["lieu", "trung"], "item.thi_am_chau": ["lieu", "thi"], "item.thi_cot_tien": ["phap_khi", "thi"], "item.thi_du": ["phu_lieu", "thi"], "item.thi_hach": ["phu_lieu", "thi"], "item.thi_hoang_an": ["phap_khi", "thi"], "item.thi_huyet_tinh": ["lieu", "thi"], "item.thi_khi_nang": ["lieu", "thi"], "item.thi_khoi_hach": ["phu_lieu", "khoi_loi"], "item.thi_mao": ["phu_lieu", "thi"], "item.thi_no_chu": ["cong_phap", "thi"], "item.thi_sat_chan_kinh": ["cong_phap", "thi"], "item.thi_sat_trao": ["phap_khi", "thi"], "item.thi_vuong_cot_truong": ["phap_khi", "thi"], "item.thi_vuong_hieu_lenh": ["cong_phap", "thi"], "item.thien_cong_hap": ["phap_khi", "khoi_loi"], "item.thien_la_khoi_vong": ["phap_khi", "khoi_loi"], "item.thien_ngoai_van_thiet": ["phu_lieu", "khoi_loi"], "item.thien_nien_ha_thu_o": ["phu_lieu", "linh_thu"], "item.thien_tam_ti": ["lieu", "trung"], "item.thiet_moc_tiet": ["lieu", "khoi_loi"], "item.thieu_hon_quyet": ["cong_phap", "hon"], "item.thu_co_an": ["cong_phap", "trung"], "item.thu_hoang_chan_kinh": ["cong_phap", "thu"], "item.thu_linh_phu": ["phu", ""], "item.thu_thi_an": ["cong_phap", "thi"], "item.thu_thu_phu": ["phu", ""], "item.thu_vuong_tuy": ["lieu", "thu"], "item.thuc_khoi_chi": ["cong_phap", "khoi_loi"], "item.tinh_than_sa": ["lieu", "khoi_loi"], "item.toa_hoa_dao_khu": ["do_pho", "thi"], "item.toa_hon_ho_lo": ["do_pho", "khoi_loi"], "item.toai_hon_dinh": ["phap_khi", "hon"], "item.tram_ho_thi": ["do_pho", "khoi_loi"], "item.tram_hon_binh": ["do_pho", "khoi_loi"], "item.tran_van_an_hinh": ["phu", ""], "item.tran_van_co_chien": ["phu", ""], "item.tran_van_cu_luc": ["phu", ""], "item.tran_van_cuong_bao": ["phu", ""], "item.tran_van_dong_tam": ["phu", ""], "item.tran_van_giap_da": ["phu", ""], "item.tran_van_ho_chu": ["phu", ""], "item.tran_van_hut_linh": ["phu", ""], "item.tran_van_kiem_y": ["phu", ""], "item.tran_van_lien_no": ["phu", ""], "item.tran_van_nguyen_to": ["phu", ""], "item.tran_van_phan_chan": ["phu", ""], "item.tran_van_yeu_nha": ["phu", ""], "item.trung_bach_hac": ["trung", "linh_thu"], "item.trung_bach_linh_ho": ["trung", "linh_thu"], "item.trung_bach_ngac": ["trung", "thu"], "item.trung_bach_trach": ["trung", "linh_thu"], "item.trung_bach_van_au_ho": ["trung", "linh_thu"], "item.trung_bang_so": ["trung", "thu"], "item.trung_bich_lan_mang": ["trung", "thu"], "item.trung_boi_son_quy": ["trung", "thu"], "item.trung_cam_ly": ["trung", "linh_thu"], "item.trung_da_anh_kieu": ["trung", "linh_thu"], "item.trung_giap_phien": ["lieu", "trung"], "item.trung_hac_phong_bao": ["trung", "thu"], "item.trung_hoa_lan": ["trung", "thu"], "item.trung_hoa_loan": ["trung", "thu"], "item.trung_hoa_nha": ["trung", "linh_thu"], "item.trung_hoa_vu_ke": ["trung", "thu"], "item.trung_huyen_duc_buc": ["trung", "linh_thu"], "item.trung_huyen_quy": ["trung", "thu"], "item.trung_kim_mao_thu": ["trung", "linh_thu"], "item.trung_liet_khong_ung": ["trung", "thu"], "item.trung_ly_long": ["trung", "thu"], "item.trung_mac_ngoc_linh_mieu": ["trung", "linh_thu"], "item.trung_ngan_giac_loc": ["trung", "linh_thu"], "item.trung_ngan_nguyet_au_lang": ["trung", "linh_thu"], "item.trung_ngoc_tho": ["trung", "linh_thu"], "item.trung_phan_son_ho": ["trung", "thu"], "item.trung_sa_tich": ["trung", "thu"], "item.trung_tam_bao_dieu": ["trung", "linh_thu"], "item.trung_thanh_dieu": ["trung", "linh_thu"], "item.trung_thanh_loan": ["trung", "thu"], "item.trung_thanh_ngoc_linh_xa": ["trung", "linh_thu"], "item.trung_thanh_nguu": ["trung", "linh_thu"], "item.trung_thanh_van_quy": ["trung", "thu"], "item.trung_thanh_vu_hac": ["trung", "thu"], "item.trung_thuc_thiet_thu": ["trung", "linh_thu"], "item.trung_tu_dien_hau": ["trung", "linh_thu"], "item.trung_vuong_giap": ["lieu", "trung"], "item.trung_xich_diem_cau": ["trung", "linh_thu"], "item.tu_am_bai": ["phap_khi", "thi"], "item.tu_hon_binh": ["phap_khi", "hon"], "item.tu_kim": ["phu_lieu", "khoi_loi"], "item.tu_lan_thao": ["lieu", "thu"], "item.tu_si_thi_hai": ["do_pho", "khoi_loi"], "item.tuong_hon_ho_phu": ["do_pho", "hon"], "item.u_minh_hon_phien": ["do_pho", "khoi_loi"], "item.u_minh_hon_tinh": ["lieu", "hon"], "item.u_minh_quy_dien": ["cong_phap", "hon"], "item.van_co_no": ["phap_khi", "khoi_loi"], "item.van_co_phien": ["phap_khi", "trung"], "item.van_co_thien_kinh": ["cong_phap", "trung"], "item.van_doc_phien": ["phap_khi", "trung"], "item.van_hon_phien": ["phap_khi", "hon"], "item.van_quy_phien": ["phap_khi", "hon"], "item.van_thu_quy_tong": ["cong_phap", "thu"], "item.van_thu_te_minh": ["cong_phap", "thu"], "item.van_yeu_phien": ["phap_khi", "thu"], "item.xich_dong_khoi_quyet": ["cong_phap", "khoi_loi"], "item.xich_kim_dich": ["lieu", "khoi_loi"], "item.yeu_dan_1": ["phu_lieu", "thu"], "item.yeu_dan_2": ["phu_lieu", "thu"], "item.yeu_dan_3": ["phu_lieu", "thu"], "item.yeu_dan_4": ["phu_lieu", "thu"], "item.yeu_dan_5": ["phu_lieu", "thu"], "item.yeu_hoang_phien": ["phap_khi", "thu"], "item.yeu_lang_nhuc": ["lieu", "thu"]}; /* mã vật phẩm → [nhóm, nhánh] */
+    var NL_META = {"item.am_binh_lenh": ["phu_lieu", "hon"], "item.am_hon_cham": ["phap_khi", "hon"], "item.am_phach_chau": ["lieu", "hon"], "item.am_phu_chi": ["phu_lieu", "hon"], "item.am_thi_tho": ["lieu", "thi"], "item.am_thuy_chau": ["phu_lieu", "hon"], "item.au_trung_bich_hat": ["trung", "trung"], "item.au_trung_doc_ngo": ["trung", "trung"], "item.au_trung_hac_chu": ["trung", "trung"], "item.au_trung_huyet_co": ["trung", "trung"], "item.au_trung_kim_giap": ["trung", "trung"], "item.bach_co_phe_than": ["cong_phap", "trung"], "item.bach_co_sao": ["phap_khi", "trung"], "item.bach_cot_phan": ["phu_lieu", "thi"], "item.bach_khoi_tam_kinh": ["cong_phap", "khoi_loi"], "item.bach_mao_thi_quan": ["do_pho", "khoi_loi"], "item.bach_quy_chan_kinh": ["cong_phap", "hon"], "item.bach_quy_phien": ["phap_khi", "hon"], "item.bach_quy_vuong_phien": ["do_pho", "khoi_loi"], "item.bach_thu_cao": ["lieu", "thu"], "item.bach_thu_cuong_hong": ["cong_phap", "thu"], "item.bach_thu_linh_bai": ["phap_khi", "thu"], "item.bach_thu_thong_ngu": ["cong_phap", "thu"], "item.bach_trung_kinh": ["cong_phap", "trung"], "item.bat_hoa_dong_cot": ["do_pho", "khoi_loi"], "item.bat_hu_thi_kinh": ["cong_phap", "thi"], "item.bich_hat_vi": ["lieu", "trung"], "item.canh_kim_tinh": ["phu_lieu", "khoi_loi"], "item.chien_hon_phien": ["do_pho", "khoi_loi"], "item.chieu_hon_linh": ["phap_khi", "hon"], "item.chu_doc_nang": ["lieu", "trung"], "item.chuong_doc_tinh": ["phu_lieu", "trung"], "item.co_dinh": ["phap_khi", "trung"], "item.co_huyet_phan_bo": ["cong_phap", "trung"], "item.co_huyet_tinh": ["lieu", "trung"], "item.co_khoi_hach": ["phu_lieu", "khoi_loi"], "item.co_khoi_tan_giap": ["phu_lieu", "khoi_loi"], "item.co_mau_tam_kinh": ["cong_phap", "trung"], "item.co_mo_bach_cot": ["do_pho", "khoi_loi"], "item.co_moc_tam": ["phu_lieu", "linh_thu"], "item.cuong_sat_tinh": ["lieu", "thi"], "item.cuong_thi_nha": ["phu_lieu", "thi"], "item.cuu_am_thi_quan": ["phap_khi", "thi"], "item.cuu_chuyen_khoi_dien": ["cong_phap", "khoi_loi"], "item.cuu_u_am_hoa": ["phu_lieu", "hon"], "item.cuu_u_hon_hach": ["lieu", "hon"], "item.cuu_u_thi_hach": ["lieu", "thi"], "item.cuu_u_thi_kinh": ["cong_phap", "thi"], "item.dang_trien_thi_hai": ["do_pho", "khoi_loi"], "item.do_pho_cu_khoi": ["do_pho", "khoi_loi"], "item.do_pho_dong_giap": ["do_pho", "khoi_loi"], "item.do_pho_dong_hac": ["do_pho", "khoi_loi"], "item.do_pho_khoi_binh": ["do_pho", "khoi_loi"], "item.do_pho_khoi_tuong": ["do_pho", "khoi_loi"], "item.do_pho_moc_hau": ["do_pho", "khoi_loi"], "item.do_pho_moc_khoi": ["do_pho", "khoi_loi"], "item.do_pho_moc_lang": ["do_pho", "khoi_loi"], "item.do_pho_moc_nhan": ["do_pho", "khoi_loi"], "item.do_pho_thiet_thi": ["do_pho", "khoi_loi"], "item.doc_co_chan_kinh": ["cong_phap", "trung"], "item.dong_khoi_hach": ["phu_lieu", "khoi_loi"], "item.dp_thu_linh_phu": ["don_phuong", ""], "item.dp_thu_thu_phu": ["don_phuong", ""], "item.duong_co_quyet": ["cong_phap", "trung"], "item.duong_co_ung": ["phap_khi", "trung"], "item.duong_hach_dang": ["phap_khi", "khoi_loi"], "item.duong_hon_moc": ["phap_khi", "hon"], "item.duong_hon_quyet": ["cong_phap", "hon"], "item.duong_quy_kinh": ["cong_phap", "hon"], "item.duong_thi_quan": ["phap_khi", "thi"], "item.duong_thi_quyet": ["cong_phap", "thi"], "item.duong_thu_quyet": ["cong_phap", "thu"], "item.han_bang_thi_quan": ["do_pho", "khoi_loi"], "item.han_thiet": ["phu_lieu", "khoi_loi"], "item.hat_doc_nang": ["phu_lieu", "trung"], "item.hoang_tuyen_quy_kinh": ["cong_phap", "hon"], "item.hoe_am_moc": ["phu_lieu", "hon"], "item.hon_nguyen_kim_tuy": ["lieu", "khoi_loi"], "item.hon_phach_tan": ["lieu", "hon"], "item.hon_phien_tan": ["do_pho", "khoi_loi"], "item.huyen_am_thi_dinh": ["phap_khi", "thi"], "item.huyen_ti_quyet": ["cong_phap", "khoi_loi"], "item.huyen_van_phan": ["lieu", "khoi_loi"], "item.huyet_anh_tinh": ["phu_lieu", "thi"], "item.huyet_linh_chi": ["phu_lieu", "linh_thu"], "item.huyet_ngoc_quan": ["do_pho", "khoi_loi"], "item.huyet_sat_chau": ["lieu", "thi"], "item.huyet_tinh_yeu_thu": ["phu_lieu", "thu"], "item.huyet_tri_cot": ["do_pho", "khoi_loi"], "item.khoi_loi_ban": ["phap_khi", "khoi_loi"], "item.khoi_loi_hien_than": ["cong_phap", "khoi_loi"], "item.khoi_loi_nang": ["phap_khi", "khoi_loi"], "item.khoi_ti_thoa": ["phap_khi", "khoi_loi"], "item.khu_khoi_thuat": ["cong_phap", "khoi_loi"], "item.khu_thi_linh": ["phap_khi", "thi"], "item.khu_yeu_tien": ["phap_khi", "thu"], "item.kim_giap_xac": ["lieu", "trung"], "item.kim_tinh_phien": ["lieu", "linh_thu"], "item.kim_trung_si": ["lieu", "trung"], "item.le_hon_phien": ["do_pho", "khoi_loi"], "item.le_phach_tinh": ["lieu", "hon"], "item.linh_giao_binh": ["phap_khi", "khoi_loi"], "item.linh_kim_vun": ["lieu", "khoi_loi"], "item.linh_nhuc_can": ["lieu", "thu"], "item.linh_thu_dai": ["phap_khi", "thu"], "item.luyen_hon_quyet": ["cong_phap", "hon"], "item.luyen_thi_bi_luc": ["cong_phap", "thi"], "item.mang_hon_chi": ["phu_lieu", "linh_thu"], "item.moc_khoi_hach": ["phu_lieu", "khoi_loi"], "item.moc_khoi_quyet": ["cong_phap", "khoi_loi"], "item.muc_yeu_kinh": ["cong_phap", "thu"], "item.ngan_ti_khien_hoan": ["phap_khi", "khoi_loi"], "item.ngo_cong_doc_nang": ["phu_lieu", "trung"], "item.ngu_doc_co_tam": ["lieu", "trung"], "item.ngu_doc_dich": ["lieu", "trung"], "item.ngu_thu_an": ["cong_phap", "thu"], "item.ngu_thu_hoan": ["phap_khi", "thu"], "item.nhiep_hach_thuat": ["cong_phap", "khoi_loi"], "item.nhiep_hon_thuat": ["cong_phap", "hon"], "item.oan_hon_tinh": ["lieu", "hon"], "item.oan_hon_ty": ["phu_lieu", "hon"], "item.pham_thi": ["do_pho", "khoi_loi"], "item.phan_than_khoi_an": ["phap_khi", "khoi_loi"], "item.phe_kim_nha": ["lieu", "trung"], "item.phong_thao_nho": ["lieu", "linh_thu"], "item.phuc_thu_an_quyet": ["cong_phap", "thu"], "item.quy_khoc_thuat": ["cong_phap", "hon"], "item.tang_hon_chung": ["phap_khi", "hon"], "item.tao_hoa_khoi_kinh": ["cong_phap", "khoi_loi"], "item.thai_co_thu_huyet": ["lieu", "thu"], "item.thanh_doc_nang": ["lieu", "trung"], "item.thanh_dong_khau": ["lieu", "khoi_loi"], "item.thao_khoi_quyet": ["cong_phap", "khoi_loi"], "item.that_thai_doc_nang": ["lieu", "trung"], "item.thi_am_chau": ["lieu", "thi"], "item.thi_cot_tien": ["phap_khi", "thi"], "item.thi_du": ["phu_lieu", "thi"], "item.thi_hach": ["phu_lieu", "thi"], "item.thi_hoang_an": ["phap_khi", "thi"], "item.thi_huyet_tinh": ["lieu", "thi"], "item.thi_khi_nang": ["lieu", "thi"], "item.thi_khoi_hach": ["phu_lieu", "khoi_loi"], "item.thi_mao": ["phu_lieu", "thi"], "item.thi_no_chu": ["cong_phap", "thi"], "item.thi_sat_chan_kinh": ["cong_phap", "thi"], "item.thi_sat_trao": ["phap_khi", "thi"], "item.thi_vuong_cot_truong": ["phap_khi", "thi"], "item.thi_vuong_hieu_lenh": ["cong_phap", "thi"], "item.thien_cong_hap": ["phap_khi", "khoi_loi"], "item.thien_la_khoi_vong": ["phap_khi", "khoi_loi"], "item.thien_ngoai_van_thiet": ["phu_lieu", "khoi_loi"], "item.thien_nien_ha_thu_o": ["phu_lieu", "linh_thu"], "item.thien_tam_ti": ["lieu", "trung"], "item.thiet_moc_tiet": ["lieu", "khoi_loi"], "item.thieu_hon_quyet": ["cong_phap", "hon"], "item.thu_co_an": ["cong_phap", "trung"], "item.thu_hoang_chan_kinh": ["cong_phap", "thu"], "item.thu_linh_phu": ["phu", ""], "item.thu_thi_an": ["cong_phap", "thi"], "item.thu_thu_phu": ["phu", ""], "item.thu_vuong_tuy": ["lieu", "thu"], "item.thuc_khoi_chi": ["cong_phap", "khoi_loi"], "item.tinh_than_sa": ["lieu", "khoi_loi"], "item.toa_hon_ho_lo": ["do_pho", "khoi_loi"], "item.toai_hon_dinh": ["phap_khi", "hon"], "item.tram_ho_thi": ["do_pho", "khoi_loi"], "item.tram_hon_binh": ["do_pho", "khoi_loi"], "item.tran_van_an_hinh": ["phu", ""], "item.tran_van_co_chien": ["phu", ""], "item.tran_van_cu_luc": ["phu", ""], "item.tran_van_cuong_bao": ["phu", ""], "item.tran_van_dong_tam": ["phu", ""], "item.tran_van_giap_da": ["phu", ""], "item.tran_van_ho_chu": ["phu", ""], "item.tran_van_hut_linh": ["phu", ""], "item.tran_van_kiem_y": ["phu", ""], "item.tran_van_lien_no": ["phu", ""], "item.tran_van_nguyen_to": ["phu", ""], "item.tran_van_phan_chan": ["phu", ""], "item.tran_van_yeu_nha": ["phu", ""], "item.trung_bach_hac": ["trung", "linh_thu"], "item.trung_bach_linh_ho": ["trung", "linh_thu"], "item.trung_bach_ngac": ["trung", "thu"], "item.trung_bach_van_au_ho": ["trung", "linh_thu"], "item.trung_bang_so": ["trung", "thu"], "item.trung_bich_lan_mang": ["trung", "thu"], "item.trung_boi_son_quy": ["trung", "thu"], "item.trung_cam_ly": ["trung", "linh_thu"], "item.trung_giap_phien": ["lieu", "trung"], "item.trung_hac_phong_bao": ["trung", "thu"], "item.trung_hoa_lan": ["trung", "thu"], "item.trung_hoa_loan": ["trung", "thu"], "item.trung_hoa_nha": ["trung", "linh_thu"], "item.trung_hoa_vu_ke": ["trung", "thu"], "item.trung_huyen_quy": ["trung", "thu"], "item.trung_kim_mao_thu": ["trung", "linh_thu"], "item.trung_liet_khong_ung": ["trung", "thu"], "item.trung_ly_long": ["trung", "thu"], "item.trung_mac_ngoc_linh_mieu": ["trung", "linh_thu"], "item.trung_ngan_giac_loc": ["trung", "linh_thu"], "item.trung_ngan_nguyet_au_lang": ["trung", "linh_thu"], "item.trung_ngoc_tho": ["trung", "linh_thu"], "item.trung_phan_son_ho": ["trung", "thu"], "item.trung_sa_tich": ["trung", "thu"], "item.trung_tam_bao_dieu": ["trung", "linh_thu"], "item.trung_thanh_dieu": ["trung", "linh_thu"], "item.trung_thanh_loan": ["trung", "thu"], "item.trung_thanh_ngoc_linh_xa": ["trung", "linh_thu"], "item.trung_thanh_nguu": ["trung", "linh_thu"], "item.trung_thanh_van_quy": ["trung", "thu"], "item.trung_thanh_vu_hac": ["trung", "thu"], "item.trung_vuong_giap": ["lieu", "trung"], "item.tu_am_bai": ["phap_khi", "thi"], "item.tu_hon_binh": ["phap_khi", "hon"], "item.tu_kim": ["phu_lieu", "khoi_loi"], "item.tu_lan_thao": ["lieu", "thu"], "item.tu_si_thi_hai": ["do_pho", "khoi_loi"], "item.u_minh_hon_phien": ["do_pho", "khoi_loi"], "item.u_minh_hon_tinh": ["lieu", "hon"], "item.u_minh_quy_dien": ["cong_phap", "hon"], "item.van_co_no": ["phap_khi", "khoi_loi"], "item.van_co_phien": ["phap_khi", "trung"], "item.van_co_thien_kinh": ["cong_phap", "trung"], "item.van_doc_phien": ["phap_khi", "trung"], "item.van_hon_phien": ["phap_khi", "hon"], "item.van_quy_phien": ["phap_khi", "hon"], "item.van_thu_quy_tong": ["cong_phap", "thu"], "item.van_thu_te_minh": ["cong_phap", "thu"], "item.van_yeu_phien": ["phap_khi", "thu"], "item.xich_dong_khoi_quyet": ["cong_phap", "khoi_loi"], "item.xich_kim_dich": ["lieu", "khoi_loi"], "item.yeu_dan_1": ["phu_lieu", "thu"], "item.yeu_dan_2": ["phu_lieu", "thu"], "item.yeu_dan_3": ["phu_lieu", "thu"], "item.yeu_dan_4": ["phu_lieu", "thu"], "item.yeu_dan_5": ["phu_lieu", "thu"], "item.yeu_hoang_phien": ["phap_khi", "thu"], "item.yeu_lang_nhuc": ["lieu", "thu"], "item.huyen_co_lang_do": ["do_pho", "khoi_loi"], "item.kim_hac_bi_do": ["do_pho", "khoi_loi"], "item.chien_khoi_chan_do": ["do_pho", "khoi_loi"], "item.tuong_hon_ho_phu": ["do_pho", "hon"], "item.hong_y_le_phach": ["do_pho", "hon"], "item.cuu_tu_hon_dang": ["do_pho", "hon"], "item.toa_hoa_dao_khu": ["do_pho", "thi"], "item.huyen_bang_co_quan": ["do_pho", "thi"], "item.han_bat_tan_khu": ["do_pho", "thi"], "item.trung_xich_diem_cau": ["trung", "linh_thu"], "item.trung_tu_dien_hau": ["trung", "linh_thu"], "item.trung_thuc_thiet_thu": ["trung", "linh_thu"], "item.trung_bach_trach": ["trung", "linh_thu"], "item.trung_da_anh_kieu": ["trung", "linh_thu"], "item.trung_huyen_duc_buc": ["trung", "linh_thu"]}; /* mã vật phẩm → [nhóm, nhánh] */
     var NL_RITUAL = [{"id": "nghi_thuc.luyen_khoi", "ten": "Luyện khôi", "loai": "khoi_loi", "tg": 1, "lieu": ["item.han_thiet", "item.linh_kim_vun", "item.yeu_dan_1", "item.yeu_dan_2", "item.moc_khoi_hach", "item.yeu_dan_3", "item.dong_khoi_hach", "item.tu_kim", "item.thi_khoi_hach", "item.co_khoi_tan_giap", "item.thien_ngoai_van_thiet", "item.yeu_dan_4", "item.canh_kim_tinh", "item.co_khoi_hach", "item.yeu_dan_5"], "mo_ta": "Khắc đồ phổ lên thân liệu, nạp lõi vào ngực, ráp từng khớp rồi rót linh lực cho bánh răng tự quay. Mỗi món liệu phụ thêm một lần cơ duyên cho tư chất khôi."}, {"id": "nghi_thuc.ap_linh_thu", "ten": "Ấp linh thú", "loai": "linh_thu", "tg": 1, "lieu": ["item.phong_thao_nho", "item.kim_tinh_phien", "item.huyet_linh_chi", "item.co_moc_tam", "item.thien_nien_ha_thu_o", "item.mang_hon_chi"], "mo_ta": "Giữ trứng bên mình, mỗi sáng truyền một sợi linh khí, để linh dược quanh ổ cho nó hút. Linh thú nở ra tự chọn ở lại."}, {"id": "nghi_thuc.ap_thu", "ten": "Ấp thú", "loai": "thu", "tg": 1, "lieu": ["item.yeu_dan_1", "item.huyet_linh_chi", "item.yeu_dan_2", "item.huyet_tinh_yeu_thu", "item.yeu_dan_3", "item.yeu_dan_4", "item.yeu_dan_5"], "mo_ta": "Đặt trứng trong ổ ấm, sáng tối rót một sợi linh lực và nhỏ máu mình lên vỏ. Con nở ra nhận hơi chủ từ trong trứng."}, {"id": "nghi_thuc.luyen_co", "ten": "Luyện cổ", "loai": "trung", "tg": 0.5, "lieu": ["item.thanh_doc_nang", "item.chu_doc_nang", "item.co_huyet_tinh", "item.hat_doc_nang", "item.ngu_doc_dich", "item.ngo_cong_doc_nang", "item.that_thai_doc_nang", "item.chuong_doc_tinh", "item.thien_tam_ti", "item.ngu_doc_co_tam"], "mo_ta": "Bỏ ấu trùng vào vạc gốm cùng độc vật, bịt miệng vạc, chôn dưới gốc cây. Mở ra chỉ còn một con, đã ăn sạch phần độc còn lại."}, {"id": "nghi_thuc.luyen_thi", "ten": "Luyện thi", "loai": "thi", "tg": 0.5, "lieu": ["item.thi_du", "item.bach_cot_phan", "item.cuong_thi_nha", "item.thi_hach", "item.thi_mao", "item.huyet_anh_tinh"], "mo_ta": "Đặt xác giữa trận tụ âm, dán phù trấn bảy huyệt, đêm đêm tưới thi khí. Tới ngày xác mở mắt, nó chỉ nghe tiếng chuông của chủ."}, {"id": "nghi_thuc.luyen_hon", "ten": "Luyện hồn", "loai": "hon", "tg": 0.5, "lieu": ["item.oan_hon_ty", "item.am_phu_chi", "item.am_thuy_chau", "item.hoe_am_moc", "item.am_binh_lenh", "item.cuu_u_am_hoa"], "mo_ta": "Treo phiên trong phòng tối, đốt hương âm, niệm chú gọi hồn mỗi canh ba. Hồn trong phiên dần quên kiếp trước, chỉ còn nhớ tên chủ."}];
-    var NL_ENC = [["ev.kl_sap_tho_khoi", "Sạp thợ khôi", "ngu_linh/khoi_loi.yaml", ["tran", "thanh", "kinh_do"], [], [0, 5], ["item.do_pho_moc_khoi"], "cua_hang"], ["ev.kl_lau_co_quan", "Lầu cơ quan", "ngu_linh/khoi_loi.yaml", ["kinh_do"], [], [2, 5], [], "cua_hang"], ["ev.kl_tho_khoi_gap_nan", "Thợ khôi gặp nạn", "ngu_linh/khoi_loi.yaml", ["hoang_da"], ["son_mach", "rung_ram"], [0, 2], ["item.do_pho_moc_khoi", "item.huyen_ti_quyet", "item.moc_khoi_quyet"], "su_kien"], ["ev.kl_xuong_khoi_bo_hoang", "Xưởng khôi bỏ hoang", "ngu_linh/khoi_loi.yaml", ["hoang_da"], ["son_mach", "rung_ram", "di_tich"], [1, 3], ["item.bach_khoi_tam_kinh", "item.khoi_loi_ban", "item.khoi_loi_nang", "item.khu_khoi_thuat", "item.ngan_ti_khien_hoan", "item.thien_cong_hap"], "su_kien"], ["ev.kl_dien_co_quan", "Điện cơ quan", "ngu_linh/khoi_loi.yaml", ["di_tich"], [], [2, 4], ["item.bach_khoi_tam_kinh", "item.tao_hoa_khoi_kinh"], "su_kien"], ["ev.kl_mo_thien_cong", "Mộ Thiên Công", "ngu_linh/khoi_loi.yaml", ["hoang_da"], ["di_tich", "son_mach"], [4, 5], ["item.cuu_chuyen_khoi_dien"], "su_kien"], ["ev.kl_dau_khoi_an_cuoc", "Đấu khôi ăn cược", "ngu_linh/khoi_loi.yaml", ["hoang_da"], ["di_tich", "son_mach"], [2, 3], ["item.tran_van_giap_da", "item.tran_van_phan_chan", "item.tran_van_yeu_nha"], "su_kien"], ["ev.lt_danh_hoi_bui_ram", "Nó đánh hơi", "ngu_linh/linh_thu.yaml", ["hoang_da"], ["rung_ram", "son_mach", "yeu_vuc"], [0, 5], [], "su_kien"], ["ev.lt_danh_hoi_mat_ho", "Bọt nước dưới hồ", "ngu_linh/linh_thu.yaml", ["hoang_da"], ["ho_nuoc"], [0, 5], [], "su_kien"], ["ev.lt_danh_hoi_nen_gach", "Nền gạch cũ", "ngu_linh/linh_thu.yaml", ["hoang_da"], ["di_tich"], [0, 5], [], "su_kien"], ["ev.lt_danh_hoi_cat_vang", "Dưới lớp cát", "ngu_linh/linh_thu.yaml", ["hoang_da"], ["hoang_mac", "hoang_nguyen"], [0, 5], [], "su_kien"], ["ev.lt_loc_bay_tho_san", "Bẫy trên lối hươu", "ngu_linh/linh_thu.yaml", ["hoang_da"], ["rung_ram", "son_mach"], [0, 5], [], "su_kien"], ["ev.lt_tho_dem_trang", "Đêm trăng tròn", "ngu_linh/linh_thu.yaml", ["hoang_da"], ["hoang_nguyen", "son_mach"], [0, 5], [], "su_kien"], ["ev.lt_cam_ly_lao_ngu", "Lão chài nhận vảy", "ngu_linh/linh_thu.yaml", ["hoang_da"], ["ho_nuoc"], [0, 5], [], "su_kien"], ["ev.lt_thanh_dieu_bay_dan", "Bầy chim xanh", "ngu_linh/linh_thu.yaml", ["hoang_da"], ["son_mach", "rung_ram"], [0, 5], [], "su_kien"], ["ev.lt_bach_trach_vach_da", "Bạch Trạch già", "ngu_linh/linh_thu.yaml", ["hoang_da"], ["yeu_vuc", "son_mach"], [0, 5], [], "su_kien"], ["ev.lt_tam_bao_cho_chon", "Chợ chồn", "ngu_linh/linh_thu.yaml", ["hoang_da"], ["di_tich", "son_mach"], [0, 5], [], "su_kien"], ["ev.lt_thuc_thiet_tho_ren", "Kiếm hỏng lò rèn", "ngu_linh/linh_thu.yaml", ["thon", "tran", "thanh"], [], [0, 5], [], "su_kien"], ["ev.lt_tinh_net", "Tính nết của nó", "ngu_linh/linh_thu.yaml", ["hoang_da"], [], [0, 5], [], "su_kien"], ["ev.lt_kho_cua_no", "Kho của nó", "ngu_linh/linh_thu.yaml", ["hoang_da"], ["rung_ram", "son_mach", "ho_nuoc", "hoang_nguyen"], [0, 5], [], "su_kien"], ["ev.lt_hoa_hinh", "Sáng ra thành người", "ngu_linh/linh_thu.yaml", ["hoang_da", "thon", "tran", "thanh", "kinh_do"], [], [0, 5], [], "su_kien"], ["ev.nl_lt_ho_trang_mac_bay", "Hồ trắng mắc bẫy", "ngu_linh/linh_thu_ket_giao.yaml", ["hoang_da"], ["rung_ram", "son_mach"], [0, 2], ["item.trung_bach_linh_ho"], "su_kien"], ["ev.nl_lt_chuot_vang_tha_bac", "Chuột vàng tha bạc", "ngu_linh/linh_thu_ket_giao.yaml", ["thon", "tran"], [], [0, 2], ["item.trung_kim_mao_thu"], "su_kien"], ["ev.nl_lt_soi_con_theo_chan", "Sói con theo chân", "ngu_linh/linh_thu_ket_giao.yaml", ["hoang_da"], ["hoang_nguyen", "son_mach"], [1, 3], ["item.trung_ngan_nguyet_au_lang"], "su_kien"], ["ev.nl_lt_ho_me_trung_ten", "Hổ mẹ trúng tên", "ngu_linh/linh_thu_ket_giao.yaml", ["hoang_da"], ["rung_ram", "son_mach"], [0, 2], ["item.trung_bach_van_au_ho"], "su_kien"], ["ev.nl_lt_ran_xanh_nghe_kinh", "Rắn xanh nghe kinh", "ngu_linh/linh_thu_ket_giao.yaml", ["hoang_da"], ["son_mach", "rung_ram"], [0, 2], ["item.trung_thanh_ngoc_linh_xa"], "su_kien"], ["ev.nl_lt_hac_dau_dinh_nui", "Hạc đậu đỉnh núi", "ngu_linh/linh_thu_ket_giao.yaml", ["hoang_da"], ["son_mach"], [1, 3], ["item.trung_bach_hac"], "su_kien"], ["ev.nl_lt_qua_lua_dau_xom", "Quạ lửa đầu xóm", "ngu_linh/linh_thu_ket_giao.yaml", ["hoang_da"], ["son_mach", "hoang_mac"], [1, 3], ["item.trung_hoa_nha"], "su_kien"], ["ev.nl_lt_mat_troi_thu_hai", "Mặt trời thứ hai", "ngu_linh/linh_thu_ket_giao.yaml", ["hoang_da"], ["hoang_mac", "son_mach"], [5, 5], [], "su_kien"], ["ev.nl_lt_trau_xanh_dao_truong", "Trâu xanh già", "ngu_linh/linh_thu_ket_giao.yaml", ["hoang_da"], ["son_mach", "hoang_nguyen"], [2, 4], ["item.trung_thanh_nguu"], "su_kien"], ["ev.nl_lt_meo_den_tren_noc", "Mèo đen trên nóc", "ngu_linh/linh_thu_ket_giao.yaml", ["thon", "tran"], [], [0, 2], ["item.trung_mac_ngoc_linh_mieu"], "su_kien"], ["ev.nl_than_ly_long_doi_te", "Ly Long đòi tế", "ngu_linh/than_thu.yaml", ["hoang_da"], ["ho_nuoc", "yeu_vuc"], [3, 5], [], "su_kien"], ["ev.nl_than_lan_hoa_cuong", "Lân hóa cuồng", "ngu_linh/than_thu.yaml", ["hoang_da"], ["son_mach", "rung_ram"], [3, 5], [], "su_kien"], ["ev.nl_than_dao_biet_lan", "Đảo biết lặn", "ngu_linh/than_thu.yaml", ["hoang_da"], ["ho_nuoc"], [3, 5], [], "su_kien"], ["ev.nl_than_loan_thu_suc", "Loan điểu thử sức", "ngu_linh/than_thu.yaml", ["hoang_da"], ["son_mach", "rung_ram", "hoang_mac"], [3, 5], [], "su_kien"], ["ev.nl_than_rong_mac_can", "Rồng nhỏ mắc cạn", "ngu_linh/than_thu.yaml", ["hoang_da"], ["ho_nuoc"], [3, 5], ["item.trung_ly_long"], "su_kien"], ["ev.nl_than_lan_trung_ten", "Lân trúng tên", "ngu_linh/than_thu.yaml", ["hoang_da"], ["son_mach", "rung_ram"], [3, 5], ["item.trung_hoa_lan"], "su_kien"], ["ev.nl_than_quy_len_bai", "Huyền Quy lên bãi", "ngu_linh/than_thu.yaml", ["hoang_da"], ["ho_nuoc"], [3, 5], ["item.trung_huyen_quy"], "su_kien"], ["ev.nl_than_to_loan_hoa_da", "Tổ loan hóa đá", "ngu_linh/than_thu.yaml", ["bi_canh"], [], [3, 5], ["item.trung_hoa_loan", "item.trung_thanh_loan"], "su_kien"], ["ev.cho_am_dem", "Chợ âm", "ngu_linh/thi_hon.yaml", ["tran", "thanh"], [], [1, 5], ["item.am_thi_tho", "item.chien_hon_phien", "item.chieu_hon_linh", "item.co_mo_bach_cot", "item.duong_hon_moc", "item.duong_hon_quyet", "item.duong_thi_quyet", "item.hon_phach_tan", "item.hon_phien_tan", "item.luyen_hon_quyet", "item.luyen_thi_bi_luc", "item.nhiep_hon_thuat", "item.pham_thi", "item.thi_cot_tien", "item.thi_khi_nang", "item.thi_no_chu", "item.thu_thi_an", "item.toa_hon_ho_lo", "item.tu_am_bai", "item.tu_si_thi_hai"], "cua_hang"], ["ev.thi_ke_dao_mo", "Kẻ đào mộ", "ngu_linh/thi_hon.yaml", ["hoang_da"], ["hoang_nguyen", "son_mach", "rung_ram", "di_tich"], [1, 2], ["item.duong_thi_quyet", "item.thi_khi_nang"], "su_kien"], ["ev.thi_xac_than_lang", "Xác thần làng", "ngu_linh/thi_hon.yaml", ["thon"], [], [1, 3], ["item.luyen_thi_bi_luc"], "su_kien"], ["ev.thi_mo_tuong_quan", "Mộ tướng quân", "ngu_linh/thi_hon.yaml", ["hoang_da"], ["di_tich", "hoang_nguyen", "son_mach"], [2, 3], ["item.cuong_sat_tinh", "item.thi_sat_chan_kinh", "item.thi_vuong_hieu_lenh"], "su_kien"], ["ev.thi_lang_thi_vuong", "Lăng Thi Vương", "ngu_linh/thi_hon.yaml", ["hoang_da"], ["di_tich", "hoang_mac", "yeu_vuc"], [3, 5], ["item.bat_hu_thi_kinh", "item.cuu_u_thi_kinh", "item.huyet_sat_chau"], "su_kien"], ["ev.hon_phien_vo_chu", "Hồn phiên vô chủ", "ngu_linh/thi_hon.yaml", ["hoang_da"], ["son_mach", "rung_ram", "hoang_nguyen", "di_tich"], [0, 2], ["item.duong_hon_quyet", "item.hon_phien_tan"], "su_kien"], ["ev.hon_quy_thanh", "Quỷ thành", "ngu_linh/thi_hon.yaml", ["hoang_da"], ["hoang_nguyen", "di_tich", "yeu_vuc"], [2, 3], ["item.duong_quy_kinh", "item.le_hon_phien", "item.le_phach_tinh", "item.thieu_hon_quyet", "item.tu_hon_binh"], "su_kien"], ["ev.hon_dien_quy_mau", "Điện Quỷ Mẫu", "ngu_linh/thi_hon.yaml", ["hoang_da"], ["yeu_vuc", "di_tich", "son_mach"], [3, 5], ["item.bach_quy_chan_kinh", "item.u_minh_hon_tinh", "item.u_minh_quy_dien"], "su_kien"], ["ev.nl_thu_lao_chan_yeu", "Lão chăn yêu", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["rung_ram", "son_mach"], [0, 2], ["item.duong_thu_quyet", "item.ngu_thu_an"], "su_kien"], ["ev.nl_thu_xac_trong_hang", "Xác trong hang yêu", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["yeu_vuc", "son_mach", "rung_ram"], [1, 3], ["item.bach_thu_thong_ngu", "item.ngu_thu_hoan"], "su_kien"], ["ev.nl_trung_co_su_doi_ruong", "Cổ Sư đòi ruộng", "ngu_linh/thu_trung.yaml", ["thon", "tran"], [], [1, 3], ["item.bach_trung_kinh", "item.duong_co_quyet", "item.thu_co_an"], "su_kien"], ["ev.nl_trung_o_co_trong_dam", "Ổ cổ trong đầm", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["ho_nuoc", "rung_ram"], [1, 3], ["item.bach_trung_kinh", "item.co_dinh"], "su_kien"], ["ev.nl_cho_dem_thu_co", "Chợ đêm thú cổ", "ngu_linh/thu_trung.yaml", ["thanh", "kinh_do"], [], [0, 5], ["item.au_trung_kim_giap", "item.bach_co_sao", "item.bach_thu_thong_ngu", "item.bach_trung_kinh", "item.co_dinh", "item.doc_co_chan_kinh", "item.duong_co_quyet", "item.duong_co_ung", "item.duong_thu_quyet", "item.linh_nhuc_can", "item.muc_yeu_kinh", "item.ngu_thu_an", "item.ngu_thu_hoan", "item.thu_co_an", "item.trung_hac_phong_bao", "item.yeu_lang_nhuc"], "cua_hang"], ["ev.nl_thu_mo_ngu_thu_su", "Mộ ngự thú sư", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["di_tich", "son_mach", "yeu_vuc"], [3, 4], ["item.khu_yeu_tien", "item.van_thu_quy_tong"], "su_kien"], ["ev.nl_thu_hai_cot_thu_hoang", "Hài cốt Thú Hoàng", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["yeu_vuc", "son_mach", "hoang_nguyen"], [4, 5], ["item.thu_hoang_chan_kinh", "item.thu_vuong_tuy"], "su_kien"], ["ev.nl_trung_dong_co_vuong", "Động Cổ Vương", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["ho_nuoc", "rung_ram", "yeu_vuc"], [3, 4], ["item.co_huyet_phan_bo", "item.co_mau_tam_kinh", "item.van_co_phien"], "su_kien"], ["ev.nl_trung_co_mau_ngu_dong", "Cổ mẫu ngủ đông", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["ho_nuoc", "yeu_vuc", "rung_ram"], [4, 5], ["item.van_co_thien_kinh"], "su_kien"], ["ev.nl_thu_cam_ly_vuot_thac", "Cá chép vượt thác", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["ho_nuoc"], [1, 5], ["item.trung_cam_ly"], "su_kien"], ["ev.nl_thu_chon_vang_duoi_trom", "Chồn vàng đuổi trộm", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["di_tich", "son_mach"], [1, 5], ["item.trung_tam_bao_dieu"], "su_kien"], ["ev.nl_thu_to_thanh_dieu", "Tổ chim xanh", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["son_mach", "rung_ram"], [2, 5], ["item.trung_thanh_dieu"], "su_kien"], ["ev.nl_thu_dinh_gio", "Đỉnh núi gió", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["son_mach"], [0, 2], ["item.kim_tinh_phien", "item.phong_thao_nho"], "su_kien"], ["ev.nl_thu_luyen_huyet_tinh", "Thợ săn luyện huyết", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["rung_ram", "son_mach", "yeu_vuc"], [1, 3], ["item.huyet_tinh_yeu_thu"], "su_kien"], ["ev.nl_thu_bai_tu_lan", "Bãi cỏ tía", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["yeu_vuc", "son_mach", "rung_ram"], [2, 4], ["item.tu_lan_thao"], "su_kien"], ["ev.nl_thu_ho_phach_co", "Hổ phách thái cổ", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["yeu_vuc", "son_mach", "hoang_nguyen"], [4, 5], ["item.thu_vuong_tuy"], "su_kien"], ["ev.nl_thu_to_liet_khong_ung", "Tổ ưng trên vách", "ngu_linh/trung_hoa_than.yaml", ["hoang_da"], ["son_mach", "hoang_nguyen"], [5, 5], ["item.trung_liet_khong_ung"], "su_kien"], ["ev.nl_thu_to_phan_son_ho", "Hang hổ cháy", "ngu_linh/trung_hoa_than.yaml", ["hoang_da"], ["son_mach", "hoang_mac", "rung_ram"], [5, 5], ["item.trung_phan_son_ho"], "su_kien"], ["ev.nl_thu_to_bich_lan_mang", "Ổ mãng dưới rễ", "ngu_linh/trung_hoa_than.yaml", ["hoang_da"], ["rung_ram", "ho_nuoc", "yeu_vuc"], [5, 5], ["item.trung_bich_lan_mang"], "su_kien"], ["ev.hac_thi_ta_phai", "Hắc thị", "ta_phai/dac_trung.yaml", ["thanh_tri"], [], null, ["item.am_thi_tho", "item.hon_phach_tan"], "cua_hang"], ["ev.cho_no_san_sau", "Chợ nô", "ta_phai/dac_trung.yaml", ["thanh_tri"], [], null, ["item.au_trung_doc_ngo", "item.au_trung_huyet_co", "item.pham_thi", "item.toa_hon_ho_lo", "item.tu_si_thi_hai"], "cua_hang"], ["ev.cho_no_tu_si_phe", "Tu sĩ bị phế", "ta_phai/dac_trung.yaml", ["thanh_tri"], [], [1, 3], ["item.pham_thi"], "su_kien"], ["ev.mieu_ta_than_tu_tu", "Từ tế nuôi thần", "ta_phai/dac_trung.yaml", ["thanh_tri"], [], [1, 3], ["item.hon_phach_tan"], "su_kien"], ["ev.ta_tu_tre_linh_can", "Đứa trẻ linh căn", "ta_tu.yaml", ["thon", "hoang_da"], [], [1, 2], ["item.pham_thi"], "su_kien"], ["ev.ta_tu_thon_dich", "Làng có dịch", "ta_tu.yaml", ["thon"], [], [1, 3], ["item.thi_khi_nang"], "su_kien"], ["ev.ta_tu_xac_cha", "Xác cha trên xe", "ta_tu.yaml", ["hoang_da", "thon"], [], [2, 3], ["item.tu_si_thi_hai"], "su_kien"], ["ev.ta_tu_oan_hon", "Hồn cô dâu", "ta_tu.yaml", ["hoang_da"], ["hoang_nguyen", "di_tich", "son_mach", "ho_nuoc"], [0, 2], ["item.hon_phien_tan", "item.toa_hon_ho_lo"], "su_kien"], ["ev.kl_tm_xuong_co_quan", "Xưởng cơ quan", "tong_mon_khoi_loi.yaml", ["tong_mon"], [], [0, 4], ["item.huyen_van_phan", "item.thanh_dong_khau", "item.thiet_moc_tiet", "item.tinh_than_sa", "item.xich_kim_dich"], "su_kien"], ["ev.tm_co_hon_quat", "Dưỡng cổ quật", "tong_mon_noi.yaml", ["tong_mon"], [], null, ["item.chu_doc_nang", "item.ngu_doc_co_tam", "item.ngu_doc_dich", "item.thanh_doc_nang", "item.that_thai_doc_nang", "item.thien_tam_ti"], "tong_mon"], ["ev.nl_lt_ngua_lua_bat_kham", "Ngựa lửa bất kham", "ngu_linh/linh_thu_ket_giao.yaml", ["hoang_da"], ["hoang_nguyen", "hoang_mac"], [2, 4], ["item.trung_xich_diem_cau"], "su_kien"], ["ev.nl_lt_khi_tim_don_set", "Khỉ tím đón sét", "ngu_linh/linh_thu_ket_giao.yaml", ["hoang_da"], ["son_mach", "rung_ram"], [2, 4], ["item.trung_tu_dien_hau"], "su_kien"], ["ev.cho_thi_hon_ta_phai", "Dưỡng Linh Thị", "ta_phai/dac_trung.yaml", ["thanh_tri"], [], null, [], "cua_hang"], ["ev.kl_tm_dau_khoi", "So tài khôi lỗi", "tong_mon_khoi_loi.yaml", ["tong_mon"], [], [0, 4], [], "su_kien"]]; /* [mã, tên, nguồn, nơi, địa hình, cảnh giới, vật phẩm, loại] */
-    var NL_ENEMY = [{"id": "enemy.ly_long_au_tu", "ten": "Ly Long Ấu Tử", "cg": 1, "he": ["thuy"], "loai": ["thu"], "dk": 0.9, "th": [{"id": "enemy.ly_long", "lieu": {"item.giao_long_lan": 1, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["ho_nuoc", "yeu_vuc"], "mt": "Rồng con dài bằng cánh tay, vảy lam sẫm còn mềm như da cá. Nó cuộn trong chậu, nước trong chậu xoay tròn không ngớt."}, {"id": "enemy.hoa_lan_au_tu", "ten": "Hỏa Lân Ấu Tử", "cg": 1, "he": ["hoa", "tho"], "loai": ["thu"], "dk": 0.9, "th": [{"id": "enemy.hoa_lan_thu", "lieu": {"item.hoa_tinh_chau": 2, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["son_mach", "rung_ram"], "mt": "Lân con to bằng con dê, vảy đỏ mới nhú, giữa trán có một chồi sừng ấm như than. Kẻ gian đến gần, nó gầm khẽ trước cả chó nhà."}, {"id": "enemy.huyen_quy_au_tu", "ten": "Huyền Quy Ấu Tử", "cg": 1, "he": ["thuy", "bang"], "loai": ["thu"], "dk": 0.9, "th": [{"id": "enemy.huyen_quy", "lieu": {"item.quy_giap": 3, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["ho_nuoc"], "mt": "Rùa con mai đen bằng cái bát, đuôi là một con rắn nhỏ biết tự ngóc đầu. Mai thì ngủ, đuôi thì canh, chẳng ai lại gần được."}, {"id": "enemy.hoa_loan_au_so", "ten": "Hỏa Loan Ấu Sồ", "cg": 1, "he": ["hoa", "phong"], "loai": ["thu"], "dk": 0.9, "th": [{"id": "enemy.hoa_loan", "lieu": {"item.ngo_dong_chi": 1, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["son_mach", "rung_ram", "hoang_mac"], "mt": "Chim non lông đỏ son, đuôi mới dài bằng ngón tay mà chóp đã lập lòe lửa. Nó chỉ chịu đậu trên cành ngô đồng."}, {"id": "enemy.thanh_loan_au_so", "ten": "Thanh Loan Ấu Sồ", "cg": 1, "he": ["phong", "moc"], "loai": ["thu"], "dk": 0.9, "th": [{"id": "enemy.thanh_loan", "lieu": {"item.ngo_dong_chi": 1, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Chim non lông xanh ngọc, tiếng kêu còn khàn mà chậu cây cạnh nó đã nhú lộc. Đêm nó rúc vào lòng bàn tay ngươi mà ngủ."}, {"id": "enemy.ly_long", "ten": "Ly Long", "cg": 4, "he": ["thuy"], "loai": ["thu"], "dk": 0.95, "th": [], "hach": null, "dh": ["ho_nuoc", "yeu_vuc"], "mt": "Rồng không sừng, máu chân long còn loãng trong người. Nó cuộn dưới đáy hồ sâu, mặt hồ trên đầu xoay thành xoáy suốt ngày đêm."}, {"id": "enemy.hoa_lan_thu", "ten": "Hỏa Lân Thú", "cg": 4, "he": ["hoa", "tho"], "loai": ["thu"], "dk": 0.95, "th": [], "hach": null, "dh": ["son_mach", "rung_ram"], "mt": "Mang chút máu Kỳ Lân, vảy đỏ, bước qua cỏ không gãy một ngọn. Nó chỉ đánh kẻ nó cho là ác, mà đã đánh thì lửa không tắt."}, {"id": "enemy.huyen_quy", "ten": "Huyền Quy", "cg": 4, "he": ["thuy", "bang"], "loai": ["thu"], "dk": 0.9, "th": [], "hach": null, "dh": ["ho_nuoc"], "mt": "Rùa đen đuôi rắn, mai to bằng sân đình, máu Huyền Vũ chảy trong người. Đánh vào mai thì tay ngươi tê trước, đuôi rắn đã quất tới sau lưng."}, {"id": "enemy.hoa_loan", "ten": "Hỏa Loan", "cg": 4, "he": ["hoa", "phong"], "loai": ["thu"], "dk": 0.95, "th": [], "hach": null, "dh": ["son_mach", "rung_ram", "hoang_mac"], "mt": "Loan điểu lông đỏ mang máu Phượng, làm tổ trên ngô đồng. Ngã xuống rồi, nó bốc cháy thành ngọn lửa và từ lửa vỗ cánh bay lên."}, {"id": "enemy.thanh_loan", "ten": "Thanh Loan", "cg": 4, "he": ["phong", "moc"], "loai": ["thu"], "dk": 0.9, "th": [], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Loan điểu lông xanh, tiếng hót làm cây khô ra lộc. Vết thương trên mình nó khép lại từng lượt, trừ khi gặp lửa."}, {"id": "enemy.oan_linh", "ten": "Oán Linh", "cg": 0, "he": ["am"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["di_tich", "hoang_nguyen", "yeu_vuc"], "mt": "Hồn người chết đói ở thôn bỏ hoang, mỏng như khói bếp. Nó chỉ biết bám theo hơi người, lạnh từ gáy xuống."}, {"id": "enemy.am_hon", "ten": "Âm Hồn", "cg": 1, "he": ["am"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": [], "mt": "Hồn người chết oan không siêu thoát, lởn vởn nơi âm khí tụ."}, {"id": "enemy.thuy_quy", "ten": "Thủy Quỷ", "cg": 1, "he": ["am"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["ho_nuoc"], "mt": "Người chết đuối hóa thành, tóc dài quấn rong. Phải kéo được một kẻ khác xuống thế chỗ mới được đi đầu thai."}, {"id": "enemy.kim_tam_co", "ten": "Kim Tằm Cổ", "cg": 2, "he": ["kim", "moc"], "loai": ["trung"], "dk": 0.6, "th": [{"id": "enemy.thien_tam_co_mau", "lieu": {"item.that_thai_doc_nang": 3}}], "hach": null, "dh": ["rung_ram", "yeu_vuc"], "mt": "Cổ mẹ cổ sư nuôi bằng máu mình, vàng óng như tằm. Chủ chết thì nó đói, đi ăn cả làng từ trong ruột ra."}, {"id": "enemy.le_quy", "ten": "Lệ Quỷ", "cg": 3, "he": ["thuy", "kim"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": [], "mt": "Oán khí kết thành hình, tiếng khóc của nó làm người nghe rợn tới tủy."}, {"id": "enemy.quy_mau", "ten": "U Minh Quỷ Mẫu", "cg": 4, "he": ["thuy", "bang"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["di_tich", "yeu_vuc"], "mt": "Nữ quỷ nuốt hồn trẻ nhỏ mà thành hình, vừa đi vừa hát ru. Trong bụng nó lúc nào cũng có tiếng trẻ khóc."}, {"id": "enemy.hanh_thi", "ten": "Hành Thi", "cg": 0, "he": ["tho"], "loai": ["thi"], "dk": null, "th": [], "hach": null, "dh": ["di_tich", "hoang_nguyen"], "mt": "Xác chưa kịp chôn bị âm khí nhập, nhảy từng bước cứng đờ theo hơi người. Chậm, nhưng không biết đau."}, {"id": "enemy.bach_cot_kho_lau", "ten": "Bạch Cốt Khô Lâu", "cg": 1, "he": ["kim"], "loai": ["thi"], "dk": null, "th": [], "hach": null, "dh": ["di_tich", "hoang_mac"], "mt": "Bộ xương khô tay cầm mâu gãy, đi đâu khớp xương kêu lách cách. Đánh rã ra thì xương lăn lại ráp thành hai."}, {"id": "enemy.am_binh", "ten": "Âm Binh", "cg": 2, "he": ["kim"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["hoang_nguyen", "di_tich"], "mt": "Lính chết trận còn mặc giáp rỉ, mắt là hai đốm lửa xanh. Đi thành hàng, bước chân đều như còn nghe trống trận."}, {"id": "enemy.thiet_giap_am_binh", "ten": "Thiết Giáp Âm Binh", "cg": 3, "he": ["kim"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["hoang_nguyen", "di_tich"], "mt": "Thân binh của một tướng quân chết trận, giáp sắt nặng vẫn kín người dù trong giáp chỉ còn khói xanh. Chém thủng giáp, khói lại tụ về chỗ cũ."}, {"id": "enemy.hac_cuong", "ten": "Hắc Cương", "cg": 2, "he": ["tho"], "loai": ["thi"], "dk": null, "th": [], "hach": "item.thi_hach", "dh": ["di_tich", "hoang_nguyen", "hoang_mac"], "mt": "Cương thi da đen như sắt nguội, quyền cước đánh vào chỉ nghe \"cạch\". Đêm trăng tròn nó đứng ngửa mặt hút âm khí."}, {"id": "enemy.mao_cuong", "ten": "Mao Cương", "cg": 3, "he": ["tho", "kim"], "loai": ["thi"], "dk": null, "th": [], "hach": "item.thi_hach", "dh": ["di_tich", "hoang_nguyen", "yeu_vuc"], "mt": "Cương thi mọc kín lông trắng dài như cỏ tranh, thở ra là mùi tanh. Cắn được người thì vết thương trên mình nó liền lại."}, {"id": "enemy.thuy_thi", "ten": "Thủy Thi", "cg": 1, "he": ["am"], "loai": ["thi"], "dk": null, "th": [], "hach": null, "dh": ["ho_nuoc"], "mt": "Xác chết đuối ngâm lâu dưới đáy hồ, trương phềnh trắng bệch, bước tới đâu nước rỉ tới đó. Nó ôm được ai là kéo thẳng xuống bùn."}, {"id": "enemy.dang_thi", "ten": "Đằng Thi", "cg": 2, "he": ["moc"], "loai": ["thi"], "dk": null, "th": [], "hach": null, "dh": ["rung_ram"], "mt": "Xác bỏ trong rừng sâu bị dây leo đâm xuyên ngực, rễ bám kín từng đốt xương. Dây kéo xác đi săn, quấn được ai là hút máu nuôi lá."}, {"id": "enemy.bang_thi", "ten": "Băng Thi", "cg": 3, "he": ["bang"], "loai": ["thi"], "dk": null, "th": [], "hach": "item.thi_hach", "dh": ["son_mach"], "mt": "Thi luyện trong hang băng của Vạn Băng Thi Động, da trong như băng, nhìn rõ mạch máu đông đen bên dưới. Bị nó chạm vào, tay chân tê cứng hồi lâu."}, {"id": "enemy.phi_cuong", "ten": "Phi Cương", "cg": 4, "he": ["tho", "hoa"], "loai": ["thi"], "dk": null, "th": [], "hach": "item.phi_cuong_tuy", "dh": ["di_tich", "yeu_vuc", "hoang_mac"], "mt": "Cương thi hút đủ máu thì nhẹ người, lướt trên ngọn cây như dơi lớn. Bay qua làng nào, sáng ra gia súc làng đó khô quắt."}, {"id": "enemy.quy_vuong", "ten": "Quỷ Vương", "cg": 5, "he": ["thuy", "bang"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["yeu_vuc", "di_tich"], "mt": "Vua của một cõi âm, ngồi trên ngai xếp bằng sọ người. Nó gõ ấn một tiếng, quỷ tốt dưới đất chui lên thành hàng."}, {"id": "enemy.bat_hoa_cot", "ten": "Bất Hóa Cốt", "cg": 5, "he": ["tho", "kim"], "loai": ["thi"], "dk": 0.7, "th": [], "hach": null, "dh": ["di_tich", "hoang_mac", "hoang_nguyen", "son_mach", "yeu_vuc"], "mt": "Xác qua nghìn năm không rữa, xương hóa sắc đồng, chém gãy rồi tự liền. Chỉ lửa mới làm nó chậm lại."}, {"id": "enemy.xich_cot_kho_lau", "ten": "Xích Cốt Khô Lâu", "cg": 2, "he": ["kim"], "loai": ["thi"], "dk": null, "th": [], "hach": null, "dh": ["di_tich", "yeu_vuc"], "mt": "Bộ xương ngâm trong ao máu lâu năm, đỏ thẫm từ sọ tới gót. Cắn trúng ai là xương nó bóng thêm một lớp."}, {"id": "enemy.bach_cot_ma_tuong", "ten": "Bạch Cốt Ma Tướng", "cg": 4, "he": ["kim"], "loai": ["thi"], "dk": null, "th": [], "hach": null, "dh": ["di_tich", "hoang_mac", "yeu_vuc"], "mt": "Xương của trăm người ráp thành một bộ cao gấp rưỡi người thường, cầm cây thương cũng bằng xương. Đánh vỡ nó ra, đống xương vụn lại chia làm hai mà đứng dậy."}, {"id": "enemy.nga_quy", "ten": "Ngạ Quỷ", "cg": 0, "he": ["hoa"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": [], "mt": "Bụng phình như trống mà cổ nhỏ như cây kim, đói mãi không no. Bám được người sống là cắn, miệng phả ra lửa xanh."}, {"id": "enemy.son_quy", "ten": "Sơn Quỷ", "cg": 0, "he": ["moc"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["son_mach", "rung_ram"], "mt": "Hồn người lạc chết trong núi, nấp sau sương gọi đúng tên kẻ đi đường. Ai quay lại đáp lời là bị dắt vòng quanh tới kiệt sức."}, {"id": "enemy.phu_thi", "ten": "Phù Thi", "cg": 0, "he": ["am"], "loai": ["thi"], "dk": null, "th": [], "hach": null, "dh": ["ho_nuoc", "hai_dao"], "mt": "Xác trôi dạt vào bãi, hà và sò bám kín lưng như vỏ thuyền. Nằm úp mặt chờ nước triều, ai lại gần lật xem là nó chộp cổ chân."}, {"id": "enemy.hoang_sa_cot", "ten": "Hoàng Sa Cốt", "cg": 0, "he": ["kim", "tho"], "loai": ["thi"], "dk": null, "th": [], "hach": null, "dh": ["hoang_mac"], "mt": "Bộ xương khách buôn chết khát, cát vàng lấp đầy hốc mắt và kẽ sườn. Nó trồi lên khỏi đụn cát khi có bóng người đi qua, đầu tiên là một bàn tay."}, {"id": "enemy.hai_u_linh", "ten": "Hải U Linh", "cg": 1, "he": ["am"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["hai_dao", "ho_nuoc"], "mt": "Hồn thủy thủ trên chiếc thuyền đắm, áo còn quấn dây buồm mục. Đêm sương nó thắp đèn trên mặt biển, dụ thuyền khác lái vào bãi đá ngầm."}, {"id": "enemy.doan_nhai_quy", "ten": "Đoạn Nhai Quỷ", "cg": 2, "he": ["phong"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["son_mach"], "mt": "Hồn kẻ trượt chân rơi vực, thân mình gãy gập như cành khô. Nó đứng sau lưng người đi đường mép núi, chờ một cơn gió để đẩy."}, {"id": "enemy.phong_sa_quy", "ten": "Phong Sa Quỷ", "cg": 2, "he": ["phong", "tho"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["hoang_mac"], "mt": "Cả đoàn lạc đà chết trong một trận bão cát, hồn nhập vào gió mà đi. Cột cát xoáy tới đâu nghe tiếng chuông lạc đà tới đó, trong cát có tay người."}, {"id": "enemy.ha_dang_hon", "ten": "Hà Đăng Hồn", "cg": 2, "he": ["thuy", "hoa"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["ho_nuoc"], "mt": "Hồn đi theo ngọn hoa đăng người ta thả sông cúng vong, mà không có ai cúng cho nó. Đèn trôi tới bến nào, nó đứng dưới nước ngóc đầu nhìn lên bờ."}, {"id": "enemy.dieu_tu_quy", "ten": "Điếu Tử Quỷ", "cg": 3, "he": ["moc"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["rung_ram"], "mt": "Hồn người thắt cổ trên cây cổ thụ giữa rừng, lưỡi thè dài tới ngực, cổ còn sợi dây gai. Nó thòng dây xuống từ tán lá, siết được ai là treo lên cạnh mình."}, {"id": "enemy.tram_uyen_thi", "ten": "Trầm Uyên Thi", "cg": 3, "he": ["am"], "loai": ["thi"], "dk": null, "th": [], "hach": "item.thi_hach", "dh": ["ho_nuoc"], "mt": "Xác nằm dưới đáy đầm trăm năm, da xanh đen mọc vảy như cá, móng dài cong như lưỡi câu. Nó trồi lên giữa vòng nước xoáy, cuốn cả thuyền lẫn người."}, {"id": "enemy.sa_tang_thi", "ten": "Sa Táng Thi", "cg": 3, "he": ["tho", "hoa"], "loai": ["thi"], "dk": null, "th": [], "hach": "item.thi_hach", "dh": ["hoang_mac"], "mt": "Xác quý tộc nước cổ quấn vải liệm tẩm hương, chôn sâu dưới cát mà không rữa. Vải liệm tự tung ra trói người, chỗ rách trên thân nó khép lại như cũ, chỉ lửa làm nó khựng."}, {"id": "enemy.han_son_quy", "ten": "Hàn Sơn Quỷ", "cg": 4, "he": ["bang"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["son_mach"], "mt": "Hồn cả đoàn người vượt núi chết cóng trong bão tuyết, dính lại thành một bóng trắng cao lênh khênh. Nó hú một tiếng, tuyết trên vách đổ xuống và hơi thở người nghe đóng băng trên môi."}, {"id": "enemy.huyen_quan_thi", "ten": "Huyền Quan Thi", "cg": 4, "he": ["tho", "kim"], "loai": ["thi"], "dk": null, "th": [], "hach": null, "dh": ["son_mach"], "mt": "Xác trong cỗ quan tài treo trên vách núi nghìn trượng, hút sương núi nghìn năm mà thành. Nó vác cả nắp quan bằng gỗ sam trên lưng, lao từ vách xuống như chim ưng."}, {"id": "enemy.tram_giang_quy", "ten": "Trầm Giang Quỷ", "cg": 4, "he": ["am"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["ho_nuoc"], "mt": "Quỷ dưới đáy khúc sông dữ, nuôi hồn bao người chết đuối làm tôi, tóc dài như rong cả chục trượng. Nó cuộn nước dựng thành vách, kéo cả bè người xuống một lượt."}, {"id": "enemy.ngu_to_tan_tran", "ten": "Ngũ Tổ Tàn Trận", "cg": 5, "he": ["kim", "loi"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.co_khoi_hach", "dh": ["di_tich"], "mt": "Trận nhãn còn sót của đại trận Ngũ Tổ dựng trên Trung Châu, nằm dưới đáy Vĩnh Triều, chỉ lộ ra đêm triều rút. Năm pho tượng đồng mang năm sắc áo tổ sư, cử động cùng một nhịp như một người."}, {"id": "enemy.thach_quai", "ten": "Thạch Quái", "cg": 0, "he": ["tho"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.thach_tuy_phan", "dh": ["son_mach", "hoang_mac"], "mt": "Tảng đá cỡ con trâu nằm giữa đường núi, có người ngồi lên nghỉ chân thì nó đứng dậy. Đấm vào chỉ đau tay."}, {"id": "enemy.thach_tuong_linh", "ten": "Thạch Tượng Linh", "cg": 2, "he": ["tho"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.linh_van_thach", "dh": ["di_tich"], "mt": "Tượng võ tướng canh cửa mộ, mắt khảm đá có vân. Chủ mộ đã thành tro, nó vẫn đứng gác, kẻ nào bước qua bậc thềm là nó quay đầu."}, {"id": "enemy.son_tinh_cu_nhan", "ten": "Sơn Tinh Cự Nhân", "cg": 3, "he": ["tho"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.son_tinh_hach", "dh": ["son_mach"], "mt": "Nửa quả núi đứng dậy đi được, đầu cao ngang ngọn thông. Nó ngủ thì là núi, người đi săn dựng lều trên vai nó mà không biết."}, {"id": "enemy.co_bi_linh", "ten": "Cổ Bi Linh", "cg": 2, "he": ["tho"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.linh_van_thach", "dh": ["di_tich"], "mt": "Tấm bia đá đầu mộ cổ, chữ khắc đã mòn mà đêm rằm vẫn tự sáng. Kẻ nào đọc to chữ trên bia thì chân dính chặt xuống đất."}, {"id": "enemy.tran_mon_thach_tuong", "ten": "Trấn Môn Thạch Tướng", "cg": 5, "he": ["tho", "kim"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.thach_tuong_tam", "dh": ["di_tich"], "mt": "Tượng thần tướng cao năm trượng trước cổng một tiên cung đã sập, giáp đá khắc kín trận văn. Cổng không còn, nó vẫn chặn đúng chỗ cổng."}, {"id": "enemy.ngoc_tuy_tinh", "ten": "Ngọc Tủy Tinh", "cg": 3, "he": ["tho", "kim"], "loai": ["thu"], "dk": 0.6, "th": [], "hach": "item.ngoc_tuy", "dh": ["son_mach", "di_tich"], "mt": "Hình đứa trẻ bằng ngọc trong, ngồi ôm gối trong khe núi. Không ai chọc thì nó chỉ ngắm nước chảy, đánh nó thì đòn dội lại."}, {"id": "enemy.sam_tinh", "ten": "Sâm Tinh", "cg": 1, "he": ["tho", "moc"], "loai": ["thu"], "dk": 0.7, "th": [], "hach": null, "dh": ["son_mach", "rung_ram"], "mt": "Củ sâm trăm năm mọc chân tay, chạy lon ton như đứa bé trần truồng. Thấy người là chui xuống đất, chỉ để lại cái lá."}, {"id": "enemy.tuyet_lien_tinh", "ten": "Tuyết Liên Tinh", "cg": 4, "he": ["bang", "thuy"], "loai": ["thu"], "dk": 0.8, "th": [], "hach": null, "dh": ["hoang_nguyen", "son_mach"], "mt": "Đóa tuyết liên vạn năm hóa thành thiếu nữ áo trắng, bước trên tuyết không để dấu. Nàng chạy đi thì để lại một làn hương lạnh."}, {"id": "enemy.chi_nhan", "ten": "Chỉ Nhân", "cg": 1, "he": ["moc"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.am_phu_chi", "dh": ["di_tich"], "mt": "Hình nhân giấy đốt dở trong nhà tang bỏ hoang, mặt vẽ son cười mãi. Xé đôi nó thì thành hai, chỉ có lửa mới làm nó im."}, {"id": "enemy.co_kinh_tinh", "ten": "Cổ Kính Tinh", "cg": 2, "he": ["kim", "thuy"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.co_kinh_phien", "dh": ["di_tich"], "mt": "Gương đồng treo trong phòng tiểu thư đã chết, mặt gương vẫn sáng như mới lau. Ai soi vào thấy cái mình sợ nhất đứng sau lưng."}, {"id": "enemy.dong_dinh_tinh", "ten": "Đồng Đỉnh Tinh", "cg": 2, "he": ["kim", "hoa"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.co_dong_tinh", "dh": ["di_tich", "son_mach"], "mt": "Đỉnh đồng ba chân của đan phòng cổ, trong lòng vẫn âm ỉ lửa trăm năm. Nó đi bằng ba chân, mỗi bước nện xuống một tiếng boong."}, {"id": "enemy.kiem_linh", "ten": "Kiếm Linh", "cg": 3, "he": ["kim"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.tan_kiem_y", "dh": ["di_tich", "son_mach"], "mt": "Thanh kiếm cắm trên mộ kiếm khách, chủ chết mà kiếm không chịu nằm. Nó tự rút khỏi đất, ra chiêu y hệt người cầm năm xưa."}, {"id": "enemy.co_chung_linh", "ten": "Cổ Chung Linh", "cg": 4, "he": ["kim"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.co_chung_dong", "dh": ["di_tich"], "mt": "Quả chuông đồng của ngôi chùa chìm dưới cát, nghe kinh nghìn năm mà sinh linh. Nó tự ngân, người nghe đứng chết lặng."}, {"id": "enemy.thuy_hau", "ten": "Thủy Hầu", "cg": 0, "he": ["thuy"], "loai": ["thu"], "dk": 0.3, "th": [], "hach": null, "dh": ["ho_nuoc"], "mt": "Con khỉ nước lông xanh rêu, ngồi rình ở bến vắng. Ai thò chân xuống nước là nó túm cổ chân kéo xuống."}, {"id": "enemy.kim_giap_trung", "ten": "Kim Giáp Trùng", "cg": 0, "he": ["kim"], "loai": ["trung"], "dk": 0.3, "th": [{"id": "enemy.phe_kim_trung", "lieu": {"item.trung_giap_phien": 3}}], "hach": null, "dh": ["son_mach", "di_tich", "rung_ram"], "mt": "Bọ cánh cứng to bằng đốt ngón tay, vỏ ánh đồng, sống trong khe quặng. Đàn bò qua thì đinh sắt trên cửa mỏ chỉ còn lỗ."}, {"id": "enemy.phe_kim_trung", "ten": "Phệ Kim Trùng", "cg": 1, "he": ["kim"], "loai": ["trung"], "dk": 0.4, "th": [{"id": "enemy.xuyen_giap_kim_trung", "lieu": {"item.kim_giap_xac": 3}}], "hach": null, "dh": ["son_mach", "di_tich", "yeu_vuc"], "mt": "Trùng vàng to bằng quả táo, ăn sắt như ăn lá. Bám được lên pháp khí là nó gặm tới khi linh quang tắt hẳn."}, {"id": "enemy.xuyen_giap_kim_trung", "ten": "Xuyên Giáp Kim Trùng", "cg": 2, "he": ["kim"], "loai": ["trung"], "dk": 0.5, "th": [{"id": "enemy.thiet_si_kim_trung", "lieu": {"item.phe_kim_nha": 3}}], "hach": null, "dh": ["son_mach", "di_tich", "yeu_vuc"], "mt": "Kim trùng dài bằng cẳng tay, đầu nhọn như dùi. Nó lao thẳng vào ngực, hộ thể mỏng thì thủng một lỗ tròn."}, {"id": "enemy.thiet_si_kim_trung", "ten": "Thiết Sí Kim Trùng", "cg": 3, "he": ["kim"], "loai": ["trung"], "dk": 0.55, "th": [{"id": "enemy.phe_kim_trung_vuong", "lieu": {"item.kim_trung_si": 3}}], "hach": null, "dh": ["son_mach", "yeu_vuc", "di_tich"], "mt": "Kim trùng mọc cánh sắt, bay tới đâu tiếng rít như mài dao tới đó. Cả đàn sà xuống, giáp trụ một đội quân thành sắt vụn."}, {"id": "enemy.phe_kim_trung_vuong", "ten": "Phệ Kim Trùng Vương", "cg": 4, "he": ["kim"], "loai": ["trung"], "dk": 0.75, "th": [], "hach": null, "dh": ["son_mach", "yeu_vuc", "di_tich"], "mt": "Trùng vương nằm giữa mạch quặng đã bị ăn rỗng, to bằng con bê, mai vàng sẫm. Nó rung cánh một hồi, đá quanh hang rỉ ra trùng con."}, {"id": "enemy.doc_ngo_cong", "ten": "Độc Ngô Công", "cg": 0, "he": ["moc"], "loai": ["trung"], "dk": 0.3, "th": [{"id": "enemy.ngu_doc_co", "lieu": {"item.chu_doc_nang": 1, "item.bich_hat_vi": 1}}], "hach": null, "dh": ["rung_ram", "ho_nuoc", "yeu_vuc"], "mt": "Rết xanh dài một gang, trăm chân gõ lách tách dưới lớp lá mục. Cắn một phát, cả bàn tay sưng tím."}, {"id": "enemy.hac_qua_chu", "ten": "Hắc Quả Chu", "cg": 1, "he": ["thuy"], "loai": ["trung"], "dk": 0.4, "th": [{"id": "enemy.ngu_doc_co", "lieu": {"item.thanh_doc_nang": 2, "item.bich_hat_vi": 1}}], "hach": null, "dh": ["ho_nuoc", "rung_ram", "yeu_vuc"], "mt": "Nhện đen bụng có đốm đỏ, giăng tơ sát mặt đầm. Con nào chạm lưới là tê cứng trước khi kịp giãy."}, {"id": "enemy.bich_hat", "ten": "Bích Hạt", "cg": 1, "he": ["moc"], "loai": ["trung"], "dk": 0.45, "th": [{"id": "enemy.ngu_doc_co", "lieu": {"item.thanh_doc_nang": 2, "item.chu_doc_nang": 1}}], "hach": null, "dh": ["rung_ram", "yeu_vuc", "di_tich"], "mt": "Bọ cạp xanh biếc nằm dưới đá ẩm, đuôi cong lên như móc câu. Ngòi chích vào, chỗ đó lạnh trước rồi mới đau."}, {"id": "enemy.ngu_doc_co", "ten": "Ngũ Độc Cổ", "cg": 2, "he": ["moc", "thuy"], "loai": ["trung"], "dk": 0.5, "th": [{"id": "enemy.that_thai_doc_co", "lieu": {"item.ngu_doc_dich": 3}}], "hach": null, "dh": ["ho_nuoc", "rung_ram", "yeu_vuc"], "mt": "Con sống sót trong hũ năm độc, mình rết, càng bọ cạp, lưng có vằn nhện. Hũ cổ sư bỏ hoang, nó tự bò ra đầm kiếm ăn."}, {"id": "enemy.that_thai_doc_co", "ten": "Thất Thải Độc Cổ", "cg": 3, "he": ["moc", "thuy"], "loai": ["trung"], "dk": 0.6, "th": [{"id": "enemy.ngu_doc_co_vuong", "lieu": {"item.that_thai_doc_nang": 3}}], "hach": null, "dh": ["ho_nuoc", "yeu_vuc", "rung_ram"], "mt": "Độc cổ vỏ bảy màu, sáng rực giữa đầm như ai đánh rơi ngọc. Sương quanh chỗ nó nằm cũng ngả màu."}, {"id": "enemy.ngu_doc_co_vuong", "ten": "Ngũ Độc Cổ Vương", "cg": 5, "he": ["moc", "thuy"], "loai": ["trung"], "dk": 0.9, "th": [], "hach": null, "dh": ["ho_nuoc", "yeu_vuc"], "mt": "Cổ vương ăn hết mọi cổ trong một vùng đầm, thân trong như lưu ly, thấy rõ năm túi độc đập theo nhịp. Cá trong đầm nổi bụng cả mùa."}, {"id": "enemy.huyet_co", "ten": "Huyết Cổ", "cg": 1, "he": ["hoa"], "loai": ["trung"], "dk": 0.45, "th": [{"id": "enemy.kim_tam_co", "lieu": {"item.co_huyet_tinh": 3}}], "hach": null, "dh": ["ho_nuoc", "yeu_vuc", "rung_ram"], "mt": "Sâu đỏ nhỏ như sợi chỉ, cổ sư chết thì nó bỏ đi tìm vật chủ mới. Chui qua da không đau, chỉ thấy người lạnh dần."}, {"id": "enemy.thien_tam_co_mau", "ten": "Thiên Tằm Cổ Mẫu", "cg": 4, "he": ["kim", "moc"], "loai": ["trung"], "dk": 0.75, "th": [], "hach": null, "dh": ["ho_nuoc", "yeu_vuc"], "mt": "Tằm mẹ to như cối xay, nằm giữa đầm phủ tơ trắng, bụng trong suốt đầy trứng. Kim Tằm Cổ trong vùng đều từ bụng nó mà ra."}, {"id": "enemy.moc_nhan_khoi", "ten": "Mộc Nhân Khôi", "cg": 1, "he": ["moc"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.moc_khoi_hach", "dh": ["di_tich"], "mt": "Người gỗ luyện tay của thợ khôi lỗi nhập môn, mặt chưa khắc mắt. Đứng giữ cửa động phủ của chủ, ai bước qua bậc là nó vung tay."}, {"id": "enemy.moc_khoi_loi", "ten": "Mộc Khôi Lỗi", "cg": 2, "he": ["moc"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.moc_khoi_hach", "dh": ["di_tich"], "mt": "Người gỗ thiết mộc cao hơn người, trong cánh tay giấu ống tên. Chém vào chỉ tóe dăm; chủ còn sống thì nó theo sau chủ, chủ chết thì đứng chết ở chỗ cuối cùng được sai."}, {"id": "enemy.dong_giap_khoi_loi", "ten": "Đồng Giáp Khôi Lỗi", "cg": 3, "he": ["kim"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.dong_khoi_hach", "dh": ["di_tich", "son_mach"], "mt": "Người đồng canh cấm chế của một tông môn đã diệt, rêu mọc kín vai. Nó chỉ nhận lệnh bài của chủ cũ; ai không có, đấm vào nó là đau tay mình trước."}, {"id": "enemy.thiet_thi_khoi", "ten": "Thiết Thi Khôi", "cg": 4, "he": ["tho"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.thi_khoi_hach", "dh": ["di_tich", "yeu_vuc"], "mt": "Xác tu sĩ Kết Đan bị ma tông đóng chín cây đinh sắt vào khớp, mặt còn nguyên vẻ kinh hãi lúc chết. Theo hầu ma tu, hoặc gác cửa ma tông bỏ hoang; cắn được ai là hút máu người đó."}, {"id": "enemy.co_chien_khoi_binh", "ten": "Cổ Chiến Khôi Binh", "cg": 4, "he": ["kim"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.co_khoi_tan_giap", "dh": ["di_tich", "hoang_nguyen"], "mt": "Lính khôi lỗi của liên quân Đoạn Thiên, giáp khắc số hiệu đội. Ba nghìn năm vẫn đi tuần quanh một ải đổ, nghe tiếng người là xếp hàng nghênh địch."}, {"id": "enemy.co_chien_khoi_loi", "ten": "Cổ Chiến Khôi Lỗi", "cg": 5, "he": ["kim", "loi"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.co_khoi_hach", "dh": ["di_tich", "hoang_nguyen"], "mt": "Khôi lỗi thống lĩnh cao ba trượng, đúc để đánh trên Trung Châu ngày Đoạn Thiên. Lõi giữa ngực vẫn sáng; nó đứng giữ ải cổ chờ hiệu lệnh rút quân, và coi mọi kẻ tới gần là quân địch."}, {"id": "enemy.moc_hau_khoi", "ten": "Mộc Hầu Khôi", "cg": 1, "he": ["moc"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.moc_khoi_hach", "dh": ["di_tich"], "mt": "Con khỉ gỗ cỡ đứa trẻ, đuôi là một sợi xích đồng. Nó leo xà nhà nhanh hơn người chạy, trong miệng ngậm sẵn ba mũi tên nhỏ."}, {"id": "enemy.moc_lang_khoi", "ten": "Mộc Lang Khôi", "cg": 2, "he": ["moc"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.moc_khoi_hach", "dh": ["di_tich"], "mt": "Sói gỗ thiết mộc, răng là đinh sắt đóng ngược. Chạy không có tiếng chân, chỉ nghe bánh răng trong bụng kêu tích tắc."}, {"id": "enemy.dong_hac_khoi", "ten": "Đồng Hạc Khôi", "cg": 3, "he": ["kim"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.dong_khoi_hach", "dh": ["di_tich", "son_mach"], "mt": "Con hạc đồng sải cánh hơn trượng, lông vũ là từng lưỡi dao mỏng. Đứng một chân trên xà như tượng, có người bước vào mới vỗ cánh."}, {"id": "enemy.thanh_dong_cu_khoi", "ten": "Thanh Đồng Cự Khôi", "cg": 4, "he": ["kim", "tho"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.dong_khoi_hach", "dh": ["di_tich", "son_mach"], "mt": "Người đồng cao hai trượng, lưng gánh cả một cái cối xay đá. Mỗi bước đi nền gạch nứt, trong ngực có ngọn lửa lò đúc cháy mãi không tắt."}, {"id": "enemy.co_chien_khoi_tuong", "ten": "Cổ Chiến Khôi Tướng", "cg": 5, "he": ["kim"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.co_khoi_tan_giap", "dh": ["di_tich", "hoang_nguyen"], "mt": "Khôi lỗi đội trưởng thời Đoạn Thiên, mũ trụ cắm lông đỏ đã bạc. Nó vẫn đếm quân dưới trướng mỗi sáng, thiếu một con là đi tìm."}, {"id": "enemy.tho_moc_khoi", "ten": "Thô Mộc Khôi", "cg": 0, "he": ["moc"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.moc_khoi_hach", "dh": ["di_tich", "rung_ram"], "mt": "Khúc gỗ đẽo vội thành người, tay chân buộc dây gai, ngực dán một lá phù đã bạc màu. Đi lệch một bên, mỗi bước kêu cót két."}, {"id": "enemy.thanh_truc_khoi", "ten": "Thanh Trúc Khôi", "cg": 1, "he": ["moc"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.moc_khoi_hach", "dh": ["rung_ram", "di_tich"], "mt": "Người trúc xanh gầy như que, đốt nào cũng nhét một mũi tên tre. Đứng lẫn giữa rừng trúc, gió thổi mới nghe nó lách cách."}, {"id": "enemy.tram_thi_khoi", "ten": "Trầm Thi Khôi", "cg": 2, "he": ["am"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": null, "dh": ["ho_nuoc", "di_tich"], "mt": "Xác tu sĩ Trúc Cơ bị ma tu buộc đá dìm đáy đầm cho khỏi rữa, khớp gối đóng chốt sắt. Thuyền ai đi ngang, nó trồi lên kéo theo một vệt rong."}, {"id": "enemy.dong_sa_khoi", "ten": "Đồng Sa Khôi", "cg": 3, "he": ["kim", "tho"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.dong_khoi_hach", "dh": ["hoang_mac", "di_tich"], "mt": "Người đồng canh trạm dịch của một tông môn đã chôn vùi dưới cát, chỉ lộ cái đầu mũ trụ. Có tiếng lạc đà đi qua là nó rũ cát đứng dậy."}, {"id": "enemy.co_khoi_xa_thu", "ten": "Cổ Khôi Xạ Thủ", "cg": 4, "he": ["kim"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.co_khoi_tan_giap", "dh": ["hoang_nguyen", "son_mach"], "mt": "Khôi lỗi cung thủ thời Đoạn Thiên, cánh tay trái đúc liền một cây nỏ đồng. Nó nằm phục trên sườn núi, ống tên sau lưng tự nạp lại sau mỗi phát."}, {"id": "enemy.thanh_vu_au_hac", "ten": "Thanh Vũ Ấu Hạc", "cg": 1, "he": ["phong", "moc"], "loai": ["thu"], "dk": 0.4, "th": [{"id": "enemy.thanh_vu_hac", "lieu": {"item.hac_vu": 3, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Hạc non lông tơ xám xanh, chân dài lêu khêu chưa đứng vững. Gió lùa qua cửa là nó dang hai cánh cụt ra hứng."}, {"id": "enemy.thanh_van_au_quy", "ten": "Thanh Văn Ấu Quy", "cg": 1, "he": ["thuy", "tho"], "loai": ["thu"], "dk": 0.4, "th": [{"id": "enemy.thanh_van_quy", "lieu": {"item.quy_ban": 3, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["ho_nuoc", "hai_dao"], "mt": "Rùa con bằng bàn tay, mai xanh rêu mới nứt vài ô vuông. Gõ nhẹ vào mai là nó rụt cả đầu lẫn chân, nửa ngày không ra."}, {"id": "enemy.cam_ly_au_ngu", "ten": "Cẩm Lý Ấu Ngư", "cg": 1, "he": ["thuy"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.cam_ly", "lieu": {"item.giao_han_can": 2, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["ho_nuoc"], "mt": "Cá chép con dài bằng ngón tay, vảy mới ửng hai ba màu. Thả vào chậu, nó cứ nhảy lên mép chậu như thử vượt thác."}, {"id": "enemy.tam_bao_au_dieu", "ten": "Tầm Bảo Ấu Điêu", "cg": 1, "he": ["kim"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.tam_bao_dieu", "lieu": {"item.toan_dia_trao": 2, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["di_tich", "son_mach"], "mt": "Chồn con lông vàng, mũi đỏ chót không lúc nào ngừng hít. Để nó trên bàn, nó bới thẳng vào túi tiền của ngươi."}, {"id": "enemy.thanh_nguu_au_tu", "ten": "Thanh Ngưu Ấu Tử", "cg": 1, "he": ["tho"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.thanh_nguu_doc", "lieu": {"item.te_nguu_giac": 2, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["son_mach", "hoang_nguyen"], "mt": "Nghé con xanh màu đá, trán mới gồ hai cục u thay sừng. Nó húc cột nhà cả ngày, cột chưa sao mà nó cũng không đau."}, {"id": "enemy.xich_diem_au_cau", "ten": "Xích Diễm Ấu Câu", "cg": 1, "he": ["hoa"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.xich_diem_cau", "lieu": {"item.hoa_tinh_chau": 2, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["hoang_nguyen", "hoang_mac"], "mt": "Ngựa non vảy đỏ, bờm mới mọc đã bốc khói. Ai đưa tay vuốt lưng là nó quay lại đớp, chỉ chịu cho ăn từ tay ngươi."}, {"id": "enemy.tu_dien_au_hau", "ten": "Tử Điện Ấu Hầu", "cg": 1, "he": ["loi"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.tu_dien_hau", "lieu": {"item.loi_linh_chau": 1, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["son_mach", "rung_ram"], "mt": "Khỉ con lông tím, chạm vào là lông dựng tách tách. Nó giấu đồ của ngươi khắp nơi rồi ngồi trên xà nhà cười."}, {"id": "enemy.thanh_dieu_au_so", "ten": "Thanh Điểu Ấu Sồ", "cg": 1, "he": ["phong"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.thanh_dieu", "lieu": {"item.hac_vu": 2, "item.yeu_dan_3": 1}}], "hach": null, "dh": ["son_mach", "rung_ram"], "mt": "Chim non xanh biếc, ba chân còn mềm như sợi bún. Ngươi đi đâu nó cũng ríu rít đòi bám theo, như đã biết việc đưa tin."}, {"id": "enemy.thuc_thiet_au_thu", "ten": "Thực Thiết Ấu Thú", "cg": 1, "he": ["kim", "tho"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.thuc_thiet_thu", "lieu": {"item.thuc_thiet_nha": 2, "item.yeu_dan_3": 1}}], "hach": null, "dh": ["son_mach", "rung_ram"], "mt": "Gấu con đen trắng tròn như cái gối, ngủ suốt ngày. Thức dậy là gặm, chân bàn sắt ở nhà đã mòn mất một khúc."}, {"id": "enemy.boi_son_au_quy", "ten": "Bối Sơn Ấu Quy", "cg": 1, "he": ["tho", "thuy"], "loai": ["thu"], "dk": 0.4, "th": [{"id": "enemy.boi_son_quy", "lieu": {"item.quy_giap": 2, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["ho_nuoc", "hai_dao"], "mt": "Rùa con to bằng cái nia, mai đã bám một lớp rêu đá mỏng. Nó bò chậm như trôi, mà đè lên chân ai thì người ấy không rút ra nổi."}, {"id": "enemy.bach_trach_au_thu", "ten": "Bạch Trạch Ấu Thú", "cg": 1, "he": ["moc", "phong"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.bach_trach", "lieu": {"item.thanh_dieu_vu": 2, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["yeu_vuc", "son_mach"], "mt": "Thú non lông trắng, đầu dê mới nhú hai mầm sừng. Ngươi chưa mở miệng, nó đã nghiêng đầu nhìn như biết ngươi định hỏi gì."}, {"id": "enemy.liet_khong_au_ung", "ten": "Liệt Không Ấu Ưng", "cg": 1, "he": ["kim", "phong"], "loai": ["thu"], "dk": 0.4, "th": [{"id": "enemy.liet_khong_ung", "lieu": {"item.ung_nhan": 3, "item.yeu_dan_5": 1}}], "hach": null, "dh": ["son_mach", "hoang_nguyen"], "mt": "Ưng non lông tơ xám, móng đã cứng như đinh sắt. Mới tập bay, nó đã lao xuống mổ chết con chuột trong bếp."}, {"id": "enemy.phan_son_au_ho", "ten": "Phần Sơn Ấu Hổ", "cg": 1, "he": ["hoa", "tho"], "loai": ["thu"], "dk": 0.4, "th": [{"id": "enemy.phan_son_ho", "lieu": {"item.ho_cot": 3, "item.yeu_dan_5": 1}}], "hach": null, "dh": ["son_mach", "rung_ram", "hoang_mac"], "mt": "Hổ con lông đỏ vằn đen, ngáp một cái là phả ra hơi nóng như miệng lò. Chỗ nó nằm ngủ, rơm xém thành một vòng tròn."}, {"id": "enemy.bich_lan_au_mang", "ten": "Bích Lân Ấu Mãng", "cg": 1, "he": ["moc"], "loai": ["thu"], "dk": 0.4, "th": [{"id": "enemy.bich_lan_mang", "lieu": {"item.xa_dam": 3, "item.yeu_dan_5": 1}}], "hach": null, "dh": ["rung_ram", "yeu_vuc", "ho_nuoc"], "mt": "Trăn con xanh như dây leo non, dài chừng một sải tay. Nó quấn lên cột nhà, mấy hôm sau chân cột mọc rễ đỏ."}, {"id": "enemy.nguyet_anh_lang", "ten": "Nguyệt Ảnh Lang", "cg": 3, "he": ["phong"], "loai": ["linh_thu"], "dk": 0.6, "th": [{"id": "enemy.ngan_nguyet_lang", "lieu": {"item.thien_lang_nhan": 1, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["son_mach", "hoang_nguyen", "hoang_mac"], "mt": "Sói xám chỉ hiện ra khi trăng lên, bóng nó đổ dài gấp ba thân. Đuổi theo bóng thì con thật đã ở sau lưng."}, {"id": "enemy.thanh_lan_giao", "ten": "Thanh Lân Giao", "cg": 3, "he": ["thuy", "bang"], "loai": ["linh_thu"], "dk": 0.65, "th": [], "hach": null, "dh": ["ho_nuoc", "son_mach"], "mt": "Vảy xanh như ngọc bích, nằm dưới thác mà nước rơi trúng lưng thì đóng băng. Trong hang nó còn cây thương của kẻ đến trước."}, {"id": "enemy.ngan_nguyet_lang", "ten": "Ngân Nguyệt Lang", "cg": 4, "he": ["phong", "hoa"], "loai": ["linh_thu"], "dk": 0.8, "th": [], "hach": null, "dh": ["son_mach", "yeu_vuc", "hoang_nguyen"], "mt": "Lông bạc ánh lên như vảy trăng, bầy sói đi sau nó không con nào dám ngẩng đầu. Nó đã thôi hú từ lâu."}, {"id": "enemy.bach_ngach_ho", "ten": "Bạch Ngạch Hổ", "cg": 4, "he": ["kim"], "loai": ["linh_thu"], "dk": 0.8, "th": [], "hach": null, "dh": ["rung_ram", "son_mach", "yeu_vuc"], "mt": "Trán trắng có vằn như chữ Vương. Cả cánh rừng nó đi qua không còn tiếng côn trùng."}, {"id": "enemy.truy_phong_ung", "ten": "Truy Phong Ưng", "cg": 3, "he": ["phong", "kim"], "loai": ["thu"], "dk": 0.6, "th": [], "hach": null, "dh": ["son_mach"], "mt": "Ưng xám bay trên mây, chân buộc ống tre nhỏ của Tuyết Bằng. Nó bám theo ngươi ba ngày rồi mới sà xuống."}, {"id": "enemy.boi_son_quy", "ten": "Bối Sơn Quy", "cg": 4, "he": ["tho", "thuy"], "loai": ["thu"], "dk": 0.8, "th": [{"id": "enemy.phu_nhac_quy", "lieu": {"item.boi_son_quy_giap": 1, "item.yeu_dan_5": 1}}], "hach": null, "dh": ["ho_nuoc", "hai_dao"], "mt": "Mai rộng như sân đình, rêu đá phủ kín, chim biển làm tổ trên lưng. Người Bắc Minh gặp nó thì quỳ lạy, tin nó là con cháu Huyền Vũ."}, {"id": "enemy.thon_kim_thu_ton", "ten": "Thôn Kim Thử Tôn", "cg": 4, "he": ["kim", "tho"], "loai": ["linh_thu"], "dk": 0.85, "th": [], "hach": null, "dh": ["hoang_mac", "di_tich"], "mt": "Chuột già to như con bê, hai túi má căng phồng vàng bạc moi từ mộ cổ. Nó rít một tiếng, cát quanh chân ngươi sủi lên toàn đầu chuột."}, {"id": "enemy.cuu_cao_tien_hac", "ten": "Cửu Cao Tiên Hạc", "cg": 4, "he": ["phong", "hoa"], "loai": ["linh_thu"], "dk": 0.85, "th": [], "hach": null, "dh": ["son_mach", "rung_ram"], "mt": "Tiếng kêu của nó vang tới chín tầng mây, đạo quán Đại Ung nghe thấy thì mở cửa đón điềm lành. Kẻ giết nó, trời đất đều nhớ mặt."}, {"id": "enemy.hac_phong_bao", "ten": "Hắc Phong Báo", "cg": 1, "he": ["phong"], "loai": ["thu"], "dk": 0.5, "th": [{"id": "enemy.van_anh_bao", "he": "phong", "lieu": {"item.huyet_tinh_yeu_thu": 1}}, {"id": "enemy.truy_phong_ung", "he": "kim", "lieu": {"item.huyet_tinh_yeu_thu": 1}}], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Báo đen nằm trên cành cao, chỉ thấy hai đốm mắt vàng. Nó vồ trước khi ngươi kịp nghe tiếng lá."}, {"id": "enemy.van_anh_bao", "ten": "Vân Ảnh Báo", "cg": 3, "he": ["phong"], "loai": ["thu"], "dk": 0.65, "th": [], "hach": null, "dh": ["rung_ram", "son_mach", "yeu_vuc"], "mt": "Lông xám đốm mây, đứng trong sương núi là tan mất. Nhát vồ tới từ phía ngươi vừa thấy trống không."}, {"id": "enemy.bach_ngac", "ten": "Bạch Ngạc", "cg": 1, "he": ["thuy"], "loai": ["thu"], "dk": 0.4, "th": [], "hach": null, "dh": ["ho_nuoc"], "mt": "Cá sấu trắng nằm im như khúc gỗ mục ven bờ. Nó ngoạm chân ai thì lôi thẳng xuống nước."}, {"id": "enemy.sa_tich", "ten": "Sa Tích", "cg": 0, "he": ["tho"], "loai": ["thu"], "dk": 0.3, "th": [], "hach": null, "dh": ["hoang_mac"], "mt": "Thằn lằn màu cát, nằm im thì không ai thấy. Nó lặn xuống cát rồi trồi lên ngay sau gót chân."}, {"id": "enemy.hoa_vu_ke", "ten": "Hỏa Vũ Kê", "cg": 1, "he": ["hoa"], "loai": ["thu"], "dk": 0.3, "th": [], "hach": null, "dh": ["hoang_nguyen", "hoang_mac"], "mt": "Gà rừng lông đỏ như than hồng, gáy một tiếng là cỏ khô bén lửa. Mùa khô, đồng cháy nhiều nhất chỗ chúng ở."}, {"id": "enemy.thuc_kim_thu", "ten": "Thực Kim Thử", "cg": 2, "he": ["kim", "tho"], "loai": ["linh_thu"], "dk": 0.5, "th": [{"id": "enemy.tang_kim_thu", "lieu": {"item.toan_dia_trao": 3, "item.yeu_dan_3": 1}}], "hach": null, "dh": ["hoang_mac", "di_tich"], "mt": "Con chuột to bằng chó săn, lông vàng xỉn như đồng ám khói. Nó gặm cửa mộ bằng đồng như gặm vỏ dưa, răng cửa sáng loáng."}, {"id": "enemy.bang_so", "ten": "Bằng Sồ", "cg": 0, "he": ["phong"], "loai": ["thu"], "dk": 0.5, "th": [], "hach": null, "dh": ["son_mach", "hoang_nguyen", "hai_dao"], "mt": "Chim bằng non chưa đủ lông cánh mà đã to bằng con ngỗng. Rơi khỏi tổ, nó mổ mọi thứ biết cử động."}, {"id": "enemy.da_vien", "ten": "Dã Viên", "cg": 0, "he": ["tho"], "loai": ["thu"], "dk": 0.3, "th": [], "hach": null, "dh": ["son_mach", "rung_ram"], "mt": "Vượn hoang chưa khai linh trí, mới biết ném đá và giật đồ. Giật được túi của ai, nó trèo lên cây lục từng món."}, {"id": "enemy.phu_nhac_quy", "ten": "Phụ Nhạc Quy", "cg": 5, "he": ["tho", "thuy"], "loai": ["thu"], "dk": 0.9, "th": [], "hach": null, "dh": ["ho_nuoc", "hai_dao"], "mt": "Mai nó nổi lên giữa biển thành một hòn đảo, ngư dân dựng miếu trên đó ba đời mới biết. Nó trở mình, cả miếu chìm theo."}, {"id": "enemy.liet_khong_ung", "ten": "Liệt Không Ưng", "cg": 5, "he": ["kim", "phong"], "loai": ["thu"], "dk": 0.75, "th": [], "hach": null, "dh": ["son_mach", "hoang_nguyen"], "mt": "Lông cánh ánh như thép mới tôi, sà xuống thì mây bị xé làm đôi. Tuyết Bằng không sai được nó, chỉ xin nó đừng bay qua núi tuyết."}, {"id": "enemy.phan_son_ho", "ten": "Phần Sơn Hổ", "cg": 5, "he": ["hoa", "tho"], "loai": ["thu"], "dk": 0.8, "th": [], "hach": null, "dh": ["son_mach", "rung_ram", "hoang_mac"], "mt": "Hổ vằn đỏ, đi qua sườn núi nào thì cỏ cháy thành một vệt đen. Người Liệt Hổ Hoang đốt rừng lúc nó ngủ, ba ngày sau làng ấy thành tro."}, {"id": "enemy.bich_lan_mang", "ten": "Bích Lân Mãng", "cg": 5, "he": ["moc"], "loai": ["thu"], "dk": 0.88, "th": [], "hach": null, "dh": ["rung_ram", "yeu_vuc", "ho_nuoc"], "mt": "Vảy xanh như rêu, nằm im thì người ta tưởng là cây cổ thụ đổ. Dây leo quanh nó đều đỏ, rễ hút máu con mồi nó bỏ lại."}, {"id": "enemy.ngan_giac_loc", "ten": "Ngân Giác Lộc", "cg": 1, "he": ["moc"], "loai": ["linh_thu"], "dk": 0.4, "th": [], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Hươu sừng bạc, đi qua đâu cỏ dưới chân xanh thêm một màu. Theo nó một quãng thường gặp ổ linh dược."}, {"id": "enemy.ngoc_tho", "ten": "Ngọc Thố", "cg": 1, "he": ["bang"], "loai": ["linh_thu"], "dk": 0.3, "th": [], "hach": null, "dh": ["hoang_nguyen", "son_mach"], "mt": "Thỏ trắng như ngọc, chỉ ra khỏi hang vào đêm trăng tròn. Lông nó sáng mờ, đứng giữa đồng như ngọn đèn nhỏ."}, {"id": "enemy.cam_ly", "ten": "Cẩm Lý", "cg": 2, "he": ["thuy"], "loai": ["linh_thu"], "dk": 0.5, "th": [], "hach": null, "dh": ["ho_nuoc"], "mt": "Cá chép vảy năm màu, ngày nào cũng nhảy thử lên thác. Người ta nói nuôi đủ trăm năm nó hóa giao long."}, {"id": "enemy.xich_diem_cau", "ten": "Xích Diễm Câu", "cg": 2, "he": ["hoa"], "loai": ["linh_thu"], "dk": 0.5, "th": [], "hach": null, "dh": ["hoang_nguyen", "hoang_mac"], "mt": "Ngựa vảy đỏ, bờm là một dải lửa. Cả đời không chịu ai cưỡi, chỉ cúi đầu trước người thuần được nó."}, {"id": "enemy.tu_dien_hau", "ten": "Tử Điện Hầu", "cg": 2, "he": ["loi"], "loai": ["linh_thu"], "dk": 0.5, "th": [], "hach": null, "dh": ["son_mach", "rung_ram"], "mt": "Khỉ lông tím, trời giông là leo lên ngọn cây cao nhất giơ tay đón sét. Tính nghịch, thích lấy đồ người khác treo lên cây."}, {"id": "enemy.thanh_dieu", "ten": "Thanh Điểu", "cg": 3, "he": ["phong"], "loai": ["linh_thu"], "dk": 0.7, "th": [], "hach": null, "dh": ["son_mach", "rung_ram"], "mt": "Chim xanh ba chân đưa thư cho tiên nhân, chân còn buộc ống tre nhỏ. Nó đậu xuống chỗ nào, tin lớn sắp tới chỗ đó."}, {"id": "enemy.bach_trach", "ten": "Bạch Trạch", "cg": 4, "he": ["moc", "phong"], "loai": ["linh_thu"], "dk": 0.95, "th": [], "hach": null, "dh": ["yeu_vuc", "son_mach"], "mt": "Thú trắng đầu dê mình sư tử, biết tên của vạn vật. Nó trả lời một câu hỏi rồi đi, không ai đuổi kịp."}, {"id": "enemy.tam_bao_dieu", "ten": "Tầm Bảo Điêu", "cg": 2, "he": ["kim"], "loai": ["linh_thu"], "dk": 0.5, "th": [], "hach": null, "dh": ["di_tich", "son_mach"], "mt": "Chồn vàng mũi đỏ, chốc chốc dừng lại hít đất. Nó đào chỗ nào, dưới đó có kim thạch hoặc đồ cũ của người xưa."}, {"id": "enemy.thuc_thiet_thu", "ten": "Thực Thiết Thú", "cg": 3, "he": ["kim", "tho"], "loai": ["linh_thu"], "dk": 0.6, "th": [], "hach": null, "dh": ["son_mach", "rung_ram"], "mt": "Gấu lông đen trắng ngồi gặm thanh kiếm gãy như gặm măng. Hiền lành, nhưng đao chém vào lưng nó chỉ mẻ đao."}, {"id": "enemy.bach_linh_ho", "ten": "Bạch Linh Hồ", "cg": 1, "he": ["hoa"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.nhi_vi_linh_ho", "lieu": {"item.ho_bi": 3, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Hồ ly nhỏ lông trắng muốt, chóp đuôi phớt hồng như vừa nhúng son, mắt màu hổ phách. Đêm tối hai mắt nó sáng như hai đốm lửa nhỏ."}, {"id": "enemy.nhi_vi_linh_ho", "ten": "Nhị Vĩ Linh Hồ", "cg": 2, "he": ["hoa"], "loai": ["linh_thu"], "dk": 0.55, "th": [{"id": "enemy.tam_vi_linh_ho", "lieu": {"item.ho_vi": 2, "item.yeu_dan_3": 1}}], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Hồ trắng mọc thêm đuôi thứ hai, hai chóp đuôi hồng như than ủ. Nó đã biết nhìn người mà đổi dáng, lúc ngoan như mèo, lúc lạnh như khách lạ."}, {"id": "enemy.tam_vi_linh_ho", "ten": "Tam Vĩ Linh Hồ", "cg": 3, "he": ["hoa", "moc"], "loai": ["linh_thu"], "dk": 0.7, "th": [{"id": "enemy.cuu_vi_thien_ho", "lieu": {"item.mi_ho_chau": 2, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["rung_ram", "son_mach", "yeu_vuc"], "mt": "Hồ trắng ba đuôi xòe như ba cành lau, chóp mỗi đuôi cháy một ngọn lửa xanh nhạt. Nó ngồi thẳng như người, nghiêng đầu nghe ngươi nói hết rồi mới quyết."}, {"id": "enemy.kim_mao_thu", "ten": "Kim Mao Thử", "cg": 0, "he": ["kim"], "loai": ["linh_thu"], "dk": 0.3, "th": [{"id": "enemy.giao_kim_thu", "lieu": {"item.thu_tu": 3, "item.yeu_dan_1": 1}}], "hach": null, "dh": ["di_tich", "son_mach", "hoang_mac"], "mt": "Chuột nhắt lông vàng óng như rắc kim nhũ, đuôi dài gấp đôi thân. Hai má lúc nào cũng phồng, nhả ra toàn mạt đồng, hạt bạc."}, {"id": "enemy.giao_kim_thu", "ten": "Giảo Kim Thử", "cg": 1, "he": ["kim"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.thuc_kim_thu", "lieu": {"item.toan_dia_trao": 2, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["di_tich", "hoang_mac"], "mt": "Chuột lông vàng to bằng con mèo, răng cửa ánh như đồng thau. Nó gặm ổ khóa sắt rồi nhả ra từng mảnh vụn."}, {"id": "enemy.tang_kim_thu", "ten": "Tàng Kim Thử", "cg": 3, "he": ["kim", "tho"], "loai": ["linh_thu"], "dk": 0.7, "th": [{"id": "enemy.thon_kim_thu_ton", "lieu": {"item.thuc_kim_thu_xi": 1, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["hoang_mac", "di_tich"], "mt": "Chuột lông vàng xỉn to như con sói, hai túi má trễ xuống vì nhét đầy vàng vụn. Nó đào hang xuyên ba ngôi mộ cổ mà vách không sụt."}, {"id": "enemy.ngan_nguyet_au_lang", "ten": "Ngân Nguyệt Ấu Lang", "cg": 1, "he": ["phong"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.ban_nguyet_lang", "lieu": {"item.lang_nha": 3, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["hoang_nguyen", "son_mach"], "mt": "Sói con lông bạc, giữa trán có vệt trắng cong như trăng non. Chân còn vụng, nhưng đêm trăng tròn nó tự ngửa cổ tập hú."}, {"id": "enemy.ban_nguyet_lang", "ten": "Bán Nguyệt Lang", "cg": 2, "he": ["phong"], "loai": ["linh_thu"], "dk": 0.5, "th": [{"id": "enemy.nguyet_anh_lang", "lieu": {"item.nguyet_lang_mao": 2, "item.yeu_dan_3": 1}}], "hach": null, "dh": ["hoang_nguyen", "son_mach"], "mt": "Sói lông bạc lớn bằng con bê, vệt trăng trên trán đã dày thành nửa vầng. Đêm nó hú, sói hoang quanh mấy quả núi hú theo."}, {"id": "enemy.bach_van_au_ho", "ten": "Bạch Văn Ấu Hổ", "cg": 0, "he": ["kim"], "loai": ["linh_thu"], "dk": 0.3, "th": [{"id": "enemy.bach_van_thieu_ho", "lieu": {"item.ho_cop_nha": 2, "item.yeu_dan_1": 1}}], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Hổ con lông trắng vằn đen, to bằng con mèo nhà, móng chưa cứng đã thích vồ. Gầm lên vẫn ra tiếng meo, nhưng chó cả làng nghe thấy đều cụp đuôi."}, {"id": "enemy.bach_van_thieu_ho", "ten": "Bạch Văn Thiếu Hổ", "cg": 1, "he": ["kim"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.bach_van_ho", "lieu": {"item.ho_cop_nha": 3, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Hổ trắng choai bằng con chó săn, vằn đen đã rõ nét. Nó rình mồi cả buổi, vồ hụt thì làm như chưa từng vồ."}, {"id": "enemy.bach_van_ho", "ten": "Bạch Văn Hổ", "cg": 2, "he": ["kim"], "loai": ["linh_thu"], "dk": 0.5, "th": [{"id": "enemy.bach_van_manh_ho", "lieu": {"item.ho_cot": 2, "item.yeu_dan_3": 1}}], "hach": null, "dh": ["rung_ram", "son_mach", "yeu_vuc"], "mt": "Hổ trắng lớn bằng con nghé, vằn đen chạy dọc thân như nét mực tàu. Nó đi không một tiếng động, chỉ thấy cỏ hai bên rạp xuống."}, {"id": "enemy.bach_van_manh_ho", "ten": "Bạch Văn Mãnh Hổ", "cg": 3, "he": ["kim"], "loai": ["linh_thu"], "dk": 0.65, "th": [{"id": "enemy.bach_ngach_ho", "lieu": {"item.ho_vuong_tu": 1, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["rung_ram", "son_mach", "yeu_vuc"], "mt": "Hổ trắng lớn như con trâu, vằn đen giữa trán đang tụ lại thành nét ngang. Nó gầm một tiếng, chim cả cánh rừng bay hết."}, {"id": "enemy.thanh_ngoc_linh_xa", "ten": "Thanh Ngọc Linh Xà", "cg": 1, "he": ["thuy"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.thanh_lan_xa", "lieu": {"item.xa_thue": 3, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["ho_nuoc", "rung_ram"], "mt": "Rắn nhỏ xanh trong như ngọc bích, dài chừng một sải tay, trên đầu nhô hai u nhỏ như sừng sắp mọc. Nó hay nằm trên đá ven suối nghe tiếng nước."}, {"id": "enemy.thanh_lan_xa", "ten": "Thanh Lân Xà", "cg": 2, "he": ["thuy"], "loai": ["linh_thu"], "dk": 0.5, "th": [{"id": "enemy.thanh_lan_giao", "lieu": {"item.giao_han_can": 2, "item.yeu_dan_3": 1}}], "hach": null, "dh": ["ho_nuoc", "rung_ram"], "mt": "Rắn xanh dài hơn trượng, vảy cứng như ngọc mài, hai sừng nhú bằng đốt ngón tay. Nó nằm dưới đáy đầm, nước quanh đó lạnh buốt quanh năm."}, {"id": "enemy.lang_van_hac", "ten": "Lăng Vân Hạc", "cg": 2, "he": ["phong"], "loai": ["linh_thu"], "dk": 0.5, "th": [{"id": "enemy.dan_dinh_hac", "lieu": {"item.hac_vu": 2, "item.yeu_dan_3": 1}}], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Hạc trắng cao ngang vai người, bay lên là nương mây mà đi, cả ngày không đập cánh. Trên trán đã lấm tấm một chấm đỏ nhạt."}, {"id": "enemy.hoa_nha", "ten": "Hỏa Nha", "cg": 1, "he": ["hoa"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.xich_vu_nha", "lieu": {"item.hoa_nha_vu": 3, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["son_mach", "hoang_mac"], "mt": "Quạ đen chóp lông đỏ rực, mỏ vàng như đồng nung. Nó kêu một tiếng, chỗ nó vừa đậu bốc lên một sợi khói."}, {"id": "enemy.xich_vu_nha", "ten": "Xích Vũ Nha", "cg": 2, "he": ["hoa"], "loai": ["linh_thu"], "dk": 0.55, "th": [{"id": "enemy.tam_tuc_xich_nha", "lieu": {"item.hoa_tinh_chau": 2, "item.yeu_dan_3": 1}}], "hach": null, "dh": ["son_mach", "hoang_mac"], "mt": "Quạ lông đỏ sẫm như than chưa tắt, dưới bụng lú ra một mấu thịt như chân thứ ba sắp mọc. Nó bay qua đâu, mái tranh nơi đó bốc khói."}, {"id": "enemy.tam_tuc_xich_nha", "ten": "Tam Túc Xích Nha", "cg": 3, "he": ["hoa"], "loai": ["linh_thu"], "dk": 0.65, "th": [{"id": "enemy.xich_kim_o", "lieu": {"item.tam_tuc_nha_trao": 2, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["son_mach", "hoang_mac"], "mt": "Quạ lửa đỏ thẫm mọc ba chân, chân giữa vàng như đồng. Bay qua ruộng nào, lúa ruộng ấy cháy sém đầu bông."}, {"id": "enemy.xich_kim_o", "ten": "Xích Kim Ô", "cg": 4, "he": ["hoa"], "loai": ["linh_thu"], "dk": 0.8, "th": [{"id": "enemy.kim_o_huyet_due", "lieu": {"item.ngo_dong_chi": 2, "item.yeu_dan_5": 1}}], "hach": null, "dh": ["son_mach", "hoang_mac"], "mt": "Quạ ba chân lông đỏ ánh vàng, sải cánh rộng như mái đình. Nó đậu xuống đâu, đá dưới chân chảy thành giọt."}, {"id": "enemy.kim_o_huyet_due", "ten": "Kim Ô Huyết Duệ", "cg": 5, "he": ["hoa"], "loai": ["linh_thu"], "dk": 0.98, "th": [], "hach": null, "dh": ["son_mach", "hoang_mac"], "mt": "Quạ ba chân lông vàng ròng, sải cánh che kín một đỉnh núi, quanh thân là vầng sáng chói như mặt trời thứ hai. Nó đậu đâu, suối đó cạn, đá đó nứt."}, {"id": "enemy.thanh_nguu_doc", "ten": "Thanh Ngưu Độc", "cg": 2, "he": ["tho"], "loai": ["linh_thu"], "dk": 0.5, "th": [{"id": "enemy.thanh_giac_nguu", "lieu": {"item.thanh_nguu_giac": 2, "item.yeu_dan_3": 1}}], "hach": null, "dh": ["son_mach", "hoang_nguyen"], "mt": "Nghé xanh màu đá thanh, sừng mới nhú cong như trăng lưỡi liềm. Nó hiền như trâu nhà, chỉ là cày hết một sườn núi không biết mệt."}, {"id": "enemy.thanh_giac_nguu", "ten": "Thanh Giác Ngưu", "cg": 3, "he": ["tho"], "loai": ["linh_thu"], "dk": 0.7, "th": [{"id": "enemy.thanh_nguu", "lieu": {"item.kim_giac": 2, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["son_mach", "hoang_nguyen"], "mt": "Trâu xanh to như con voi nhỏ, đôi sừng đã cong nửa vòng, gõ vào nghe như gõ đá. Nó cày một đường, gò đất trước mặt rẽ đôi."}, {"id": "enemy.thanh_nguu", "ten": "Thanh Ngưu", "cg": 4, "he": ["tho", "moc"], "loai": ["linh_thu"], "dk": 0.85, "th": [], "hach": null, "dh": ["son_mach", "hoang_nguyen"], "mt": "Trâu xanh lớn như gò đất, sừng cong vút đeo vòng đồng xỉn khắc chữ triện. Lưng phẳng như chiếu; tương truyền từng chở một tiên ông ra khỏi cửa ải về phía tây."}, {"id": "enemy.mac_ngoc_linh_mieu", "ten": "Mặc Ngọc Linh Miêu", "cg": 0, "he": ["thuy"], "loai": ["linh_thu"], "dk": 0.3, "th": [{"id": "enemy.tam_menh_linh_mieu", "lieu": {"item.oan_hon_ty": 2, "item.yeu_dan_1": 1}}], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Mèo đen tuyền, lông bóng như mực mài, đôi mắt xanh ngọc. Nó ngồi trên nóc nhà suốt đêm, nhà ấy không con quỷ nào dám bén mảng."}, {"id": "enemy.tam_menh_linh_mieu", "ten": "Tam Mệnh Linh Miêu", "cg": 1, "he": ["thuy"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.luc_menh_linh_mieu", "lieu": {"item.oan_hon_ty": 3, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Mèo đen lớn hơn mèo nhà một vòng, dọc sống lưng ẩn ba vệt bạc mảnh như sợi chỉ. Nó nhìn vào góc tối nào, góc ấy lạnh đi."}, {"id": "enemy.luc_menh_linh_mieu", "ten": "Lục Mệnh Linh Miêu", "cg": 2, "he": ["thuy"], "loai": ["linh_thu"], "dk": 0.55, "th": [{"id": "enemy.cuu_menh_huyen_mieu", "lieu": {"item.oan_hon_ty": 4, "item.yeu_dan_3": 1}}], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Mèo đen to bằng con chó săn, sáu vệt bạc chạy dọc sống lưng. Đêm rằm nó kêu một tiếng, oan hồn quanh bãi tha ma tan như khói."}, {"id": "enemy.cuu_menh_huyen_mieu", "ten": "Cửu Mệnh Huyền Miêu", "cg": 3, "he": ["thuy"], "loai": ["linh_thu"], "dk": 0.65, "th": [], "hach": null, "dh": ["rung_ram", "son_mach", "yeu_vuc"], "mt": "Mèo đen lớn bằng con báo, chín vệt bạc chạy dọc sống lưng như chín ngọn nến. Mỗi lần ngã xuống, một vệt tắt đi và nó lại đứng dậy."}, {"id": "enemy.cuu_vi_thien_ho", "ten": "Cửu Vĩ Thiên Hồ", "cg": 4, "he": ["moc", "hoa"], "loai": ["linh_thu"], "dk": 0.95, "th": [], "hach": null, "dh": ["yeu_vuc", "rung_ram"], "mt": "Chín đuôi trải ra như chín cành đèn lụa. Nó thích nói chuyện trước, và chỉ ra tay khi ngươi đã quên mình đến đây làm gì."}, {"id": "enemy.bach_hac_linh", "ten": "Bạch Hạc Linh", "cg": 1, "he": ["phong", "moc"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.lang_van_hac", "lieu": {"item.hac_cot": 3, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Lông trắng như tuyết đọng, cổ dài, một chân co lại giữa bãi đá. Người Đại Ung thấy nó thì chắp tay; ai ra tay phải tự gánh lấy."}, {"id": "enemy.dan_dinh_hac", "ten": "Đan Đỉnh Hạc", "cg": 3, "he": ["phong", "hoa"], "loai": ["linh_thu"], "dk": 0.6, "th": [{"id": "enemy.cuu_cao_tien_hac", "lieu": {"item.hac_dinh_hong": 1, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["son_mach", "rung_ram"], "mt": "Trán đỏ như giọt son, sải cánh phủ bóng cả khe núi. Nó thường đứng nhìn đạo sĩ luyện đan, và đôi khi nhìn người ta rất lâu."}, {"id": "enemy.thanh_van_quy", "ten": "Thanh Văn Quy", "cg": 2, "he": ["thuy", "tho"], "loai": ["thu"], "dk": 0.4, "th": [], "hach": null, "dh": ["ho_nuoc", "hai_dao"], "mt": "Mai xanh rêu, vân nứt thành từng ô như bàn cờ. Nó nằm chặn lối lên bờ, đánh thì rụt vào, bỏ đi thì cắn gót."}, {"id": "enemy.thanh_vu_hac", "ten": "Thanh Vũ Hạc", "cg": 2, "he": ["phong", "moc"], "loai": ["thu"], "dk": 0.5, "th": [], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Hạc lông xám xanh, hay đậu trên mái đạo quán bỏ hoang. Nó không tránh người, chỉ mổ khi bị dồn vào góc."}, {"id": "enemy.lan_hoa_quy", "ten": "Lân Hỏa Quỷ", "cg": 0, "he": ["hoa"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["hoang_nguyen", "di_tich"], "mt": "Đốm ma trơi xanh lè lơ lửng trên bãi tha ma, theo bước người về tận đầu làng. Đánh tan một đốm thì nó tách làm hai; dội nước mới tắt hẳn."}, {"id": "enemy.quy_tan_nuong", "ten": "Quỷ Tân Nương", "cg": 2, "he": ["am"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["di_tich", "rung_ram"], "mt": "Cô dâu chết trên đường rước, kiệu hoa mục trong rừng mà khăn voan đỏ vẫn tươi. Ai nhìn thẳng mặt nàng là đứng ngây ra, để nàng cúi xuống cổ mình."}, {"id": "enemy.thi_khuyen", "ten": "Thi Khuyển", "cg": 1, "he": ["tho"], "loai": ["thi"], "dk": null, "th": [], "hach": null, "dh": ["hoang_nguyen", "di_tich"], "mt": "Chó giữ mộ chết theo chủ, âm khí nhập xác mà đứng dậy, lông rụng từng mảng. Chúng đi từng cặp, một con cắn giữ, con kia vòng ra sau."}, {"id": "enemy.da_anh_kieu", "ten": "Dạ Ảnh Kiêu", "cg": 1, "he": ["am"], "loai": ["linh_thu"], "dk": 0.3, "th": [], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Cú lông đen như mực, chỉ hai con mắt vàng là sáng. Nó đậu trên cây gần bãi tha ma, đêm nào kêu ba tiếng là đêm ấy cô hồn không dám lảng vảng."}, {"id": "enemy.huyen_duc_au_buc", "ten": "Huyền Dực Ấu Bức", "cg": 1, "he": ["am", "phong"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.huyen_duc_buc", "lieu": {"item.bien_buc_si": 3, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["son_mach", "yeu_vuc"], "mt": "Dơi non to bằng bàn tay, cánh mỏng đen như giấy than. Ban ngày nó rúc trong tay áo ngủ, đêm xuống thì đèn trong phòng cứ lụi dần."}, {"id": "enemy.huyen_duc_buc", "ten": "Huyền Dực Bức", "cg": 4, "he": ["am", "phong"], "loai": ["linh_thu"], "dk": 0.95, "th": [], "hach": null, "dh": ["son_mach", "yeu_vuc"], "mt": "Dơi đen sải cánh rộng bằng mái đình, treo ngược trong hang sâu không thấy đáy. Nó vỗ cánh một cái, đuốc trong tay người tắt hết, vết thương thì không chịu khép miệng."}]; /* bản dự phòng khi game không đưa dữ liệu sinh vật ra ngoài */
+    var NL_ENC = [["ev.kl_sap_tho_khoi", "Sạp thợ khôi", "ngu_linh/khoi_loi.yaml", ["tran", "thanh", "kinh_do"], [], [0, 5], ["item.do_pho_moc_khoi"], "cua_hang"], ["ev.kl_lau_co_quan", "Lầu cơ quan", "ngu_linh/khoi_loi.yaml", ["kinh_do"], [], [2, 5], [], "cua_hang"], ["ev.kl_tho_khoi_gap_nan", "Thợ khôi gặp nạn", "ngu_linh/khoi_loi.yaml", ["hoang_da"], ["son_mach", "rung_ram"], [0, 2], ["item.do_pho_moc_khoi", "item.huyen_ti_quyet", "item.moc_khoi_quyet"], "su_kien"], ["ev.kl_xuong_khoi_bo_hoang", "Xưởng khôi bỏ hoang", "ngu_linh/khoi_loi.yaml", ["hoang_da"], ["son_mach", "rung_ram", "di_tich"], [1, 3], ["item.bach_khoi_tam_kinh", "item.khoi_loi_ban", "item.khoi_loi_nang", "item.khu_khoi_thuat", "item.ngan_ti_khien_hoan", "item.thien_cong_hap"], "su_kien"], ["ev.kl_dien_co_quan", "Điện cơ quan", "ngu_linh/khoi_loi.yaml", ["di_tich"], [], [2, 4], ["item.bach_khoi_tam_kinh", "item.tao_hoa_khoi_kinh"], "su_kien"], ["ev.kl_mo_thien_cong", "Mộ Thiên Công", "ngu_linh/khoi_loi.yaml", ["hoang_da"], ["di_tich", "son_mach"], [4, 5], ["item.cuu_chuyen_khoi_dien"], "su_kien"], ["ev.kl_dau_khoi_an_cuoc", "Đấu khôi ăn cược", "ngu_linh/khoi_loi.yaml", ["hoang_da"], ["di_tich", "son_mach"], [2, 3], ["item.tran_van_giap_da", "item.tran_van_phan_chan", "item.tran_van_yeu_nha"], "su_kien"], ["ev.lt_danh_hoi_bui_ram", "Nó đánh hơi", "ngu_linh/linh_thu.yaml", ["hoang_da"], ["rung_ram", "son_mach", "yeu_vuc"], [0, 5], [], "su_kien"], ["ev.lt_danh_hoi_mat_ho", "Bọt nước dưới hồ", "ngu_linh/linh_thu.yaml", ["hoang_da"], ["ho_nuoc"], [0, 5], [], "su_kien"], ["ev.lt_danh_hoi_nen_gach", "Nền gạch cũ", "ngu_linh/linh_thu.yaml", ["hoang_da"], ["di_tich"], [0, 5], [], "su_kien"], ["ev.lt_danh_hoi_cat_vang", "Dưới lớp cát", "ngu_linh/linh_thu.yaml", ["hoang_da"], ["hoang_mac", "hoang_nguyen"], [0, 5], [], "su_kien"], ["ev.lt_loc_bay_tho_san", "Bẫy trên lối hươu", "ngu_linh/linh_thu.yaml", ["hoang_da"], ["rung_ram", "son_mach"], [0, 5], [], "su_kien"], ["ev.lt_tho_dem_trang", "Đêm trăng tròn", "ngu_linh/linh_thu.yaml", ["hoang_da"], ["hoang_nguyen", "son_mach"], [0, 5], [], "su_kien"], ["ev.lt_cam_ly_lao_ngu", "Lão chài nhận vảy", "ngu_linh/linh_thu.yaml", ["hoang_da"], ["ho_nuoc"], [0, 5], [], "su_kien"], ["ev.lt_thanh_dieu_bay_dan", "Bầy chim xanh", "ngu_linh/linh_thu.yaml", ["hoang_da"], ["son_mach", "rung_ram"], [0, 5], [], "su_kien"], ["ev.lt_bach_trach_vach_da", "Bạch Trạch già", "ngu_linh/linh_thu.yaml", ["hoang_da"], ["yeu_vuc", "son_mach"], [0, 5], [], "su_kien"], ["ev.lt_tam_bao_cho_chon", "Chợ chồn", "ngu_linh/linh_thu.yaml", ["hoang_da"], ["di_tich", "son_mach"], [0, 5], [], "su_kien"], ["ev.lt_thuc_thiet_tho_ren", "Kiếm hỏng lò rèn", "ngu_linh/linh_thu.yaml", ["thon", "tran", "thanh"], [], [0, 5], [], "su_kien"], ["ev.lt_tinh_net", "Tính nết của nó", "ngu_linh/linh_thu.yaml", ["hoang_da"], [], [0, 5], [], "su_kien"], ["ev.lt_kho_cua_no", "Kho của nó", "ngu_linh/linh_thu.yaml", ["hoang_da"], ["rung_ram", "son_mach", "ho_nuoc", "hoang_nguyen"], [0, 5], [], "su_kien"], ["ev.lt_hoa_hinh", "Sáng ra thành người", "ngu_linh/linh_thu.yaml", ["hoang_da", "thon", "tran", "thanh", "kinh_do"], [], [0, 5], [], "su_kien"], ["ev.nl_lt_ho_trang_mac_bay", "Hồ trắng mắc bẫy", "ngu_linh/linh_thu_ket_giao.yaml", ["hoang_da"], ["rung_ram", "son_mach"], [0, 2], ["item.trung_bach_linh_ho"], "su_kien"], ["ev.nl_lt_chuot_vang_tha_bac", "Chuột vàng tha bạc", "ngu_linh/linh_thu_ket_giao.yaml", ["thon", "tran"], [], [0, 2], ["item.trung_kim_mao_thu"], "su_kien"], ["ev.nl_lt_soi_con_theo_chan", "Sói con theo chân", "ngu_linh/linh_thu_ket_giao.yaml", ["hoang_da"], ["hoang_nguyen", "son_mach"], [1, 3], ["item.trung_ngan_nguyet_au_lang"], "su_kien"], ["ev.nl_lt_ho_me_trung_ten", "Hổ mẹ trúng tên", "ngu_linh/linh_thu_ket_giao.yaml", ["hoang_da"], ["rung_ram", "son_mach"], [0, 2], ["item.trung_bach_van_au_ho"], "su_kien"], ["ev.nl_lt_ran_xanh_nghe_kinh", "Rắn xanh nghe kinh", "ngu_linh/linh_thu_ket_giao.yaml", ["hoang_da"], ["son_mach", "rung_ram"], [0, 2], ["item.trung_thanh_ngoc_linh_xa"], "su_kien"], ["ev.nl_lt_hac_dau_dinh_nui", "Hạc đậu đỉnh núi", "ngu_linh/linh_thu_ket_giao.yaml", ["hoang_da"], ["son_mach"], [1, 3], ["item.trung_bach_hac"], "su_kien"], ["ev.nl_lt_qua_lua_dau_xom", "Quạ lửa đầu xóm", "ngu_linh/linh_thu_ket_giao.yaml", ["hoang_da"], ["son_mach", "hoang_mac"], [1, 3], ["item.trung_hoa_nha"], "su_kien"], ["ev.nl_lt_mat_troi_thu_hai", "Mặt trời thứ hai", "ngu_linh/linh_thu_ket_giao.yaml", ["hoang_da"], ["hoang_mac", "son_mach"], [5, 5], [], "su_kien"], ["ev.nl_lt_trau_xanh_dao_truong", "Trâu xanh già", "ngu_linh/linh_thu_ket_giao.yaml", ["hoang_da"], ["son_mach", "hoang_nguyen"], [2, 4], ["item.trung_thanh_nguu"], "su_kien"], ["ev.nl_lt_meo_den_tren_noc", "Mèo đen trên nóc", "ngu_linh/linh_thu_ket_giao.yaml", ["thon", "tran"], [], [0, 2], ["item.trung_mac_ngoc_linh_mieu"], "su_kien"], ["ev.nl_than_ly_long_doi_te", "Ly Long đòi tế", "ngu_linh/than_thu.yaml", ["hoang_da"], ["ho_nuoc", "yeu_vuc"], [3, 5], [], "su_kien"], ["ev.nl_than_lan_hoa_cuong", "Lân hóa cuồng", "ngu_linh/than_thu.yaml", ["hoang_da"], ["son_mach", "rung_ram"], [3, 5], [], "su_kien"], ["ev.nl_than_dao_biet_lan", "Đảo biết lặn", "ngu_linh/than_thu.yaml", ["hoang_da"], ["ho_nuoc"], [3, 5], [], "su_kien"], ["ev.nl_than_loan_thu_suc", "Loan điểu thử sức", "ngu_linh/than_thu.yaml", ["hoang_da"], ["son_mach", "rung_ram", "hoang_mac"], [3, 5], [], "su_kien"], ["ev.nl_than_rong_mac_can", "Rồng nhỏ mắc cạn", "ngu_linh/than_thu.yaml", ["hoang_da"], ["ho_nuoc"], [3, 5], ["item.trung_ly_long"], "su_kien"], ["ev.nl_than_lan_trung_ten", "Lân trúng tên", "ngu_linh/than_thu.yaml", ["hoang_da"], ["son_mach", "rung_ram"], [3, 5], ["item.trung_hoa_lan"], "su_kien"], ["ev.nl_than_quy_len_bai", "Huyền Quy lên bãi", "ngu_linh/than_thu.yaml", ["hoang_da"], ["ho_nuoc"], [3, 5], ["item.trung_huyen_quy"], "su_kien"], ["ev.nl_than_to_loan_hoa_da", "Tổ loan hóa đá", "ngu_linh/than_thu.yaml", ["bi_canh"], [], [3, 5], ["item.trung_hoa_loan", "item.trung_thanh_loan"], "su_kien"], ["ev.cho_am_dem", "Chợ âm", "ngu_linh/thi_hon.yaml", ["tran", "thanh"], [], [1, 5], ["item.am_thi_tho", "item.chien_hon_phien", "item.chieu_hon_linh", "item.co_mo_bach_cot", "item.duong_hon_moc", "item.duong_hon_quyet", "item.duong_thi_quyet", "item.hon_phach_tan", "item.hon_phien_tan", "item.luyen_hon_quyet", "item.luyen_thi_bi_luc", "item.nhiep_hon_thuat", "item.pham_thi", "item.thi_cot_tien", "item.thi_khi_nang", "item.thi_no_chu", "item.thu_thi_an", "item.toa_hon_ho_lo", "item.tu_am_bai", "item.tu_si_thi_hai"], "cua_hang"], ["ev.thi_ke_dao_mo", "Kẻ đào mộ", "ngu_linh/thi_hon.yaml", ["hoang_da"], ["hoang_nguyen", "son_mach", "rung_ram", "di_tich"], [1, 2], ["item.duong_thi_quyet", "item.thi_khi_nang"], "su_kien"], ["ev.thi_xac_than_lang", "Xác thần làng", "ngu_linh/thi_hon.yaml", ["thon"], [], [1, 3], ["item.luyen_thi_bi_luc"], "su_kien"], ["ev.thi_mo_tuong_quan", "Mộ tướng quân", "ngu_linh/thi_hon.yaml", ["hoang_da"], ["di_tich", "hoang_nguyen", "son_mach"], [2, 3], ["item.cuong_sat_tinh", "item.thi_sat_chan_kinh", "item.thi_vuong_hieu_lenh"], "su_kien"], ["ev.thi_lang_thi_vuong", "Lăng Thi Vương", "ngu_linh/thi_hon.yaml", ["hoang_da"], ["di_tich", "hoang_mac", "yeu_vuc"], [3, 5], ["item.bat_hu_thi_kinh", "item.cuu_u_thi_kinh", "item.huyet_sat_chau"], "su_kien"], ["ev.hon_phien_vo_chu", "Hồn phiên vô chủ", "ngu_linh/thi_hon.yaml", ["hoang_da"], ["son_mach", "rung_ram", "hoang_nguyen", "di_tich"], [0, 2], ["item.duong_hon_quyet", "item.hon_phien_tan"], "su_kien"], ["ev.hon_quy_thanh", "Quỷ thành", "ngu_linh/thi_hon.yaml", ["hoang_da"], ["hoang_nguyen", "di_tich", "yeu_vuc"], [2, 3], ["item.duong_quy_kinh", "item.le_hon_phien", "item.le_phach_tinh", "item.thieu_hon_quyet", "item.tu_hon_binh"], "su_kien"], ["ev.hon_dien_quy_mau", "Điện Quỷ Mẫu", "ngu_linh/thi_hon.yaml", ["hoang_da"], ["yeu_vuc", "di_tich", "son_mach"], [3, 5], ["item.bach_quy_chan_kinh", "item.u_minh_hon_tinh", "item.u_minh_quy_dien"], "su_kien"], ["ev.nl_thu_lao_chan_yeu", "Lão chăn yêu", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["rung_ram", "son_mach"], [0, 2], ["item.duong_thu_quyet", "item.ngu_thu_an"], "su_kien"], ["ev.nl_thu_xac_trong_hang", "Xác trong hang yêu", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["yeu_vuc", "son_mach", "rung_ram"], [1, 3], ["item.bach_thu_thong_ngu", "item.ngu_thu_hoan"], "su_kien"], ["ev.nl_trung_co_su_doi_ruong", "Cổ Sư đòi ruộng", "ngu_linh/thu_trung.yaml", ["thon", "tran"], [], [1, 3], ["item.bach_trung_kinh", "item.duong_co_quyet", "item.thu_co_an"], "su_kien"], ["ev.nl_trung_o_co_trong_dam", "Ổ cổ trong đầm", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["ho_nuoc", "rung_ram"], [1, 3], ["item.bach_trung_kinh", "item.co_dinh"], "su_kien"], ["ev.nl_cho_dem_thu_co", "Chợ đêm thú cổ", "ngu_linh/thu_trung.yaml", ["thanh", "kinh_do"], [], [0, 5], ["item.au_trung_kim_giap", "item.bach_co_sao", "item.bach_thu_thong_ngu", "item.bach_trung_kinh", "item.co_dinh", "item.doc_co_chan_kinh", "item.duong_co_quyet", "item.duong_co_ung", "item.duong_thu_quyet", "item.linh_nhuc_can", "item.muc_yeu_kinh", "item.ngu_thu_an", "item.ngu_thu_hoan", "item.thu_co_an", "item.trung_hac_phong_bao", "item.yeu_lang_nhuc"], "cua_hang"], ["ev.nl_thu_mo_ngu_thu_su", "Mộ ngự thú sư", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["di_tich", "son_mach", "yeu_vuc"], [3, 4], ["item.khu_yeu_tien", "item.van_thu_quy_tong"], "su_kien"], ["ev.nl_thu_hai_cot_thu_hoang", "Hài cốt Thú Hoàng", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["yeu_vuc", "son_mach", "hoang_nguyen"], [4, 5], ["item.thu_hoang_chan_kinh", "item.thu_vuong_tuy"], "su_kien"], ["ev.nl_trung_dong_co_vuong", "Động Cổ Vương", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["ho_nuoc", "rung_ram", "yeu_vuc"], [3, 4], ["item.co_huyet_phan_bo", "item.co_mau_tam_kinh", "item.van_co_phien"], "su_kien"], ["ev.nl_trung_co_mau_ngu_dong", "Cổ mẫu ngủ đông", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["ho_nuoc", "yeu_vuc", "rung_ram"], [4, 5], ["item.van_co_thien_kinh"], "su_kien"], ["ev.nl_thu_cam_ly_vuot_thac", "Cá chép vượt thác", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["ho_nuoc"], [1, 5], ["item.trung_cam_ly"], "su_kien"], ["ev.nl_thu_chon_vang_duoi_trom", "Chồn vàng đuổi trộm", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["di_tich", "son_mach"], [1, 5], ["item.trung_tam_bao_dieu"], "su_kien"], ["ev.nl_thu_to_thanh_dieu", "Tổ chim xanh", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["son_mach", "rung_ram"], [2, 5], ["item.trung_thanh_dieu"], "su_kien"], ["ev.nl_thu_dinh_gio", "Đỉnh núi gió", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["son_mach"], [0, 2], ["item.kim_tinh_phien", "item.phong_thao_nho"], "su_kien"], ["ev.nl_thu_luyen_huyet_tinh", "Thợ săn luyện huyết", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["rung_ram", "son_mach", "yeu_vuc"], [1, 3], ["item.huyet_tinh_yeu_thu"], "su_kien"], ["ev.nl_thu_bai_tu_lan", "Bãi cỏ tía", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["yeu_vuc", "son_mach", "rung_ram"], [2, 4], ["item.tu_lan_thao"], "su_kien"], ["ev.nl_thu_ho_phach_co", "Hổ phách thái cổ", "ngu_linh/thu_trung.yaml", ["hoang_da"], ["yeu_vuc", "son_mach", "hoang_nguyen"], [4, 5], ["item.thu_vuong_tuy"], "su_kien"], ["ev.nl_thu_to_liet_khong_ung", "Tổ ưng trên vách", "ngu_linh/trung_hoa_than.yaml", ["hoang_da"], ["son_mach", "hoang_nguyen"], [5, 5], ["item.trung_liet_khong_ung"], "su_kien"], ["ev.nl_thu_to_phan_son_ho", "Hang hổ cháy", "ngu_linh/trung_hoa_than.yaml", ["hoang_da"], ["son_mach", "hoang_mac", "rung_ram"], [5, 5], ["item.trung_phan_son_ho"], "su_kien"], ["ev.nl_thu_to_bich_lan_mang", "Ổ mãng dưới rễ", "ngu_linh/trung_hoa_than.yaml", ["hoang_da"], ["rung_ram", "ho_nuoc", "yeu_vuc"], [5, 5], ["item.trung_bich_lan_mang"], "su_kien"], ["ev.hac_thi_ta_phai", "Hắc thị", "ta_phai/dac_trung.yaml", ["thanh_tri"], [], null, ["item.am_thi_tho", "item.hon_phach_tan"], "cua_hang"], ["ev.cho_no_san_sau", "Chợ nô", "ta_phai/dac_trung.yaml", ["thanh_tri"], [], null, ["item.au_trung_doc_ngo", "item.au_trung_huyet_co", "item.pham_thi", "item.toa_hon_ho_lo", "item.tu_si_thi_hai"], "cua_hang"], ["ev.cho_no_tu_si_phe", "Tu sĩ bị phế", "ta_phai/dac_trung.yaml", ["thanh_tri"], [], [1, 3], ["item.pham_thi"], "su_kien"], ["ev.mieu_ta_than_tu_tu", "Từ tế nuôi thần", "ta_phai/dac_trung.yaml", ["thanh_tri"], [], [1, 3], ["item.hon_phach_tan"], "su_kien"], ["ev.ta_tu_tre_linh_can", "Đứa trẻ linh căn", "ta_tu.yaml", ["thon", "hoang_da"], [], [1, 2], ["item.pham_thi"], "su_kien"], ["ev.ta_tu_thon_dich", "Làng có dịch", "ta_tu.yaml", ["thon"], [], [1, 3], ["item.thi_khi_nang"], "su_kien"], ["ev.ta_tu_xac_cha", "Xác cha trên xe", "ta_tu.yaml", ["hoang_da", "thon"], [], [2, 3], ["item.tu_si_thi_hai"], "su_kien"], ["ev.ta_tu_oan_hon", "Hồn cô dâu", "ta_tu.yaml", ["hoang_da"], ["hoang_nguyen", "di_tich", "son_mach", "ho_nuoc"], [0, 2], ["item.hon_phien_tan", "item.toa_hon_ho_lo"], "su_kien"], ["ev.kl_tm_xuong_co_quan", "Xưởng cơ quan", "tong_mon_khoi_loi.yaml", ["tong_mon"], [], [0, 4], ["item.huyen_van_phan", "item.thanh_dong_khau", "item.thiet_moc_tiet", "item.tinh_than_sa", "item.xich_kim_dich"], "su_kien"], ["ev.tm_co_hon_quat", "Dưỡng cổ quật", "tong_mon_noi.yaml", ["tong_mon"], [], null, ["item.chu_doc_nang", "item.ngu_doc_co_tam", "item.ngu_doc_dich", "item.thanh_doc_nang", "item.that_thai_doc_nang", "item.thien_tam_ti"], "tong_mon"], ["ev.nl_lt_ngua_lua_bat_kham", "Ngựa lửa bất kham", "ngu_linh/linh_thu_ket_giao.yaml", ["hoang_da"], ["hoang_nguyen", "hoang_mac"], [2, 4], ["item.trung_xich_diem_cau"], "su_kien"], ["ev.nl_lt_khi_tim_don_set", "Khỉ tím đón sét", "ngu_linh/linh_thu_ket_giao.yaml", ["hoang_da"], ["son_mach", "rung_ram"], [2, 4], ["item.trung_tu_dien_hau"], "su_kien"], ["ev.cho_thi_hon_ta_phai", "Dưỡng Linh Thị", "ta_phai/dac_trung.yaml", ["thanh_tri"], [], null, [], "cua_hang"], ["ev.kl_tm_dau_khoi", "So tài khôi lỗi", "tong_mon_khoi_loi.yaml", ["tong_mon"], [], [0, 4], [], "su_kien"], ["ev.kl_tm_khoi_gac_nui", "Khôi lỗi gác núi", "tong_mon_khoi_loi.yaml", ["tong_mon"], [], [0, 4], [], "su_kien"], ["ev.kl_tm_tim_lieu", "Trưởng lão tìm liệu", "tong_mon_khoi_loi.yaml", ["tong_mon"], [], [1, 4], ["item.huyen_van_phan", "item.thanh_dong_khau", "item.tinh_than_sa", "item.xich_kim_dich"], "su_kien"], ["ev.kl_tm_khoi_phat_cuong", "Khôi lỗi phát cuồng", "tong_mon_khoi_loi.yaml", ["tong_mon"], [], [0, 4], [], "su_kien"], ["ev.kl_tm_khoi_to_su", "Khôi tổ sư", "tong_mon_khoi_loi.yaml", ["tong_mon"], [], [1, 4], [], "su_kien"]]; /* [mã, tên, nguồn, nơi, địa hình, cảnh giới, vật phẩm, loại] */
+    var NL_ENEMY = [{"id": "enemy.ly_long_au_tu", "ten": "Ly Long Ấu Tử", "cg": 1, "he": ["thuy"], "loai": ["thu"], "dk": 0.9, "th": [{"id": "enemy.ly_long", "lieu": {"item.giao_long_lan": 1, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["ho_nuoc", "yeu_vuc"], "mt": "Rồng con dài bằng cánh tay, vảy lam sẫm còn mềm như da cá. Nó cuộn trong chậu, nước trong chậu xoay tròn không ngớt."}, {"id": "enemy.hoa_lan_au_tu", "ten": "Hỏa Lân Ấu Tử", "cg": 1, "he": ["hoa", "tho"], "loai": ["thu"], "dk": 0.9, "th": [{"id": "enemy.hoa_lan_thu", "lieu": {"item.hoa_tinh_chau": 2, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["son_mach", "rung_ram"], "mt": "Lân con to bằng con dê, vảy đỏ mới nhú, giữa trán có một chồi sừng ấm như than. Kẻ gian đến gần, nó gầm khẽ trước cả chó nhà."}, {"id": "enemy.huyen_quy_au_tu", "ten": "Huyền Quy Ấu Tử", "cg": 1, "he": ["thuy", "bang"], "loai": ["thu"], "dk": 0.9, "th": [{"id": "enemy.huyen_quy", "lieu": {"item.quy_giap": 3, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["ho_nuoc"], "mt": "Rùa con mai đen bằng cái bát, đuôi là một con rắn nhỏ biết tự ngóc đầu. Mai thì ngủ, đuôi thì canh, chẳng ai lại gần được."}, {"id": "enemy.hoa_loan_au_so", "ten": "Hỏa Loan Ấu Sồ", "cg": 1, "he": ["hoa", "phong"], "loai": ["thu"], "dk": 0.9, "th": [{"id": "enemy.hoa_loan", "lieu": {"item.ngo_dong_chi": 1, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["son_mach", "rung_ram", "hoang_mac"], "mt": "Chim non lông đỏ son, đuôi mới dài bằng ngón tay mà chóp đã lập lòe lửa. Nó chỉ chịu đậu trên cành ngô đồng."}, {"id": "enemy.thanh_loan_au_so", "ten": "Thanh Loan Ấu Sồ", "cg": 1, "he": ["phong", "moc"], "loai": ["thu"], "dk": 0.9, "th": [{"id": "enemy.thanh_loan", "lieu": {"item.ngo_dong_chi": 1, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Chim non lông xanh ngọc, tiếng kêu còn khàn mà chậu cây cạnh nó đã nhú lộc. Đêm nó rúc vào lòng bàn tay ngươi mà ngủ."}, {"id": "enemy.ly_long", "ten": "Ly Long", "cg": 4, "he": ["thuy"], "loai": ["thu"], "dk": 0.95, "th": [], "hach": null, "dh": ["ho_nuoc", "yeu_vuc"], "mt": "Rồng không sừng, máu chân long còn loãng trong người. Nó cuộn dưới đáy hồ sâu, mặt hồ trên đầu xoay thành xoáy suốt ngày đêm."}, {"id": "enemy.hoa_lan_thu", "ten": "Hỏa Lân Thú", "cg": 4, "he": ["hoa", "tho"], "loai": ["thu"], "dk": 0.95, "th": [], "hach": null, "dh": ["son_mach", "rung_ram"], "mt": "Mang chút máu Kỳ Lân, vảy đỏ, bước qua cỏ không gãy một ngọn. Nó chỉ đánh kẻ nó cho là ác, mà đã đánh thì lửa không tắt."}, {"id": "enemy.huyen_quy", "ten": "Huyền Quy", "cg": 4, "he": ["thuy", "bang"], "loai": ["thu"], "dk": 0.9, "th": [], "hach": null, "dh": ["ho_nuoc"], "mt": "Rùa đen đuôi rắn, mai to bằng sân đình, máu Huyền Vũ chảy trong người. Đánh vào mai thì tay ngươi tê trước, đuôi rắn đã quất tới sau lưng."}, {"id": "enemy.hoa_loan", "ten": "Hỏa Loan", "cg": 4, "he": ["hoa", "phong"], "loai": ["thu"], "dk": 0.95, "th": [], "hach": null, "dh": ["son_mach", "rung_ram", "hoang_mac"], "mt": "Loan điểu lông đỏ mang máu Phượng, làm tổ trên ngô đồng. Ngã xuống rồi, nó bốc cháy thành ngọn lửa và từ lửa vỗ cánh bay lên."}, {"id": "enemy.thanh_loan", "ten": "Thanh Loan", "cg": 4, "he": ["phong", "moc"], "loai": ["thu"], "dk": 0.9, "th": [], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Loan điểu lông xanh, tiếng hót làm cây khô ra lộc. Vết thương trên mình nó khép lại từng lượt, trừ khi gặp lửa."}, {"id": "enemy.oan_linh", "ten": "Oán Linh", "cg": 0, "he": ["am"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["di_tich", "hoang_nguyen", "yeu_vuc"], "mt": "Hồn người chết đói ở thôn bỏ hoang, mỏng như khói bếp. Nó chỉ biết bám theo hơi người, lạnh từ gáy xuống."}, {"id": "enemy.am_hon", "ten": "Âm Hồn", "cg": 1, "he": ["am"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": [], "mt": "Hồn người chết oan không siêu thoát, lởn vởn nơi âm khí tụ."}, {"id": "enemy.thuy_quy", "ten": "Thủy Quỷ", "cg": 1, "he": ["am"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["ho_nuoc"], "mt": "Người chết đuối hóa thành, tóc dài quấn rong. Phải kéo được một kẻ khác xuống thế chỗ mới được đi đầu thai."}, {"id": "enemy.kim_tam_co", "ten": "Kim Tằm Cổ", "cg": 2, "he": ["kim", "moc"], "loai": ["trung"], "dk": 0.6, "th": [{"id": "enemy.thien_tam_co_mau", "lieu": {"item.that_thai_doc_nang": 3}}], "hach": null, "dh": ["rung_ram", "yeu_vuc"], "mt": "Cổ mẹ cổ sư nuôi bằng máu mình, vàng óng như tằm. Chủ chết thì nó đói, đi ăn cả làng từ trong ruột ra."}, {"id": "enemy.le_quy", "ten": "Lệ Quỷ", "cg": 3, "he": ["thuy", "kim"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": [], "mt": "Oán khí kết thành hình, tiếng khóc của nó làm người nghe rợn tới tủy."}, {"id": "enemy.quy_mau", "ten": "U Minh Quỷ Mẫu", "cg": 4, "he": ["thuy", "bang"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["di_tich", "yeu_vuc"], "mt": "Nữ quỷ nuốt hồn trẻ nhỏ mà thành hình, vừa đi vừa hát ru. Trong bụng nó lúc nào cũng có tiếng trẻ khóc."}, {"id": "enemy.hanh_thi", "ten": "Hành Thi", "cg": 0, "he": ["tho"], "loai": ["thi"], "dk": null, "th": [], "hach": null, "dh": ["di_tich", "hoang_nguyen"], "mt": "Xác chưa kịp chôn bị âm khí nhập, nhảy từng bước cứng đờ theo hơi người. Chậm, nhưng không biết đau."}, {"id": "enemy.bach_cot_kho_lau", "ten": "Bạch Cốt Khô Lâu", "cg": 1, "he": ["kim"], "loai": ["thi"], "dk": null, "th": [], "hach": null, "dh": ["di_tich", "hoang_mac"], "mt": "Bộ xương khô tay cầm mâu gãy, đi đâu khớp xương kêu lách cách. Đánh rã ra thì xương lăn lại ráp thành hai."}, {"id": "enemy.am_binh", "ten": "Âm Binh", "cg": 2, "he": ["kim"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["hoang_nguyen", "di_tich"], "mt": "Lính chết trận còn mặc giáp rỉ, mắt là hai đốm lửa xanh. Đi thành hàng, bước chân đều như còn nghe trống trận."}, {"id": "enemy.thiet_giap_am_binh", "ten": "Thiết Giáp Âm Binh", "cg": 3, "he": ["kim"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["hoang_nguyen", "di_tich"], "mt": "Thân binh của một tướng quân chết trận, giáp sắt nặng vẫn kín người dù trong giáp chỉ còn khói xanh. Chém thủng giáp, khói lại tụ về chỗ cũ."}, {"id": "enemy.hac_cuong", "ten": "Hắc Cương", "cg": 2, "he": ["tho"], "loai": ["thi"], "dk": null, "th": [], "hach": "item.thi_hach", "dh": ["di_tich", "hoang_nguyen", "hoang_mac"], "mt": "Cương thi da đen như sắt nguội, quyền cước đánh vào chỉ nghe \"cạch\". Đêm trăng tròn nó đứng ngửa mặt hút âm khí."}, {"id": "enemy.mao_cuong", "ten": "Mao Cương", "cg": 3, "he": ["tho", "kim"], "loai": ["thi"], "dk": null, "th": [], "hach": "item.thi_hach", "dh": ["di_tich", "hoang_nguyen", "yeu_vuc"], "mt": "Cương thi mọc kín lông trắng dài như cỏ tranh, thở ra là mùi tanh. Cắn được người thì vết thương trên mình nó liền lại."}, {"id": "enemy.thuy_thi", "ten": "Thủy Thi", "cg": 1, "he": ["am"], "loai": ["thi"], "dk": null, "th": [], "hach": null, "dh": ["ho_nuoc"], "mt": "Xác chết đuối ngâm lâu dưới đáy hồ, trương phềnh trắng bệch, bước tới đâu nước rỉ tới đó. Nó ôm được ai là kéo thẳng xuống bùn."}, {"id": "enemy.dang_thi", "ten": "Đằng Thi", "cg": 2, "he": ["moc"], "loai": ["thi"], "dk": null, "th": [], "hach": null, "dh": ["rung_ram"], "mt": "Xác bỏ trong rừng sâu bị dây leo đâm xuyên ngực, rễ bám kín từng đốt xương. Dây kéo xác đi săn, quấn được ai là hút máu nuôi lá."}, {"id": "enemy.bang_thi", "ten": "Băng Thi", "cg": 3, "he": ["bang"], "loai": ["thi"], "dk": null, "th": [], "hach": "item.thi_hach", "dh": ["son_mach"], "mt": "Thi luyện trong hang băng của Vạn Băng Thi Động, da trong như băng, nhìn rõ mạch máu đông đen bên dưới. Bị nó chạm vào, tay chân tê cứng hồi lâu."}, {"id": "enemy.phi_cuong", "ten": "Phi Cương", "cg": 4, "he": ["tho", "hoa"], "loai": ["thi"], "dk": null, "th": [], "hach": "item.phi_cuong_tuy", "dh": ["di_tich", "yeu_vuc", "hoang_mac"], "mt": "Cương thi hút đủ máu thì nhẹ người, lướt trên ngọn cây như dơi lớn. Bay qua làng nào, sáng ra gia súc làng đó khô quắt."}, {"id": "enemy.quy_vuong", "ten": "Quỷ Vương", "cg": 5, "he": ["thuy", "bang"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["yeu_vuc", "di_tich"], "mt": "Vua của một cõi âm, ngồi trên ngai xếp bằng sọ người. Nó gõ ấn một tiếng, quỷ tốt dưới đất chui lên thành hàng."}, {"id": "enemy.bat_hoa_cot", "ten": "Bất Hóa Cốt", "cg": 5, "he": ["tho", "kim"], "loai": ["thi"], "dk": 0.7, "th": [], "hach": null, "dh": ["di_tich", "hoang_mac", "hoang_nguyen", "son_mach", "yeu_vuc"], "mt": "Xác qua nghìn năm không rữa, xương hóa sắc đồng, chém gãy rồi tự liền. Chỉ lửa mới làm nó chậm lại."}, {"id": "enemy.xich_cot_kho_lau", "ten": "Xích Cốt Khô Lâu", "cg": 2, "he": ["kim"], "loai": ["thi"], "dk": null, "th": [], "hach": null, "dh": ["di_tich", "yeu_vuc"], "mt": "Bộ xương ngâm trong ao máu lâu năm, đỏ thẫm từ sọ tới gót. Cắn trúng ai là xương nó bóng thêm một lớp."}, {"id": "enemy.bach_cot_ma_tuong", "ten": "Bạch Cốt Ma Tướng", "cg": 4, "he": ["kim"], "loai": ["thi"], "dk": null, "th": [], "hach": null, "dh": ["di_tich", "hoang_mac", "yeu_vuc"], "mt": "Xương của trăm người ráp thành một bộ cao gấp rưỡi người thường, cầm cây thương cũng bằng xương. Đánh vỡ nó ra, đống xương vụn lại chia làm hai mà đứng dậy."}, {"id": "enemy.nga_quy", "ten": "Ngạ Quỷ", "cg": 0, "he": ["hoa"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": [], "mt": "Bụng phình như trống mà cổ nhỏ như cây kim, đói mãi không no. Bám được người sống là cắn, miệng phả ra lửa xanh."}, {"id": "enemy.son_quy", "ten": "Sơn Quỷ", "cg": 0, "he": ["moc"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["son_mach", "rung_ram"], "mt": "Hồn người lạc chết trong núi, nấp sau sương gọi đúng tên kẻ đi đường. Ai quay lại đáp lời là bị dắt vòng quanh tới kiệt sức."}, {"id": "enemy.phu_thi", "ten": "Phù Thi", "cg": 0, "he": ["am"], "loai": ["thi"], "dk": null, "th": [], "hach": null, "dh": ["ho_nuoc", "hai_dao"], "mt": "Xác trôi dạt vào bãi, hà và sò bám kín lưng như vỏ thuyền. Nằm úp mặt chờ nước triều, ai lại gần lật xem là nó chộp cổ chân."}, {"id": "enemy.hoang_sa_cot", "ten": "Hoàng Sa Cốt", "cg": 0, "he": ["kim", "tho"], "loai": ["thi"], "dk": null, "th": [], "hach": null, "dh": ["hoang_mac"], "mt": "Bộ xương khách buôn chết khát, cát vàng lấp đầy hốc mắt và kẽ sườn. Nó trồi lên khỏi đụn cát khi có bóng người đi qua, đầu tiên là một bàn tay."}, {"id": "enemy.hai_u_linh", "ten": "Hải U Linh", "cg": 1, "he": ["am"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["hai_dao", "ho_nuoc"], "mt": "Hồn thủy thủ trên chiếc thuyền đắm, áo còn quấn dây buồm mục. Đêm sương nó thắp đèn trên mặt biển, dụ thuyền khác lái vào bãi đá ngầm."}, {"id": "enemy.doan_nhai_quy", "ten": "Đoạn Nhai Quỷ", "cg": 2, "he": ["phong"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["son_mach"], "mt": "Hồn kẻ trượt chân rơi vực, thân mình gãy gập như cành khô. Nó đứng sau lưng người đi đường mép núi, chờ một cơn gió để đẩy."}, {"id": "enemy.phong_sa_quy", "ten": "Phong Sa Quỷ", "cg": 2, "he": ["phong", "tho"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["hoang_mac"], "mt": "Cả đoàn lạc đà chết trong một trận bão cát, hồn nhập vào gió mà đi. Cột cát xoáy tới đâu nghe tiếng chuông lạc đà tới đó, trong cát có tay người."}, {"id": "enemy.ha_dang_hon", "ten": "Hà Đăng Hồn", "cg": 2, "he": ["thuy", "hoa"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["ho_nuoc"], "mt": "Hồn đi theo ngọn hoa đăng người ta thả sông cúng vong, mà không có ai cúng cho nó. Đèn trôi tới bến nào, nó đứng dưới nước ngóc đầu nhìn lên bờ."}, {"id": "enemy.dieu_tu_quy", "ten": "Điếu Tử Quỷ", "cg": 3, "he": ["moc"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["rung_ram"], "mt": "Hồn người thắt cổ trên cây cổ thụ giữa rừng, lưỡi thè dài tới ngực, cổ còn sợi dây gai. Nó thòng dây xuống từ tán lá, siết được ai là treo lên cạnh mình."}, {"id": "enemy.tram_uyen_thi", "ten": "Trầm Uyên Thi", "cg": 3, "he": ["am"], "loai": ["thi"], "dk": null, "th": [], "hach": "item.thi_hach", "dh": ["ho_nuoc"], "mt": "Xác nằm dưới đáy đầm trăm năm, da xanh đen mọc vảy như cá, móng dài cong như lưỡi câu. Nó trồi lên giữa vòng nước xoáy, cuốn cả thuyền lẫn người."}, {"id": "enemy.sa_tang_thi", "ten": "Sa Táng Thi", "cg": 3, "he": ["tho", "hoa"], "loai": ["thi"], "dk": null, "th": [], "hach": "item.thi_hach", "dh": ["hoang_mac"], "mt": "Xác quý tộc nước cổ quấn vải liệm tẩm hương, chôn sâu dưới cát mà không rữa. Vải liệm tự tung ra trói người, chỗ rách trên thân nó khép lại như cũ, chỉ lửa làm nó khựng."}, {"id": "enemy.han_son_quy", "ten": "Hàn Sơn Quỷ", "cg": 4, "he": ["bang"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["son_mach"], "mt": "Hồn cả đoàn người vượt núi chết cóng trong bão tuyết, dính lại thành một bóng trắng cao lênh khênh. Nó hú một tiếng, tuyết trên vách đổ xuống và hơi thở người nghe đóng băng trên môi."}, {"id": "enemy.huyen_quan_thi", "ten": "Huyền Quan Thi", "cg": 4, "he": ["tho", "kim"], "loai": ["thi"], "dk": null, "th": [], "hach": null, "dh": ["son_mach"], "mt": "Xác trong cỗ quan tài treo trên vách núi nghìn trượng, hút sương núi nghìn năm mà thành. Nó vác cả nắp quan bằng gỗ sam trên lưng, lao từ vách xuống như chim ưng."}, {"id": "enemy.tram_giang_quy", "ten": "Trầm Giang Quỷ", "cg": 4, "he": ["am"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["ho_nuoc"], "mt": "Quỷ dưới đáy khúc sông dữ, nuôi hồn bao người chết đuối làm tôi, tóc dài như rong cả chục trượng. Nó cuộn nước dựng thành vách, kéo cả bè người xuống một lượt."}, {"id": "enemy.ngu_to_tan_tran", "ten": "Ngũ Tổ Tàn Trận", "cg": 5, "he": ["kim", "loi"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.co_khoi_hach", "dh": ["di_tich"], "mt": "Trận nhãn còn sót của đại trận Ngũ Tổ dựng trên Trung Châu, nằm dưới đáy Vĩnh Triều, chỉ lộ ra đêm triều rút. Năm pho tượng đồng mang năm sắc áo tổ sư, cử động cùng một nhịp như một người."}, {"id": "enemy.thach_quai", "ten": "Thạch Quái", "cg": 0, "he": ["tho"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.thach_tuy_phan", "dh": ["son_mach", "hoang_mac"], "mt": "Tảng đá cỡ con trâu nằm giữa đường núi, có người ngồi lên nghỉ chân thì nó đứng dậy. Đấm vào chỉ đau tay."}, {"id": "enemy.thach_tuong_linh", "ten": "Thạch Tượng Linh", "cg": 2, "he": ["tho"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.linh_van_thach", "dh": ["di_tich"], "mt": "Tượng võ tướng canh cửa mộ, mắt khảm đá có vân. Chủ mộ đã thành tro, nó vẫn đứng gác, kẻ nào bước qua bậc thềm là nó quay đầu."}, {"id": "enemy.son_tinh_cu_nhan", "ten": "Sơn Tinh Cự Nhân", "cg": 3, "he": ["tho"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.son_tinh_hach", "dh": ["son_mach"], "mt": "Nửa quả núi đứng dậy đi được, đầu cao ngang ngọn thông. Nó ngủ thì là núi, người đi săn dựng lều trên vai nó mà không biết."}, {"id": "enemy.co_bi_linh", "ten": "Cổ Bi Linh", "cg": 2, "he": ["tho"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.linh_van_thach", "dh": ["di_tich"], "mt": "Tấm bia đá đầu mộ cổ, chữ khắc đã mòn mà đêm rằm vẫn tự sáng. Kẻ nào đọc to chữ trên bia thì chân dính chặt xuống đất."}, {"id": "enemy.tran_mon_thach_tuong", "ten": "Trấn Môn Thạch Tướng", "cg": 5, "he": ["tho", "kim"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.thach_tuong_tam", "dh": ["di_tich"], "mt": "Tượng thần tướng cao năm trượng trước cổng một tiên cung đã sập, giáp đá khắc kín trận văn. Cổng không còn, nó vẫn chặn đúng chỗ cổng."}, {"id": "enemy.ngoc_tuy_tinh", "ten": "Ngọc Tủy Tinh", "cg": 3, "he": ["tho", "kim"], "loai": ["thu"], "dk": 0.6, "th": [], "hach": "item.ngoc_tuy", "dh": ["son_mach", "di_tich"], "mt": "Hình đứa trẻ bằng ngọc trong, ngồi ôm gối trong khe núi. Không ai chọc thì nó chỉ ngắm nước chảy, đánh nó thì đòn dội lại."}, {"id": "enemy.sam_tinh", "ten": "Sâm Tinh", "cg": 1, "he": ["tho", "moc"], "loai": ["thu"], "dk": 0.7, "th": [], "hach": null, "dh": ["son_mach", "rung_ram"], "mt": "Củ sâm trăm năm mọc chân tay, chạy lon ton như đứa bé trần truồng. Thấy người là chui xuống đất, chỉ để lại cái lá."}, {"id": "enemy.tuyet_lien_tinh", "ten": "Tuyết Liên Tinh", "cg": 4, "he": ["bang", "thuy"], "loai": ["thu"], "dk": 0.8, "th": [], "hach": null, "dh": ["hoang_nguyen", "son_mach"], "mt": "Đóa tuyết liên vạn năm hóa thành thiếu nữ áo trắng, bước trên tuyết không để dấu. Nàng chạy đi thì để lại một làn hương lạnh."}, {"id": "enemy.chi_nhan", "ten": "Chỉ Nhân", "cg": 1, "he": ["moc"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.am_phu_chi", "dh": ["di_tich"], "mt": "Hình nhân giấy đốt dở trong nhà tang bỏ hoang, mặt vẽ son cười mãi. Xé đôi nó thì thành hai, chỉ có lửa mới làm nó im."}, {"id": "enemy.co_kinh_tinh", "ten": "Cổ Kính Tinh", "cg": 2, "he": ["kim", "thuy"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.co_kinh_phien", "dh": ["di_tich"], "mt": "Gương đồng treo trong phòng tiểu thư đã chết, mặt gương vẫn sáng như mới lau. Ai soi vào thấy cái mình sợ nhất đứng sau lưng."}, {"id": "enemy.dong_dinh_tinh", "ten": "Đồng Đỉnh Tinh", "cg": 2, "he": ["kim", "hoa"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.co_dong_tinh", "dh": ["di_tich", "son_mach"], "mt": "Đỉnh đồng ba chân của đan phòng cổ, trong lòng vẫn âm ỉ lửa trăm năm. Nó đi bằng ba chân, mỗi bước nện xuống một tiếng boong."}, {"id": "enemy.kiem_linh", "ten": "Kiếm Linh", "cg": 3, "he": ["kim"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.tan_kiem_y", "dh": ["di_tich", "son_mach"], "mt": "Thanh kiếm cắm trên mộ kiếm khách, chủ chết mà kiếm không chịu nằm. Nó tự rút khỏi đất, ra chiêu y hệt người cầm năm xưa."}, {"id": "enemy.co_chung_linh", "ten": "Cổ Chung Linh", "cg": 4, "he": ["kim"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.co_chung_dong", "dh": ["di_tich"], "mt": "Quả chuông đồng của ngôi chùa chìm dưới cát, nghe kinh nghìn năm mà sinh linh. Nó tự ngân, người nghe đứng chết lặng."}, {"id": "enemy.thuy_hau", "ten": "Thủy Hầu", "cg": 0, "he": ["thuy"], "loai": ["thu"], "dk": 0.3, "th": [], "hach": null, "dh": ["ho_nuoc"], "mt": "Con khỉ nước lông xanh rêu, ngồi rình ở bến vắng. Ai thò chân xuống nước là nó túm cổ chân kéo xuống."}, {"id": "enemy.kim_giap_trung", "ten": "Kim Giáp Trùng", "cg": 0, "he": ["kim"], "loai": ["trung"], "dk": 0.3, "th": [{"id": "enemy.phe_kim_trung", "lieu": {"item.trung_giap_phien": 3}}], "hach": null, "dh": ["son_mach", "di_tich", "rung_ram"], "mt": "Bọ cánh cứng to bằng đốt ngón tay, vỏ ánh đồng, sống trong khe quặng. Đàn bò qua thì đinh sắt trên cửa mỏ chỉ còn lỗ."}, {"id": "enemy.phe_kim_trung", "ten": "Phệ Kim Trùng", "cg": 1, "he": ["kim"], "loai": ["trung"], "dk": 0.4, "th": [{"id": "enemy.xuyen_giap_kim_trung", "lieu": {"item.kim_giap_xac": 3}}], "hach": null, "dh": ["son_mach", "di_tich", "yeu_vuc"], "mt": "Trùng vàng to bằng quả táo, ăn sắt như ăn lá. Bám được lên pháp khí là nó gặm tới khi linh quang tắt hẳn."}, {"id": "enemy.xuyen_giap_kim_trung", "ten": "Xuyên Giáp Kim Trùng", "cg": 2, "he": ["kim"], "loai": ["trung"], "dk": 0.5, "th": [{"id": "enemy.thiet_si_kim_trung", "lieu": {"item.phe_kim_nha": 3}}], "hach": null, "dh": ["son_mach", "di_tich", "yeu_vuc"], "mt": "Kim trùng dài bằng cẳng tay, đầu nhọn như dùi. Nó lao thẳng vào ngực, hộ thể mỏng thì thủng một lỗ tròn."}, {"id": "enemy.thiet_si_kim_trung", "ten": "Thiết Sí Kim Trùng", "cg": 3, "he": ["kim"], "loai": ["trung"], "dk": 0.55, "th": [{"id": "enemy.phe_kim_trung_vuong", "lieu": {"item.kim_trung_si": 3}}], "hach": null, "dh": ["son_mach", "yeu_vuc", "di_tich"], "mt": "Kim trùng mọc cánh sắt, bay tới đâu tiếng rít như mài dao tới đó. Cả đàn sà xuống, giáp trụ một đội quân thành sắt vụn."}, {"id": "enemy.phe_kim_trung_vuong", "ten": "Phệ Kim Trùng Vương", "cg": 4, "he": ["kim"], "loai": ["trung"], "dk": 0.75, "th": [], "hach": null, "dh": ["son_mach", "yeu_vuc", "di_tich"], "mt": "Trùng vương nằm giữa mạch quặng đã bị ăn rỗng, to bằng con bê, mai vàng sẫm. Nó rung cánh một hồi, đá quanh hang rỉ ra trùng con."}, {"id": "enemy.doc_ngo_cong", "ten": "Độc Ngô Công", "cg": 0, "he": ["moc"], "loai": ["trung"], "dk": 0.3, "th": [{"id": "enemy.ngu_doc_co", "lieu": {"item.chu_doc_nang": 1, "item.bich_hat_vi": 1}}], "hach": null, "dh": ["rung_ram", "ho_nuoc", "yeu_vuc"], "mt": "Rết xanh dài một gang, trăm chân gõ lách tách dưới lớp lá mục. Cắn một phát, cả bàn tay sưng tím."}, {"id": "enemy.hac_qua_chu", "ten": "Hắc Quả Chu", "cg": 1, "he": ["thuy"], "loai": ["trung"], "dk": 0.4, "th": [{"id": "enemy.ngu_doc_co", "lieu": {"item.thanh_doc_nang": 2, "item.bich_hat_vi": 1}}], "hach": null, "dh": ["ho_nuoc", "rung_ram", "yeu_vuc"], "mt": "Nhện đen bụng có đốm đỏ, giăng tơ sát mặt đầm. Con nào chạm lưới là tê cứng trước khi kịp giãy."}, {"id": "enemy.bich_hat", "ten": "Bích Hạt", "cg": 1, "he": ["moc"], "loai": ["trung"], "dk": 0.45, "th": [{"id": "enemy.ngu_doc_co", "lieu": {"item.thanh_doc_nang": 2, "item.chu_doc_nang": 1}}], "hach": null, "dh": ["rung_ram", "yeu_vuc", "di_tich"], "mt": "Bọ cạp xanh biếc nằm dưới đá ẩm, đuôi cong lên như móc câu. Ngòi chích vào, chỗ đó lạnh trước rồi mới đau."}, {"id": "enemy.ngu_doc_co", "ten": "Ngũ Độc Cổ", "cg": 2, "he": ["moc", "thuy"], "loai": ["trung"], "dk": 0.5, "th": [{"id": "enemy.that_thai_doc_co", "lieu": {"item.ngu_doc_dich": 3}}], "hach": null, "dh": ["ho_nuoc", "rung_ram", "yeu_vuc"], "mt": "Con sống sót trong hũ năm độc, mình rết, càng bọ cạp, lưng có vằn nhện. Hũ cổ sư bỏ hoang, nó tự bò ra đầm kiếm ăn."}, {"id": "enemy.that_thai_doc_co", "ten": "Thất Thải Độc Cổ", "cg": 3, "he": ["moc", "thuy"], "loai": ["trung"], "dk": 0.6, "th": [{"id": "enemy.ngu_doc_co_vuong", "lieu": {"item.that_thai_doc_nang": 3}}], "hach": null, "dh": ["ho_nuoc", "yeu_vuc", "rung_ram"], "mt": "Độc cổ vỏ bảy màu, sáng rực giữa đầm như ai đánh rơi ngọc. Sương quanh chỗ nó nằm cũng ngả màu."}, {"id": "enemy.ngu_doc_co_vuong", "ten": "Ngũ Độc Cổ Vương", "cg": 5, "he": ["moc", "thuy"], "loai": ["trung"], "dk": 0.9, "th": [], "hach": null, "dh": ["ho_nuoc", "yeu_vuc"], "mt": "Cổ vương ăn hết mọi cổ trong một vùng đầm, thân trong như lưu ly, thấy rõ năm túi độc đập theo nhịp. Cá trong đầm nổi bụng cả mùa."}, {"id": "enemy.huyet_co", "ten": "Huyết Cổ", "cg": 1, "he": ["hoa"], "loai": ["trung"], "dk": 0.45, "th": [{"id": "enemy.kim_tam_co", "lieu": {"item.co_huyet_tinh": 3}}], "hach": null, "dh": ["ho_nuoc", "yeu_vuc", "rung_ram"], "mt": "Sâu đỏ nhỏ như sợi chỉ, cổ sư chết thì nó bỏ đi tìm vật chủ mới. Chui qua da không đau, chỉ thấy người lạnh dần."}, {"id": "enemy.thien_tam_co_mau", "ten": "Thiên Tằm Cổ Mẫu", "cg": 4, "he": ["kim", "moc"], "loai": ["trung"], "dk": 0.75, "th": [], "hach": null, "dh": ["ho_nuoc", "yeu_vuc"], "mt": "Tằm mẹ to như cối xay, nằm giữa đầm phủ tơ trắng, bụng trong suốt đầy trứng. Kim Tằm Cổ trong vùng đều từ bụng nó mà ra."}, {"id": "enemy.moc_nhan_khoi", "ten": "Mộc Nhân Khôi", "cg": 1, "he": ["moc"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.moc_khoi_hach", "dh": ["di_tich"], "mt": "Người gỗ luyện tay của thợ khôi lỗi nhập môn, mặt chưa khắc mắt. Đứng giữ cửa động phủ của chủ, ai bước qua bậc là nó vung tay."}, {"id": "enemy.moc_khoi_loi", "ten": "Mộc Khôi Lỗi", "cg": 2, "he": ["moc"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.moc_khoi_hach", "dh": ["di_tich"], "mt": "Người gỗ thiết mộc cao hơn người, trong cánh tay giấu ống tên. Chém vào chỉ tóe dăm; chủ còn sống thì nó theo sau chủ, chủ chết thì đứng chết ở chỗ cuối cùng được sai."}, {"id": "enemy.dong_giap_khoi_loi", "ten": "Đồng Giáp Khôi Lỗi", "cg": 3, "he": ["kim"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.dong_khoi_hach", "dh": ["di_tich", "son_mach"], "mt": "Người đồng canh cấm chế của một tông môn đã diệt, rêu mọc kín vai. Nó chỉ nhận lệnh bài của chủ cũ; ai không có, đấm vào nó là đau tay mình trước."}, {"id": "enemy.thiet_thi_khoi", "ten": "Thiết Thi Khôi", "cg": 4, "he": ["tho"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.thi_khoi_hach", "dh": ["di_tich", "yeu_vuc"], "mt": "Xác tu sĩ Kết Đan bị ma tông đóng chín cây đinh sắt vào khớp, mặt còn nguyên vẻ kinh hãi lúc chết. Theo hầu ma tu, hoặc gác cửa ma tông bỏ hoang; cắn được ai là hút máu người đó."}, {"id": "enemy.co_chien_khoi_binh", "ten": "Cổ Chiến Khôi Binh", "cg": 4, "he": ["kim"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.co_khoi_tan_giap", "dh": ["di_tich", "hoang_nguyen"], "mt": "Lính khôi lỗi của liên quân Đoạn Thiên, giáp khắc số hiệu đội. Ba nghìn năm vẫn đi tuần quanh một ải đổ, nghe tiếng người là xếp hàng nghênh địch."}, {"id": "enemy.co_chien_khoi_loi", "ten": "Cổ Chiến Khôi Lỗi", "cg": 5, "he": ["kim", "loi"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.co_khoi_hach", "dh": ["di_tich", "hoang_nguyen"], "mt": "Khôi lỗi thống lĩnh cao ba trượng, đúc để đánh trên Trung Châu ngày Đoạn Thiên. Lõi giữa ngực vẫn sáng; nó đứng giữ ải cổ chờ hiệu lệnh rút quân, và coi mọi kẻ tới gần là quân địch."}, {"id": "enemy.moc_hau_khoi", "ten": "Mộc Hầu Khôi", "cg": 1, "he": ["moc"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.moc_khoi_hach", "dh": ["di_tich"], "mt": "Con khỉ gỗ cỡ đứa trẻ, đuôi là một sợi xích đồng. Nó leo xà nhà nhanh hơn người chạy, trong miệng ngậm sẵn ba mũi tên nhỏ."}, {"id": "enemy.moc_lang_khoi", "ten": "Mộc Lang Khôi", "cg": 2, "he": ["moc"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.moc_khoi_hach", "dh": ["di_tich"], "mt": "Sói gỗ thiết mộc, răng là đinh sắt đóng ngược. Chạy không có tiếng chân, chỉ nghe bánh răng trong bụng kêu tích tắc."}, {"id": "enemy.dong_hac_khoi", "ten": "Đồng Hạc Khôi", "cg": 3, "he": ["kim"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.dong_khoi_hach", "dh": ["di_tich", "son_mach"], "mt": "Con hạc đồng sải cánh hơn trượng, lông vũ là từng lưỡi dao mỏng. Đứng một chân trên xà như tượng, có người bước vào mới vỗ cánh."}, {"id": "enemy.thanh_dong_cu_khoi", "ten": "Thanh Đồng Cự Khôi", "cg": 4, "he": ["kim", "tho"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.dong_khoi_hach", "dh": ["di_tich", "son_mach"], "mt": "Người đồng cao hai trượng, lưng gánh cả một cái cối xay đá. Mỗi bước đi nền gạch nứt, trong ngực có ngọn lửa lò đúc cháy mãi không tắt."}, {"id": "enemy.co_chien_khoi_tuong", "ten": "Cổ Chiến Khôi Tướng", "cg": 5, "he": ["kim"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.co_khoi_tan_giap", "dh": ["di_tich", "hoang_nguyen"], "mt": "Khôi lỗi đội trưởng thời Đoạn Thiên, mũ trụ cắm lông đỏ đã bạc. Nó vẫn đếm quân dưới trướng mỗi sáng, thiếu một con là đi tìm."}, {"id": "enemy.tho_moc_khoi", "ten": "Thô Mộc Khôi", "cg": 0, "he": ["moc"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.moc_khoi_hach", "dh": ["di_tich", "rung_ram"], "mt": "Khúc gỗ đẽo vội thành người, tay chân buộc dây gai, ngực dán một lá phù đã bạc màu. Đi lệch một bên, mỗi bước kêu cót két."}, {"id": "enemy.thanh_truc_khoi", "ten": "Thanh Trúc Khôi", "cg": 1, "he": ["moc"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.moc_khoi_hach", "dh": ["rung_ram", "di_tich"], "mt": "Người trúc xanh gầy như que, đốt nào cũng nhét một mũi tên tre. Đứng lẫn giữa rừng trúc, gió thổi mới nghe nó lách cách."}, {"id": "enemy.tram_thi_khoi", "ten": "Trầm Thi Khôi", "cg": 2, "he": ["am"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": null, "dh": ["ho_nuoc", "di_tich"], "mt": "Xác tu sĩ Trúc Cơ bị ma tu buộc đá dìm đáy đầm cho khỏi rữa, khớp gối đóng chốt sắt. Thuyền ai đi ngang, nó trồi lên kéo theo một vệt rong."}, {"id": "enemy.dong_sa_khoi", "ten": "Đồng Sa Khôi", "cg": 3, "he": ["kim", "tho"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.dong_khoi_hach", "dh": ["hoang_mac", "di_tich"], "mt": "Người đồng canh trạm dịch của một tông môn đã chôn vùi dưới cát, chỉ lộ cái đầu mũ trụ. Có tiếng lạc đà đi qua là nó rũ cát đứng dậy."}, {"id": "enemy.co_khoi_xa_thu", "ten": "Cổ Khôi Xạ Thủ", "cg": 4, "he": ["kim"], "loai": ["khoi_loi"], "dk": null, "th": [], "hach": "item.co_khoi_tan_giap", "dh": ["hoang_nguyen", "son_mach"], "mt": "Khôi lỗi cung thủ thời Đoạn Thiên, cánh tay trái đúc liền một cây nỏ đồng. Nó nằm phục trên sườn núi, ống tên sau lưng tự nạp lại sau mỗi phát."}, {"id": "enemy.thanh_vu_au_hac", "ten": "Thanh Vũ Ấu Hạc", "cg": 1, "he": ["phong", "moc"], "loai": ["thu"], "dk": 0.4, "th": [{"id": "enemy.thanh_vu_hac", "lieu": {"item.hac_vu": 3, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Hạc non lông tơ xám xanh, chân dài lêu khêu chưa đứng vững. Gió lùa qua cửa là nó dang hai cánh cụt ra hứng."}, {"id": "enemy.thanh_van_au_quy", "ten": "Thanh Văn Ấu Quy", "cg": 1, "he": ["thuy", "tho"], "loai": ["thu"], "dk": 0.4, "th": [{"id": "enemy.thanh_van_quy", "lieu": {"item.quy_ban": 3, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["ho_nuoc", "hai_dao"], "mt": "Rùa con bằng bàn tay, mai xanh rêu mới nứt vài ô vuông. Gõ nhẹ vào mai là nó rụt cả đầu lẫn chân, nửa ngày không ra."}, {"id": "enemy.cam_ly_au_ngu", "ten": "Cẩm Lý Ấu Ngư", "cg": 1, "he": ["thuy"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.cam_ly", "lieu": {"item.giao_han_can": 2, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["ho_nuoc"], "mt": "Cá chép con dài bằng ngón tay, vảy mới ửng hai ba màu. Thả vào chậu, nó cứ nhảy lên mép chậu như thử vượt thác."}, {"id": "enemy.tam_bao_au_dieu", "ten": "Tầm Bảo Ấu Điêu", "cg": 1, "he": ["kim"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.tam_bao_dieu", "lieu": {"item.toan_dia_trao": 2, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["di_tich", "son_mach"], "mt": "Chồn con lông vàng, mũi đỏ chót không lúc nào ngừng hít. Để nó trên bàn, nó bới thẳng vào túi tiền của ngươi."}, {"id": "enemy.thanh_nguu_au_tu", "ten": "Thanh Ngưu Ấu Tử", "cg": 1, "he": ["tho"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.thanh_nguu_doc", "lieu": {"item.te_nguu_giac": 2, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["son_mach", "hoang_nguyen"], "mt": "Nghé con xanh màu đá, trán mới gồ hai cục u thay sừng. Nó húc cột nhà cả ngày, cột chưa sao mà nó cũng không đau."}, {"id": "enemy.xich_diem_au_cau", "ten": "Xích Diễm Ấu Câu", "cg": 1, "he": ["hoa"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.xich_diem_cau", "lieu": {"item.hoa_tinh_chau": 2, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["hoang_nguyen", "hoang_mac"], "mt": "Ngựa non vảy đỏ, bờm mới mọc đã bốc khói. Ai đưa tay vuốt lưng là nó quay lại đớp, chỉ chịu cho ăn từ tay ngươi."}, {"id": "enemy.tu_dien_au_hau", "ten": "Tử Điện Ấu Hầu", "cg": 1, "he": ["loi"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.tu_dien_hau", "lieu": {"item.loi_linh_chau": 1, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["son_mach", "rung_ram"], "mt": "Khỉ con lông tím, chạm vào là lông dựng tách tách. Nó giấu đồ của ngươi khắp nơi rồi ngồi trên xà nhà cười."}, {"id": "enemy.thanh_dieu_au_so", "ten": "Thanh Điểu Ấu Sồ", "cg": 1, "he": ["phong"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.thanh_dieu", "lieu": {"item.hac_vu": 2, "item.yeu_dan_3": 1}}], "hach": null, "dh": ["son_mach", "rung_ram"], "mt": "Chim non xanh biếc, ba chân còn mềm như sợi bún. Ngươi đi đâu nó cũng ríu rít đòi bám theo, như đã biết việc đưa tin."}, {"id": "enemy.thuc_thiet_au_thu", "ten": "Thực Thiết Ấu Thú", "cg": 1, "he": ["kim", "tho"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.thuc_thiet_thu", "lieu": {"item.thuc_thiet_nha": 2, "item.yeu_dan_3": 1}}], "hach": null, "dh": ["son_mach", "rung_ram"], "mt": "Gấu con đen trắng tròn như cái gối, ngủ suốt ngày. Thức dậy là gặm, chân bàn sắt ở nhà đã mòn mất một khúc."}, {"id": "enemy.boi_son_au_quy", "ten": "Bối Sơn Ấu Quy", "cg": 1, "he": ["tho", "thuy"], "loai": ["thu"], "dk": 0.4, "th": [{"id": "enemy.boi_son_quy", "lieu": {"item.quy_giap": 2, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["ho_nuoc", "hai_dao"], "mt": "Rùa con to bằng cái nia, mai đã bám một lớp rêu đá mỏng. Nó bò chậm như trôi, mà đè lên chân ai thì người ấy không rút ra nổi."}, {"id": "enemy.bach_trach_au_thu", "ten": "Bạch Trạch Ấu Thú", "cg": 1, "he": ["moc", "phong"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.bach_trach", "lieu": {"item.thanh_dieu_vu": 2, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["yeu_vuc", "son_mach"], "mt": "Thú non lông trắng, đầu dê mới nhú hai mầm sừng. Ngươi chưa mở miệng, nó đã nghiêng đầu nhìn như biết ngươi định hỏi gì."}, {"id": "enemy.liet_khong_au_ung", "ten": "Liệt Không Ấu Ưng", "cg": 1, "he": ["kim", "phong"], "loai": ["thu"], "dk": 0.4, "th": [{"id": "enemy.liet_khong_ung", "lieu": {"item.ung_nhan": 3, "item.yeu_dan_5": 1}}], "hach": null, "dh": ["son_mach", "hoang_nguyen"], "mt": "Ưng non lông tơ xám, móng đã cứng như đinh sắt. Mới tập bay, nó đã lao xuống mổ chết con chuột trong bếp."}, {"id": "enemy.phan_son_au_ho", "ten": "Phần Sơn Ấu Hổ", "cg": 1, "he": ["hoa", "tho"], "loai": ["thu"], "dk": 0.4, "th": [{"id": "enemy.phan_son_ho", "lieu": {"item.ho_cot": 3, "item.yeu_dan_5": 1}}], "hach": null, "dh": ["son_mach", "rung_ram", "hoang_mac"], "mt": "Hổ con lông đỏ vằn đen, ngáp một cái là phả ra hơi nóng như miệng lò. Chỗ nó nằm ngủ, rơm xém thành một vòng tròn."}, {"id": "enemy.bich_lan_au_mang", "ten": "Bích Lân Ấu Mãng", "cg": 1, "he": ["moc"], "loai": ["thu"], "dk": 0.4, "th": [{"id": "enemy.bich_lan_mang", "lieu": {"item.xa_dam": 3, "item.yeu_dan_5": 1}}], "hach": null, "dh": ["rung_ram", "yeu_vuc", "ho_nuoc"], "mt": "Trăn con xanh như dây leo non, dài chừng một sải tay. Nó quấn lên cột nhà, mấy hôm sau chân cột mọc rễ đỏ."}, {"id": "enemy.nguyet_anh_lang", "ten": "Nguyệt Ảnh Lang", "cg": 3, "he": ["phong"], "loai": ["linh_thu"], "dk": 0.6, "th": [{"id": "enemy.ngan_nguyet_lang", "lieu": {"item.thien_lang_nhan": 1, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["son_mach", "hoang_nguyen", "hoang_mac"], "mt": "Sói xám chỉ hiện ra khi trăng lên, bóng nó đổ dài gấp ba thân. Đuổi theo bóng thì con thật đã ở sau lưng."}, {"id": "enemy.thanh_lan_giao", "ten": "Thanh Lân Giao", "cg": 3, "he": ["thuy", "bang"], "loai": ["linh_thu"], "dk": 0.65, "th": [], "hach": null, "dh": ["ho_nuoc", "son_mach"], "mt": "Vảy xanh như ngọc bích, nằm dưới thác mà nước rơi trúng lưng thì đóng băng. Trong hang nó còn cây thương của kẻ đến trước."}, {"id": "enemy.ngan_nguyet_lang", "ten": "Ngân Nguyệt Lang", "cg": 4, "he": ["phong", "hoa"], "loai": ["linh_thu"], "dk": 0.8, "th": [], "hach": null, "dh": ["son_mach", "yeu_vuc", "hoang_nguyen"], "mt": "Lông bạc ánh lên như vảy trăng, bầy sói đi sau nó không con nào dám ngẩng đầu. Nó đã thôi hú từ lâu."}, {"id": "enemy.bach_ngach_ho", "ten": "Bạch Ngạch Hổ", "cg": 4, "he": ["kim"], "loai": ["linh_thu"], "dk": 0.8, "th": [], "hach": null, "dh": ["rung_ram", "son_mach", "yeu_vuc"], "mt": "Trán trắng có vằn như chữ Vương. Cả cánh rừng nó đi qua không còn tiếng côn trùng."}, {"id": "enemy.truy_phong_ung", "ten": "Truy Phong Ưng", "cg": 3, "he": ["phong", "kim"], "loai": ["thu"], "dk": 0.6, "th": [], "hach": null, "dh": ["son_mach"], "mt": "Ưng xám bay trên mây, chân buộc ống tre nhỏ của Tuyết Bằng. Nó bám theo ngươi ba ngày rồi mới sà xuống."}, {"id": "enemy.boi_son_quy", "ten": "Bối Sơn Quy", "cg": 4, "he": ["tho", "thuy"], "loai": ["thu"], "dk": 0.8, "th": [{"id": "enemy.phu_nhac_quy", "lieu": {"item.boi_son_quy_giap": 1, "item.yeu_dan_5": 1}}], "hach": null, "dh": ["ho_nuoc", "hai_dao"], "mt": "Mai rộng như sân đình, rêu đá phủ kín, chim biển làm tổ trên lưng. Người Bắc Minh gặp nó thì quỳ lạy, tin nó là con cháu Huyền Vũ."}, {"id": "enemy.thon_kim_thu_ton", "ten": "Thôn Kim Thử Tôn", "cg": 4, "he": ["kim", "tho"], "loai": ["linh_thu"], "dk": 0.85, "th": [], "hach": null, "dh": ["hoang_mac", "di_tich"], "mt": "Chuột già to như con bê, hai túi má căng phồng vàng bạc moi từ mộ cổ. Nó rít một tiếng, cát quanh chân ngươi sủi lên toàn đầu chuột."}, {"id": "enemy.cuu_cao_tien_hac", "ten": "Cửu Cao Tiên Hạc", "cg": 4, "he": ["phong", "hoa"], "loai": ["linh_thu"], "dk": 0.85, "th": [], "hach": null, "dh": ["son_mach", "rung_ram"], "mt": "Tiếng kêu của nó vang tới chín tầng mây, đạo quán Đại Ung nghe thấy thì mở cửa đón điềm lành. Kẻ giết nó, trời đất đều nhớ mặt."}, {"id": "enemy.hac_phong_bao", "ten": "Hắc Phong Báo", "cg": 1, "he": ["phong"], "loai": ["thu"], "dk": 0.5, "th": [{"id": "enemy.van_anh_bao", "he": "phong", "lieu": {"item.huyet_tinh_yeu_thu": 1}}, {"id": "enemy.truy_phong_ung", "he": "kim", "lieu": {"item.huyet_tinh_yeu_thu": 1}}], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Báo đen nằm trên cành cao, chỉ thấy hai đốm mắt vàng. Nó vồ trước khi ngươi kịp nghe tiếng lá."}, {"id": "enemy.van_anh_bao", "ten": "Vân Ảnh Báo", "cg": 3, "he": ["phong"], "loai": ["thu"], "dk": 0.65, "th": [], "hach": null, "dh": ["rung_ram", "son_mach", "yeu_vuc"], "mt": "Lông xám đốm mây, đứng trong sương núi là tan mất. Nhát vồ tới từ phía ngươi vừa thấy trống không."}, {"id": "enemy.bach_ngac", "ten": "Bạch Ngạc", "cg": 1, "he": ["thuy"], "loai": ["thu"], "dk": 0.4, "th": [], "hach": null, "dh": ["ho_nuoc"], "mt": "Cá sấu trắng nằm im như khúc gỗ mục ven bờ. Nó ngoạm chân ai thì lôi thẳng xuống nước."}, {"id": "enemy.sa_tich", "ten": "Sa Tích", "cg": 0, "he": ["tho"], "loai": ["thu"], "dk": 0.3, "th": [], "hach": null, "dh": ["hoang_mac"], "mt": "Thằn lằn màu cát, nằm im thì không ai thấy. Nó lặn xuống cát rồi trồi lên ngay sau gót chân."}, {"id": "enemy.hoa_vu_ke", "ten": "Hỏa Vũ Kê", "cg": 1, "he": ["hoa"], "loai": ["thu"], "dk": 0.3, "th": [], "hach": null, "dh": ["hoang_nguyen", "hoang_mac"], "mt": "Gà rừng lông đỏ như than hồng, gáy một tiếng là cỏ khô bén lửa. Mùa khô, đồng cháy nhiều nhất chỗ chúng ở."}, {"id": "enemy.thuc_kim_thu", "ten": "Thực Kim Thử", "cg": 2, "he": ["kim", "tho"], "loai": ["linh_thu"], "dk": 0.5, "th": [{"id": "enemy.tang_kim_thu", "lieu": {"item.toan_dia_trao": 3, "item.yeu_dan_3": 1}}], "hach": null, "dh": ["hoang_mac", "di_tich"], "mt": "Con chuột to bằng chó săn, lông vàng xỉn như đồng ám khói. Nó gặm cửa mộ bằng đồng như gặm vỏ dưa, răng cửa sáng loáng."}, {"id": "enemy.bang_so", "ten": "Bằng Sồ", "cg": 0, "he": ["phong"], "loai": ["thu"], "dk": 0.5, "th": [], "hach": null, "dh": ["son_mach", "hoang_nguyen", "hai_dao"], "mt": "Chim bằng non chưa đủ lông cánh mà đã to bằng con ngỗng. Rơi khỏi tổ, nó mổ mọi thứ biết cử động."}, {"id": "enemy.da_vien", "ten": "Dã Viên", "cg": 0, "he": ["tho"], "loai": ["thu"], "dk": 0.3, "th": [], "hach": null, "dh": ["son_mach", "rung_ram"], "mt": "Vượn hoang chưa khai linh trí, mới biết ném đá và giật đồ. Giật được túi của ai, nó trèo lên cây lục từng món."}, {"id": "enemy.phu_nhac_quy", "ten": "Phụ Nhạc Quy", "cg": 5, "he": ["tho", "thuy"], "loai": ["thu"], "dk": 0.9, "th": [], "hach": null, "dh": ["ho_nuoc", "hai_dao"], "mt": "Mai nó nổi lên giữa biển thành một hòn đảo, ngư dân dựng miếu trên đó ba đời mới biết. Nó trở mình, cả miếu chìm theo."}, {"id": "enemy.liet_khong_ung", "ten": "Liệt Không Ưng", "cg": 5, "he": ["kim", "phong"], "loai": ["thu"], "dk": 0.75, "th": [], "hach": null, "dh": ["son_mach", "hoang_nguyen"], "mt": "Lông cánh ánh như thép mới tôi, sà xuống thì mây bị xé làm đôi. Tuyết Bằng không sai được nó, chỉ xin nó đừng bay qua núi tuyết."}, {"id": "enemy.phan_son_ho", "ten": "Phần Sơn Hổ", "cg": 5, "he": ["hoa", "tho"], "loai": ["thu"], "dk": 0.8, "th": [], "hach": null, "dh": ["son_mach", "rung_ram", "hoang_mac"], "mt": "Hổ vằn đỏ, đi qua sườn núi nào thì cỏ cháy thành một vệt đen. Người Liệt Hổ Hoang đốt rừng lúc nó ngủ, ba ngày sau làng ấy thành tro."}, {"id": "enemy.bich_lan_mang", "ten": "Bích Lân Mãng", "cg": 5, "he": ["moc"], "loai": ["thu"], "dk": 0.88, "th": [], "hach": null, "dh": ["rung_ram", "yeu_vuc", "ho_nuoc"], "mt": "Vảy xanh như rêu, nằm im thì người ta tưởng là cây cổ thụ đổ. Dây leo quanh nó đều đỏ, rễ hút máu con mồi nó bỏ lại."}, {"id": "enemy.ngan_giac_loc", "ten": "Ngân Giác Lộc", "cg": 1, "he": ["moc"], "loai": ["linh_thu"], "dk": 0.4, "th": [], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Hươu sừng bạc, đi qua đâu cỏ dưới chân xanh thêm một màu. Theo nó một quãng thường gặp ổ linh dược."}, {"id": "enemy.ngoc_tho", "ten": "Ngọc Thố", "cg": 1, "he": ["bang"], "loai": ["linh_thu"], "dk": 0.3, "th": [], "hach": null, "dh": ["hoang_nguyen", "son_mach"], "mt": "Thỏ trắng như ngọc, chỉ ra khỏi hang vào đêm trăng tròn. Lông nó sáng mờ, đứng giữa đồng như ngọn đèn nhỏ."}, {"id": "enemy.cam_ly", "ten": "Cẩm Lý", "cg": 2, "he": ["thuy"], "loai": ["linh_thu"], "dk": 0.5, "th": [], "hach": null, "dh": ["ho_nuoc"], "mt": "Cá chép vảy năm màu, ngày nào cũng nhảy thử lên thác. Người ta nói nuôi đủ trăm năm nó hóa giao long."}, {"id": "enemy.xich_diem_cau", "ten": "Xích Diễm Câu", "cg": 2, "he": ["hoa"], "loai": ["linh_thu"], "dk": 0.5, "th": [], "hach": null, "dh": ["hoang_nguyen", "hoang_mac"], "mt": "Ngựa vảy đỏ, bờm là một dải lửa. Cả đời không chịu ai cưỡi, chỉ cúi đầu trước người thuần được nó."}, {"id": "enemy.tu_dien_hau", "ten": "Tử Điện Hầu", "cg": 2, "he": ["loi"], "loai": ["linh_thu"], "dk": 0.5, "th": [], "hach": null, "dh": ["son_mach", "rung_ram"], "mt": "Khỉ lông tím, trời giông là leo lên ngọn cây cao nhất giơ tay đón sét. Tính nghịch, thích lấy đồ người khác treo lên cây."}, {"id": "enemy.thanh_dieu", "ten": "Thanh Điểu", "cg": 3, "he": ["phong"], "loai": ["linh_thu"], "dk": 0.7, "th": [], "hach": null, "dh": ["son_mach", "rung_ram"], "mt": "Chim xanh ba chân đưa thư cho tiên nhân, chân còn buộc ống tre nhỏ. Nó đậu xuống chỗ nào, tin lớn sắp tới chỗ đó."}, {"id": "enemy.bach_trach", "ten": "Bạch Trạch", "cg": 4, "he": ["moc", "phong"], "loai": ["linh_thu"], "dk": 0.95, "th": [], "hach": null, "dh": ["yeu_vuc", "son_mach"], "mt": "Thú trắng đầu dê mình sư tử, biết tên của vạn vật. Nó trả lời một câu hỏi rồi đi, không ai đuổi kịp."}, {"id": "enemy.tam_bao_dieu", "ten": "Tầm Bảo Điêu", "cg": 2, "he": ["kim"], "loai": ["linh_thu"], "dk": 0.5, "th": [], "hach": null, "dh": ["di_tich", "son_mach"], "mt": "Chồn vàng mũi đỏ, chốc chốc dừng lại hít đất. Nó đào chỗ nào, dưới đó có kim thạch hoặc đồ cũ của người xưa."}, {"id": "enemy.thuc_thiet_thu", "ten": "Thực Thiết Thú", "cg": 3, "he": ["kim", "tho"], "loai": ["linh_thu"], "dk": 0.6, "th": [], "hach": null, "dh": ["son_mach", "rung_ram"], "mt": "Gấu lông đen trắng ngồi gặm thanh kiếm gãy như gặm măng. Hiền lành, nhưng đao chém vào lưng nó chỉ mẻ đao."}, {"id": "enemy.bach_linh_ho", "ten": "Bạch Linh Hồ", "cg": 1, "he": ["hoa"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.nhi_vi_linh_ho", "lieu": {"item.ho_bi": 3, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Hồ ly nhỏ lông trắng muốt, chóp đuôi phớt hồng như vừa nhúng son, mắt màu hổ phách. Đêm tối hai mắt nó sáng như hai đốm lửa nhỏ."}, {"id": "enemy.nhi_vi_linh_ho", "ten": "Nhị Vĩ Linh Hồ", "cg": 2, "he": ["hoa"], "loai": ["linh_thu"], "dk": 0.55, "th": [{"id": "enemy.tam_vi_linh_ho", "lieu": {"item.ho_vi": 2, "item.yeu_dan_3": 1}}], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Hồ trắng mọc thêm đuôi thứ hai, hai chóp đuôi hồng như than ủ. Nó đã biết nhìn người mà đổi dáng, lúc ngoan như mèo, lúc lạnh như khách lạ."}, {"id": "enemy.tam_vi_linh_ho", "ten": "Tam Vĩ Linh Hồ", "cg": 3, "he": ["hoa", "moc"], "loai": ["linh_thu"], "dk": 0.7, "th": [{"id": "enemy.cuu_vi_thien_ho", "lieu": {"item.mi_ho_chau": 2, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["rung_ram", "son_mach", "yeu_vuc"], "mt": "Hồ trắng ba đuôi xòe như ba cành lau, chóp mỗi đuôi cháy một ngọn lửa xanh nhạt. Nó ngồi thẳng như người, nghiêng đầu nghe ngươi nói hết rồi mới quyết."}, {"id": "enemy.kim_mao_thu", "ten": "Kim Mao Thử", "cg": 0, "he": ["kim"], "loai": ["linh_thu"], "dk": 0.3, "th": [{"id": "enemy.giao_kim_thu", "lieu": {"item.thu_tu": 3, "item.yeu_dan_1": 1}}], "hach": null, "dh": ["di_tich", "son_mach", "hoang_mac"], "mt": "Chuột nhắt lông vàng óng như rắc kim nhũ, đuôi dài gấp đôi thân. Hai má lúc nào cũng phồng, nhả ra toàn mạt đồng, hạt bạc."}, {"id": "enemy.giao_kim_thu", "ten": "Giảo Kim Thử", "cg": 1, "he": ["kim"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.thuc_kim_thu", "lieu": {"item.toan_dia_trao": 2, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["di_tich", "hoang_mac"], "mt": "Chuột lông vàng to bằng con mèo, răng cửa ánh như đồng thau. Nó gặm ổ khóa sắt rồi nhả ra từng mảnh vụn."}, {"id": "enemy.tang_kim_thu", "ten": "Tàng Kim Thử", "cg": 3, "he": ["kim", "tho"], "loai": ["linh_thu"], "dk": 0.7, "th": [{"id": "enemy.thon_kim_thu_ton", "lieu": {"item.thuc_kim_thu_xi": 1, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["hoang_mac", "di_tich"], "mt": "Chuột lông vàng xỉn to như con sói, hai túi má trễ xuống vì nhét đầy vàng vụn. Nó đào hang xuyên ba ngôi mộ cổ mà vách không sụt."}, {"id": "enemy.ngan_nguyet_au_lang", "ten": "Ngân Nguyệt Ấu Lang", "cg": 1, "he": ["phong"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.ban_nguyet_lang", "lieu": {"item.lang_nha": 3, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["hoang_nguyen", "son_mach"], "mt": "Sói con lông bạc, giữa trán có vệt trắng cong như trăng non. Chân còn vụng, nhưng đêm trăng tròn nó tự ngửa cổ tập hú."}, {"id": "enemy.ban_nguyet_lang", "ten": "Bán Nguyệt Lang", "cg": 2, "he": ["phong"], "loai": ["linh_thu"], "dk": 0.5, "th": [{"id": "enemy.nguyet_anh_lang", "lieu": {"item.nguyet_lang_mao": 2, "item.yeu_dan_3": 1}}], "hach": null, "dh": ["hoang_nguyen", "son_mach"], "mt": "Sói lông bạc lớn bằng con bê, vệt trăng trên trán đã dày thành nửa vầng. Đêm nó hú, sói hoang quanh mấy quả núi hú theo."}, {"id": "enemy.bach_van_au_ho", "ten": "Bạch Văn Ấu Hổ", "cg": 0, "he": ["kim"], "loai": ["linh_thu"], "dk": 0.3, "th": [{"id": "enemy.bach_van_thieu_ho", "lieu": {"item.ho_cop_nha": 2, "item.yeu_dan_1": 1}}], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Hổ con lông trắng vằn đen, to bằng con mèo nhà, móng chưa cứng đã thích vồ. Gầm lên vẫn ra tiếng meo, nhưng chó cả làng nghe thấy đều cụp đuôi."}, {"id": "enemy.bach_van_thieu_ho", "ten": "Bạch Văn Thiếu Hổ", "cg": 1, "he": ["kim"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.bach_van_ho", "lieu": {"item.ho_cop_nha": 3, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Hổ trắng choai bằng con chó săn, vằn đen đã rõ nét. Nó rình mồi cả buổi, vồ hụt thì làm như chưa từng vồ."}, {"id": "enemy.bach_van_ho", "ten": "Bạch Văn Hổ", "cg": 2, "he": ["kim"], "loai": ["linh_thu"], "dk": 0.5, "th": [{"id": "enemy.bach_van_manh_ho", "lieu": {"item.ho_cot": 2, "item.yeu_dan_3": 1}}], "hach": null, "dh": ["rung_ram", "son_mach", "yeu_vuc"], "mt": "Hổ trắng lớn bằng con nghé, vằn đen chạy dọc thân như nét mực tàu. Nó đi không một tiếng động, chỉ thấy cỏ hai bên rạp xuống."}, {"id": "enemy.bach_van_manh_ho", "ten": "Bạch Văn Mãnh Hổ", "cg": 3, "he": ["kim"], "loai": ["linh_thu"], "dk": 0.65, "th": [{"id": "enemy.bach_ngach_ho", "lieu": {"item.ho_vuong_tu": 1, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["rung_ram", "son_mach", "yeu_vuc"], "mt": "Hổ trắng lớn như con trâu, vằn đen giữa trán đang tụ lại thành nét ngang. Nó gầm một tiếng, chim cả cánh rừng bay hết."}, {"id": "enemy.thanh_ngoc_linh_xa", "ten": "Thanh Ngọc Linh Xà", "cg": 1, "he": ["thuy"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.thanh_lan_xa", "lieu": {"item.xa_thue": 3, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["ho_nuoc", "rung_ram"], "mt": "Rắn nhỏ xanh trong như ngọc bích, dài chừng một sải tay, trên đầu nhô hai u nhỏ như sừng sắp mọc. Nó hay nằm trên đá ven suối nghe tiếng nước."}, {"id": "enemy.thanh_lan_xa", "ten": "Thanh Lân Xà", "cg": 2, "he": ["thuy"], "loai": ["linh_thu"], "dk": 0.5, "th": [{"id": "enemy.thanh_lan_giao", "lieu": {"item.giao_han_can": 2, "item.yeu_dan_3": 1}}], "hach": null, "dh": ["ho_nuoc", "rung_ram"], "mt": "Rắn xanh dài hơn trượng, vảy cứng như ngọc mài, hai sừng nhú bằng đốt ngón tay. Nó nằm dưới đáy đầm, nước quanh đó lạnh buốt quanh năm."}, {"id": "enemy.lang_van_hac", "ten": "Lăng Vân Hạc", "cg": 2, "he": ["phong"], "loai": ["linh_thu"], "dk": 0.5, "th": [{"id": "enemy.dan_dinh_hac", "lieu": {"item.hac_vu": 2, "item.yeu_dan_3": 1}}], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Hạc trắng cao ngang vai người, bay lên là nương mây mà đi, cả ngày không đập cánh. Trên trán đã lấm tấm một chấm đỏ nhạt."}, {"id": "enemy.hoa_nha", "ten": "Hỏa Nha", "cg": 1, "he": ["hoa"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.xich_vu_nha", "lieu": {"item.hoa_nha_vu": 3, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["son_mach", "hoang_mac"], "mt": "Quạ đen chóp lông đỏ rực, mỏ vàng như đồng nung. Nó kêu một tiếng, chỗ nó vừa đậu bốc lên một sợi khói."}, {"id": "enemy.xich_vu_nha", "ten": "Xích Vũ Nha", "cg": 2, "he": ["hoa"], "loai": ["linh_thu"], "dk": 0.55, "th": [{"id": "enemy.tam_tuc_xich_nha", "lieu": {"item.hoa_tinh_chau": 2, "item.yeu_dan_3": 1}}], "hach": null, "dh": ["son_mach", "hoang_mac"], "mt": "Quạ lông đỏ sẫm như than chưa tắt, dưới bụng lú ra một mấu thịt như chân thứ ba sắp mọc. Nó bay qua đâu, mái tranh nơi đó bốc khói."}, {"id": "enemy.tam_tuc_xich_nha", "ten": "Tam Túc Xích Nha", "cg": 3, "he": ["hoa"], "loai": ["linh_thu"], "dk": 0.65, "th": [{"id": "enemy.xich_kim_o", "lieu": {"item.tam_tuc_nha_trao": 2, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["son_mach", "hoang_mac"], "mt": "Quạ lửa đỏ thẫm mọc ba chân, chân giữa vàng như đồng. Bay qua ruộng nào, lúa ruộng ấy cháy sém đầu bông."}, {"id": "enemy.xich_kim_o", "ten": "Xích Kim Ô", "cg": 4, "he": ["hoa"], "loai": ["linh_thu"], "dk": 0.8, "th": [{"id": "enemy.kim_o_huyet_due", "lieu": {"item.ngo_dong_chi": 2, "item.yeu_dan_5": 1}}], "hach": null, "dh": ["son_mach", "hoang_mac"], "mt": "Quạ ba chân lông đỏ ánh vàng, sải cánh rộng như mái đình. Nó đậu xuống đâu, đá dưới chân chảy thành giọt."}, {"id": "enemy.kim_o_huyet_due", "ten": "Kim Ô Huyết Duệ", "cg": 5, "he": ["hoa"], "loai": ["linh_thu"], "dk": 0.98, "th": [], "hach": null, "dh": ["son_mach", "hoang_mac"], "mt": "Quạ ba chân lông vàng ròng, sải cánh che kín một đỉnh núi, quanh thân là vầng sáng chói như mặt trời thứ hai. Nó đậu đâu, suối đó cạn, đá đó nứt."}, {"id": "enemy.thanh_nguu_doc", "ten": "Thanh Ngưu Độc", "cg": 2, "he": ["tho"], "loai": ["linh_thu"], "dk": 0.5, "th": [{"id": "enemy.thanh_giac_nguu", "lieu": {"item.thanh_nguu_giac": 2, "item.yeu_dan_3": 1}}], "hach": null, "dh": ["son_mach", "hoang_nguyen"], "mt": "Nghé xanh màu đá thanh, sừng mới nhú cong như trăng lưỡi liềm. Nó hiền như trâu nhà, chỉ là cày hết một sườn núi không biết mệt."}, {"id": "enemy.thanh_giac_nguu", "ten": "Thanh Giác Ngưu", "cg": 3, "he": ["tho"], "loai": ["linh_thu"], "dk": 0.7, "th": [{"id": "enemy.thanh_nguu", "lieu": {"item.kim_giac": 2, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["son_mach", "hoang_nguyen"], "mt": "Trâu xanh to như con voi nhỏ, đôi sừng đã cong nửa vòng, gõ vào nghe như gõ đá. Nó cày một đường, gò đất trước mặt rẽ đôi."}, {"id": "enemy.thanh_nguu", "ten": "Thanh Ngưu", "cg": 4, "he": ["tho", "moc"], "loai": ["linh_thu"], "dk": 0.85, "th": [], "hach": null, "dh": ["son_mach", "hoang_nguyen"], "mt": "Trâu xanh lớn như gò đất, sừng cong vút đeo vòng đồng xỉn khắc chữ triện. Lưng phẳng như chiếu; tương truyền từng chở một tiên ông ra khỏi cửa ải về phía tây."}, {"id": "enemy.mac_ngoc_linh_mieu", "ten": "Mặc Ngọc Linh Miêu", "cg": 0, "he": ["thuy"], "loai": ["linh_thu"], "dk": 0.3, "th": [{"id": "enemy.tam_menh_linh_mieu", "lieu": {"item.oan_hon_ty": 2, "item.yeu_dan_1": 1}}], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Mèo đen tuyền, lông bóng như mực mài, đôi mắt xanh ngọc. Nó ngồi trên nóc nhà suốt đêm, nhà ấy không con quỷ nào dám bén mảng."}, {"id": "enemy.tam_menh_linh_mieu", "ten": "Tam Mệnh Linh Miêu", "cg": 1, "he": ["thuy"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.luc_menh_linh_mieu", "lieu": {"item.oan_hon_ty": 3, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Mèo đen lớn hơn mèo nhà một vòng, dọc sống lưng ẩn ba vệt bạc mảnh như sợi chỉ. Nó nhìn vào góc tối nào, góc ấy lạnh đi."}, {"id": "enemy.luc_menh_linh_mieu", "ten": "Lục Mệnh Linh Miêu", "cg": 2, "he": ["thuy"], "loai": ["linh_thu"], "dk": 0.55, "th": [{"id": "enemy.cuu_menh_huyen_mieu", "lieu": {"item.oan_hon_ty": 4, "item.yeu_dan_3": 1}}], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Mèo đen to bằng con chó săn, sáu vệt bạc chạy dọc sống lưng. Đêm rằm nó kêu một tiếng, oan hồn quanh bãi tha ma tan như khói."}, {"id": "enemy.cuu_menh_huyen_mieu", "ten": "Cửu Mệnh Huyền Miêu", "cg": 3, "he": ["thuy"], "loai": ["linh_thu"], "dk": 0.65, "th": [], "hach": null, "dh": ["rung_ram", "son_mach", "yeu_vuc"], "mt": "Mèo đen lớn bằng con báo, chín vệt bạc chạy dọc sống lưng như chín ngọn nến. Mỗi lần ngã xuống, một vệt tắt đi và nó lại đứng dậy."}, {"id": "enemy.cuu_vi_thien_ho", "ten": "Cửu Vĩ Thiên Hồ", "cg": 4, "he": ["moc", "hoa"], "loai": ["linh_thu"], "dk": 0.95, "th": [], "hach": null, "dh": ["yeu_vuc", "rung_ram"], "mt": "Chín đuôi trải ra như chín cành đèn lụa. Nó thích nói chuyện trước, và chỉ ra tay khi ngươi đã quên mình đến đây làm gì."}, {"id": "enemy.bach_hac_linh", "ten": "Bạch Hạc Linh", "cg": 1, "he": ["phong", "moc"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.lang_van_hac", "lieu": {"item.hac_cot": 3, "item.yeu_dan_2": 1}}], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Lông trắng như tuyết đọng, cổ dài, một chân co lại giữa bãi đá. Người Đại Ung thấy nó thì chắp tay; ai ra tay phải tự gánh lấy."}, {"id": "enemy.dan_dinh_hac", "ten": "Đan Đỉnh Hạc", "cg": 3, "he": ["phong", "hoa"], "loai": ["linh_thu"], "dk": 0.6, "th": [{"id": "enemy.cuu_cao_tien_hac", "lieu": {"item.hac_dinh_hong": 1, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["son_mach", "rung_ram"], "mt": "Trán đỏ như giọt son, sải cánh phủ bóng cả khe núi. Nó thường đứng nhìn đạo sĩ luyện đan, và đôi khi nhìn người ta rất lâu."}, {"id": "enemy.thanh_van_quy", "ten": "Thanh Văn Quy", "cg": 2, "he": ["thuy", "tho"], "loai": ["thu"], "dk": 0.4, "th": [], "hach": null, "dh": ["ho_nuoc", "hai_dao"], "mt": "Mai xanh rêu, vân nứt thành từng ô như bàn cờ. Nó nằm chặn lối lên bờ, đánh thì rụt vào, bỏ đi thì cắn gót."}, {"id": "enemy.thanh_vu_hac", "ten": "Thanh Vũ Hạc", "cg": 2, "he": ["phong", "moc"], "loai": ["thu"], "dk": 0.5, "th": [], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Hạc lông xám xanh, hay đậu trên mái đạo quán bỏ hoang. Nó không tránh người, chỉ mổ khi bị dồn vào góc."}, {"id": "enemy.lan_hoa_quy", "ten": "Lân Hỏa Quỷ", "cg": 0, "he": ["hoa"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["hoang_nguyen", "di_tich"], "mt": "Đốm ma trơi xanh lè lơ lửng trên bãi tha ma, theo bước người về tận đầu làng. Đánh tan một đốm thì nó tách làm hai; dội nước mới tắt hẳn."}, {"id": "enemy.quy_tan_nuong", "ten": "Quỷ Tân Nương", "cg": 2, "he": ["am"], "loai": ["hon"], "dk": null, "th": [], "hach": null, "dh": ["di_tich", "rung_ram"], "mt": "Cô dâu chết trên đường rước, kiệu hoa mục trong rừng mà khăn voan đỏ vẫn tươi. Ai nhìn thẳng mặt nàng là đứng ngây ra, để nàng cúi xuống cổ mình."}, {"id": "enemy.thi_khuyen", "ten": "Thi Khuyển", "cg": 1, "he": ["tho"], "loai": ["thi"], "dk": null, "th": [], "hach": null, "dh": ["hoang_nguyen", "di_tich"], "mt": "Chó giữ mộ chết theo chủ, âm khí nhập xác mà đứng dậy, lông rụng từng mảng. Chúng đi từng cặp, một con cắn giữ, con kia vòng ra sau."}, {"id": "enemy.huyen_duc_au_buc", "ten": "Huyền Dực Ấu Bức", "cg": 1, "he": ["am", "phong"], "loai": ["linh_thu"], "dk": 0.4, "th": [{"id": "enemy.huyen_duc_buc", "lieu": {"item.bien_buc_si": 3, "item.yeu_dan_4": 1}}], "hach": null, "dh": ["son_mach", "yeu_vuc"], "mt": "Dơi non to bằng bàn tay, cánh mỏng đen như giấy than. Ban ngày nó rúc trong tay áo ngủ, đêm xuống thì đèn trong phòng cứ lụi dần."}, {"id": "enemy.da_anh_kieu", "ten": "Dạ Ảnh Kiêu", "cg": 1, "he": ["am"], "loai": ["linh_thu"], "dk": 0.3, "th": [], "hach": null, "dh": ["rung_ram", "son_mach"], "mt": "Cú lông đen như mực, chỉ hai con mắt vàng là sáng. Nó đậu trên cây gần bãi tha ma, đêm nào kêu ba tiếng là đêm ấy cô hồn không dám lảng vảng."}, {"id": "enemy.huyen_duc_buc", "ten": "Huyền Dực Bức", "cg": 4, "he": ["am", "phong"], "loai": ["linh_thu"], "dk": 0.95, "th": [], "hach": null, "dh": ["son_mach", "yeu_vuc"], "mt": "Dơi đen sải cánh rộng bằng mái đình, treo ngược trong hang sâu không thấy đáy. Nó vỗ cánh một cái, đuốc trong tay người tắt hết, vết thương thì không chịu khép miệng."}]; /* bản dự phòng khi game không đưa dữ liệu sinh vật ra ngoài */
     /* Kho Thể Chất đóng gói sẵn: dự phòng cho mô tả Thể Chất của Trợ Lý khi game chưa trả dữ liệu. */
     var THE_CHAT_DB = {"the_chat.pham_the": {"id": "the_chat.pham_the", "ten": "Phàm Thể", "mo_ta": "Thân thể bình thường, kinh mạch không có gì đặc biệt.", "icon": "👤", "khuon": ". . f 4 e 4 5 . .\n. d 3 2 2 2 3 3 .\n5 3 2 1 1 1 2 3 5\n4 2 1 0 0 0 1 c 4\n4 2 1 0 D 0 1 2 4\n4 2 1 0 0 0 1 2 4\n5 3 2 1 b 1 2 3 5\n. 3 3 2 2 2 3 3 .\n. . 5 4 e 4 5 . .\n", "ti_le": 80}, "the_chat.bach_thao": {"id": "the_chat.bach_thao", "ten": "Bách Thảo Thể", "mo_ta": "Huyết mạch quen mùi thảo mộc từ trong bụng mẹ. Kinh mạch như người thường, nhưng thuốc vào người thấm nhanh, đan dược, linh quả lâu nhạt hơn người khác; đan hồi trong trận mạnh thêm 50%, khí huyết dày hơn một chút.", "icon": "🌿", "khuon": ". . f 4 e 4 5 . .\n. d 3 2 2 2 3 3 .\n5 3 2 1 1 1 2 3 5\n4 2 1 0 0 0 1 c 4\n4 2 1 0 D 0 1 2 4\n4 2 1 0 0 0 1 2 4\n5 3 2 1 b 1 2 3 5\n. 3 3 2 2 2 3 3 .\n. . 5 4 e 4 5 . .\n", "dac_tinh": {"duoc_khang": 0.3, "dan_tran": 0.5, "khi_huyet": 0.1, "khang_doc": 0.2}, "ti_le": 4, "ti_le_xuat_than": {"hoc_do_dan_phong": 20, "con_thay_lang": 20}}, "the_chat.thiet_cot": {"id": "the_chat.thiet_cot", "ten": "Thiết Cốt", "mo_ta": "Gân cốt rắn như sắt, kinh mạch rộng mà ít huyệt khiếu. Chịu đòn tốt, hợp thể tu.", "icon": "🛡️", "khuon": ". . f 5 4 4 4 5 5 . .\n. 3 3 3 2 2 2 3 3 3 .\n5 3 2 2 1 1 1 2 2 3 5\n4 2 1 1 0 0 0 1 1 c 4\n4 2 1 1 0 D 0 1 1 2 4\n4 2 1 1 0 0 0 1 1 2 4\n5 3 2 2 1 1 1 2 2 3 5\n. 3 3 3 2 2 2 3 3 3 .\n. . 5 5 4 e 4 5 5 . .\n", "dac_tinh": {"khi_huyet": 0.3, "ho_the": 0.05, "the_uy_luc": 0.15, "khang_hieu_ung": 0.1}, "ti_le": 8, "ti_le_xuat_than": {"con_chau_tuan_bien": 60}}, "the_chat.kiem_cot": {"id": "the_chat.kiem_cot", "ten": "Kiếm Cốt", "mo_ta": "Xương sống thẳng như kiếm, kinh mạch dài và hẹp. Kiếm trong tay như mọc ra từ thân.", "icon": "⚔️", "khuon": ". . f . .\n. 5 4 5 .\n5 4 e 4 5\n4 4 3 4 4\n4 3 d 3 4\n3 3 2 3 3\n3 2 c 2 3\n2 2 1 2 2\n2 1 b 1 2\n1 0 0 0 1\n1 0 D 0 1\n1 0 0 0 1\n. 1 1 1 .\n", "dac_tinh": {"kiem_uy_luc": 0.25, "kinh_lo_toi_da": 7}, "ti_le": 4}, "the_chat.hoang_co": {"id": "the_chat.hoang_co", "ten": "Hoang Cổ Thánh Thể", "mo_ta": "Thể chất thượng cổ. Kinh mạch rộng như sông, sinh ra không một huyệt khiếu, thân thể nuốt linh khí nên tu luyện chậm; mỗi cảnh giới đạt Hoàn Mỹ, thân thể lại tôi thêm một tầng và mở ra một huyệt khiếu.", "icon": "👑", "khuon": ". . 5 5 4 4 4 5 5 . .\n. 3 3 3 2 2 2 3 3 3 .\n5 3 2 2 1 1 1 2 2 3 5\n5 3 2 2 1 1 1 2 2 3 5\n4 2 1 1 0 0 0 1 1 2 4\n4 2 1 1 0 D 0 1 1 2 4\n4 2 1 1 0 0 0 1 1 2 4\n5 3 2 2 1 1 1 2 2 3 5\n5 3 2 2 1 1 1 2 2 3 5\n. 3 3 3 2 2 2 3 3 3 .\n. . 5 5 4 4 4 5 5 . .\n", "dac_tinh": {"khi_huyet": 0.5, "hoan_my_khi_huyet": 0.05, "phan_phe": 0.5, "toc_do": -0.15, "khang_hieu_ung": 0.1}, "ti_le": 4}, "the_chat.cuu_am": {"id": "the_chat.cuu_am", "ten": "Cửu Âm Tuyệt Mạch", "mo_ta": "Âm khí tụ trong chín đường kinh mạch. Huyệt khiếu dày đặc, âm khí hóa chiêu băng càng sắc, tu luyện nhanh; nhưng chưa bước vào Luyện Khí thì khó sống quá ba mươi.", "icon": "❄️", "khuon": "5 4 4 e 4 4 5\nf d 2 b 2 c 5\n3 c 0 0 0 2 3\n4 1 0 D 0 1 e\n3 2 0 0 0 c 3\n4 c 2 b 2 3 4\n5 5 3 d 3 f 5\n", "dac_tinh": {"ep_bang": 0.3, "tho_pham_nhan": 30, "toc_do": 0.2, "uy_luc_he": {"bang": 0.25}, "khang_bang": 0.2}, "ti_le": 4}, "the_chat.am_hon": {"id": "the_chat.am_hon", "ten": "Âm Hồn Thể", "mo_ta": "Hồn phách nặng hơn thân xác, sinh ra đã nghe được tiếng người chết. Huyệt khiếu nhiều, khí huyết mỏng; người luyện thi, dưỡng hồn nuôi thi khôi, quỷ hồn tốn ít ngự lực hơn.", "icon": "👻", "khuon": ". . . 5 f 5 . . .\n. . 4 4 e 4 4 . .\n. 5 3 2 2 2 3 d .\n5 3 2 1 1 1 2 3 5\ne 2 1 0 0 0 1 2 4\n4 c 1 0 D 0 1 c 4\n5 3 2 0 0 0 2 3 5\n. 4 b 1 1 1 2 4 .\n. . 3 2 . 2 3 . .\n. . . 5 . 5 . . .\n", "dac_tinh": {"khi_huyet": -0.1}, "ti_le": 2, "ti_le_xuat_than": {"con_thay_cung": 15}}, "the_chat.huyen_vu": {"id": "the_chat.huyen_vu", "ten": "Huyền Vũ Thể", "mo_ta": "Thân như mai rùa, kinh mạch tròn kín, gần như không một huyệt khiếu. Chịu đòn giỏi, tà công khó phản phệ, nhưng tu luyện chậm.", "icon": "🐢", "khuon": ". . . 5 4 4 4 5 . . .\n. . 5 3 3 3 3 3 5 . .\n. 4 3 2 2 2 2 2 3 4 .\n5 3 2 1 1 1 1 1 2 3 5\n4 3 2 1 0 0 0 1 2 c 4\n4 2 1 1 0 D 0 1 1 2 4\n4 3 2 1 0 0 0 1 2 3 4\n5 3 2 1 1 1 1 1 2 3 5\n. 4 3 2 2 2 2 2 3 4 .\n. . 5 3 3 3 3 3 5 . .\n. . . 5 4 e 4 5 . . .\n", "dac_tinh": {"khi_huyet": 0.4, "phan_phe": 0.5, "toc_do": -0.15, "ho_the": 0.1, "ho_the_tran": 0.05, "khang_hieu_ung": 0.15}, "ti_le": 2, "ti_le_xuat_than": {"nguoi_giu_dai": 15}}, "the_chat.liet_duong": {"id": "the_chat.liet_duong", "ten": "Liệt Dương Thể", "mo_ta": "Dương khí trong người cháy như mặt trời giữa trưa. Kinh mạch nhỏ mà tu luyện nhanh, có điều tà công vào người thì phản phệ dữ hơn.", "icon": "☀️", "khuon": ". . . . . 5 . . . . .\n. . . . . f . . . . .\n. . . 4 3 3 3 4 . . .\n. . 3 2 1 1 1 2 3 . .\n. 4 2 1 0 0 0 1 2 4 .\n5 d 3 1 0 D 0 1 3 e 5\n. 4 2 1 0 0 0 1 2 4 .\n. . 3 2 1 b 1 2 3 . .\n. . . 4 3 3 3 4 . . .\n. . . . . c . . . . .\n. . . . . 5 . . . . .\n", "dac_tinh": {"toc_do": 0.2, "phan_phe": 1.5, "uy_luc_he": {"hoa": 0.25}, "khang_hoa": 0.2}, "ti_le": 2, "ti_le_xuat_than": {"linh_quan_ai": 12}}, "the_chat.van_doc": {"mo_ta": "Sinh ra đã ngậm độc khí trong máu, rắn rết cắn phải tự lăn ra chết. Độc qua tay càng thêm hiểm, độc ngấm vào kẻ khác lại nuôi thân mình; có điều thuốc thang vào người bị độc khí ăn mất một phần.", "ti_le": 2, "khuon": ". . . 5 f 5 . . .\n. . 4 4 e 4 4 . .\n. . 4 3 3 3 4 . .\n. . . 3 d 3 . . .\n. . 3 2 2 2 3 . .\n. 3 2 1 1 1 2 3 .\n5 3 1 0 0 0 1 c 5\n4 2 1 0 D 0 1 2 4\n5 3 1 0 0 0 1 3 5\n. 4 2 b 1 1 2 4 .\n. . 5 3 2 3 5 . .\n", "dac_tinh": {"doc_uy_luc": 0.3, "doc_tang": 1, "doc_duong": 0.3, "khang_doc": 0.3, "dan_tran": -0.3, "duoc_khang": -0.1}, "id": "the_chat.van_doc", "ten": "Vạn Độc Thể", "icon": "☠️"}, "the_chat.cuu_u": {"mo_ta": "Thân sinh ra nơi âm khí chín tầng đất tụ lại, đèn trong phòng tự lụi khi ngươi bước vào. Ám khí trong kinh mạch hóa chiêu Ám càng hiểm, kẻ trúng mà muốn hồi sức thì sinh cơ chảy sang ngươi; nhưng lôi hỏa đánh vào thân này đau gấp bội.", "ti_le": 2, "khuon": ". . 5 e 4 4 5 . .\n. 4 3 3 d 3 3 5 .\n5 3 2 1 1 1 c 3 4\n4 3 1 0 0 0 1 3 e\n4 d 1 0 D 0 1 2 4\nf 3 c 0 0 0 1 3 4\n5 3 2 1 b 1 2 3 5\n. 5 3 2 2 2 3 4 .\n. . 5 4 f 4 5 . .\n", "dac_tinh": {"ep_am": 0.3, "uy_luc_he": {"am": 0.25}, "doat_sinh": 0.5, "than_am": true}, "id": "the_chat.cuu_u", "ten": "Cửu U Thể", "icon": "🌑"}};
 
@@ -614,6 +709,7 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
   ];
   // Tính năng phụ: thiếu thì chỉ tính năng đó tắt, phần còn lại vẫn chạy.
   const CORE_OPTIONAL = [
+    ['pillFitsRealm', 'progress/dot_pha', 'pillFitsRealm', 'đan hợp cảnh giới đột phá'], ['pillMaxRealm', 'progress/dot_pha', 'pillMaxRealm', 'cảnh giới tối đa của đan'],
     ['facilitiesAt', 'encounter/director', 'facilitiesAt', 'tiện ích ở một nơi'], ['giaBan', 'world/phong_tho', 'giaBan', 'giá bán'],
     ['tinhDiemKiep', 'progress/luan_hoi', 'tinhDiemKiep', 'điểm luân hồi'], ['xepBang', 'character/nhan_vat', 'xepBang', 'bảng Thiên Kiêu'],
     ['chuanBiBeQuan', 'progress/be_quan', 'chuanBiBeQuan', 'thông tin bế quan'], ['retreatTargetGain', 'progress/be_quan', 'retreatTargetGain', 'tu vi còn thiếu'],
@@ -627,12 +723,17 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     ['namLinhNgo', 'character/kinh_mach', 'namLinhNgo', 'năm lĩnh ngộ'], ['masteryMult', 'character/kinh_mach', 'masteryMult', 'hệ số lĩnh ngộ'],
     ['effectiveStat', 'character/stats', 'effectiveStat', 'chỉ số nhân vật'], ['gradeMult', 'character/pham', 'gradeMult', 'hệ số phẩm'],
     ['skillCap', 'character/pham', 'skillCap', 'trần pháp lực của món'], ['spellPower', 'balance/combat', 'spellPower', 'pháp lực theo cảnh giới'],
+    ['giaBoChay', 'combat/actions', 'giaBoChay', 'giá bỏ chạy theo luật game'], ['escapeGreed', 'combat/actions', 'escapeGreed', 'loại tài sản địch chấp nhận khi dụ bỏ chạy'], ['escapeBlock', 'combat/actions', 'escapeBlock', 'điều kiện game khóa mọi đường bỏ chạy'], ['giaTriGoiNem', 'combat/actions', 'giaTriGoiNem', 'giá trị gói vật phẩm hối lộ'], ['tiLeThoatNem', 'combat/actions', 'tiLeThoatNem', 'xác suất thoát bằng gói hối lộ'],
     ['refineQuote', 'character/natal', 'refineQuote', 'chi phí tế luyện bản mệnh'], ['ascendQuote', 'character/natal', 'ascendQuote', 'chi phí nâng giai bản mệnh'],
     ['refineBlock', 'character/natal', 'refineBlock', 'kiểm tra tế luyện'], ['natalItemError', 'character/natal', 'natalItemError', 'món làm bản mệnh'],
     ['ascendBlock', 'character/natal', 'ascendBlock', 'kiểm tra nâng giai'], ['temperBlock', 'character/natal', 'temperBlock', 'kiểm tra huyết luyện'],
     ['devourCandidates', 'progress/natal_act', 'devourCandidates', 'ứng viên văn khi nuốt'], ['devourItemError', 'progress/natal_act', 'devourItemError', 'kiểm tra nuốt món'],
     ['innateRuneOf', 'character/natalRunes', 'innateRuneOf', 'văn bẩm sinh của món'],
+    ['breakthroughGrade', 'progress/dot_pha', 'breakthroughGrade', 'phẩm đạo cơ khi đột phá thành công'],
   ];
+  // Chữ ký (số tham số, tức fn.length) của từng hàm lõi Tool gọi, ghi từ game 0.0.2 (apiVersion 1), đã đối chiếu lại với bản build mới ngày 07/11/2026. Game đổi tham số một hàm thì
+  // buildCore ghi vào K.arityDrift và Tự Kiểm Tra báo LỖI ngay, không cần mốc cũ. Cập nhật bảng này sau khi đã sửa Tool cho khớp bản game mới.
+  const CORE_ARITY = {'combat/autoCombat.tinhTocChien': 3, 'combat/setup.taoBenTa': 2, 'combat/setup.taoBenDich': 2, 'character/kinh_mach.tinhKinhMach': 2, 'character/kinh_mach.oCuaManh': 3, 'character/kinh_mach.kiemTraDat': 3, 'progress/dot_pha.chuanBiDotPha': 1, 'progress/tong_mon.hangTong': 2, 'progress/tong_mon.thieuDeThangCap': 1, 'progress/tong_mon.tongMonCua': 1, 'character/character.thoNguyenToiDa': 1, 'progress/tournament.trialOpponent': 3, 'character/npc.timDich': 2, 'kernel/realms.tenCanhGioi': 2, 'world/travel.travelYears': 2, 'kernel/realms.canhGioi': 1, 'kernel/rng.Rng': 1, 'world/phong_tho.giaMua': 3, 'world/suong.slotDaMo': 2, 'encounter/shop/market.shelfStock': 3, 'progress/dot_pha.pillFitsRealm': 2, 'progress/dot_pha.pillMaxRealm': 1, 'encounter/director.facilitiesAt': 2, 'world/phong_tho.giaBan': 3, 'progress/luan_hoi.tinhDiemKiep': 3, 'character/nhan_vat.xepBang': 1, 'progress/be_quan.chuanBiBeQuan': 1, 'progress/be_quan.retreatTargetGain': 2, 'progress/be_quan.retreatGain': 4, 'character/character.tocDoTuLuyen': 2, 'progress/luyen_che.phanBoKhaoHach': 3, 'progress/luyen_che.thieuDeKhaoHach': 3, 'progress/luyen_che.chuanBiLuyen': 3, 'progress/luyen_che.nguonDiemGoc': 7, 'world/bounty.bangTreoThuong': 1, 'progress/tong_mon.bongLoc': 1, 'progress/tong_mon.tienCuDuoc': 1, 'encounter/choice_risk.revealedCombatRisk': 3, 'kernel/run.createRun': 3, 'world/market_glut.glutRoom': 2, 'encounter/do_hiem.doChenh': 3, 'encounter/do_hiem.mucHiem': 1, 'character/kinh_mach.namLinhNgo': 1, 'character/kinh_mach.masteryMult': 2, 'character/stats.effectiveStat': 4, 'character/pham.gradeMult': 2, 'character/pham.skillCap': 1, 'balance/combat.spellPower': 2, 'combat/actions.giaBoChay': 1, 'combat/actions.escapeGreed': 1, 'combat/actions.escapeBlock': 1, 'combat/actions.giaTriGoiNem': 2, 'combat/actions.tiLeThoatNem': 3, 'character/natal.refineQuote': 2, 'character/natal.ascendQuote': 2, 'character/natal.refineBlock': 2, 'character/natal.natalItemError': 1, 'character/natal.ascendBlock': 1, 'character/natal.temperBlock': 1, 'progress/natal_act.devourCandidates': 2, 'progress/natal_act.devourItemError': 2, 'character/natalRunes.innateRuneOf': 1, 'progress/dot_pha.breakthroughGrade': 2};
   // Hằng số bản mệnh: khóa Tool → tên hằng trong core['balance/natal'].
   const BM_CONST = {
     realmMin: 'NATAL_MIN_REALM', gradeMin: 'NATAL_MIN_GRADE', gradeMax: 'NATAL_MAX_GRADE', pickMax: 'NATAL_MAX_BASE_GRADE',
@@ -645,21 +746,43 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     runeLv: 'NATAL_RUNE_LEVEL_POINTS', devourMax: 'NATAL_DEVOUR_PER_YEAR', weakGap: 'NATAL_DEVOUR_LOW_GAP', weakMul: 'NATAL_DEVOUR_LOW_RATIO',
     newGap: 'NATAL_LEARN_GAP', cand: 'NATAL_RUNE_CANDIDATES',
   };
+  // Hằng số bồi văn cấp cao (game 0.0.2 mới): tùy chọn, thiếu thì dùng số dự phòng trong BM_DEF.
+  const BM_CONST_OPT = {
+    runeMax: 'NATAL_RUNE_MAX_LEVEL', runeHigh: 'NATAL_RUNE_HIGH_CHANCE', runeLuck: 'NATAL_RUNE_LUCK_STEP', runeHighGap: 'NATAL_RUNE_HIGH_GAP',
+    runeFail: 'NATAL_RUNE_FAIL_CHANCE', runeLucky: 'NATAL_RUNE_LUCKY_CHANCE', runeLuckyMult: 'NATAL_RUNE_LUCKY_MULT',
+    runeMut: 'NATAL_RUNE_MUTANT_CHANCE', runeMutTop: 'NATAL_RUNE_MUTANT_CHANCE_TOP', runeMutMult: 'NATAL_RUNE_MUTANT_MULT', runeMutForm: 'NATAL_RUNE_MUTANT_FORM',
+    runeSkip: 'NATAL_RUNE_MUTANT_SKIP', runeFormKeys: 'NATAL_RUNE_FORM_KEYS',
+  };
   const BM_RUNE_KEYS = ['liet', 'phagiap', 'lienhoan', 'hothe', 'kimchung', 'hutmau', 'tulinh', 'effect_chance', 'troi', 'phan', 'van', 'quy', 'nhiem', 'uanbao', 'inner_stat'];
 
   function buildCore(tt) {
     const R = tt.core;
     if (!R) throw new Error('Game chưa mở tuTien.core. Hãy cập nhật game.');
-    const K = { gameVersion: tt.gameVersion, bundle: 'v' + tt.gameVersion, healed: [], healFail: [], optMissing: [] };
+    const K = { gameVersion: tt.gameVersion, bundle: 'v' + tt.gameVersion, healed: [], healFail: [], optMissing: [], arityDrift: [] };
     const miss = [];
+    // Tìm hàm theo đúng chỗ cũ; mất thì tự dò lại theo tên / dấu vân tay thân hàm của mốc (xem Kho Dữ Liệu Game).
+    const dsBase = dsLoadBase();
+    const pick = (mod, name) => {
+      let f; try { f = R[mod] && R[mod][name]; } catch (e) { f = undefined; }
+      if (f !== undefined) return f;
+      let r = null; try { r = dsRelocate(R, mod, name, dsBase); } catch (e) { r = null; }
+      if (r) { K.healed.push(mod + '.' + name + ' → ' + r.where + ' (' + r.how + ')'); return r.fn; }
+      return undefined;
+    };
     for (const [key, mod, name] of CORE_REQUIRED) {
-      const f = R[mod] && R[mod][name];
+      const f = pick(mod, name);
       if (f === undefined) miss.push(mod + '.' + name); else K[key] = f;
     }
-    if (miss.length) throw new Error('Game vừa cập nhật nên Tool chưa nhận ra: ' + miss.join(', ') + '. Hãy chụp màn hình này gửi Claude để sửa Tool.');
+    if (miss.length) throw new Error('Game vừa cập nhật nên Tool chưa nhận ra: ' + miss.join(', ') + '. Hãy bấm “Sao chép báo cáo nhanh” ở thẻ Kho Dữ Liệu Game bên dưới rồi dán gửi Claude để sửa Tool.');
     for (const [key, mod, name, label] of CORE_OPTIONAL) {
-      const f = R[mod] && R[mod][name];
-      if (f !== undefined) K[key] = f; else K.optMissing.push(label + ' (' + mod + '.' + name + ')');
+      const f = pick(mod, name);
+      if (f !== undefined) K[key] = f; else { K.optMissing.push(label + ' (' + mod + '.' + name + ')'); K.healFail.push(mod + '.' + name); }
+    }
+    // Đối chiếu chữ ký với bảng CORE_ARITY (bản game đã kiểm).
+    K.arityDrift = [];
+    for (const [key, mod, name] of CORE_REQUIRED.concat(CORE_OPTIONAL)) {
+      const f = K[key], want = CORE_ARITY[mod + '.' + name];
+      if (typeof f === 'function' && want !== undefined && f.length !== want) K.arityDrift.push(mod + '.' + name + ' (' + want + ' → ' + f.length + ' tham số)');
     }
     // Lưới kinh mạch: khuonCua(content, nhânVật). ctx có đủ .items nên truyền thẳng được.
     const KM = R['character/kinh_mach'];
@@ -667,6 +790,8 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     // Hằng đọc sống từ game (hằng khai 'export let' đổi theo độ khó), không chép ra biến lúc nạp.
     const live = (name, mod, key) => Object.defineProperty(K, name, { enumerable: true, get() { try { const v = R[mod][key]; return v === undefined ? undefined : v; } catch (e) { return undefined; } } });
     live('AMBUSH_MIN_DISTANCE', 'balance/encounter', 'AMBUSH_MIN_DISTANCE');
+    live('HO_THE_MAX', 'balance/combat', 'HO_THE_MAX'); // 7.4.0: trần Hộ Thể trong trận (game: 0,6)
+    live('CONG_PHAP_CAP', 'balance/breakthrough', 'CONG_PHAP_CAP'); // 7.4.0: trần Đột Phá cộng từ công pháp (game: 0,12)
     live('CAP_BAC', 'balance/sect', 'CAP_BAC'); // tên cấp bậc tông môn: Tạp dịch … Trưởng lão
     if (!Array.isArray(K.CAP_BAC) || !K.CAP_BAC.length) throw new Error('Game vừa cập nhật nên Tool chưa nhận ra: balance/sect.CAP_BAC (tên cấp bậc tông môn). Hãy chụp màn hình này gửi Claude để sửa Tool.');
     const numArr = (a, n) => Array.isArray(a) && (n === undefined || a.length === n) && a.every(Number.isFinite);
@@ -678,13 +803,21 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
           const arr6 = ['teYears', 'teEss', 'upEss', 'hoaYears', 'tempEss', 'ess', 'fail', 'byp'];
           const ok = arr6.every((k) => numArr(o[k], 6)) && numArr(o.tier, 4) && numArr(o.mult, 4) && numArr(o.slotT, 4) && numArr(o.runeLv, 2)
             && Object.entries(o).every(([k, v]) => Array.isArray(v) ? v.every(Number.isFinite) : Number.isFinite(v));
-          return ok ? o : undefined;
+          if (!ok) return undefined;
+          // Hằng bồi văn cấp cao: nhận khi đúng kiểu, sai/thiếu thì giữ số dự phòng.
+          for (const [k, nm] of Object.entries(BM_CONST_OPT)) {
+            const v = N[nm];
+            if (k === 'runeSkip' || k === 'runeFormKeys') { if (Array.isArray(v) && v.every((x) => typeof x === 'string')) o[k] = v.slice(); }
+            else if (Array.isArray(v)) { if (v.length && v.every(Number.isFinite)) o[k] = v.slice(); }
+            else if (Number.isFinite(v)) o[k] = v;
+          }
+          return o;
         } catch (e) { return undefined; }
       },
     });
     Object.defineProperty(K, 'bmRune', {
       enumerable: true, get() {
-        try { const o = R['balance/natal'].NATAL_RUNE_VALUE; return o && BM_RUNE_KEYS.every((k) => numArr(o[k], 3)) ? o : undefined; } catch (e) { return undefined; }
+        try { const o = R['balance/natal'].NATAL_RUNE_VALUE; return o && BM_RUNE_KEYS.every((k) => numArr(o[k]) && o[k].length >= 3) ? o : undefined; } catch (e) { return undefined; }
       },
     });
     Object.defineProperty(K, 'rare', {
@@ -711,7 +844,9 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     const g = G();
     if (!g || !g.env || !g.env.content) throw new Error('Chưa thấy game. Hãy đợi game tải xong rồi bấm Thử Lại.');
     progress('Đang nối lõi game…');
-    return buildCore(TT);
+    const K = buildCore(TT);
+    dsOnCoreReady();
+    return K;
   }
 
 
@@ -806,15 +941,17 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     if (!dir && !prio && !bk) return null;
     const km = nv0.kinhMach;
     const hy = hySet(g, km); // đúng code game mới (hV / sV), xem hySet
-    return { dir, prio, rong: g.rong, mau: km.mau || [], hy, lc: new Set((nv0.linhCan && nv0.linhCan.he) || []), lcRoot: new Set(((nv0.linhCan && nv0.linhCan.he) || []).map(gocHe)), items: C().items, build: bk ? (BUILDS.find((x) => x.k === bk) || null) : null };
+    let pw = null; try { pw = powerMap(nv0); } catch (e) { pw = null; }
+    return { dir, prio, pw, rong: g.rong, mau: km.mau || [], hy, lc: new Set((nv0.linhCan && nv0.linhCan.he) || []), lcRoot: new Set(((nv0.linhCan && nv0.linhCan.he) || []).map(gocHe)), items: C().items, build: bk ? (BUILDS.find((x) => x.k === bk) || null) : null };
   }
   function biasInfo(B, manh, R) {
-    const f = { sinh: 0, khac: 0, hop: 0, lech: 0, trungTinh: 0, lc: 0, lcGoc: 0, lcKhac: 0, huyet: 0, build: 0, bhuyet: 0 };
+    const f = { sinh: 0, khac: 0, hop: 0, lech: 0, trungTinh: 0, lc: 0, lcGoc: 0, lcKhac: 0, huyet: 0, build: 0, bhuyet: 0, huyetPow: 0, sinhPow: 0, khacPow: 0, chainPow: 0 };
     const own = new Map(); manh.forEach((p, i) => p.cells.forEach((x) => own.set(x, i)));
     const hes = manh.map((p) => { const it = B.items.get(p.m.item); return ((it && it.he) || []).filter((h) => h && h !== 'vo_sac'); });
     const thong = (i) => !R || !R.manh || !R.manh[i] || R.manh[i].thong;
     manh.forEach((p, i) => {
       if (!thong(i)) return;
+      const pwi = B.pw ? (B.pw.get(p.m.item) ?? 0.5) : 0.5; // 7.4.0: sức tương đối của món này
       const nb = new Set();
       for (const c of p.cells) {
         const x = c % B.rong;
@@ -822,18 +959,20 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
       }
       // Ưu tiên số liệu chính game tính (theo từng ô chạm nhau, có xét chênh phẩm); thiếu thì dùng cách ước lượng theo hệ cả món.
       const gm = R && R.manh && R.manh[i];
-      if (gm && typeof gm.generators === 'number') { f.sinh += gm.generators - 0.5 * (gm.weakGenerators || 0); f.khac += gm.restrainers || 0; }
+      if (gm && typeof gm.generators === 'number') { const gs = gm.generators - 0.5 * (gm.weakGenerators || 0); f.sinh += gs; f.khac += gm.restrainers || 0; f.sinhPow += pwi * gs; f.khacPow += pwi * (gm.restrainers || 0); }
       else for (const j of nb) {
         if (!thong(j)) continue;
         let sinh = 0, khac = 0;
         for (const a of hes[j]) for (const b of hes[i]) { const d = heTacDong(a, b); if (d > 0) sinh = 1; else if (d < 0) khac = 1; }
-        f.sinh += sinh; f.khac += khac;
+        f.sinh += sinh; f.khac += khac; f.sinhPow += pwi * sinh; f.khacPow += pwi * khac;
       }
       for (const c of p.cells) {
         const m = B.mau[c];
         if (m && m !== 'vo_sac' && hes[i].length) { const w = Math.max(...hes[i].map((h) => oHop(m, h))); f.hop += w; if (!w) { if (hes[i].some((h) => oKhac(m, h))) f.lech++; else f.trungTinh++; } }
       }
-      { let k = 0; for (const c of p.cells) if (B.hy.has(c)) k++; if (k) f.huyet += 1 + 0.125 * (k - 1); }
+      { let k = 0; for (const c of p.cells) if (B.hy.has(c)) k++; if (k) { f.huyet += 1 + 0.125 * (k - 1); f.huyetPow += pwi * (1 + 0.125 * (k - 1)); } }
+      // 7.4.0: kinh lộ của pháp khí (chuỗi công pháp cùng họ hệ từ đan điền tới món) tính theo phần trăm của mức tối đa, nhân sức món
+      if (gm && gm.kinhLoCap > 1 && gm.thong) f.chainPow += pwi * Math.max(0, gm.kinhLo - 1) / (gm.kinhLoCap - 1);
       // 6.19: ba tầng theo linh căn: trùng hệ linh căn > dị linh căn cùng gốc > hệ không bị linh căn khắc (trung tính); hệ bị linh căn khắc bị trừ nhẹ.
       if (hes[i].some((h) => B.lc.has(h))) f.lc++;
       else if (hes[i].some((h) => B.lcRoot.has(gocHe(h)))) f.lcGoc++;
@@ -847,9 +986,10 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     if (!B) return 0;
     try {
       const f = biasInfo(B, manh, R); let s = 0;
-      if (B.dir === 'tien') s += 8 * f.sinh - 10 * f.khac;
-      else if (B.dir === 'ma') s += 8 * f.khac - 3 * f.sinh;
-      if (B.prio) s += 2 * f.hop - 1.5 * f.lech + 4 * f.lc + 2.4 * f.lcGoc - 1.5 * f.lcKhac + 5 * f.huyet;
+      // 7.4.0: nửa điểm tính đều mọi món, nửa còn lại nhân sức món, để sinh / khắc / huyệt / kinh lộ dồn cho công pháp mạnh nhất trong lưới.
+      if (B.dir === 'tien') s += 4 * f.sinh + 6 * f.sinhPow - 5 * f.khac - 7 * f.khacPow;
+      else if (B.dir === 'ma') s += 4 * f.khac + 6 * f.khacPow - 1.5 * f.sinh - 2 * f.sinhPow;
+      if (B.prio) s += 2 * f.hop - 1.5 * f.lech + 4 * f.lc + 2.4 * f.lcGoc - 1.5 * f.lcKhac + 2 * f.huyet + 4 * f.huyetPow + 3 * f.chainPow;
       if (B.build) s += 12 * f.build + 4 * f.bhuyet;
       return s * (S.biasK || 1);
     } catch (e) { return 0; }
@@ -892,10 +1032,95 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     return s;
   }
 
+  // ═════════════ BẢN 7.4.0: TRẦN CHỈ SỐ CỦA GAME · XẾP CHẠM TRẦN, KHÔNG THỪA ═════════════
+  /* Trần đọc từ code game (game có xuất hằng thì đọc sống, không thì dùng số dự phòng):
+       Đột Phá: công pháp chỉ cộng tối đa balance/breakthrough.CONG_PHAP_CAP (0,12) vào tỉ lệ đột phá → min(CONG_PHAP_CAP, bị động đột phá).
+       Hộ Thể: giáp trong trận = min(balance/combat.HO_THE_MAX (0,6) + hộ thể trong trận của thể chất, hộ thể công pháp + hộ thể của thể chất).
+       Kháng Tâm Ma: game kẹp min(1, kháng tâm ma).
+     Tốc Độ Tu Luyện và Khí Huyết game không kẹp nên càng nhiều càng tốt. Phần vượt trần là phần bỏ phí: Tool không thưởng, còn trừ nhẹ để nhường ô cho món khác. */
+  const CAP_DEF = { dotPha: 0.12, hoThe: 0.6, khangTamMa: 1 };
+  const CAP_WASTE_W = 12;                            // điểm trừ khi một chỉ số thừa trọn một mức trần (tỉ lệ theo phần thừa)
+  const CAP_REACH_W = { tu: 0, bal: 16, danh: 0 };   // thưởng khi Đột Phá chạm trần (chế độ Tu đã có sẵn 300 × Đột Phá)
+  const KTM_W = { tu: 30, bal: 8, danh: 0 };         // thưởng Kháng Tâm Ma tới trần
+  function statCapCtx(nv) {
+    const K = S.core || {}; let tc = {};
+    try { tc = ((tcMap()[String((nv && nv.theChat) || 'the_chat.pham_the')] || {}).dac_tinh) || {}; } catch (e) { tc = {}; }
+    const pos = (v, d) => (Number.isFinite(v) && v > 0 ? v : d);
+    let ho, dp; try { ho = K.HO_THE_MAX; } catch (e) { ho = undefined; } try { dp = K.CONG_PHAP_CAP; } catch (e) { dp = undefined; }
+    return { dp: pos(dp, CAP_DEF.dotPha), ht: pos(ho, CAP_DEF.hoThe) + (+tc.ho_the_tran || 0), htBase: +tc.ho_the || 0, ktm: CAP_DEF.khangTamMa, live: Number.isFinite(ho) && Number.isFinite(dp) };
+  }
+  function statEff(X, R) {
+    const b = (R && R.biDong) || {}, dp = b.dot_pha || 0, ht = (b.ho_the || 0) + X.htBase, kt = b.khang_tam_ma || 0;
+    return { dp, dpEff: Math.min(dp, X.dp), dpOver: Math.max(0, dp - X.dp), ht, htEff: Math.min(ht, X.ht), htOver: Math.max(0, ht - X.ht), kt, ktEff: Math.min(kt, X.ktm), ktOver: Math.max(0, kt - X.ktm) };
+  }
+  function capStatScore(X, R, mode) {
+    if (!X || !R) return 0;
+    try {
+      const e = statEff(X, R);
+      return (CAP_REACH_W[mode] || 0) * (e.dpEff / X.dp) + (KTM_W[mode] || 0) * e.ktEff - CAP_WASTE_W * (e.dpOver / X.dp + e.htOver / X.ht + e.ktOver / X.ktm);
+    } catch (err) { return 0; }
+  }
+  function capLine(nv, R) {
+    try {
+      const X = statCapCtx(nv), e = statEff(X, R);
+      const mk = (v, cap, over) => (over > 1e-9 ? ' <span class="vk-bad">thừa ' + pct(over, 1) + '</span>' : v >= cap - 1e-9 ? ' <span class="vk-ok">chạm trần</span>' : '');
+      return `<div class="vk-mu" style="font-size:12px;margin-top:4px">Trần chỉ số: Đột Phá ${pct(e.dp, 1)} / ${pct(X.dp, 1)}${mk(e.dp, X.dp, e.dpOver)} · Hộ Thể ${pct(e.ht, 1)} / ${pct(X.ht, 1)}${mk(e.ht, X.ht, e.htOver)} · Kháng Tâm Ma ${pct(e.kt, 1)} / ${pct(X.ktm, 1)}${mk(e.kt, X.ktm, e.ktOver)}. Tốc Độ Tu Luyện và Khí Huyết game không kẹp trần.</div>`;
+    } catch (err) { return ''; }
+  }
+  // Sức tương đối của từng món trong túi (0,05 → 1): món mạnh nhất = 1. Dùng để món mạnh được ưu tiên huyệt, sinh, kinh lộ.
+  function powerMap(nv0) {
+    const c = C(), R0 = nv0.canhGioi || 0, out = new Map(); let mx = 0;
+    for (const id of Object.keys(nv0.tuiDo || {})) {
+      if (!(nv0.tuiDo[id] > 0)) continue;
+      const it = c.items.get(id); if (!isKmItem(it)) continue;
+      let v = 0; try { v = hbVal(it, R0, 1, { st: nv0.tieuCanhGioi || 0 }); } catch (e) { v = 0; }
+      if (!(v > 0)) v = 0; out.set(id, v); if (v > mx) mx = v;
+    }
+    for (const [id, v] of out) out.set(id, mx > 0 ? Math.max(0.05, v / mx) : 0.5);
+    return out;
+  }
+  // Dồn buff cho món mạnh nhất: polish chỉ nhích ≤ 3 ô, nên bước này thử đặt từng món trong nhóm mạnh nhất vào MỌI chỗ hợp lệ
+  // (ưu tiên chỗ phủ huyệt), và cho món mạnh chiếm huyệt đang do món yếu hơn giữ (món bị đẩy được thử đặt lại chỗ khác).
+  const BUFF_TOP = 5, BUFF_MS = 12000;
+  async function buffPass(nv0, ev, cand, cur0, curS0, overl, over) {
+    let cur = cur0, curS = curS0;
+    try {
+      const g = S.core.luoiKinhMach(C(), nv0), hy = hySet(g, nv0.kinhMach), pw = powerMap(nv0);
+      let seed = 4242; const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+      const smp = (arr, n) => { if (arr.length <= n) return arr; const o = []; for (let k = 0; k < n; k++) o.push(arr[Math.floor(rnd() * arr.length)]); return o; };
+      const covers = (cn) => cn.cells.some((x) => hy.has(x));
+      const order = cur.map((p) => p.m.item).sort((a, b) => (pw.get(b) ?? 0) - (pw.get(a) ?? 0)).slice(0, BUFF_TOP);
+      const t0 = Date.now(), stop = () => Date.now() - t0 > BUFF_MS || over();
+      for (const id of order) {
+        if (stop()) break;
+        const i = cur.findIndex((p) => p.m.item === id); if (i < 0) continue;
+        const pool = (cand[id] || []).filter((cn) => cn !== cur[i]), free = pool.filter((cn) => !overl(cur, cn, i));
+        let best = null;
+        for (const cn of [...smp(free.filter(covers), 24), ...smp(free.filter((x) => !covers(x)), 12)]) {
+          const nx = cur.slice(); nx[i] = cn; const e = ev(nx);
+          if (e.s > curS + 1e-9 && (!best || e.s > best.s)) best = { s: e.s, nx };
+        }
+        for (const cn of smp(pool.filter(covers), 10)) {
+          const js = []; cur.forEach((p, j) => { if (j !== i && p.cells.some((x) => cn.cells.includes(x))) js.push(j); });
+          if (js.length !== 1 || (pw.get(cur[js[0]].m.item) ?? 0) >= (pw.get(id) ?? 0)) continue;
+          const idj = cur[js[0]].m.item, base = cur.filter((_, k) => k !== i && k !== js[0]); base.push(cn);
+          const e0 = ev(base); if (e0.s > curS + 1e-9 && (!best || e0.s > best.s)) best = { s: e0.s, nx: base };
+          for (const cj of smp((cand[idj] || []).filter((x) => !overl(base, x)), 20)) {
+            const nx = [...base, cj], e = ev(nx);
+            if (e.s > curS + 1e-9 && (!best || e.s > best.s)) best = { s: e.s, nx };
+          }
+        }
+        if (best) { cur = best.nx; curS = best.s; }
+        await sleep0();
+      }
+    } catch (err) { /* lỗi ở bước phụ thì giữ nguyên kết quả đang có */ }
+    return { cur, curS };
+  }
+
   function makeEval(nv0, enemies, mode) {
     nv0 = lnPrep(nv0);
     const K = S.core, c = C(), cache = new Map();
-    const B = biasCtx(nv0, K.luoiKinhMach(c, nv0)), capX = capCtxOf(nv0), ngW = S.dir === 'ma' ? 0.4 : 1;
+    const B = biasCtx(nv0, K.luoiKinhMach(c, nv0)), capX = capCtxOf(nv0), sX = statCapCtx(nv0), ngW = S.dir === 'ma' ? 0.4 : 1;
     return (manh) => {
       const key = manh.map((p) => p.key).sort().join('|');
       if (cache.has(key)) return cache.get(key);
@@ -910,7 +1135,7 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
         else fightScore += 50 * dealt;
       }
       const thong = R.manh.filter((m) => m && m.thong).length;
-      const toc = R.biDong.toc_do || 0, dp = R.biDong.dot_pha || 0;
+      const toc = R.biDong.toc_do || 0, dp = Math.min(R.biDong.dot_pha || 0, sX.dp); // 7.4.0: game chỉ cộng tối đa CONG_PHAP_CAP
       const ng = (R.diemNghich || 0) * ngW;
       // Linh lực: hồi mỗi lượt phải đủ ra chiêu; món không thông chỉ chiếm chỗ.
       const ll = P.linhLucMoiLuot || 0;
@@ -923,7 +1148,7 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
       if (mode === 'tu') s = 0.3 * fightScore + 400 * toc + 300 * dp + thong - 40 * ng + llScore;
       else if (mode === 'danh') s = fightScore + 0.2 * thong - 3 * ng + llScore;
       else s = fightScore + 30 * toc + 20 * dp + 0.2 * thong - 10 * ng + llScore;
-      s += biasScore(B, manh, R) + capScore(capX, R);
+      s += biasScore(B, manh, R) + capScore(capX, R) + capStatScore(sX, R, mode);
       if (S.hbRatio) s -= hbRatioPenalty(manh, R);
       // Xếp Full Ô: thưởng lớn theo số ô được phủ để bộ tìm kiếm ưu tiên lấp đầy lưới.
       if (S.full) s += 20 * manh.reduce((a, p) => a + p.cells.length, 0);
@@ -957,15 +1182,15 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     nv0 = lnPrep(nv0);
     const K = S.core, c = C(), { cand, g } = buildCandidates(nv0), B = biasCtx(nv0, g);
     if (S.hbLite) for (const id of Object.keys(cand)) { const a = cand[id]; if (a.length > 80) { const sp = Math.ceil(a.length / 80); cand[id] = a.filter((_, i) => i % sp === 0); } }
-    const capX = capCtxOf(nv0);
+    const capX = capCtxOf(nv0), sX = statCapCtx(nv0);
     const quick = (manh) => {
       const nv = clone(nv0); nv.kinhMach.manh = manh.map((p) => ({ ...p.m }));
       const R = K.tinhKinhMach(nv, c);
       const uy = (R.chieu || []).reduce((a, x) => a + (x.uyLuc || x.uy || 0) / 10, 0);
-      const toc = R.biDong.toc_do || 0, dp = R.biDong.dot_pha || 0;
+      const toc = R.biDong.toc_do || 0, dp = Math.min(R.biDong.dot_pha || 0, sX.dp);
       const w = mode === 'tu' ? [0.5, 60, 40, 0.3] : mode === 'danh' ? [1.5, 3, 2, 1.2] : [1, 12, 8, 1];
       const thongAll = R.manh.every((m) => !m || m.thong);
-      return w[0] * R.linhLuc + w[1] * toc + w[2] * dp + w[3] * uy - 6 * (R.diemNghich || 0) * (S.dir === 'ma' ? 0.4 : 1) + biasScore(B, manh, R) + capScore(capX, R) + (S.full ? 3 * manh.reduce((a, p) => a + p.cells.length, 0) : 0) - (thongAll || S.full ? 0 : 1000);
+      return w[0] * R.linhLuc + w[1] * toc + w[2] * dp + w[3] * uy - 6 * (R.diemNghich || 0) * (S.dir === 'ma' ? 0.4 : 1) + biasScore(B, manh, R) + capScore(capX, R) + capStatScore(sX, R, mode) + (S.full ? 3 * manh.reduce((a, p) => a + p.cells.length, 0) : 0) - (thongAll || S.full ? 0 : 1000);
     };
     let cur = [], curS = quick(cur);
     for (let round = 0; round < 40; round++) {
@@ -1072,6 +1297,7 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
       for (let i = cur.length - 1; i >= 0; i--) { const nx = cur.filter((_, j) => j !== i), e = ev(nx); if (e.s > curS + 1e-9) { cur = nx; curS = e.s; improved = true; } } // bỏ món gây hại
       if (!improved) break;
     }
+    { const r = await buffPass(nv0, ev, cand, cur, curS, overl, () => S.abort || S.kmAbort); cur = r.cur; curS = r.curS; } // 7.4.0
     const e = ev(cur);
     return { manh: cur.map((p) => ({ ...p.m })), score: e.s, wins: e.wins, n: enemies.length, P: e.P, R: e.R };
   }
@@ -1328,7 +1554,12 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
       if (!G().state.run) { body.innerHTML = `<div class="vk-card">Chưa có kiếp nào đang chơi. Vào game (tạo hoặc nạp kiếp) rồi bấm <b>Làm mới</b>.</div>`; return; }
       S.abort = false; if (S.core && S.core.sync) S.core.sync();
       ({ tq: () => { tabTongQuan(); tongQuanExtra(); }, dp: tabDotPha2, tr: tabTran, tkc: tabTKC, bm: tabBanMenh, cho: tabCho, ld: tabLuyenDan, cph: tabCheePhu, lbo: tabLuyenBao, tph: tabTranPhap, tien: tabTien, bd: tabBanDo, tt: tabTreoThuong, san: tabSan, tcv: tabVatPham, tcq: tabQuaiVat, tcd: tabDiaDanh, db: tabDiBao, nlw: tabNLW, nlm: tabNLM, nls: tabNLS, nlv: tabNLV, nlc: tabNLC, lhd: tabDuTinhDiem, tkb: tabThienKieu, nmn: tabNhanMach, abb: tabAutoBuon, asy: tabAutoSan, akm: tabAutoKm, arr: tabAutoReroll })[S.tab]();
-    } catch (e) { console.error(e); body.innerHTML = errBox(e) + '<button class="vk-btn sec" id="vk-retry">↻ Thử Lại</button>'; const rb = body.querySelector('#vk-retry'); if (rb) rb.onclick = () => { S.core = null; S.coreP = null; render(); }; }
+    } catch (e) {
+      console.error(e); body.innerHTML = errBox(e) + '<button class="vk-btn sec" id="vk-retry">↻ Thử Lại</button><div class="vk-card" id="vk-ds" style="margin-top:10px"></div>';
+      const rb = body.querySelector('#vk-retry'); if (rb) rb.onclick = () => { S.core = null; S.coreP = null; render(); };
+      // Lõi hỏng sau khi game cập nhật vẫn xuất được báo cáo dữ liệu (không cần lõi): gửi Claude thay cho việc tải source.
+      try { dsMount(body.querySelector('#vk-ds')); } catch (e2) { console.error('[ds] mount', e2); }
+    }
   }
 
   const progressHtml = (id) => `<div id="${id}" style="display:none"><div class="vk-bar"><i></i></div><div class="vk-mu" style="font-size:13px"></div><button class="vk-btn sec vk-stop">Dừng</button></div>`;
@@ -1415,7 +1646,7 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     const st = G().state, run = st.run, nv = run.nhanVat, nam = typeof run.nam === 'number' ? run.nam : null;
     const sc = scanDiBao([run, st.meta]);
     const nodeByEnc = new Map();
-    if (sc.nodes) for (const nd of Object.values(sc.nodes)) if (nd && typeof nd.encounter === 'string' && !nodeByEnc.has(nd.encounter)) nodeByEnc.set(nd.encounter, nd);
+    if (run.nodes) for (const [slot, nd] of Object.entries(run.nodes)) if (nd && typeof nd.encounter === 'string' && !nodeByEnc.has(nd.encounter)) nodeByEnc.set(nd.encounter, { slot, node: nd });
     const has = (id) => sc.relics.has(id) || sc.flags.has(id.replace('item.', '')) || (nv.tuiDo && nv.tuiDo[id] > 0);
     const rows = DIBAO.ev.map((e) => {
       const done = has(e.relic), info = DIBAO.rel[e.relic] || {};
@@ -1427,11 +1658,13 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
       else if (!gateOk) stt = 'lock';
       const nd = nodeByEnc.get(e.id);
       let nodeLeft = null;
-      if (!done && stt !== 'cd' && nd) { stt = 'map'; if (typeof nd.hetHanNam === 'number' && nam != null) nodeLeft = nd.hetHanNam - nam; }
-      return { e, info, stt, left, nodeLeft, gateOk };
+      if (!done && stt !== 'cd' && nd) { stt = 'map'; if (typeof nd.node.hetHanNam === 'number' && nam != null) nodeLeft = nd.node.hetHanNam - nam; }
+      const targetSlot = ddResolveEventSlot(e.id, e.dia, run);
+      return { e, info, stt, left, nodeLeft, gateOk, targetSlot };
     });
     const ORD = { map: 0, ok: 1, cd: 2, lock: 3, done: 4 };
     rows.sort((a, b) => ORD[a.stt] - ORD[b.stt]);
+    const randRows = diBaoRandom(sc, nodeByEnc, nv, nam);
     const bossRows = DIBAO.boss.map((id) => ({ id, info: DIBAO.rel[id] || {}, done: has(id) }));
     const nDone = rows.filter((r) => r.stt === 'done').length + bossRows.filter((r) => r.done).length;
     const badge = (r) => {
@@ -1449,11 +1682,34 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
       if (e.chk) bits.push('Kiểm định: ' + esc(e.chk.replace(/^[a-z_]+/, (m) => CHI_SO_VI[m] || m)));
       if (e.p != null) bits.push('Tỉ lệ (theo dữ liệu của Di Bảo Companion, chưa rõ cách tính): ' + pct(e.p));
       if (i.bd) bits.push('Theo hồn qua kiếp: ' + esc(i.bd));
-      return `<div class="vk-card"><h3>${esc(i.ten || e.relic)}</h3><div style="margin-bottom:4px">${badge(r)}</div><div class="vk-mu" style="font-size:13px">Sự kiện: «${esc(e.ten)}»<br>${bits.join('<br>')}</div></div>`;
+      const bay = r.targetSlot ? ddQuickTravelButton(r.targetSlot, run.viTri, 'Đi tới ' + (e.dia || 'địa điểm')) : '';
+      const noTarget = !r.targetSlot && r.stt !== 'done' ? '<div class="vk-mu" style="font-size:12px;margin-top:8px">Chưa xác định được ô bản đồ cho địa điểm này trong save hiện tại.</div>' : '';
+      return `<div class="vk-card"><h3>${esc(i.ten || e.relic)}</h3><div style="margin-bottom:4px">${badge(r)}</div><div class="vk-mu" style="font-size:13px">Sự kiện: «${esc(e.ten)}»<br>${bits.join('<br>')}</div>${bay ? `<div class="vk-dibao-actions">${bay}</div>` : noTarget}</div>`;
     };
     body.innerHTML = `<div class="vk-card"><h3>Dị bảo đã nhận: ${nDone}/${rows.length + bossRows.length}</h3><div class="vk-mu" style="font-size:13px">Trạng thái đọc thẳng từ save đang chơi. Dị bảo chỉ hiện trên bản đồ khi game cho sự kiện xuất hiện; node tồn tại vài năm rồi tan, nên đủ điều kiện chưa chắc đã thấy. Bảng này không thể hiện được tỉ lệ rơi từ boss.</div></div>` +
       rows.map(card).join('') +
-      (bossRows.length ? `<div class="vk-card"><h3>Chỉ rơi từ boss Hóa Thần</h3>${bossRows.map((b) => `<div class="vk-row"><span>${esc(b.info.ten || b.id)}</span><b>${b.done ? 'Đã nhận' : 'Chưa có'}</b></div>`).join('')}</div>` : '');
+      (bossRows.length ? `<div class="vk-card"><h3>Chỉ rơi từ boss Hóa Thần</h3>${bossRows.map((b) => `<div class="vk-row"><span>${esc(b.info.ten || b.id)}</span><b>${b.done ? 'Đã nhận' : 'Chưa có'}</b></div>`).join('')}</div>` : '') +
+      (randRows.length ? `<div class="vk-card"><h3>Dị bảo ngẫu nhiên (${randRows.length})</h3><div class="vk-mu" style="font-size:13px;margin-bottom:6px">Sự kiện chỉ cho một vật ngẫu nhiên theo loại, không có món cố định, nên không đánh dấu “đã nhận”. Đọc thẳng từ dữ liệu game.</div>${randRows.map((r) => `<div class="vk-row" style="align-items:flex-start"><span>${esc(r.ten)}<div class="vk-mu" style="font-size:12px">${esc(r.noi)}${r.gate ? ' · cần ' + esc(realmName(r.gate[0])) : ''}${r.loai ? ' · thưởng ' + esc(LOAI_VI[r.loai] || r.loai) : ''}${r.hc ? ' · hồi chiêu ' + r.hc + ' năm' : ''}</div></span><b>${r.stt === 'map' ? '<span class="vk-ok">Đang có trên bản đồ' + (r.nodeLeft != null ? ' · còn ' + Math.max(0, Math.floor(r.nodeLeft)) + ' năm' : '') + '</span>' : r.stt === 'cd' ? '<span class="vk-bad">Hồi chiêu · còn ' + Math.ceil(r.left) + ' năm</span>' : r.stt === 'lock' ? '<span class="vk-bad">Chưa đủ cảnh giới</span>' : '<span class="vk-ok">Đủ điều kiện</span>'}</b></div>`).join('')}</div>` : '');
+    ddBindQuickTravel(body);
+  }
+  // Dị bảo ngẫu nhiên (game 0.0.2): sự kiện ev.di_bao_* không có món cố định, vật thưởng bốc ngẫu nhiên theo loại và cảnh giới.
+  // Không nhúng sẵn: đọc thẳng từ game.env.content nên game thêm sự kiện loại này thì Tool tự thấy.
+  function diBaoRandom(sc, nodeByEnc, nv, nam) {
+    const out = [], known = new Set(DIBAO.ev.map((e) => e.id));
+    try {
+      for (const [id, d] of C().encounters) {
+        if (!/^ev\.di_bao_/.test(id) || known.has(id) || !d || !d.vars || !d.vars.bao) continue;
+        const tg = d.tags || {}, gate = Array.isArray(tg.canh_gioi) ? tg.canh_gioi : null, hc = d.limits && d.limits.hoi_chieu_nam;
+        const h = sc.history.get(id), nd = nodeByEnc.get(id);
+        let stt = 'ok', left = null, nodeLeft = null;
+        if (h && hc && nam != null && nam < h.namCuoi + hc) { stt = 'cd'; left = h.namCuoi + hc - nam; }
+        else if (gate && nv.canhGioi < gate[0]) stt = 'lock';
+        if (nd && stt !== 'cd') { stt = 'map'; if (typeof nd.node.hetHanNam === 'number' && nam != null) nodeLeft = nd.node.hetHanNam - nam; }
+        out.push({ id, ten: d.ten || id, noi: (tg.noi || []).map((x) => NLW_NOI[x] || ({ son_thuy: 'Sơn Thủy' })[x] || String(x).replace(/_/g, ' ')).join(', '), gate, hc, loai: d.vars.bao.loai, stt, left, nodeLeft });
+      }
+    } catch (e) { console.error('[dibao] random', e); }
+    const ORD = { map: 0, ok: 1, cd: 2, lock: 3 };
+    return out.sort((a, b) => ORD[a.stt] - ORD[b.stt]);
   }
 
   // ═════════════ KINH MẠCH 6.5: Lĩnh Ngộ · áp dụng bằng hàm của game · ô mở được ═════════════
@@ -1672,6 +1928,115 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     return { base, out: out.slice(0, 8), tried: list.length, total: jobs.length, g, left: (km.cho && km.cho.doiMau) || 0 };
   }
 
+
+  // ═════ BẢN 7.2.0: GIẢ ĐỊNH FULL TẨY TỦY THEO LINH CĂN + ĐỒ MẠNH NHẤT CỦA HỆ LIÊN QUAN ═════
+  /* Ý tưởng (từ góp ý người chơi): lấy linh căn kiếp này, xét các hệ liên quan (hệ linh căn, hệ sinh ra nó, hệ sinh nó và Vô sắc),
+     với mỗi hệ giả định đã có món mạnh nhất của hệ đó trong cả game, rồi cho phép đổi màu MỌI ô sang hệ linh căn (giả định đủ lượt đổi màu)
+     và để Tool xếp lại tối ưu. So với mốc đang có để biết nên săn món nào ở cuối game.
+     Điểm/trận mẫu là của Tool (cùng cách tính các phép giả định khác); "mạnh nhất" xếp theo phẩm, cảnh giới, trần pháp lực: là ước lượng của Tool, không phải số liệu game. */
+  // Đổi màu các ô nằm dưới món ĐANG THÔNG sang hệ linh căn hợp món nhất (đúng hàm hợp màu oHop của game). Trả về mảng màu mới.
+  function kmRecolorAll(nv, manh) {
+    const K = S.core, c = C(), g = K.luoiKinhMach(c, nv);
+    const lc = ((nv.linhCan && nv.linhCan.he) || []).filter((h) => h && h !== 'vo_sac');
+    const nv2 = clone(nv); nv2.kinhMach.manh = manh.map((m) => ({ ...m }));
+    const R = K.tinhKinhMach(nv2, c), mau = (nv.kinhMach.mau || []).slice();
+    if (!lc.length) return { mau, changed: 0 };
+    let changed = 0;
+    const val = (h, hs) => Math.max(...hs.map((q) => oHop(h, q))) * 10 - (hs.some((q) => oKhac(h, q)) ? 3 : 0);
+    manh.forEach((m, i) => {
+      if (!(R.manh[i] && R.manh[i].thong)) return;
+      const it = c.items.get(m.item), hs = ((it && it.he) || []).filter((h) => h && h !== 'vo_sac'); if (!hs.length) return;
+      for (const x of K.oCuaManh(g, m, it) || []) {
+        if (x === g.danDien) continue;
+        let best = mau[x], bs = val(mau[x], hs);
+        for (const h of lc) { const s = val(h, hs); if (s > bs + 1e-9) { bs = s; best = h; } }
+        if (best !== mau[x]) { mau[x] = best; changed++; }
+      }
+    });
+    return { mau, changed };
+  }
+  // Các hệ (gốc) liên quan tới linh căn: chính nó + hệ cầu nối (được một linh căn sinh ra và sinh ra linh căn kia; vd Kim–Mộc → Thủy).
+  // Không có cầu nối (đơn linh căn, hoặc hai hệ không cách nhau một bậc) thì lấy hệ kề theo tương sinh (hệ nó sinh ra, hệ sinh ra nó). Luôn thêm Vô sắc.
+  function kmRootGroups(nv) {
+    const lc = ((nv.linhCan && nv.linhCan.he) || []).filter((h) => h && h !== 'vo_sac');
+    const roots = [...new Set(lc.map(gocHe))], out = new Map();
+    for (const r of roots) out.set(r, 'linh căn');
+    const add = (h, role) => { if (h && !out.has(h)) out.set(h, role); };
+    for (const r of roots) { const m = SINH_HE[r], to = m && SINH_HE[m]; if (m && roots.includes(to) && to !== r) add(m, 'cầu nối ' + heTen(r) + ' → ' + heTen(to)); }
+    if (out.size === roots.length) for (const r of roots) { add(SINH_HE[r], 'được ' + heTen(r) + ' sinh'); add(sinhBoi(r), 'sinh ra ' + heTen(r)); }
+    out.set('vo_sac', 'trung tính, hợp mọi ô');
+    return { lc, roots, groups: [...out.entries()].map(([k, role]) => ({ k, role })) };
+  }
+  async function kmWhatIfRoot(nv, mode, prog, opt) {
+    const K = S.core, c = C(), iters = (opt && opt.iters) || 800, X = capCtxOf(nv), allowMa = S.dir === 'ma';
+    const { lc, roots, groups } = kmRootGroups(nv);
+    if (!lc.length) return { na: 'Không đọc được hệ linh căn của nhân vật nên chưa tính được.' };
+    // Kho đồ cả game dùng được ở cảnh giới hiện tại, xếp theo sức mạnh ước lượng
+    const bank = [...c.items.values()].filter((it) => isKmItem(it) && (it.canh_gioi ?? 0) <= nv.canhGioi && (allowMa || !((it.tag || []).includes('ma') || (it.tag || []).includes('nghich'))));
+    const inG = (it, g) => g === 'vo_sac' ? !(it.he || []).some((h) => h && h !== 'vo_sac') : (it.he || []).some((h) => gocHe(h) === g);
+    const strength = (it) => (it.pham_cap || 0) * 10 + (it.canh_gioi ?? 0) * 3 + (X ? 8 * capUp(X, it) : 0) + (it.chieu ? 2 : 0);
+    const top = (g, k) => { const a = bank.filter((it) => inG(it, g)).sort((x, y) => strength(y) - strength(x)); return [...a.filter((i) => i.loai === 'cong_phap').slice(0, k), ...a.filter((i) => i.loai === 'phap_khi').slice(0, k)].map((i) => i.id); };
+    const cases = groups.map((q) => ({ key: q.k, name: 'Đồ hệ ' + heTen(q.k), role: q.role, extra: top(q.k, 5) }));
+    cases.push({ key: 'all', name: 'Đồ mạnh nhất của mọi hệ liên quan', role: groups.map((q) => heTen(q.k)).join(' + '), extra: [...new Set(groups.flatMap((q) => top(q.k, 2)))] });
+    const nv0 = clone(nv); nv0.kinhMach.manh = [];
+    const total = 2 + cases.length; let done = 0; const step = (label) => (f) => prog((done + Math.min(1, f)) / total, label);
+    const heOfCells = (nvX, manh, R) => { const g = K.luoiKinhMach(c, nvX), cnt = {}; manh.forEach((m, i) => { if (!(R.manh[i] && R.manh[i].thong)) return; for (const x of K.oCuaManh(g, m, c.items.get(m.item)) || []) { const h = nvX.kinhMach.mau[x]; if (h !== (nv.kinhMach.mau || [])[x]) cnt[h] = (cnt[h] || 0) + 1; } }); return cnt; };
+    // Giải một kịch bản: xếp (màu cũ) → đổi màu toàn bộ theo món → xếp lại → đổi màu lần cuối
+    async function solve(extra, recolor, label) {
+      const nvA = clone(nv0); for (const id of extra) if (!(nvA.tuiDo[id] > 0)) nvA.tuiDo[id] = 1;
+      const part = recolor ? 2 : 1, sub = (k) => (f) => step(label)((k + f) / part);
+      let r = await anneal({ nv0: nvA, mode, iters, init: nv.kinhMach.manh, onProg: sub(0), label });
+      let manh = stripDead(nvA, r, mode).manh, nvF = clone(nvA);
+      if (recolor && !S.abort) {
+        nvF.kinhMach.mau = kmRecolorAll(nvA, manh).mau;
+        r = await anneal({ nv0: nvF, mode, iters, init: manh, seed: 424243, onProg: sub(1), label });
+        manh = stripDead(nvF, r, mode).manh;
+        nvF.kinhMach.mau = kmRecolorAll(nvF, manh).mau;
+      }
+      nvF.kinhMach.manh = manh.map((m) => ({ ...m }));
+      const fin = evalCurrent(nvF, mode);
+      const used = manh.filter((m, i) => fin.R.manh[i] && fin.R.manh[i].thong).map((m) => m.item);
+      return { score: fin.score, wins: fin.wins, n: fin.n, P: fin.P, R: fin.R, manh, nvF, used, recol: recolor ? heOfCells(nvF, manh, fin.R) : {} };
+    }
+    const out = {};
+    out.base = await solve([], false, 'Mốc: đồ đang có, màu ô hiện tại'); done++;
+    if (!S.abort) { out.tay = await solve([], true, 'Chỉ full tẩy tủy, đồ đang có'); done++; }
+    out.cases = [];
+    for (const cs of cases) {
+      if (S.abort) break;
+      const r = await solve(cs.extra, true, cs.name); done++;
+      out.cases.push({ ...cs, ...r, hunt: [...new Set(r.used)].filter((id) => !(nv.tuiDo[id] > 0)) });
+    }
+    out.cases.sort((a, b) => b.score - a.score);
+    out.roots = roots; out.lc = lc; out.aborted = !!S.abort;
+    return out;
+  }
+  function kmRootHtml(nv, r) {
+    if (r.na) return `<div class="vk-mu" style="margin-top:8px">${esc(r.na)}</div>`;
+    const c = C(), d = (x) => (x >= 1 ? '<span class="vk-ok">+' + Math.round(x) + '</span>' : x <= -1 ? '<span class="vk-bad">' + Math.round(x) + '</span>' : '<span class="vk-mu">≈0</span>');
+    const row = (name, x, note) => `<tr><td>${name}${note ? '<br><span class="vk-mu" style="font-size:12px">' + note + '</span>' : ''}</td><td>${x.wins}/${x.n}</td><td>${x === r.base ? '—' : d(x.score - r.base.score)}</td></tr>`;
+    const recolTxt = (x) => { const e = Object.entries(x.recol || {}).sort((a, b) => b[1] - a[1]); return e.length ? 'đổi màu ' + e.map(([h, n]) => n + ' ô → ' + esc(heTen(h))).join(', ') : ''; };
+    const rows = [row('Mốc: đồ đang có, màu ô hiện tại', r.base)];
+    if (r.tay) rows.push(row('Chỉ full tẩy tủy (đồ đang có)', r.tay, recolTxt(r.tay)));
+    for (const x of r.cases) rows.push(row(esc(x.name), x, esc(x.role) + (x.hunt.length ? ' · cần săn ' + x.hunt.length + ' món' : ' · không cần món mới')));
+    const best = r.cases[0], ref = r.tay || r.base;
+    let html = `<div class="vk-mu" style="font-size:13px;margin-top:8px">Linh căn <b>${r.lc.map(heTen).map(esc).join(' + ')}</b>. Giả định đủ lượt đổi màu (mọi ô đổi được sang hệ linh căn) và đã có món mạnh nhất của từng hệ liên quan (Tool xếp hạng theo phẩm, cảnh giới, trần pháp lực). Giá, độ khó săn và số lượt đổi màu thật chưa tính.${r.aborted ? ' <b>Đã dừng giữa chừng: chỉ có các kịch bản đã chạy xong.</b>' : ''}</div>
+      <table class="vk-t"><tr><th>Kịch bản</th><th>Thắng</th><th>Lợi so với mốc</th></tr>${rows.join('')}</table>`;
+    if (!best) return html;
+    const gain = best.score - ref.score;
+    if (gain < 1 && !best.hunt.length) { return html + `<div class="vk-ok" style="margin-top:8px">Đồ đang có cộng full tẩy tủy đã gần chạm trần của linh căn này, chưa cần săn thêm.</div>`; }
+    html += `<div style="margin-top:10px;font-size:14px"><b>Nghiêng về: ${esc(best.name)}</b> (${esc(best.role)}) · thắng <b>${best.wins}/${best.n}</b>${gain >= 1 ? ' · hơn "chỉ full tẩy tủy" <span class="vk-ok">+' + Math.round(gain) + '</span>' : ' · gần bằng "chỉ full tẩy tủy"'}</div>`;
+    try { html += drawGrid(best.nvF, best.manh); } catch (e) { html += errBox(e); }
+    const huntRow = (id) => { const it = c.items.get(id); if (!it) return ''; const src = sourceNote(it), where = whereToGet(id);
+      return `<tr><td><b>${esc(it.ten)}</b><br><span class="vk-mu" style="font-size:12px">${esc((it.he || ['vo_sac']).map(heTen).join('/'))} · phẩm ${it.pham_cap} · ${itemDesc(it)}${src.length ? '<br>' + esc(src.join(' · ')) : ''}${where ? '<br>Có ở: ' + where : ''}</span></td><td>${it.gia ? '~' + it.gia : '—'}</td></tr>`; };
+    if (best.hunt.length) html += `<div style="margin-top:8px"><b>Đồ nên săn để lắp vào</b><table class="vk-t"><tr><th>Món</th><th>Giá</th></tr>${best.hunt.map(huntRow).join('')}</table></div>`;
+    const rc = recolTxt(best); if (rc) html += `<div class="vk-mu" style="font-size:13px;margin-top:6px">Màu ô theo cách xếp trên: ${rc}.</div>`;
+    const more = r.cases.slice(1, 3).filter((x) => x.hunt.length && x.score - r.base.score >= 1);
+    if (more.length) html += `<div class="vk-mu" style="font-size:13px;margin-top:6px"><b>Phương án thay thế:</b> ${more.map((x) => esc(x.name) + ' (' + x.wins + '/' + x.n + ') → ' + x.hunt.map((id) => esc((c.items.get(id) || {}).ten || id)).join(', ')).join('<br>')}</div>`;
+    html += `<div class="vk-mu" style="font-size:11px;margin-top:6px">Chỉ tính thử trên bản sao, không đụng game. Muốn áp dụng: săn đủ món, dùng đan đổi màu ô (nếu game cho) rồi vào "Bắt Đầu Xếp".</div>`;
+    return html;
+  }
+
   // ── Tab Kinh mạch
   function statRows(a, b) {
     const ch = (r) => r.P.chieu.filter((x) => x.dang !== undefined).map((x) => `${esc(x.ten)} (${Math.round(x.uy)})`).join(', ');
@@ -1702,7 +2067,8 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
   function kmManualHtml(nv) {
     const tacAll = nv.kinhMach.trangThai.filter((s) => s === 'tac').length, tac = kmOpenable(nv);
     const mo = (nv.kinhMach.cho && nv.kinhMach.cho.mo) || 0;
-    return `
+    // 7.4.0: trả về mảng 6 thẻ [Xếp Từ Túi, Hai Bộ, Ô Nên Mở, Giả Định, Đang Xếp, Nguyên Lý] để tab Hướng Build tự sắp theo ưu tiên.
+    const all = `
     <div class="vk-card"><h3>Xếp Từ Đồ Trong Túi</h3>
       <div class="vk-mu" style="font-size:13px">Tool thử hàng nghìn cách xếp các món trong túi, đánh thử 9 trận mẫu cùng cảnh giới cho mỗi cách và giữ cách tốt nhất, theo Cài Đặt Chung ở trên. Kết quả hiện ở đây, bạn bấm Áp Dụng Vào Game khi ưng; muốn Tool tự làm hết thì dùng Auto Kinh Mạch.</div>
       <button class="vk-btn" id="vk-go" style="margin-top:8px">Bắt Đầu Xếp</button>
@@ -1716,10 +2082,10 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
       ${progressHtml('vk-pr2')}<div id="vk-out2"></div></div>
     <div class="vk-card"><h3>Phép Tính Giả Định</h3>
       <div class="vk-mu" style="font-size:13px">Tính thử trên bản sao nhân vật, không đụng game, dựa trên cách bạn đang xếp. Trận mẫu luôn là đối thủ cùng cảnh giới với nhân vật giả định.</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="vk-btn sec" id="vk-wi-up">Nếu Lên Tiểu Cảnh Giới Kế</button><button class="vk-btn sec" id="vk-wi-rm">Nếu Gỡ Từng Món</button><button class="vk-btn sec" id="vk-wi-col">Nếu Đổi Màu Một Ô</button></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="vk-btn sec" id="vk-wi-up">Nếu Lên Tiểu Cảnh Giới Kế</button><button class="vk-btn sec" id="vk-wi-rm">Nếu Gỡ Từng Món</button><button class="vk-btn sec" id="vk-wi-col">Nếu Đổi Màu Một Ô</button><button class="vk-btn sec" id="vk-wi-root">Giả Định Full Tẩy Tủy Theo Linh Căn</button><select class="vk-sel" id="vk-wi-q" title="Độ kỹ của Giả Định Full Tẩy Tủy"><option value="400">Nhanh</option><option value="800" selected>Chuẩn</option><option value="1500">Kỹ</option></select></div>
       ${progressHtml('vk-prw')}<div id="vk-outw"></div></div>
     <div class="vk-card"><h3>Đang xếp trong game</h3><div id="vk-cur"></div></div>
-    <div class="vk-card"><h3>Nguyên lý kinh mạch (đọc từ code game)</h3><ul style="margin:0;padding-left:18px;font-size:14px">
+    <details class="vk-card"><summary><b>Nguyên Lý Kinh Mạch (Đọc Từ Code Game)</b></summary><ul style="margin:6px 0 0;padding-left:18px;font-size:14px">
       <li><b>Thông:</b> tâm pháp/đấu pháp thông khi chạm đan điền hoặc chạm một công pháp đã thông (nối thành chuỗi). Pháp khí thông khi chạm đan điền hoặc chạm công pháp đã thông. Món không thông = không có tác dụng.</li>
       <li><b>Màu ô:</b> hệ số = 0,85 + 0,45 × độ hợp trung bình các ô (đúng hệ = 1; cùng gốc như Băng–Thủy hoặc có Vô sắc = 0,5; khác hệ = 0). Đặt đúng màu tối đa ×1,3.</li>
       <li><b>Huyệt:</b> phủ 1 huyệt ×2, mỗi huyệt thêm +0,25. Nên đặt món mạnh nhất (chiêu chính, pháp khí thủ) lên huyệt.</li>
@@ -1731,7 +2097,10 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
       <li><b>Nội tại:</b> món nhiều hệ mà các hệ sinh nhau ×1,1.</li>
       <li><b>Điểm nghịch</b> (+1 mỗi cặp món kề nhau khắc nhau, +1 mỗi món đặt quá nửa trên ô khắc nó, +1 mỗi món tự có hệ khắc nhau): mỗi điểm −3% tỉ lệ đột phá (tối đa −15%) và gây phản phệ trong trận. Tool trừ điểm nghịch khi xếp.</li>
       <li><b>Tâm pháp:</b> tốc độ tu luyện/đột phá/kháng tâm ma không nhân hệ số, chỉ cần thông; linh lực và chỉ số thì nhân hệ số. Món Vô sắc cho linh lực ×0,85.</li>
-    </ul></div>`;
+      <li><b>Trần chỉ số (7.4.0):</b> game chỉ cộng tối đa 12% Đột Phá từ công pháp, giáp Hộ Thể trong trận tối đa 60% (thể chất có thể nới thêm) và Kháng Tâm Ma tối đa 100%; Tốc Độ Tu Luyện và Khí Huyết không có trần. Tool đọc các hằng này từ game, chỉ thưởng tới trần và trừ phần thừa để nhường ô cho món khác.</li>
+      <li><b>Món mạnh nhất lên trước (7.4.0):</b> huyệt ×2 mỗi huyệt chỉ chứa một món, nên Tool dồn huyệt, màu đúng, món sinh kề bên và kinh lộ cho các công pháp mạnh nhất; sau khi xếp còn một bước thử đặt riêng từng món mạnh vào mọi chỗ hợp lệ, kể cả chiếm huyệt của món yếu hơn.</li>
+    </ul></details>`;
+    return all.split(/(?=<(?:div|details) class="vk-card">)/).filter((x) => x.trim());
   }
   function kmManualBind(nv) {
     const tac = kmOpenable(nv), mo = (nv.kinhMach.cho && nv.kinhMach.cho.mo) || 0;
@@ -1846,6 +2215,10 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
       out.innerHTML = `<div class="vk-mu" style="font-size:13px;margin-top:8px">Còn <b>${r.left}</b> lượt chuyển hệ. Thử ${r.tried}${r.total > r.tried ? '/' + r.total : ''} cách đổi trên cách xếp hiện tại (chưa xếp lại món). Điểm hiện tại: <b>${num(r.base.s, 0)}</b>.</div>
         <table class="vk-t"><tr><th>Ô</th><th>Món đang đè</th><th>Đổi</th><th>Lợi</th></tr>${r.out.map((x) => `<tr><td>${pos(x.x)}</td><td>${esc(x.ten)}</td><td>${esc(heTen(x.from))} → <b>${esc(heTen(x.to))}</b></td><td>${x.gain > 1 ? '<span class="vk-ok">+' + Math.round(x.gain) + '</span>' : '<span class="vk-mu">≈0</span>'}${x.dw ? ' · thắng ' + (x.dw > 0 ? '+' : '') + x.dw : ''}</td></tr>`).join('')}</table>`;
     });
+    body.querySelector('#vk-wi-root').onclick = (ev) => wiRun(ev.target, async (prog, out, mode) => {
+      const r = await kmWhatIfRoot(nv, mode, prog, { iters: +body.querySelector('#vk-wi-q').value || 800 });
+      out.innerHTML = kmRootHtml(nv, r);
+    });
   }
   function copyText(t) {
     const fallback = () => { const ta = document.createElement('textarea'); ta.value = t; ta.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(ta); ta.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (e) {} ta.remove(); return ok; };
@@ -1857,7 +2230,7 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     if (!out) return;
     out.innerHTML = (best.same ? '<div class="vk-ok" style="margin:6px 0">Cách đang xếp đã là cách tốt nhất Tool tìm được.</div>' : '<div class="vk-ok" style="margin:6px 0">Xếp lại trong game theo ảnh dưới:</div>' + drawGrid(nv, best.manh)) + statRows(cur, best) +
       ((best.R && best.R.diemNghich) ? `<div class="vk-mu" style="font-size:12px;margin-top:6px">Cách này còn ${best.R.diemNghich} điểm nghịch (−${Math.min(15, 3 * best.R.diemNghich)}% tỉ lệ đột phá). Lúc chuẩn bị đột phá, chọn chế độ "Ưu tiên tu luyện / đột phá" để Tool ưu tiên xóa điểm nghịch.</div>` : '') +
-      biasSummary(nv, best) + (S.full ? coverNote(nv, best) : '') + '<div class="vk-mu" style="font-size:12px;margin-top:6px">Trận mẫu: 9 loại quái cùng cảnh giới với bạn, ở tiểu cảnh giới quanh mức của bạn (thấp hơn 1, bằng, cao hơn 1).</div>' + pieceTable(best.R) + sellAdvice(nv, best);
+      biasSummary(nv, best) + capLine(nv, best.R) + (S.full ? coverNote(nv, best) : '') + '<div class="vk-mu" style="font-size:12px;margin-top:6px">Trận mẫu: 9 loại quái cùng cảnh giới với bạn, ở tiểu cảnh giới quanh mức của bạn (thấp hơn 1, bằng, cao hơn 1).</div>' + pieceTable(best.R) + sellAdvice(nv, best);
     if (!best.same) {
       out.insertAdjacentHTML('afterbegin', '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0"><button class="vk-btn" id="vk-apply">Áp dụng vào game</button><button class="vk-btn sec" id="vk-copy">Sao chép cách xếp</button></div>');
       out.querySelector('#vk-apply').onclick = async (e) => { if (kmAutoRunning()) { UI.notify('Auto Kinh Mạch đang chạy, hãy dừng trước.'); return; } e.target.disabled = true; if (await applyManh(best.manh)) await render(); else e.target.disabled = false; };
@@ -1948,7 +2321,25 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     for (const dan of sets) for (const td of tdOpts) { try { const h = K.chuanBiDotPha(ctx(), { dan, thieuDot: td }); combos.push({ dan, td, tiLe: h.tiLe, h }); } catch {} }
     combos.sort((a, b) => b.tiLe - a.tiLe || a.dan.length - b.dan.length || a.td - b.td);
     const itemTen = (id) => (C().items.get(id) || {}).ten || id;
-    const rows = combos.slice(0, 10).map((x) => `<tr><td>${x.dan.length ? x.dan.map(itemTen).map(esc).join(' + ') : '—'}</td><td>${x.td ? x.td + ' nấc (−' + h0.thieuDot[x.td - 1].nam + ' năm)' : '—'}</td><td><b>${pct(x.tiLe, 1)}</b></td></tr>`).join('');
+    // 7.6.0: phẩm đạo cơ nếu đột phá thành công, hỏi thẳng breakthroughGrade của game. Game cho trôi 'năm xung kích' rồi mới tung phẩm nên cộng trước vào bản sao ctx.
+    const GR = { ha: 'Hạ', trung: 'Trung', thuong: 'Thượng', hoan_my: 'Hoàn Mỹ' };
+    const grOf = (dan, td, cap) => {
+      if (typeof K.breakthroughGrade !== 'function' || !(h0.len >= 2)) return null;
+      try {
+        const nx = (K.canhGioi(h0.len) || {}).namXungKich || 0, c2 = ctx();
+        c2.run.nam = Math.round((c2.run.nam + nx) * 1e6) / 1e6;
+        const g = K.breakthroughGrade(c2, { dan: dan || [], thieuDot: td || 0, capGrade: cap });
+        return typeof g === 'string' ? (GR[g] || g) : null;
+      } catch (e) { return null; }
+    };
+    combos.slice(0, 10).forEach((x) => { x.gr = grOf(x.dan, x.td); });
+    const hasGr = combos.slice(0, 10).some((x) => x.gr);
+    const rows = combos.slice(0, 10).map((x) => `<tr><td>${x.dan.length ? x.dan.map(itemTen).map(esc).join(' + ') : '—'}</td><td>${x.td ? x.td + ' nấc (−' + h0.thieuDot[x.td - 1].nam + ' năm)' : '—'}</td><td><b>${pct(x.tiLe, 1)}</b></td>${hasGr ? `<td>${esc(x.gr || '—')}</td>` : ''}</tr>`).join('');
+    const capRows = (h0.len >= 2 && Array.isArray(h0.capOptions) ? h0.capOptions : []).map((o) => { const g = grOf([], 0, o.cap); return `<tr><td>${esc(GR[o.cap] || o.cap)}</td><td><b class="vk-ok">+${pct(o.bonus, 1)}</b></td><td>${esc(g || '—')}</td></tr>`; }).join('');
+    const phamCard = h0.len >= 2 && Array.isArray(h0.pham) ? `<div class="vk-card"><h3>Phẩm đạo cơ</h3>
+      <div class="vk-row"><span>Có thể rơi vào</span><b>${esc(GR[h0.pham[0]] || h0.pham[0])} → ${esc(GR[h0.pham[1]] || h0.pham[1])}</b></div>
+      ${capRows ? `<div class="vk-mu" style="font-size:12px;margin:6px 0 2px">Cầu phẩm thấp để vững đạo cơ: cộng tỉ lệ nhưng phẩm không vượt mức đã chọn.</div><table class="vk-t"><tr><th>Cầu phẩm</th><th>Cộng tỉ lệ</th><th>Phẩm nếu thành công</th></tr>${capRows}</table>` : ''}
+      ${grOf([], 0) ? '<div class="vk-mu" style="font-size:12px;margin-top:6px">Phẩm “nếu thành công” do game tính theo hạt giống của tháng xung kích; nghỉ qua tháng khác có thể ra phẩm khác.</div>' : ''}</div>` : '';
     const best = combos[0] || { h: h0, tiLe: h0.tiLe };
     const nguon = (best.h.nguon || []).map((n) => `<div class="vk-row"><span>${esc(n.ten)}</span><b class="${n.gt < 0 ? 'vk-bad' : ''}">${n.gt >= 0 ? '+' : ''}${pct(n.gt, 1)}</b></div>`).join('');
     const cho = h0.cho ? `${esc(h0.cho.ten)} · linh khí ${esc(h0.cho.linhKhi && h0.cho.linhKhi.ten)}` : '—';
@@ -1962,8 +2353,9 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     </div>
     <div class="vk-card"><h3>Các phương án (đan trong túi + đốt thọ)</h3>
       ${pills.length ? '' : '<div class="vk-mu" style="font-size:13px">Trong túi chưa có đan đột phá dùng được.</div>'}
-      <table class="vk-t"><tr><th>Đan</th><th>Đốt thọ</th><th>Tỉ lệ</th></tr>${rows}</table>
+      <table class="vk-t"><tr><th>Đan</th><th>Đốt thọ</th><th>Tỉ lệ</th>${hasGr ? '<th>Phẩm</th>' : ''}</tr>${rows}</table>
       <div class="vk-mu" style="font-size:12px;margin-top:6px">Chưa tính hộ pháp (+5% nếu có). Đột phá ở động phủ hoặc sư môn của mình sẽ cao hơn ở thành thị.</div></div>
+    ${phamCard}
     <div class="vk-card"><h3>Chi tiết phương án tốt nhất</h3>${nguon}</div>`;
   }
 
@@ -2015,7 +2407,7 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     <div class="vk-card"><h3>Khảo hạch thăng cấp tông môn</h3>${kh}</div>
     <div class="vk-card"><h3>Nhiệm vụ</h3><div class="vk-mu">Nhiệm vụ sư môn và việc treo thưởng ở thành trấn giờ nằm ở tab <b>Treo thưởng</b>, có thử sức từng việc bằng chính cách game đánh giá.</div></div>
     <div class="vk-card"><h3>Thử đánh quái bất kỳ</h3>
-      <input class="vk-sel" id="vk-eq" style="width:100%;margin-bottom:6px" placeholder="Gõ tên quái, ví dụ: lang, giao long, ma tu…" autocomplete="off">
+      <div class="tc-sb" style="margin-bottom:6px"><span class="tc-sb-ic">🔍</span><input class="tc-shared-q" type="text" id="vk-eq" placeholder="Gõ tên quái, ví dụ: lang, giao long, ma tu…" autocomplete="off"></div>
       <select class="vk-sel" id="vk-en" style="width:100%" size="6">${enemyOpts}</select>
       <div style="margin-top:6px"><select class="vk-sel" id="vk-cg"><option value="-1" selected>Cảnh giới gốc của quái</option>${names.map((n, i) => `<option value="${i}">${esc(n)}</option>`).join('')}</select>
       <select class="vk-sel" id="vk-muc"><option value="thuong">Thường</option><option value="tinh_anh">Tinh anh</option><option value="boss">Đầu lĩnh</option></select>
@@ -2038,19 +2430,8 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
   }
 
   // ── Tab Tàng Kinh Các
-  // ── Nhãn trường phái + đặc điểm theo máu (đọc từ it.tag / it.ngu_linh qua schoolsOf, it.chieu.effects; mô tả lấy từ ghi chú Hướng Build của Tool)
-  const SCH_INFO = { kiem: ['Kiếm Tu', 'Chính đạo'], the: ['Thể Tu', 'Chính đạo'], phat: ['Phật Tu', 'Chính đạo'], ma: ['Ma Tu', 'Tà đạo'], doc: ['Độc Cổ Tu', 'Tà đạo'], hop_hoan: ['Hợp Hoan Tu', 'Tà đạo'], thi: ['Luyện Thi Tu', 'Tà đạo'], quy: ['Luyện Hồn (Quỷ Tu)', 'Tà đạo'], ngu_thu: ['Ngự Thú Tu', 'Ngự linh'], khoi_loi: ['Khôi Lỗi Tu', 'Ngự linh'] };
-  function itemTagInfo(it) {
-    const sc = schoolsOf(it), tags = sc.map((k) => (SCH_INFO[k] ? SCH_INFO[k][0] + ' (' + SCH_INFO[k][1] + ')' : k)), blood = [], ch = it.chieu;
-    const cong = !!(ch && ch.dang === 'cong');
-    if (sc.includes('the') && cong) blood.push('Thể Tu chiêu công: đánh bằng sức thân theo căn cốt + khí huyết (cần tâm pháp luyện thể đang thông)');
-    if (ch && (ch.effects || []).some((e) => e.kind === 'bleed')) blood.push('chiêu có hiệu ứng Chảy Máu');
-    if (sc.includes('ma') && cong) blood.push('Ma Tu chiêu công: hút máu theo ma niệm');
-    return { schools: sc, tags, blood };
-  }
   function itemDesc(it) {
     const b = it.bi_dong || {}, out = [];
-    try { const ti = itemTagInfo(it); if (ti.tags.length) out.push(`<b>${esc(ti.tags.join(' · '))}</b>`); if (ti.blood.length) out.push(`<span class="vk-bad">máu: ${esc(ti.blood.join('; '))}</span>`); } catch (e) { /* bỏ qua */ }
     if (it.linh_luc) out.push(`linh lực ${num(it.linh_luc, 2)}`);
     const sg = (v, d = 0) => (v >= 0 ? '+' : '') + pct(v, d);
     if (b.toc_do) out.push(`tu luyện ${sg(b.toc_do)}`);
@@ -2187,7 +2568,7 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     const where = (r) => `${esc(r.noi)} <span class="vk-mu">· ${r.years < 0.05 ? 'ngay đây' : num(r.years) + ' năm'}${r.doi ? ' · hàng năm mới' : ''}</span>`;
     const all = [...cheapest.values()];
     // Đan đột phá cho cửa kế tiếp
-    const pills = all.filter((r) => r.it.dot_pha && (r.it.dot_pha.canh_gioi === undefined || r.it.dot_pha.canh_gioi === canhGioi + 1)).sort((a, b) => a.price - b.price);
+    const pills = all.filter((r) => r.it.dot_pha && pillFits(r.it.dot_pha, canhGioi + 1)).sort((a, b) => a.price - b.price);
     const lo = all.filter((r) => r.it.loai === 'dung_cu').sort((a, b) => (b.it.pham_cap || 0) - (a.it.pham_cap || 0));
     let html = `<div class="vk-card"><h3>Kết quả</h3><div class="vk-mu" style="font-size:13px">Đã xem ${nPlaces} nơi, ${rows.length} món. Tiệm đổi hàng vào <b>đầu mỗi năm</b> theo lịch game; Tool đã tính tốc độ đi của bạn và cho ra <b>hàng sẽ bày lúc bạn tới nơi</b> (nơi nào tới sau giao thừa thì là hàng năm mới). Giá tính theo từng nơi. Đi vòng qua nơi khác trước hoặc ngồi bế quan thì ngày tới thay đổi — quét lại trước khi đi.</div></div>`;
     if (measured.length) {
@@ -2227,6 +2608,17 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
 
   // ═════════════════════════ BẢN 2.0: các tính năng mới ═════════════════════════
   const has = (...ks) => ks.every((k) => typeof S.core[k] === 'function');
+  // Đan đột phá: đan có thể khai cảnh giới riêng (canh_gioi) và trần dược lực (canh_gioi_toi_da, cộng thêm độ nới theo độ khó). Ưu tiên hàm của game.
+  function pillFits(dp, realm) {
+    if (!dp) return false;
+    try { if (typeof S.core.pillFitsRealm === 'function') return !!S.core.pillFitsRealm(dp, realm); } catch (e) {}
+    if (dp.canh_gioi !== undefined && dp.canh_gioi !== realm) return false;
+    return dp.canh_gioi_toi_da === undefined || realm <= dp.canh_gioi_toi_da + 1;
+  }
+  function pillMax(dp) {
+    try { if (typeof S.core.pillMaxRealm === 'function') return S.core.pillMaxRealm(dp); } catch (e) {}
+    return dp && dp.canh_gioi_toi_da !== undefined ? dp.canh_gioi_toi_da + 1 : undefined;
+  }
   const needMsg = (what) => `<div class="vk-mu">Phần "${what}" chưa dùng được với bản game này. Bấm "Tự kiểm tra" ở tab Tổng quan rồi chụp màn hình gửi Claude.</div>`;
   const placeName = (c, slot) => { try { return c.world.info(slot).ten || slot; } catch { return slot; } };
   const danger = (c, slot) => { try { return S.core.mucHiem(S.core.doChenh(c, c.run, slot)); } catch { return null; } };
@@ -2310,7 +2702,7 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     return out.sort((a, b) => b.info.tuViNam - a.info.tuViNam || dr(a.d) - dr(b.d) || a.y - b.y);
   }
   function pillCandidates(nextRealm) {
-    return [...C().items.values()].filter((it) => it.dot_pha && (it.dot_pha.canh_gioi === undefined || it.dot_pha.canh_gioi === nextRealm));
+    return [...C().items.values()].filter((it) => it.dot_pha && pillFits(it.dot_pha, nextRealm));
   }
   function bestRateWith(nv, extraPills, td, asDvm) {
     const c = ctx();
@@ -2515,11 +2907,14 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     tier: [0, 20, 60, 150], mult: [1.5, 1.65, 1.8, 1.8], slotT: [0, 1, 2, 3], slotMax: 4,
     winExp: 1, winGap: 1, seatRate: 1, seatCap: 3, breakExp: 10, tempExp: 3, tempMax: 5, loseKeep: 0.25, upCap: 2, upExp: 20,
     runeLv: [6, 18], devourMax: 5, weakGap: 3, weakMul: 0.5, newGap: 2, cand: 3,
+    runeMax: 4, runeHigh: [0.2, 0.1], runeLuck: [0.1, 0.05], runeHighGap: 1, runeFail: 0.2, runeLucky: 0.1, runeLuckyMult: 2,
+    runeMut: 0.05, runeMutTop: 0.15, runeMutMult: 1.5, runeMutForm: 0.05, runeSkip: ['echo_ratio', 'troi_turns'], runeFormKeys: ['phan', 'van', 'quy'],
   };
   const BM_RUNE_VAL = {
-    liet: [0.08, 0.14, 0.2], phagiap: [0.1, 0.15, 0.2], lienhoan: [0.1, 0.15, 0.2], echo_ratio: [0.5, 0.5, 0.5], hothe: [0.03, 0.06, 0.1], kimchung: [0.05, 0.08, 0.12],
-    hutmau: [0.05, 0.1, 0.15], tulinh: [0.04, 0.08, 0.12], effect_chance: [0.25, 0.35, 0.45], troi: [0.1, 0.15, 0.2], troi_turns: [1, 1, 1], phan: [0.75, 0.8, 0.85],
-    van: [0.6, 0.65, 0.7], quy: [1.33, 1.4, 1.5], nhiem: [0, 0.04, 0.08], uanbao: [0.08, 0.14, 0.2], inner_stat: [0.6, 1, 1.5],
+    liet: [0.08, 0.14, 0.2, 0.25, 0.3], phagiap: [0.1, 0.15, 0.2, 0.25, 0.3], lienhoan: [0.1, 0.15, 0.2, 0.25, 0.3], echo_ratio: [0.5, 0.5, 0.5, 0.5, 0.5],
+    hothe: [0.03, 0.06, 0.1, 0.13, 0.16], kimchung: [0.05, 0.08, 0.12, 0.15, 0.18], hutmau: [0.05, 0.1, 0.15, 0.18, 0.21], tulinh: [0.04, 0.08, 0.12, 0.15, 0.18],
+    effect_chance: [0.25, 0.35, 0.45, 0.5, 0.55], troi: [0.1, 0.15, 0.2, 0.22, 0.24], troi_turns: [1, 1, 1, 1, 1], phan: [0.75, 0.8, 0.85, 0.9, 0.95],
+    van: [0.6, 0.65, 0.7, 0.72, 0.75], quy: [1.33, 1.4, 1.5, 1.55, 1.6], nhiem: [0, 0.06, 0.12, 0.15, 0.18], uanbao: [0.08, 0.14, 0.2, 0.25, 0.3], inner_stat: [0.6, 1, 1.5, 1.7, 1.9],
   };
   const BM_HESO = [0.5, 1, 1.75, 2.75, 4, 5.5, 7.5, 5]; // hệ số phẩm (Phàm → Nghịch Thiên)
   const BM_PHAM_CG = [0, 0, 1, 2, 3, 4, 5, 2]; // cảnh giới tối thiểu để dùng món theo phẩm
@@ -2533,28 +2928,47 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
   const bmX = (x) => `×${String(Math.round(x * 100) / 100).replace('.', ',')}`;
   const bmLv = (a, lv) => a[Math.max(0, Math.min(a.length - 1, lv))];
   function bmRunes() {
-    const V = bmV(), v = (k, l) => bmLv(V[k], l);
+    const V = bmV(), D = bmD();
+    // Dị văn: mọi giá trị ×runeMutMult; riêng nhóm dạng (phân/vạn/quy) cộng runeMutForm; echo_ratio và troi_turns giữ nguyên.
+    const v = (k, l, mu) => {
+      const x = bmLv(V[k], l);
+      if (!mu || (D.runeSkip || []).includes(k)) return x;
+      return (D.runeFormKeys || []).includes(k) ? x + D.runeMutForm : x * D.runeMutMult;
+    };
     const inner = [['van.minh_than', 'Minh Thần', 'Thần thức'], ['van.luyen_cot', 'Luyện Cốt', 'Căn cốt'], ['van.khinh_than', 'Khinh Thân', 'Thân pháp'], ['van.phuc_van', 'Phúc Vận', 'Khí vận'], ['van.tinh_tam', 'Tĩnh Tâm', 'Đạo tâm']];
-    const eff = [['van.thieu', 'Thiêu', 'Thiêu đốt'], ['van.doc', 'Độc', 'Trúng độc'], ['van.han', 'Hàn', 'Hàn khí'], ['van.huyet', 'Huyết', 'Xuất huyết']];
-    const he = [['van.nhiem_kim', 'Nhiễm Kim', 'Kim'], ['van.nhiem_moc', 'Nhiễm Mộc', 'Mộc'], ['van.nhiem_thuy', 'Nhiễm Thủy', 'Thủy'], ['van.nhiem_hoa', 'Nhiễm Hỏa', 'Hỏa'], ['van.nhiem_tho', 'Nhiễm Thổ', 'Thổ']];
+    const eff = [['van.thieu', 'Thiêu', 'Thiêu đốt'], ['van.doc', 'Độc', 'Trúng độc'], ['van.han', 'Hàn', 'Hàn khí'], ['van.huyet', 'Huyết', 'Xuất huyết'], ['van.tuyet_hoi', 'Tuyệt Hồi', 'Tuyệt hồi']];
+    const he = [['van.nhiem_kim', 'Nhiễm Kim', 'Kim'], ['van.nhiem_moc', 'Nhiễm Mộc', 'Mộc'], ['van.nhiem_thuy', 'Nhiễm Thủy', 'Thủy'], ['van.nhiem_hoa', 'Nhiễm Hỏa', 'Hỏa'], ['van.nhiem_tho', 'Nhiễm Thổ', 'Thổ'],
+      ['van.nhiem_loi', 'Nhiễm Lôi', 'Lôi'], ['van.nhiem_bang', 'Nhiễm Băng', 'Băng'], ['van.nhiem_phong', 'Nhiễm Phong', 'Phong'], ['van.nhiem_am', 'Nhiễm Ám', 'Ám']];
     const R = [
-      { id: 'van.uan_bao', name: 'Uẩn Bảo', g: 'inner', relic: true, d: (l) => `Bị động và linh lực của món +${bmP(v('uanbao', l))}` },
-      ...inner.map(([id, name, st]) => ({ id, name, g: 'inner', relic: true, d: (l) => `${st} +${String(Math.round(v('inner_stat', l) * 100) / 100).replace('.', ',')} × hệ số phẩm` })),
-      { id: 'van.liet', name: 'Liệt', g: 'strike', atk: true, d: (l) => `Uy chiêu +${bmP(v('liet', l))}` },
-      { id: 'van.phagiap', name: 'Phá Giáp', g: 'strike', atk: true, d: (l) => `Đánh trúng có thể phá giáp địch ${bmP(v('phagiap', l))}` },
-      { id: 'van.lienhoan', name: 'Liên Hoàn', g: 'strike', atk: true, d: (l) => `${bmP(v('lienhoan', l))} đánh thêm một đòn, uy ${bmX(v('echo_ratio', l))}` },
-      { id: 'van.ho_the', name: 'Hộ Thể', g: 'guard', d: (l) => `Hộ thể +${bmP(v('hothe', l))}` },
-      { id: 'van.kim_chung', name: 'Kim Chung', g: 'guard', d: (l) => `Ra chiêu xong dựng thuẫn ${bmP(v('kimchung', l))} khí huyết tối đa, giữ một lượt` },
-      { id: 'van.hut_huyet', name: 'Hút Huyết', g: 'heal', atk: true, d: (l) => `Hút ${bmP(v('hutmau', l))} sát thương chiêu hóa khí huyết` },
-      { id: 'van.tu_linh', name: 'Tụ Linh', g: 'heal', d: (l) => `Linh lực mỗi lượt +${bmP(v('tulinh', l))}` },
-      ...eff.map(([id, name, lb]) => ({ id, name, g: 'effect', atk: true, d: (l) => `${bmP(v('effect_chance', l))} gây ${lb}, uy chiêu ${bmX(BM_PN)}` })),
-      { id: 'van.troi', name: 'Trói', g: 'effect', atk: true, d: (l) => `${bmP(v('troi', l))} trói địch ${v('troi_turns', l)} lượt, uy chiêu ${bmX(BM_PN)}` },
-      { id: 'van.phan_anh', name: 'Phân Ảnh', g: 'form', atk: true, d: (l) => `Chiêu đơn hóa lan, uy ${bmX(v('phan', l))}` },
-      { id: 'van.van_anh', name: 'Vạn Ảnh', g: 'form', atk: true, tier: 3, d: (l) => `Chiêu hóa toàn trận, uy ${bmX(v('van', l))}` },
-      { id: 'van.quy_nhat', name: 'Quy Nhất', g: 'form', atk: true, d: (l) => `Chiêu lan / toàn trận thu về đơn, uy ${bmX(v('quy', l))}` },
-      ...he.map(([id, name, h]) => ({ id, name, g: 'element', atk: true, d: (l) => `Nhuộm chiêu sang hệ ${h}${v('nhiem', l) ? `, uy +${bmP(v('nhiem', l))}` : ''}` })),
+      { id: 'van.uan_bao', name: 'Uẩn Bảo', g: 'inner', relic: true, d: (l, m) => `Bị động và linh lực của món +${bmP(v('uanbao', l, m))}` },
+      ...inner.map(([id, name, st]) => ({ id, name, g: 'inner', relic: true, d: (l, m) => `${st} +${String(Math.round(v('inner_stat', l, m) * 100) / 100).replace('.', ',')} × hệ số phẩm` })),
+      { id: 'van.liet', name: 'Liệt', g: 'strike', atk: true, d: (l, m) => `Uy chiêu +${bmP(v('liet', l, m))}` },
+      { id: 'van.phagiap', name: 'Phá Giáp', g: 'strike', atk: true, d: (l, m) => `Đánh trúng có thể phá giáp địch ${bmP(v('phagiap', l, m))}` },
+      { id: 'van.lienhoan', name: 'Liên Hoàn', g: 'strike', atk: true, d: (l, m) => `${bmP(v('lienhoan', l, m))} đánh thêm một đòn, uy ${bmX(v('echo_ratio', l, m))}` },
+      { id: 'van.ho_the', name: 'Hộ Thể', g: 'guard', d: (l, m) => `Hộ thể +${bmP(v('hothe', l, m))}` },
+      { id: 'van.kim_chung', name: 'Kim Chung', g: 'guard', d: (l, m) => `Ra chiêu xong dựng thuẫn ${bmP(v('kimchung', l, m))} khí huyết tối đa, giữ một lượt` },
+      { id: 'van.hut_huyet', name: 'Hút Huyết', g: 'heal', atk: true, d: (l, m) => `Hút ${bmP(v('hutmau', l, m))} sát thương chiêu hóa khí huyết` },
+      { id: 'van.tu_linh', name: 'Tụ Linh', g: 'heal', d: (l, m) => `Linh lực mỗi lượt +${bmP(v('tulinh', l, m))}` },
+      // Xác suất gây hiệu ứng của văn hiệu ứng bị chặn ở 100% (game dùng Math.min(1, …)).
+      ...eff.map(([id, name, lb]) => ({ id, name, g: 'effect', atk: true, d: (l, m) => `${bmP(Math.min(1, v('effect_chance', l, m)))} gây ${lb}, uy chiêu ${bmX(BM_PN)}` })),
+      { id: 'van.troi', name: 'Trói', g: 'effect', atk: true, d: (l, m) => `${bmP(v('troi', l, m))} trói địch ${v('troi_turns', l, m)} lượt, uy chiêu ${bmX(BM_PN)}` },
+      { id: 'van.phan_anh', name: 'Phân Ảnh', g: 'form', atk: true, d: (l, m) => `Chiêu đơn hóa lan, uy ${bmX(v('phan', l, m))}` },
+      { id: 'van.van_anh', name: 'Vạn Ảnh', g: 'form', atk: true, tier: 3, d: (l, m) => `Chiêu hóa toàn trận, uy ${bmX(v('van', l, m))}` },
+      { id: 'van.quy_nhat', name: 'Quy Nhất', g: 'form', atk: true, d: (l, m) => `Chiêu lan / toàn trận thu về đơn, uy ${bmX(v('quy', l, m))}` },
+      ...he.map(([id, name, h]) => ({ id, name, g: 'element', atk: true, d: (l, m) => `Nhuộm chiêu sang hệ ${h}${v('nhiem', l, m) ? `, uy +${bmP(v('nhiem', l, m))} khi khắc địch` : ''}` })),
     ];
     return Object.fromEntries(R.map((r) => [r.id, r]));
+  }
+  // Trạng thái một văn: cấp 1–3 lên theo điểm; cấp 3→4 và 4→5 là bình cảnh (bồi bằng xác suất, thất bại cộng may mắn); cấp tối đa thì dừng.
+  const bmHighChance = (r, D) => Math.min(1, bmLv(D.runeHigh, r.level - D.runeLv.length) + (r.luck || 0));
+  const bmIsHigh = (lv, D) => lv >= D.runeLv.length && lv < D.runeMax;
+  function bmRuneState(r, D) {
+    const lv = r.level || 0;
+    let t = `cấp ${lv + 1}`;
+    if (lv < D.runeLv.length) t += ` (${r.points || 0}/${D.runeLv[lv]})`;
+    else if (lv < D.runeMax) t += ` · bình cảnh, bồi thành ${bmP(bmHighChance(r, D))}${r.luck ? ` (đã cộng may mắn ${bmP(r.luck)})` : ''}`;
+    else t += ' (tối đa)';
+    return t + (r.mutant ? ' · Dị văn' : '');
   }
   const bmRuneName = (id) => { const r = bmRunes()[id]; return r ? r.name : String(id || '—').replace('van.', '').replace(/_/g, ' '); };
   const bmGrade = (it) => Math.max(1, Math.min(8, (it && it.pham_cap) ?? 2));
@@ -2639,9 +3053,9 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
       const it = Cc.items.get(n.item), ti = bmTier(D, n.exp), nextT = D.tier[ti + 1];
       const slots = bmSlots(D, n), life = bmLife(nv);
       const damaged = n.damagedUntil && n.damagedUntil > nv.tuoi;
-      const inn = n.innate, innNext = D.runeLv[inn.level];
-      const runesOn = n.runes.map((id) => { const r = (nv.natalRunes || {})[id] || { level: 0 }; return `<span class="tc-pill">${esc(bmRuneName(id))} · cấp ${r.level + 1}</span>`; }).join('') || '<span class="vk-mu">chưa khắc văn nào</span>';
-      const kho = Object.entries(nv.natalRunes || {}).filter(([id]) => id !== inn.id).map(([id, r]) => { const nx = D.runeLv[r.level]; return `<span class="tc-pill">${esc(bmRuneName(id))} · cấp ${r.level + 1}${nx ? ` (${r.points}/${nx})` : ' (tối đa)'}${n.runes.includes(id) ? ' · đang khắc' : ''}</span>`; }).join('');
+      const inn = n.innate;
+      const runesOn = n.runes.map((id) => { const r = (nv.natalRunes || {})[id] || { level: 0 }; return `<span class="tc-pill">${esc(bmRuneName(id))} · cấp ${r.level + 1}${r.mutant ? ' · Dị văn' : ''}</span>`; }).join('') || '<span class="vk-mu">chưa khắc văn nào</span>';
+      const kho = Object.entries(nv.natalRunes || {}).filter(([id]) => id !== inn.id).map(([id, r]) => `<span class="tc-pill">${esc(bmRuneName(id))} · ${esc(bmRuneState(r, D))}${n.runes.includes(id) ? ' · đang khắc' : ''}</span>`).join('');
       const tmp = (nv.natalTemper || {})[nv.canhGioi] || 0;
       const dev = (nv.natalYear && nv.natalYear.year === Math.floor(nv.tuoi)) ? nv.natalYear.devoured : 0;
       const dTen = it && it.chieu ? 'Chiêu bản mệnh (món có chiêu)' : 'Pháp khí bị động';
@@ -2652,8 +3066,8 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
         ${row('Tầng', `${BM_TANG[ti]} <span class="vk-mu">· tâm huyết ${n.exp}${nextT !== undefined ? '/' + nextT : ' (đầy)'}</span>`)}
         ${row('Hệ số cố định', bmX(D.mult[ti]))}
         ${row('Ô khắc văn', `${n.runes.length}/${slots}`)}
-        ${row('Văn bẩm sinh', `${esc(bmRuneName(inn.id))} · cấp ${inn.level + 1}${innNext ? ` (${inn.points}/${innNext})` : ' (tối đa)'}`)}
-        <div class="vk-mu" style="font-size:12.5px;margin:2px 0 4px">${esc(RN[inn.id] ? RN[inn.id].d(inn.level) : '')}</div>
+        ${row('Văn bẩm sinh', `${esc(bmRuneName(inn.id))} · ${esc(bmRuneState(inn, D))}`)}
+        <div class="vk-mu" style="font-size:12.5px;margin:2px 0 4px">${esc(RN[inn.id] ? RN[inn.id].d(inn.level, inn.mutant) : '')}</div>
         ${row('Huyết luyện cảnh giới này', `${tmp}/${D.tempMax}`)}
         ${row('Nuốt món năm nay', `${dev}/${D.devourMax}`)}
         ${row('Tình trạng', damaged ? `<span class="vk-bad">Đang tổn, còn ${num(n.damagedUntil - nv.tuoi, 2)} năm</span>` : '<span class="vk-ok">Nguyên vẹn</span>')}
@@ -2723,15 +3137,19 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
       const mk = ({ it, r }) => {
         const g = bmGrade(it), weak = g <= n.grade - D.weakGap, pts = BM_HESO[g - 1] * (weak ? D.weakMul : 1);
         const chips = r.list.map((id) => {
-          const has0 = id === n.innate.id || (nv.natalRunes || {})[id];
-          const lv = id === n.innate.id ? n.innate.level : has0 ? nv.natalRunes[id].level : -1;
-          const note = lv >= 0 ? `nâng (cấp ${lv + 1}, +${num(pts, 2)} điểm${lv >= D.runeLv.length ? ', đã tối đa' : ''})` : (g < n.grade - D.newGap ? 'ngộ mới (món quá yếu, không ngộ được)' : 'ngộ mới');
+          const ro = id === n.innate.id ? n.innate : (nv.natalRunes || {})[id];
+          const lv = ro ? ro.level : -1;
+          let note;
+          if (!ro) note = g < n.grade - D.newGap ? 'ngộ mới (món quá yếu, không ngộ được)' : 'ngộ mới';
+          else if (lv >= D.runeMax) note = 'đã tối đa';
+          else if (bmIsHigh(lv, D)) note = g < n.grade - D.runeHighGap ? `bồi cấp ${lv + 2}: món quá yếu (cần phẩm không thấp hơn bản mệnh quá ${D.runeHighGap} phẩm)` : `bồi lên cấp ${lv + 2}: thành ${bmP(bmHighChance(ro, D))}, hụt thì cộng ${bmP(bmLv(D.runeLuck, lv - D.runeLv.length))} may mắn`;
+          else note = `nâng (cấp ${lv + 1}, +${num(pts, 2)} điểm khi trúng; ${bmP(D.runeFail)} hụt, ${bmP(D.runeLucky)} được ×${D.runeLuckyMult})`;
           return `<span class="tc-pill" title="${esc(RN[id] ? RN[id].d(0) : '')}">${esc(bmRuneName(id))} · ${esc(note)}</span>`;
         }).join('');
         return `<div class="tc-sec"><b>${esc(it.ten)} <span class="vk-mu">· ${esc(bmPham(g))}${weak ? ' · quá yếu, điểm giảm nửa' : ''}</span></b>${chips}</div>`;
       };
       html += `<div class="vk-card"><h3>Nuốt Món Ngộ Văn</h3>
-        <div class="vk-mu" style="font-size:12.5px;line-height:1.5">Mỗi năm nuốt tối đa ${D.devourMax} món (còn ${Math.max(0, dLeft)}). Mỗi món hiện ${D.cand} văn ứng viên, bạn chọn một: văn chưa có thì ngộ mới (cần món không yếu hơn bản mệnh quá ${D.newGap} phẩm), văn đã có thì cộng điểm bằng hệ số phẩm của món (cấp 2 ở ${D.runeLv[0]} điểm, cấp 3 ở ${D.runeLv[1]}).
+        <div class="vk-mu" style="font-size:12.5px;line-height:1.5">Mỗi năm nuốt tối đa ${D.devourMax} món (còn ${Math.max(0, dLeft)}). Mỗi món hiện ${D.cand} văn ứng viên, bạn chọn một: văn chưa có thì ngộ mới (cần món không yếu hơn bản mệnh quá ${D.newGap} phẩm), văn đã có thì cộng điểm bằng hệ số phẩm của món (cấp 2 ở ${D.runeLv[0]} điểm, cấp 3 ở ${D.runeLv[1]}; mỗi lần nuốt có ${bmP(D.runeFail)} hụt không cộng, ${bmP(D.runeLucky)} được nhân ${D.runeLuckyMult}). Từ cấp 3 lên cấp ${D.runeMax + 1} là <b>bình cảnh</b>: không cộng điểm mà bồi bằng xác suất (${D.runeHigh.map((x, i) => `cấp ${D.runeLv.length + i + 1}→${D.runeLv.length + i + 2}: ${bmP(x)}`).join(', ')}), hụt thì lần sau dễ hơn; món phải không thấp hơn bản mệnh quá ${D.runeHighGap} phẩm. Mỗi lần văn lên cấp có ${bmP(D.runeMut)} hóa <b>Dị văn</b> (${bmP(D.runeMutTop)} khi chạm cấp tối đa), uy lực ×${D.runeMutMult} (nhóm dạng cộng ${bmP(D.runeMutForm)}). Văn đã tối đa không còn xuất hiện trong ứng viên.
         Ứng viên được game gieo theo kiếp, món, năm tuổi và số món đã nuốt, nên đổi khi sang năm hoặc sau mỗi lần nuốt.</div>
         ${has('devourCandidates', 'devourItemError') ? (nut.slice(0, 10).map(mk).join('') || '<div class="vk-mu" style="margin-top:8px">Không có món nào nuốt được lúc này (cần pháp khí trong túi, không trên kinh mạch, không khóa).</div>') + (nut.length > 10 ? `<div class="vk-mu" style="font-size:12px">Còn ${nut.length - 10} món khác.</div>` : '') : needMsg('ứng viên văn khi nuốt')}</div>`;
     }
@@ -2739,7 +3157,7 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     // ── 5. Bảng tham khảo
     const groups = {};
     Object.values(RN).forEach((r) => { (groups[r.g] = groups[r.g] || []).push(r); });
-    const runeHtml = Object.keys(BM_NHOM).filter((g) => groups[g]).map((g) => `<div class="tc-sec"><b>${esc(BM_NHOM[g])}${BM_NHOM_TOIDA[g] ? ` <span class="vk-mu">· tối đa ${BM_NHOM_TOIDA[g]} văn trên ô khắc</span>` : ''}</b>${groups[g].map((r) => `<div style="margin:2px 0"><b>${esc(r.name)}</b>${r.atk ? ' <span class="vk-mu">(chiêu công)</span>' : ''}${r.relic ? ' <span class="vk-mu">(pháp khí bị động)</span>' : ''}${r.tier ? ` <span class="vk-mu">(cần ${BM_TANG[r.tier]})</span>` : ''}<br><span class="vk-mu" style="font-size:12.5px">Cấp 1: ${esc(r.d(0))}<br>Cấp 3: ${esc(r.d(2))}</span></div>`).join('')}</div>`).join('');
+    const runeHtml = Object.keys(BM_NHOM).filter((g) => groups[g]).map((g) => `<div class="tc-sec"><b>${esc(BM_NHOM[g])}${BM_NHOM_TOIDA[g] ? ` <span class="vk-mu">· tối đa ${BM_NHOM_TOIDA[g]} văn trên ô khắc</span>` : ''}</b>${groups[g].map((r) => `<div style="margin:2px 0"><b>${esc(r.name)}</b>${r.atk ? ' <span class="vk-mu">(chiêu công)</span>' : ''}${r.relic ? ' <span class="vk-mu">(pháp khí bị động)</span>' : ''}${r.tier ? ` <span class="vk-mu">(cần ${BM_TANG[r.tier]})</span>` : ''}<br><span class="vk-mu" style="font-size:12.5px">Cấp 1: ${esc(r.d(0))}<br>Cấp 3: ${esc(r.d(2))}<br>Cấp ${D.runeMax + 1}: ${esc(r.d(D.runeMax))}<br>Dị văn cấp ${D.runeMax + 1}: ${esc(r.d(D.runeMax, true))}</span></div>`).join('')}</div>`).join('');
     html += `<div class="vk-card"><h3>Cách Bản Mệnh Lớn Lên</h3>
       <div style="font-size:13px;line-height:1.6">
         <div>• Tầng theo tâm huyết: ${D.tier.map((e, i) => `${BM_TANG[i]} từ ${e}`).join(' · ')}.</div>
@@ -2748,6 +3166,7 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
         <div>• <b>Giảm:</b> bại trận mất ${pct(D.loseKeep)} tâm huyết (không tụt dưới mốc tầng đang đứng); gặp quái cao hơn một cảnh giới trở lên còn bị bản mệnh tổn một lúc.</div>
         <div>• Món có chiêu chỉ được cộng tâm huyết khi thắng trận mà dùng chính chiêu đó.</div>
         <div>• Khắc văn tốn ${D.runeStone} × hệ số phẩm linh thạch lần đầu (khắc lại văn đã khắc rồi thì miễn phí).</div>
+        <div>• Văn có ${D.runeMax + 1} cấp: cấp 1–3 lên theo điểm nuốt món, cấp 4 và cấp ${D.runeMax + 1} phải bồi qua bình cảnh bằng xác suất; Dị văn mạnh hơn hẳn (xem phần nuốt món).</div>
       </div></div>
       <div class="vk-card"><details><summary><b>Bảng Văn Và Hiệu Quả</b></summary>${runeHtml}</details></div>
       <div class="vk-mu" style="font-size:12px;text-align:center">${S.core.bm ? 'Số liệu đọc từ code game' : 'Số liệu dự phòng theo bản game hiện tại'}${miss.length ? ' · chưa nhận ra hàm: ' + esc(miss.join(', ')) + ' (đã dùng công thức thay thế)' : ' · dùng hàm tính của game'}</div>`;
@@ -2850,6 +3269,85 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     let len = 0; for (let i = 1; i < path.length; i++) len += Math.hypot(path[i].x - path[i - 1].x, path[i].y - path[i - 1].y);
     return { path, len };
   }
+  // ── Bản đồ: chỉ dẫn bằng mũi tên đứt tới một địa điểm cụ thể (chỉ vẽ và liệt kê, không tự đi)
+  function ddGuideButton(slot, currentSlot, label) {
+    if (!slot) return '';
+    const same = slot === currentSlot;
+    const hint = same ? 'Bạn đang ở địa điểm này' : 'Xem đường đi bằng mũi tên đứt, kèm tên từng địa điểm trên đường.';
+    return `<button type="button" class="vk-guide-btn" data-vk-guide="${esc(slot)}" title="${esc(hint)}"${same ? ' disabled' : ''}>⇢ ${esc(label || 'Chỉ dẫn')}</button>`;
+  }
+  function bdGuideHtml(c, dst) {
+    const K = S.core, run = c.run, W = c.world, start = run.viTri, AM = K.AMBUSH_MIN_DISTANCE || 30;
+    if (!dst) return '<div class="vk-card"><div class="vk-mu">Chưa chọn địa điểm.</div></div>';
+    if (start === dst) return `<div class="vk-card"><div class="vk-mu">Bạn đang đứng ở ${esc(placeName(c, dst))} rồi.</div></div>`;
+    let direct = NaN; try { direct = K.travelYears(c, dst); } catch {}
+    let r = null; try { r = routeSafe(c, dst); } catch {}
+    let path = null, ids = null;
+    if (r) { path = r.path; ids = r.path.map((s) => s.id); }
+    else { try { path = [W.slot(start), W.slot(dst)]; ids = [start, dst]; } catch {} }
+    if (!path || path.length < 2 || path.some((s) => !s || !isFinite(s.x) || !isFinite(s.y))) return '<div class="vk-card"><div class="vk-mu">Không dựng được chỉ dẫn cho địa điểm này.</div></div>';
+
+    // Vẽ: co toàn bộ đường đi vào khung 320 x 230
+    const Wd = 320, Hd = 230, pad = 36, n = path.length;
+    const xs = path.map((s) => s.x), ys = path.map((s) => s.y);
+    const minX = Math.min(...xs), minY = Math.min(...ys);
+    const spanX = Math.max(Math.max(...xs) - minX, 1), spanY = Math.max(Math.max(...ys) - minY, 1);
+    const k = Math.min((Wd - 2 * pad) / spanX, (Hd - 2 * pad) / spanY);
+    const offX = (Wd - spanX * k) / 2, offY = (Hd - spanY * k) / 2;
+    const P = path.map((s) => ({ x: offX + (s.x - minX) * k, y: offY + (s.y - minY) * k }));
+    const R = (i) => (i === 0 || i === n - 1 ? 9 : 6);
+    const names = ids.map((id) => placeName(c, id));
+    const cut = (t) => (t.length > 20 ? t.slice(0, 19) + '…' : t);
+
+    let seg = '';
+    for (let i = 1; i < n; i++) {
+      const a = P[i - 1], b = P[i], dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy);
+      if (L <= R(i - 1) + R(i) + 9) continue;
+      const ux = dx / L, uy = dy / L;
+      const x1 = a.x + ux * (R(i - 1) + 2), y1 = a.y + uy * (R(i - 1) + 2), x2 = b.x - ux * (R(i) + 5), y2 = b.y - uy * (R(i) + 5);
+      seg += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke-dasharray="7 5" stroke-width="2.2" stroke-linecap="round" marker-end="url(#vk-gd-ar)" style="stroke:var(--acc)"><animate attributeName="stroke-dashoffset" from="24" to="0" dur="1.4s" repeatCount="indefinite"/></line>`;
+    }
+    const showAll = n <= 7;
+    let pts = '';
+    P.forEach((p, i) => {
+      const first = i === 0, last = i === n - 1, rr = R(i);
+      const fill = first ? 'var(--acc)' : last ? '#ffb454' : 'var(--bg3)';
+      pts += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${rr}" stroke-width="2" style="fill:${fill};stroke:${last ? '#ffb454' : 'var(--acc)'}"/>`;
+      if (!first && !last) pts += `<text x="${p.x.toFixed(1)}" y="${(p.y + 3.5).toFixed(1)}" text-anchor="middle" font-size="9" font-weight="700" style="fill:var(--txt)">${i}</text>`;
+      if (first || last || showAll) {
+        const anc = p.x > Wd * 0.62 ? 'end' : p.x < Wd * 0.38 ? 'start' : 'middle';
+        const tx = anc === 'end' ? p.x + rr : anc === 'start' ? p.x - rr : p.x;
+        const ty = (i % 2 === 0) ? p.y - rr - 6 : p.y + rr + 14;
+        pts += `<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${anc}" font-size="11" font-weight="${first || last ? 800 : 600}" style="fill:var(--txt)">${esc(cut(names[i]))}</text>`;
+      }
+    });
+    const svg = `<svg viewBox="0 0 ${Wd} ${Hd}" role="img" aria-label="Chỉ dẫn bằng mũi tên đứt"><defs><marker id="vk-gd-ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" style="fill:var(--acc)"/></marker></defs>${seg}${pts}</svg>`;
+
+    let len = 0; for (let i = 1; i < n; i++) len += Math.hypot(path[i].x - path[i - 1].x, path[i].y - path[i - 1].y);
+    const dTot = Math.hypot(path[0].x - path[n - 1].x, path[0].y - path[n - 1].y) || 1;
+    const yPer = isFinite(direct) ? direct / dTot : NaN;
+    const info = r
+      ? `Đi theo chặng: ${n - 1} chặng${isFinite(yPer) ? ', khoảng ' + yrs(len * yPer) : ''}. Đi thẳng: ${isFinite(direct) ? yrs(direct) : 'không rõ'}${dTot >= AM ? ' · <span class="vk-bad">có thể bị chặn giữa đường</span>' : ''}.`
+      : `Không tìm được chuỗi chặng đi bộ ngắn (có thể khác đại lục, cần đi thuyền) nên chỉ vẽ mũi tên thẳng tới đích${isFinite(direct) ? ' · đi thẳng ' + yrs(direct) : ''}${dTot >= AM ? ' · <span class="vk-bad">có thể bị chặn giữa đường</span>' : ''}.`;
+    const chain = ids.map((id, i) => `<b>${esc(names[i])}</b>${i > 0 ? ' ' + dangerTag(danger(c, id)) : ''}`).join(' <span class="vk-arr">┄┄▶</span> ');
+    const list = ids.slice(1).map((id, i) => `<li>${esc(names[i + 1])} ${dangerTag(danger(c, id))}</li>`).join('');
+    return `<div class="vk-card vk-guide"><h3>Chỉ dẫn tới ${esc(names[n - 1])}</h3>
+      <div class="vk-mu" style="font-size:13px">Xuất phát: <b>${esc(names[0])}</b> (bạn đang ở đây).</div>
+      ${svg}
+      <div class="vk-guide-chain">${chain}</div>
+      <div class="vk-mu" style="font-size:13px;margin:4px 0">${info}</div>
+      <ol style="margin:0;padding-left:20px;font-size:14px">${list}</ol>
+      <div class="vk-guide-acts">${ddQuickTravelButton(dst, start, 'Đi tới ' + names[n - 1])}<button type="button" class="vk-btn sec" data-vk-guide-close>Đóng</button></div></div>`;
+  }
+  function bdShowGuide(root, dst) {
+    const box = root.querySelector('#vk-guide'); if (!box) return;
+    let c2 = null; try { c2 = ctx(); } catch {}
+    if (!c2 || !c2.run) { UI.notify('Chưa có kiếp nào đang chơi.'); return; }
+    box.innerHTML = bdGuideHtml(c2, dst);
+    const cl = box.querySelector('[data-vk-guide-close]'); if (cl) cl.onclick = () => { box.innerHTML = ''; };
+    ddBindQuickTravel(box);
+    try { box.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch {}
+  }
   function tabBanDo() {
     const K = S.core, c = ctx(), run = c.run, Cc = C(), P = K.taoBenTa(run.nhanVat, Cc);
     const items = [];
@@ -2869,11 +3367,12 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     const extra = tm ? `<option value="${esc(tm.slot)}">Sư môn · ${esc(placeName(c, tm.slot))}</option>` : '';
     const choTowns = S.cho ? [...new Set(S.cho.rows.map((r) => r.slot))].slice(0, 30).map((sl) => `<option value="${esc(sl)}">Chợ · ${esc(placeName(c, sl))}</option>`).join('') : '';
     body.innerHTML = `
-    <div class="vk-card"><h3>Cơ duyên và sự kiện trên bản đồ</h3>${items.length ? `<table class="vk-t"><tr><th>Sự kiện</th><th>Đi</th><th>Sức</th></tr>${items.map((x) => `<tr><td><b>${esc(cleanTxt(x.def.ten || x.n.encounter))}</b><br><span class="vk-mu" style="font-size:12px">${esc(placeName(c, x.slot))} · ${dangerTag(x.d)}${x.left !== undefined ? ` · còn <span class="${x.left < x.y ? 'vk-bad' : ''}">${num(x.left)} năm</span>` : ''}${x.foes.length ? ' · gặp ' + esc(x.foes.map((f) => f.ten).join(', ')) : ''}<br>Có thể được: ${esc(rewardHint(x.def))}</span></td><td>${yrs(x.y)}</td><td>${x.th !== null && x.th !== undefined ? threatHtml(x.th) : x.res ? x.res.txt : '<span class="vk-mu">không rõ</span>'}</td></tr>`).join('')}</table>` : '<div class="vk-mu">Chưa có sự kiện nào hiện trên bản đồ.</div>'}</div>
+    <div class="vk-card"><h3>Cơ duyên và sự kiện trên bản đồ</h3>${items.length ? `<table class="vk-t"><tr><th>Sự kiện</th><th>Đi</th><th>Sức</th><th class="vk-map-tele">Đi tới</th></tr>${items.map((x) => `<tr><td><b>${esc(cleanTxt(x.def.ten || x.n.encounter))}</b><br><span class="vk-mu" style="font-size:12px">${esc(placeName(c, x.slot))} · ${dangerTag(x.d)}${x.left !== undefined ? ` · còn <span class="${x.left < x.y ? 'vk-bad' : ''}">${num(x.left)} năm</span>` : ''}${x.foes.length ? ' · gặp ' + esc(x.foes.map((f) => f.ten).join(', ')) : ''}<br>Có thể được: ${esc(rewardHint(x.def))}</span></td><td>${yrs(x.y)}</td><td>${x.th !== null && x.th !== undefined ? threatHtml(x.th) : x.res ? x.res.txt : '<span class="vk-mu">không rõ</span>'}</td><td class="vk-map-tele"><div class="vk-map-btns">${ddQuickTravelButton(x.slot, run.viTri, 'Đi tới')}${ddGuideButton(x.slot, run.viTri, 'Chỉ dẫn')}</div></td></tr>`).join('')}</table>` : '<div class="vk-mu">Chưa có sự kiện nào hiện trên bản đồ.</div>'}</div>
+    <div id="vk-guide"></div>
     <div class="vk-card"><h3>Đường đi an toàn</h3>
       <div class="vk-mu" style="font-size:13px">Đi một chặng dài dễ gặp biến cố giữa đường. Chặng ngắn hơn ${K.AMBUSH_MIN_DISTANCE || 30} đơn vị bản đồ thì không bị chặn giữa đường. Tool tìm chuỗi chặng ngắn, né nơi nguy hiểm.</div>
       <select class="vk-sel" id="vk-dst" style="width:100%;margin:6px 0">${opts}${extra}${choTowns}</select>
-      <button class="vk-btn" id="vk-rt" ${items.length || tm || choTowns ? '' : 'disabled'}>Tìm đường</button><div id="vk-rto"></div></div>`;
+      <button class="vk-btn" id="vk-rt" ${items.length || tm || choTowns ? '' : 'disabled'}>Tìm đường</button> <button type="button" class="vk-guide-btn" id="vk-gd" ${items.length || tm || choTowns ? '' : 'disabled'} title="Vẽ đường đi bằng mũi tên đứt tới nơi đã chọn">⇢ Chỉ dẫn</button><div id="vk-rto"></div></div>`;
     body.querySelector('#vk-rt').onclick = () => {
       const dst = body.querySelector('#vk-dst').value; const out = body.querySelector('#vk-rto');
       let direct = 0; try { direct = K.travelYears(c, dst); } catch {}
@@ -2883,6 +3382,9 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
       const yPer = direct / dTot;
       out.innerHTML = `<div style="margin:6px 0">Đi thẳng: ${yrs(direct)}${dTot >= (K.AMBUSH_MIN_DISTANCE || 30) ? ' · <span class="vk-bad">có thể bị chặn giữa đường</span>' : ''}. Đi theo chặng: ${r.path.length - 1} chặng, khoảng ${yrs(r.len * yPer)}.</div><ol style="margin:0;padding-left:20px;font-size:14px">${r.path.slice(1).map((s) => `<li>${esc(placeName(c, s.id))} ${dangerTag(danger(c, s.id))}</li>`).join('')}</ol>`;
     };
+    ddBindQuickTravel(body);
+    body.querySelectorAll('[data-vk-guide]').forEach((btn) => { btn.onclick = (ev) => { ev.preventDefault(); ev.stopPropagation(); bdShowGuide(body, btn.dataset.vkGuide); }; });
+    const gdBtn = body.querySelector('#vk-gd'); if (gdBtn) gdBtn.onclick = () => bdShowGuide(body, body.querySelector('#vk-dst').value);
   }
 
   // ═════════════════════════ TRA CỨU: ĐỊA DANH · ĐI ĐẾN · DỊCH CHUYỂN ĐẾN ═════════════════════════
@@ -2895,7 +3397,8 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
   const ddLoai = (l) => DD_LOAI[l] || tcWord(String(l || 'khác').replace(/_/g, ' '));
   const DD_TANG = { dai_tong_mon: 'Đại Tông Môn' };
   const DD_EV_TELE = ['ev.public_teleport', 'ev.dong_phu']; // hai sự kiện của game có lựa chọn mở bảng truyền tống
-  S.dd = S.dd || { q: '', loai: '', qg: '', he: '', phai: '', cl: '', kham: false, may: false, sort: 'gan', n: 30, focus: null };
+  S.dd = S.dd || { q: '', loai: '', qg: '', cl: '', phai: '', he: '', kham: false, may: false, sort: 'gan', n: 30, focus: null };
+  S.dd.phai ??= ''; S.dd.he ??= '';
   let ddCache = null;
 
   // Mô tả địa danh: dòng Tóm Tắt (loại, tông môn, phái, hệ, đạo, truyền tống…) lấy từ dữ liệu bản đồ game;
@@ -2955,10 +3458,7 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     }
     const loais = [...new Set(list.map((x) => x.loai))].map((l) => [l, ddLoai(l)]).sort((a, b) => a[1].localeCompare(b[1], 'vi'));
     const qgs = [...new Set(list.map((x) => x.qg).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi')).map((q) => [q, q]);
-    const hesOf = (x) => [].concat(x.he || []).filter(Boolean);
-    const hes = [...new Set(list.flatMap(hesOf))].map((h) => [h, heTen(h)]).sort((a, b) => a[1].localeCompare(b[1], 'vi'));
-    const phais = [...new Set(list.map((x) => x.phai).filter(Boolean))].map((k) => [k, DD_PHAI[k] || tcWord(String(k).replace(/_/g, ' '))]).sort((a, b) => a[1].localeCompare(b[1], 'vi'));
-    return (ddCache = { W, list, loais, qgs, hes, phais, byId: new Map(list.map((x) => [x.id, x])) });
+    return (ddCache = { W, list, loais, qgs, byId: new Map(list.map((x) => [x.id, x])) });
   }
 
   // Các nguồn truyền tống đang có: Trận Truyền Tống (luôn hỏi game) và mỗi loại Truyền Tống Phù còn trong túi.
@@ -3031,11 +3531,90 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     return { ok: true, msg: now.viTri === slot ? 'Đã truyền tống tới nơi.' : 'Trận lệch tọa độ, bạn rơi xuống gần nơi đến (game có 10% lệch khi dùng trận ở vùng hoang).' };
   }
 
+  // Nguồn/nơi truyền tống được hỏi lại từ game mỗi lần bấm; không tự sửa vị trí hay bỏ qua điều kiện của game.
+  function ddQuickTeleSources(g) {
+    return ddTeleSources(g).map((s) => ({ s, m: ddTeleOpts(g, s) }));
+  }
+  // Nút đi tới nhanh: luôn dùng game.travelTo (tự đi theo lộ trình của game), không dùng truyền tống.
+  function ddQuickTravelButton(slot, currentSlot, label) {
+    if (!slot) return '';
+    const same = slot === currentSlot;
+    const hint = same ? 'Bạn đang ở địa điểm này' : 'Đi tới bằng đường đi của game; thời gian, phương tiện và biến cố do game xử lý.';
+    return `<button type="button" class="vk-quick-tele" data-vk-quick-go="${esc(slot)}" title="${esc(hint)}"${same ? ' disabled' : ''}>↗ ${esc(label || 'Đi tới')}</button>`;
+  }
+  function ddResolvePlaceSlot(placeNameValue, activeNodeSlot) {
+    if (activeNodeSlot) return activeNodeSlot;
+    if (!placeNameValue) return null;
+    try {
+      const W = ctxLite().world, key = fold(placeNameValue);
+      let best = null, bestScore = Infinity;
+      for (const sl of W.slots || []) {
+        if (!sl || !sl.dia_danh) continue;
+        let d = null; try { d = W.diaDanh(sl.dia_danh); } catch (e) {}
+        if (!d || !d.ten) continue;
+        const n = fold(d.ten);
+        if (n === key) return sl.id;
+        // The companion's human label can omit prefixes such as "Cửa"; accept a unique containing match.
+        if (n.includes(key) || key.includes(n)) {
+          const score = Math.abs(n.length - key.length);
+          if (score < bestScore) { best = sl.id; bestScore = score; }
+        }
+      }
+      return best;
+    } catch (e) { return null; }
+  }
+  function ddResolveEventSlot(eventId, placeNameValue, run) {
+    const W = ctxLite().world;
+    // Active node on the current map is the most accurate destination for this occurrence.
+    for (const [slot, nd] of Object.entries((run && run.nodes) || {})) {
+      if (nd && nd.encounter === eventId && !(typeof nd.hetHanNam === 'number' && typeof run.nam === 'number' && nd.hetHanNam <= run.nam)) return slot;
+    }
+    // Official event content uses requires.dia_danh IDs (not necessarily the display name in the companion table).
+    try {
+      const def = C().encounters.get(eventId);
+      const req = def && def.requires && def.requires.dia_danh;
+      for (const id of [].concat(req || []).filter((x) => typeof x === 'string')) {
+        try { if (W.hasSlot && W.hasSlot(id)) return id; } catch (e) {}
+        const slot = (W.slots || []).find((x) => x && (x.id === id || x.dia_danh === id));
+        if (slot) return slot.id;
+        try {
+          const d = W.diaDanh(id);
+          if (d && d.id) {
+            const hit = (W.slots || []).find((x) => x && x.dia_danh === d.id);
+            if (hit) return hit.id;
+          }
+        } catch (e) {}
+      }
+    } catch (e) {}
+    // Last fallback only; event requirements above remain authoritative.
+    return ddResolvePlaceSlot(placeNameValue, null);
+  }
+  function ddBindQuickTravel(root) {
+    if (!root) return;
+    root.querySelectorAll('[data-vk-quick-go]').forEach((btn) => {
+      if (btn.dataset.vkBound === '1') return;
+      btn.dataset.vkBound = '1';
+      btn.addEventListener('click', (ev) => {
+        ev.preventDefault(); ev.stopPropagation();
+        const slot = btn.dataset.vkQuickGo, g = G();
+        if (!slot || !g.state.run) { UI.notify('Không xác định được địa điểm cần đi tới.'); return; }
+        const c = ctxLite(), run = g.state.run;
+        let name = slot, years = null;
+        try { name = c.world.info(slot).ten || placeName(c, slot) || slot; } catch (e) { try { name = placeName(c, slot) || slot; } catch (_) {} }
+        try { const y = S.core.travelYears(c, slot); if (Number.isFinite(y)) years = y; } catch (e) {}
+        if (run.viTri === slot) { UI.notify('Bạn đang ở ' + name + ' rồi.'); return; }
+        const r = ddDoTravel(slot);
+        UI.notify((r.ok ? '✅ ' : '❌ ') + r.msg);
+        render();
+      });
+    });
+  }
+
   function tabDiaDanh() {
     const K = S.core, f = S.dd;
     body.innerHTML = `<div class="vk-card"><h3>Tra Cứu Địa Danh</h3>
       <div id="dd-here" class="vk-mu" style="font-size:13px;margin-bottom:6px"></div>
-      <input class="vk-sel" id="dd-q" style="width:100%" placeholder="Gõ tên nơi (không cần dấu): thanh, tong mon, kinh do…" value="${esc(f.q)}" autocomplete="off">
+      <div class="tc-sb"><span class="tc-sb-ic">🔍</span><input class="tc-shared-q" type="text" id="dd-q" placeholder="Gõ tên nơi (không cần dấu): thanh, tong mon, kinh do…" value="${esc(f.q)}" autocomplete="off"></div>
       <div class="tc-row" id="dd-sel" style="margin-top:6px"></div>
       <div style="margin-top:6px;font-size:14px"><label><input type="checkbox" id="dd-kham"${f.kham ? ' checked' : ''}> Chỉ Nơi Đã Từng Tới</label> · <label><input type="checkbox" id="dd-may"${f.may ? ' checked' : ''}> Hiện Cả Nơi Còn Phủ Mây</label></div>
       <div class="vk-mu" style="font-size:12px;margin-top:4px" id="dd-cnt"></div></div>
@@ -3047,8 +3626,20 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
 
     const fillSel = (X) => {
       const o = (list, cur, first) => `<option value="">${first}</option>` + list.map((x) => `<option value="${esc(x[0])}" ${String(x[0]) === String(cur) ? 'selected' : ''}>${esc(x[1])}</option>`).join('');
-      $('dd-sel').innerHTML = `<select class="vk-sel" id="dd-loai">${o(X.loais, f.loai, 'Mọi Loại')}</select><select class="vk-sel" id="dd-qg">${o(X.qgs, f.qg, 'Mọi Quốc Gia')}</select><select class="vk-sel" id="dd-he">${o(X.hes, f.he, 'Mọi Hệ Linh Căn')}</select><select class="vk-sel" id="dd-phai">${o(X.phais, f.phai, 'Mọi Phái Tu')}</select><select class="vk-sel" id="dd-cl">${o([['cung', 'Cùng Đại Lục'], ['khac', 'Khác Đại Lục']], f.cl, 'Mọi Đại Lục')}</select><select class="vk-sel" id="dd-st">${o([['gan', 'Gần Nhất Trước'], ['ten', 'Theo Tên']], f.sort, '').replace('<option value=""></option>', '')}</select>`;
-      body.querySelectorAll('#dd-sel select').forEach((el) => { el.onchange = () => { f.focus = null; f.n = 30; draw(); }; });
+      const tongMons = X.list.filter((x) => x.loai === 'tong_mon');
+      const phais = [...new Set(tongMons.map((x) => x.phai).filter(Boolean))].sort().map((k) => [k, DD_PHAI[k] || tcWord(String(k).replace(/_/g, ' '))]);
+      const hes = [...new Set(tongMons.flatMap((x) => [].concat(x.he || []).filter(Boolean)))].sort().map((k) => [k, heTen(k)]);
+      const school = f.loai === 'tong_mon'
+        ? `<select class="vk-sel" id="dd-he">${o(hes, f.he, 'Mọi Hệ Linh Căn')}</select><select class="vk-sel" id="dd-phai">${o(phais, f.phai, 'Mọi Phái Tu')}</select>`
+        : '';
+      $('dd-sel').innerHTML = `<select class="vk-sel" id="dd-loai">${o(X.loais, f.loai, 'Mọi Loại')}</select><select class="vk-sel" id="dd-qg">${o(X.qgs, f.qg, 'Mọi Quốc Gia')}</select><select class="vk-sel" id="dd-cl">${o([['cung', 'Cùng Đại Lục'], ['khac', 'Khác Đại Lục']], f.cl, 'Mọi Đại Lục')}</select><select class="vk-sel" id="dd-st">${o([['gan', 'Gần Nhất Trước'], ['ten', 'Theo Tên']], f.sort, '').replace('<option value=""></option>', '')}</select>${school}`;
+      body.querySelectorAll('#dd-sel select').forEach((el) => { el.onchange = () => {
+        f.loai = $('dd-loai').value; f.qg = $('dd-qg').value; f.cl = $('dd-cl').value; f.sort = $('dd-st').value || 'gan';
+        f.he = $('dd-he')?.value || ''; f.phai = $('dd-phai')?.value || '';
+        f.focus = null; f.n = 30;
+        if (el.id === 'dd-loai') fillSel(X);
+        draw();
+      }; });
     };
 
     const cardBody = (x, c, g, run) => {
@@ -3090,15 +3681,16 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
       const c = ctxLite(), X = ddBuild(c), W = c.world;
       if (!$('dd-loai')) fillSel(X);
       f.q = $('dd-q').value; f.kham = $('dd-kham').checked; f.may = $('dd-may').checked;
-      f.loai = $('dd-loai').value; f.qg = $('dd-qg').value; f.he = $('dd-he').value; f.phai = $('dd-phai').value; f.cl = $('dd-cl').value; f.sort = $('dd-st').value || 'gan';
+      f.loai = $('dd-loai').value; f.qg = $('dd-qg').value; f.cl = $('dd-cl').value; f.sort = $('dd-st').value || 'gan';
+      f.he = $('dd-he')?.value || ''; f.phai = $('dd-phai')?.value || '';
       let cur = 0; try { cur = W.tho(run.viTri); } catch (e) { cur = 0; }
       const knownSet = new Set(run.daKhamPha || []), q = fold(f.q).trim(), toks = q.split(/\s+/).filter(Boolean);
       const res = [];
       for (const x of X.list) {
         if (f.loai && x.loai !== f.loai) continue;
         if (f.qg && x.qg !== f.qg) continue;
-        if (f.he && ![].concat(x.he || []).includes(f.he)) continue;
-        if (f.phai && x.phai !== f.phai) continue;
+        if (f.loai === 'tong_mon' && f.phai && x.phai !== f.phai) continue;
+        if (f.loai === 'tong_mon' && f.he && ![].concat(x.he || []).includes(f.he)) continue;
         if (f.cl && (f.cl === 'cung' ? x.tho !== cur : x.tho === cur)) continue;
         if (f.kham && !knownSet.has(x.id) && x.id !== run.viTri) continue;
         if (toks.length && !toks.every((t) => x.key.includes(t))) continue;
@@ -3136,7 +3728,6 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
       const X = ddBuild(ctxLite()), x = X.byId.get(id), nm = x ? x.name : id;
       let r;
       if (t.classList.contains('dd-go')) {
-        if (!confirm('Đi bộ tới ' + nm + '?\nGame tính thời gian đi đường thật và có thể gặp biến cố giữa đường.')) return;
         r = ddDoTravel(id);
       } else {
         const g = G(), src = getTele(g).map((e) => e.s).find((s) => s.k === t.dataset.src);
@@ -3163,18 +3754,365 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     if (has('thieuDeKhaoHach')) for (const ng of Object.keys(nv.nghe || {})) { try { const r = K.thieuDeKhaoHach(c, ng).find((x) => x.includes('rớt')); if (r) w.push(['', `${NGHE[ng] || ng}: ${r}.`]); } catch {} }
     const seen = new Map(); for (const l of run.log || []) if (l.expiresAt && l.key) seen.set(l.key, l);
     for (const l of seen.values()) { const d = l.expiresAt - run.nam; if (d > 0.05 && d < 0.6) w.push(['', `Sắp hết hạn (${num(d)} năm): ${cleanTxt(String(l.text).replace(/còn [\d.,]+ năm\.?/, ''))}`]); }
+    try { if (S.dsBaseVer && String(S.dsBaseVer) !== String(TT.gameVersion)) w.push(['', `Game đã cập nhật (v${S.dsBaseVer} → v${TT.gameVersion}). Mở Tổng Quan → Kho Dữ Liệu Game, bấm “So với mốc” để xem thay đổi.`]); } catch {}
+    try { if (K.arityDrift && K.arityDrift.length) w.push(['bad', `Game đổi tham số ${K.arityDrift.length} hàm lõi (${K.arityDrift.slice(0, 3).join('; ')}${K.arityDrift.length > 3 ? '…' : ''}). Chạy Tự Kiểm Tra, nếu LỖI thì gửi Claude báo cáo ở Kho Dữ Liệu Game.`]); } catch {}
+    try { if (K.healed && K.healed.length) w.push(['', `Game đổi vị trí ${K.healed.length} hàm lõi; Tool đã tự dò lại (${K.healed.join('; ')}).`]); } catch {}
     return w;
   }
   function masterInfo(c) {
     const ms = Object.values(c.run.npc || {}).filter((n) => n.song && n.danhPhan === 'su_phu');
     return ms.map((m) => `${esc(m.ten)} (thiện cảm ${Math.round(m.haoCam ?? 0)})`).join(', ');
   }
+  // ═════════════════════════ KHO DỮ LIỆU SỐNG (API game) ═════════════════════════
+  // Mục đích: không cần tải file source của game mỗi lần game cập nhật.
+  //  1) Quét sống tuTien.core (module/hàm/hằng), game.env.content (các bộ dữ liệu), game (hàm, state) → "bản chụp".
+  //  2) Lưu bản chụp làm MỐC (localStorage). Game đổi bản → so sánh mốc với hiện tại, chỉ ra thay đổi chạm vào Tool.
+  //  3) Hàm lõi biến mất/đổi tên/đổi module → tự dò lại theo tên hoặc theo "dấu vân tay" thân hàm của mốc.
+  //  4) Bảng nhúng sẵn (Ngự Linh, Dị Bảo) → đối chiếu với dữ liệu sống, tự ẩn mục game đã xóa, báo mục mới.
+  //  5) Xuất gói dữ liệu (báo cáo nhanh / gói đầy đủ) để gửi Claude thay cho việc tải source.
+  const DS_KEY = 'vkx_ds_base_v1';
+  let DS_ORIG = null;
+  const dsHash = (s) => { let h = 0x811c9dc5; s = String(s); for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); } return (h >>> 0).toString(16); };
+  const dsType = (v) => v === null ? 'null' : Array.isArray(v) ? 'array' : v instanceof Map ? 'map' : v instanceof Set ? 'set' : typeof v;
+  const dsFnSrc = (f) => { try { return Function.prototype.toString.call(f); } catch (e) { return ''; } };
+  function dsJson(v, cap, space) {
+    const stack = [];
+    const rep = function (k, x) {
+      if (typeof x === 'function') return '[fn]';
+      if (typeof x === 'bigint') return String(x);
+      if (x instanceof Map) x = { __map: [...x.entries()] };
+      else if (x instanceof Set) x = { __set: [...x] };
+      if (x && typeof x === 'object') {
+        while (stack.length && stack[stack.length - 1] !== this) stack.pop();
+        if (stack.length > 40) return '[sâu quá]';
+        if (stack.includes(x)) return '[vòng]';
+        stack.push(x);
+      }
+      return x;
+    };
+    try { const s = JSON.stringify(v, rep, space); return s === undefined ? 'undefined' : (cap && s.length > cap ? s.slice(0, cap) : s); } catch (e) { return '[lỗi: ' + (e && e.message) + ']'; }
+  }
+  const dsShort = (v) => { const t = dsType(v); if (t === 'string') return v.length > 48 ? v.slice(0, 48) + '…' : v; if (t === 'number' || t === 'boolean' || t === 'undefined' || t === 'null') return String(v); if (t === 'array') return 'array[' + v.length + ']'; if (t === 'map' || t === 'set') return t + '(' + v.size + ')'; return t === 'object' ? dsJson(v, 60) : t; };
+  const dsEntries = (v) => v instanceof Map ? [...v.entries()] : Array.isArray(v) ? v.map((x, i) => [i, x]) : (v && typeof v === 'object') ? Object.entries(v) : null;
+  const dsKeysOf = (v) => { try { return v instanceof Map ? [...v.keys()] : v instanceof Set ? [...v] : Array.isArray(v) ? [] : (v && typeof v === 'object') ? Object.keys(v) : []; } catch (e) { return []; } };
+  const dsHasId = (coll, id) => { try { return coll instanceof Map || coll instanceof Set ? coll.has(id) : (coll && typeof coll === 'object') ? Object.hasOwn(coll, id) : false; } catch (e) { return false; } };
+  const dsSize = (coll) => { try { return coll instanceof Map || coll instanceof Set ? coll.size : (coll && typeof coll === 'object') ? Object.keys(coll).length : 0; } catch (e) { return 0; } };
+
+  // Lược đồ một bộ dữ liệu: số mục, tiền tố id, từng trường (kiểu, % mục có), trường có ít giá trị (enum).
+  function dsSchema(v) {
+    const ents = dsEntries(v);
+    if (!ents) return { t: dsType(v), s: dsShort(v) };
+    const out = { t: dsType(v), n: ents.length, id: [], pre: {}, f: {}, e: {} };
+    const cnt = {}, enums = {}, lim = Math.min(ents.length, 600);
+    for (let i = 0; i < ents.length; i++) { const p = String(ents[i][0]).split('.')[0]; if (p.length <= 24) out.pre[p] = (out.pre[p] || 0) + 1; if (i < 3) out.id.push(String(ents[i][0]).slice(0, 70)); }
+    if (Object.keys(out.pre).length > 12) out.pre = {};
+    for (let i = 0; i < lim; i++) {
+      const val = ents[i][1];
+      if (!val || typeof val !== 'object' || Array.isArray(val) || val instanceof Map || val instanceof Set) { const c = (cnt['(giá trị)'] ??= {}); const t = dsType(val); c[t] = (c[t] || 0) + 1; continue; }
+      for (const k of Object.keys(val)) {
+        let x; try { x = val[k]; } catch (e) { continue; }
+        const t = dsType(x), c = (cnt[k] ??= {}); c[t] = (c[t] || 0) + 1;
+        if (t === 'string' && x.length <= 40) { const e = (enums[k] ??= new Set()); if (e.size <= 14) e.add(x); }
+      }
+    }
+    for (const k of Object.keys(cnt)) {
+      const tot = Object.values(cnt[k]).reduce((a, b) => a + b, 0);
+      out.f[k] = [Object.keys(cnt[k]).sort().join('|'), Math.round(tot / lim * 100)];
+      if (enums[k] && enums[k].size >= 1 && enums[k].size <= 12 && tot >= 6) out.e[k] = [...enums[k]].sort();
+    }
+    return out;
+  }
+  function dsOwnNames(o) {
+    const names = new Set(); let p = o, d = 0;
+    while (p && p !== Object.prototype && p !== Function.prototype && d++ < 6) { try { Object.getOwnPropertyNames(p).forEach((n) => names.add(n)); } catch (e) {} p = Object.getPrototypeOf(p); }
+    names.delete('constructor'); return [...names].sort();
+  }
+  // Bản chụp sống. opts.src: kèm mã nguồn hàm; opts.data: kèm toàn bộ dữ liệu content.
+  function dsSnapshot(opts) {
+    opts = opts || {};
+    const R = TT.core || {}, g = G(), snap = { v: String(TT.gameVersion), api: TT.apiVersion, tool: TOOL_VER, at: new Date().toISOString(), core: {}, content: {}, game: { methods: {}, props: {}, fnh: {}, state: [], run: [], meta: [], nv: [], env: [], world: [] }, tt: dsOwnNames(TT), mod: dsOwnNames(MOD) };
+    const src = opts.src ? {} : null;
+    for (const m of Object.keys(R).sort()) {
+      let o; try { o = R[m]; } catch (e) { continue; }
+      const t = (snap.core[m] = {});
+      if (!o || (typeof o !== 'object' && typeof o !== 'function')) { t['*'] = ['c', 0, dsHash(String(o)), dsShort(o)]; continue; }
+      let keys; try { keys = Object.keys(o).sort(); } catch (e) { keys = []; }
+      for (const k of keys) {
+        let v; try { v = o[k]; } catch (e) { continue; }
+        if (typeof v === 'function') { const s = dsFnSrc(v); t[k] = ['fn', v.length, dsHash(s)]; if (src) src[m + '.' + k] = s; }
+        else t[k] = ['c', 0, dsHash(dsJson(v, 20000)), dsShort(v)];
+      }
+    }
+    let content = null; try { content = g && g.env && g.env.content; } catch (e) {}
+    if (content) for (const k of dsOwnNames(content)) { let v; try { v = content[k]; } catch (e) { continue; } if (typeof v === 'function') continue; snap.content[k] = dsSchema(v); }
+    if (g) {
+      for (const n of dsOwnNames(g)) { let v; try { v = g[n]; } catch (e) { continue; } if (typeof v === 'function') { snap.game.methods[n] = v.length; const fs = dsFnSrc(v); snap.game.fnh[n] = /\[native code\]/.test(fs) ? 'native' : dsHash(fs); if (src) src['game.' + n] = fs; } else snap.game.props[n] = dsType(v); }
+      try { snap.game.state = Object.keys(g.state || {}); snap.game.run = Object.keys((g.state && g.state.run) || {}); snap.game.meta = Object.keys((g.state && g.state.meta) || {}); snap.game.nv = Object.keys((g.state && g.state.run && g.state.run.nhanVat) || {}); snap.game.env = Object.keys(g.env || {}); snap.game.world = Object.keys((g.env && g.env.world) || {}); } catch (e) {}
+    }
+    if (src) snap.src = src;
+    if (opts.data && content) { snap.data = {}; for (const k of Object.keys(snap.content)) { try { snap.data[k] = JSON.parse(dsJson(content[k])); } catch (e) { snap.data[k] = '[không xuất được]'; } } }
+    return snap;
+  }
+  function dsLoadBase() { try { const s = localStorage.getItem(DS_KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
+  function dsSaveBase(snap) {
+    const slim = { v: snap.v, api: snap.api, tool: snap.tool, at: snap.at, core: snap.core, content: snap.content, game: snap.game, tt: snap.tt, mod: snap.mod };
+    try { localStorage.setItem(DS_KEY, JSON.stringify(slim)); return true; } catch (e) { return false; }
+  }
+  // Tìm lại một hàm lõi không còn ở chỗ cũ: ưu tiên cùng thân hàm với mốc (đổi tên/module), sau đó cùng tên ở module khác.
+  function dsRelocate(R, mod, name, base) {
+    const want = base && base.core && base.core[mod] && base.core[mod][name], wantFn = want && want[0] === 'fn' ? want : null;
+    let byName = null;
+    for (const m of Object.keys(R)) {
+      let o; try { o = R[m]; } catch (e) { continue; }
+      if (!o || (typeof o !== 'object' && typeof o !== 'function')) continue;
+      if (m !== mod && !byName) { let f; try { f = o[name]; } catch (e) { f = undefined; } if (typeof f === 'function') byName = { fn: f, where: m + '.' + name, how: 'cùng tên, đổi module' }; }
+      if (wantFn) {
+        let ks; try { ks = Object.keys(o); } catch (e) { continue; }
+        for (const k of ks) { let g; try { g = o[k]; } catch (e) { continue; } if (typeof g === 'function' && g.length === wantFn[1] && dsHash(dsFnSrc(g)) === wantFn[2]) return { fn: g, where: m + '.' + k, how: 'cùng thân hàm với mốc, đổi tên/module' }; }
+      }
+    }
+    return byName;
+  }
+  // 7.6.0: game mở cả hàm nội bộ qua tuTien.core nên 'hàm lõi mới' lên tới hàng nghìn. Báo cáo chỉ giữ số lượng theo module và tên mới ở module Tool đang dùng.
+  function dsCompactDiff(d) {
+    const c = Object.assign({}, d.core);
+    if (c.add.length > 60) {
+      const used = new Set(CORE_REQUIRED.concat(CORE_OPTIONAL).map((r) => r[1])), by = {}, modOf = (id) => id.slice(0, id.lastIndexOf('.'));
+      for (const id of c.add) { const m = modOf(id); by[m] = (by[m] || 0) + 1; }
+      c.addTotal = c.add.length; c.addByModule = by; c.add = c.add.filter((id) => used.has(modOf(id))).slice(0, 40);
+      c.addNote = 'Game mở thêm hàm/hằng nội bộ qua tuTien.core (không cam kết ổn định). Đã gộp theo module, chỉ liệt kê tên mới ở module Tool đang dùng.';
+    }
+    return Object.assign({}, d, { core: c });
+  }
+  // So mốc với hiện tại.
+  function dsDiff(a, b) {
+    const d = { ver: [a.v, b.v], core: { addMod: [], delMod: [], add: [], del: [], body: [], arity: [], cst: [] }, content: { add: [], del: [], count: [], fAdd: [], fDel: [], fType: [] }, game: { add: [], del: [], arity: [], body: [] }, state: { add: [], del: [] }, tt: { add: [], del: [] } };
+    const A = a.core || {}, B = b.core || {};
+    for (const m of new Set([...Object.keys(A), ...Object.keys(B)])) {
+      if (!A[m]) { d.core.addMod.push(m); continue; }
+      if (!B[m]) { d.core.delMod.push(m); continue; }
+      for (const k of new Set([...Object.keys(A[m]), ...Object.keys(B[m])])) {
+        const x = A[m][k], y = B[m][k], id = m + '.' + k;
+        if (!x) { d.core.add.push(id); continue; }
+        if (!y) { d.core.del.push(id); continue; }
+        if (x[0] !== y[0]) d.core.body.push(id + ' (đổi loại ' + x[0] + '→' + y[0] + ')');
+        else if (x[0] === 'fn') { if (x[1] !== y[1]) d.core.arity.push(id + ' (' + x[1] + '→' + y[1] + ' tham số)'); else if (x[2] !== y[2]) d.core.body.push(id); }
+        else if (x[2] !== y[2]) d.core.cst.push(id + ': ' + (x[3] ?? '?') + ' → ' + (y[3] ?? '?'));
+      }
+    }
+    const CA = a.content || {}, CB = b.content || {};
+    for (const k of new Set([...Object.keys(CA), ...Object.keys(CB)])) {
+      if (!CA[k]) { d.content.add.push(k + (CB[k].n != null ? ' (' + CB[k].n + ' mục)' : '')); continue; }
+      if (!CB[k]) { d.content.del.push(k); continue; }
+      if (CA[k].n !== CB[k].n) d.content.count.push(k + ': ' + (CA[k].n ?? '?') + ' → ' + (CB[k].n ?? '?'));
+      const fa = CA[k].f || {}, fb = CB[k].f || {};
+      for (const f of new Set([...Object.keys(fa), ...Object.keys(fb)])) {
+        if (!fa[f]) d.content.fAdd.push(k + '.' + f + ' [' + fb[f][0] + ']');
+        else if (!fb[f]) d.content.fDel.push(k + '.' + f);
+        else if (fa[f][0] !== fb[f][0]) d.content.fType.push(k + '.' + f + ': ' + fa[f][0] + ' → ' + fb[f][0]);
+      }
+    }
+    const setDiff = (x, y, o) => { const sx = new Set(x || []), sy = new Set(y || []); for (const i of sy) if (!sx.has(i)) o.add.push(i); for (const i of sx) if (!sy.has(i)) o.del.push(i); };
+    const gm = (s) => Object.keys((s.game && s.game.methods) || {}).concat(Object.keys((s.game && s.game.props) || {}));
+    setDiff(gm(a), gm(b), d.game);
+    { // Hàm của đối tượng game: đổi số tham số (mốc cũ đã có) và đổi thân hàm (chỉ khi cả hai bản chụp đều có dấu vân tay).
+      const ma = (a.game && a.game.methods) || {}, mb = (b.game && b.game.methods) || {}, ha = a.game && a.game.fnh, hb = (b.game && b.game.fnh) || {};
+      for (const n of Object.keys(mb)) {
+        if (!(n in ma)) continue;
+        if (ma[n] !== mb[n]) d.game.arity.push('game.' + n + ' (' + ma[n] + '→' + mb[n] + ' tham số)');
+        else if (ha && ha[n] && hb[n] && ha[n] !== 'native' && hb[n] !== 'native' && ha[n] !== hb[n]) d.game.body.push('game.' + n);
+      }
+    }
+    for (const k of ['state', 'run', 'meta', 'nv', 'env', 'world']) { const o = { add: [], del: [] }; setDiff(a.game && a.game[k], b.game && b.game[k], o); o.add.forEach((i) => d.state.add.push(k + '.' + i)); o.del.forEach((i) => d.state.del.push(k + '.' + i)); }
+    setDiff(a.tt, b.tt, d.tt);
+    return d;
+  }
+  const dsDiffCount = (d) => ['core', 'content', 'game', 'state', 'tt'].reduce((n, g) => n + Object.values(d[g]).reduce((m, l) => m + l.length, 0), 0);
+  // Hàm/hằng mà Tool đang dựa vào, và trạng thái hiện tại.
+  function dsDeps() {
+    const R = TT.core || {}, rows = [];
+    for (const [key, mod, name] of CORE_REQUIRED) rows.push({ key, mod, name, req: true });
+    for (const [key, mod, name] of CORE_OPTIONAL) rows.push({ key, mod, name, req: false });
+    const healed = (S.core && S.core.healed) || [];
+    for (const r of rows) {
+      let f; try { f = R[r.mod] && R[r.mod][r.name]; } catch (e) {}
+      r.st = typeof f === 'function' ? 'ok' : (S.core && typeof S.core[r.key] === 'function' ? 'moved' : 'missing');
+      r.healed = healed.find((h) => h.startsWith(r.mod + '.' + r.name + ' ')) || '';
+    }
+    return rows;
+  }
+  // Hàm của đối tượng game (TT.game) mà Tool gọi trực tiếp (Auto, Địa Danh, Dị Bảo, Kinh Mạch…). Dùng để đánh dấu "chạm vào Tool" khi đối chiếu.
+  const DS_GAME_USED = ['readCtx', 'travelTo', 'teleportOptions', 'resume', 'useItem', 'encounterView', 'canDo', 'doAction', 'choose', 'enterNode', 'chooseActivity', 'leaveShop', 'shopView', 'shopBuy', 'shopSell', 'shopBuyQuote', 'shopSellQuote', 'tocChienTran', 'duKienTran', 'xongTran', 'closeEncounter', 'closeLongNotice', 'datManh', 'goManh', 'goHetManh', 'switchLoadout', 'unlockLoadoutSlot', 'moO'];
+  // Hàm game mà Tool đã có nhánh dự phòng khi thiếu (thiếu thì chỉ tính năng đó dừng).
+  const DS_GAME_OPT = ['muaMoKhoa', 'hanhDongTran', 'newRun'];
+  const DS_TOOL_COLLS = ['items', 'enemies', 'encounters', 'theChat', 'moKhoa', 'thanhTuu', 'tocYeu', 'enemyFamilies', 'donPhuong', 'lootTables', 'towers', 'chieuDich', 'noiChon', 'npc', 'origins'];
+  // Đối chiếu bảng nhúng sẵn với dữ liệu sống.
+  function dsAudit() {
+    const Cc = C(), rows = [], add = (name, total, stale, fresh, note, liveFirst) => rows.push({ name, total, stale, fresh, note: note || '', liveFirst: !!liveFirst });
+    const ids = (arr) => arr.filter(Boolean);
+    try { const items = Cc.items; add('NL_META (vật phẩm Ngự Linh)', Object.keys(NL_META).length, ids(Object.keys(NL_META).filter((id) => !dsHasId(items, id))), ids([...items.values()].filter((it) => nlIsItem(it) && !NL_META[it.id]).map((it) => it.id)), 'mục mới vẫn hiện nhờ luật đoán nhóm'); } catch (e) { add('NL_META', 0, [], [], 'không đối chiếu được: ' + (e && e.message)); }
+    try { const O = DS_ORIG; add('NL_ENC (sự kiện Ngự Linh)', (O ? O.enc : NL_ENC).length, ids((O ? O.enc : NL_ENC).filter((r) => !dsHasId(Cc.encounters, r[0])).map((r) => r[0])), ids(dsKeysOf(Cc.encounters).filter((id) => /^ev\.(nl|kl|lt|hon|thi)_/.test(id) && !(O ? O.enc : NL_ENC).some((r) => r[0] === id))), 'mục mới: đoán theo tiền tố ev.nl_/kl_/lt_/hon_/thi_'); } catch (e) { add('NL_ENC', 0, [], [], 'không đối chiếu được: ' + (e && e.message)); }
+    try { const O = DS_ORIG, rit = O ? O.rit : NL_RITUAL, miss = []; for (const r of rit) for (const id of r.lieu || []) if (!dsHasId(Cc.items, id)) miss.push(r.id + ' → ' + id); add('NL_RITUAL (nghi thức)', rit.length, miss, [], 'chỉ kiểm liệu tham chiếu tới vật phẩm còn tồn tại'); } catch (e) { add('NL_RITUAL', 0, [], [], 'không đối chiếu được: ' + (e && e.message)); }
+    try { const have = new Set(NL_ENEMY.map((s) => s.id)); add('NL_ENEMY (quái Ngự Linh, dự phòng)', NL_ENEMY.length, ids(NL_ENEMY.filter((s) => !dsHasId(Cc.enemies, s.id)).map((s) => s.id)), ids([...Cc.enemies.values()].filter((e) => e && e.ngu_linh && !have.has(e.id)).map((e) => e.id)), 'đã ưu tiên đọc sống, bảng nhúng chỉ là dự phòng; mục mới vẫn hiện', true); } catch (e) { add('NL_ENEMY', 0, [], [], 'không đối chiếu được: ' + (e && e.message)); }
+    try { const O = DS_ORIG, ev = O ? O.ev : DIBAO.ev, boss = O ? O.boss : DIBAO.boss, rel = O ? O.rel : DIBAO.rel; const stale = [...ev.filter((e) => !dsHasId(Cc.encounters, e.id)).map((e) => e.id), ...Object.keys(rel).concat(boss).filter((id) => !dsHasId(Cc.items, id))]; add('DIBAO (Dị Bảo)', ev.length + boss.length, [...new Set(stale)], ids(dsKeysOf(Cc.encounters).filter((id) => /^ev\.di_bao_/.test(id) && !ev.some((e) => e.id === id) && !(Cc.encounters.get(id) && Cc.encounters.get(id).vars && Cc.encounters.get(id).vars.bao))), 'mục mới có món cố định: đoán theo tiền tố ev.di_bao_ (loại thưởng ngẫu nhiên đã hiện riêng ở tab Dị Bảo)'); } catch (e) { add('DIBAO', 0, [], [], 'không đối chiếu được: ' + (e && e.message)); }
+    try { const live = Cc.theChat; add('THE_CHAT_DB (Thể Chất, dự phòng)', Object.keys(THE_CHAT_DB).length, ids(Object.keys(THE_CHAT_DB).filter((id) => live && !dsHasId(live, id))), ids(dsKeysOf(live).filter((id) => !THE_CHAT_DB[id])), 'đã ưu tiên đọc sống; mục mới vẫn hiện', true); } catch (e) { add('THE_CHAT_DB', 0, [], [], 'không đối chiếu được: ' + (e && e.message)); }
+    return rows;
+  }
+  // Đối chiếu TOÀN BỘ hàm của game với mốc: mọi hàm/hằng của tuTien.core, mọi hàm của đối tượng game, bộ dữ liệu content, thuộc tính/state, khóa tuTien.
+  // Chỉ đọc chữ ký và mã nguồn hàm, KHÔNG gọi hàm nào của game nên không đổi save, không tốn linh thạch hay năm tuổi.
+  function dsAuditAll() {
+    const cur = dsSnapshot(), base = dsLoadBase(), d = base ? dsDiff(base, cur) : null, g = G();
+    const tok = (x) => String(x).split(' ')[0].replace(/:$/, '');
+    const typeAt = (snap, id) => { const i = id.indexOf('.'), m = snap && snap.core && snap.core[id.slice(0, i)], e = m && m[id.slice(i + 1)]; return e ? e[0] : ''; };
+    const isFnCur = (id) => typeAt(cur, id) === 'fn', isFnBase = (id) => typeAt(base, id) === 'fn';
+    const cnt = (pred) => Object.values(cur.core).reduce((n, m) => n + Object.values(m).filter(pred).length, 0);
+    const gm = cur.game.methods || {}, bm = (base && base.game && base.game.methods) || {};
+    const stateN = ['state', 'run', 'meta', 'nv', 'env', 'world'].reduce((n, k) => n + ((cur.game[k] || []).length), 0);
+    const groups = [], none = [];
+    const push = (name, total, chg, add, del, note) => groups.push({ name, total, chg: chg || none, add: add || none, del: del || none, note });
+    push('Hàm lõi (tuTien.core)', cnt((x) => x[0] === 'fn'), d && [...d.core.body, ...d.core.arity], d && d.core.add.filter(isFnCur).concat(d.core.addMod.map((m) => 'module ' + m)), d && d.core.del.filter(isFnBase).concat(d.core.delMod.map((m) => 'module ' + m)), 'so thân hàm và số tham số');
+    push('Hằng số lõi', cnt((x) => x[0] !== 'fn'), d && d.core.cst, d && d.core.add.filter((x) => !isFnCur(x)), d && d.core.del.filter((x) => !isFnBase(x)), 'so giá trị');
+    push('Hàm của game (game.*)', Object.keys(gm).length, d && [...d.game.body, ...d.game.arity], d && d.game.add.filter((n) => n in gm), d && d.game.del.filter((n) => n in bm), (base && base.game && base.game.fnh) ? 'so thân hàm và số tham số' : 'mốc cũ chưa có thân hàm game: tạm chỉ so số tham số');
+    push('Bộ dữ liệu content', Object.keys(cur.content).length, d && [...d.content.count, ...d.content.fAdd, ...d.content.fDel, ...d.content.fType], d && d.content.add, d && d.content.del, 'số mục, trường, kiểu trường');
+    push('Thuộc tính game · khóa state/env', Object.keys(cur.game.props || {}).length + stateN, none, d && d.game.add.filter((n) => !(n in gm)).concat(d.state.add), d && d.game.del.filter((n) => !(n in bm)).concat(d.state.del), 'khóa còn/mất');
+    push('Khóa API tuTien', (cur.tt || []).length, none, d && d.tt.add, d && d.tt.del, 'khóa còn/mất');
+    // Chạm vào cái Tool đang dùng
+    const deps = dsDeps(), dep = new Set(deps.map((r) => r.mod + '.' + r.name)), gUsed = new Set(DS_GAME_USED.concat(DS_GAME_OPT).map((n) => 'game.' + n)), colls = new Set(DS_TOOL_COLLS), hit = new Set();
+    if (d) {
+      for (const x of [...d.core.body, ...d.core.arity, ...d.core.del]) if (dep.has(tok(x))) hit.add(tok(x));
+      for (const x of [...d.game.body, ...d.game.arity]) if (gUsed.has(tok(x))) hit.add(tok(x));
+      for (const n of d.game.del) if (gUsed.has('game.' + n)) hit.add('game.' + n);
+      for (const x of [...d.content.count, ...d.content.fAdd, ...d.content.fDel, ...d.content.fType, ...d.content.del]) if (colls.has(String(x).split(/[.: ]/)[0])) hit.add('content.' + x);
+    }
+    const miss = deps.filter((r) => r.st !== 'ok').map((r) => r.mod + '.' + r.name + (r.st === 'moved' ? ' (đã tự nối lại)' : r.req ? ' (MẤT, bắt buộc)' : ' (mất, tùy chọn)'));
+    const gMiss = DS_GAME_USED.filter((n) => typeof g[n] !== 'function').map((n) => 'game.' + n + ' (MẤT)').concat(DS_GAME_OPT.filter((n) => typeof g[n] !== 'function').map((n) => 'game.' + n + ' (mất, tùy chọn)'));
+    return { cur, base, groups, hit: [...hit], miss: miss.concat(gMiss), nDep: dep.size, nGame: DS_GAME_USED.length + DS_GAME_OPT.length, nMod: Object.keys(cur.core).length, embedded: dsAudit() };
+  }
+  // Ẩn mục nhúng sẵn mà game đã xóa. Có ngưỡng an toàn: nếu quá nhiều mục "biến mất" thì coi là đổi cấu trúc dữ liệu, không ẩn gì.
+  function dsApplyPrune() {
+    const Cc = C(), rep = [];
+    if (!DS_ORIG) DS_ORIG = { enc: NL_ENC.map((r) => r.slice()), rit: JSON.parse(JSON.stringify(NL_RITUAL)), ev: DIBAO.ev.slice(), boss: DIBAO.boss.slice(), rel: Object.assign({}, DIBAO.rel) };
+    const ok = (m) => m && typeof m.has === 'function' && m.size > 0;
+    const enc = Cc.encounters, items = Cc.items;
+    if (ok(enc)) {
+      const keep = DS_ORIG.enc.filter((r) => enc.has(r[0]));
+      if (keep.length >= DS_ORIG.enc.length * 0.6) { NL_ENC.length = 0; keep.forEach((r) => { const c = r.slice(); if (ok(items) && Array.isArray(c[6])) c[6] = c[6].filter((id) => items.has(id)); NL_ENC.push(c); }); rep.push('NL_ENC: giữ ' + keep.length + '/' + DS_ORIG.enc.length); }
+      else rep.push('NL_ENC: bỏ qua (chỉ ' + keep.length + '/' + DS_ORIG.enc.length + ' còn khớp, nghi game đổi cấu trúc)');
+      const evKeep = DS_ORIG.ev.filter((e) => enc.has(e.id));
+      if (evKeep.length >= DS_ORIG.ev.length * 0.6) { DIBAO.ev = evKeep; rep.push('DIBAO.ev: giữ ' + evKeep.length + '/' + DS_ORIG.ev.length); } else rep.push('DIBAO.ev: bỏ qua (nghi đổi cấu trúc)');
+    }
+    if (ok(items)) {
+      NL_RITUAL.length = 0; DS_ORIG.rit.forEach((r) => { const c = JSON.parse(JSON.stringify(r)); if (Array.isArray(c.lieu)) c.lieu = c.lieu.filter((id) => items.has(id)); NL_RITUAL.push(c); });
+      const bossKeep = DS_ORIG.boss.filter((id) => items.has(id));
+      DIBAO.boss = bossKeep.length >= DS_ORIG.boss.length * 0.6 || !DS_ORIG.boss.length ? bossKeep : DS_ORIG.boss.slice();
+    }
+    S.dsPrune = rep; return rep;
+  }
+  // Gọi một lần sau khi nối lõi game xong.
+  function dsOnCoreReady() {
+    try { dsApplyPrune(); } catch (e) { console.error('[ds] prune', e); }
+    setTimeout(() => {
+      try {
+        const base = dsLoadBase();
+        if (!base) { dsSaveBase(dsSnapshot()); S.dsBaseVer = String(TT.gameVersion); S.dsFirst = true; }
+        else S.dsBaseVer = String(base.v);
+      } catch (e) { console.error('[ds] base', e); }
+    }, 1500);
+  }
+  function dsDownload(name, blob) {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(() => { try { URL.revokeObjectURL(a.href); a.remove(); } catch (e) {} }, 4000);
+  }
+  const dsStamp = () => { const d = new Date(), p = (n) => String(n).padStart(2, '0'); return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes()); };
+  // Báo cáo: quick = gọn để dán vào chat; full = đủ lược đồ, mã nguồn mọi hàm và toàn bộ dữ liệu content.
+  function dsReport(full) {
+    const cur = dsSnapshot({ src: true, data: !!full }), base = dsLoadBase(), diff = base ? dsDiff(base, cur) : null, deps = dsDeps(), audit = dsAudit();
+    const rep = { format: 'vktt-datasource/1', tool: TOOL_VER, game: cur.v, api: cur.api, at: cur.at, baseline: base ? { v: base.v, at: base.at, tool: base.tool } : null, healed: (S.core && S.core.healed) || [], prune: S.dsPrune || [], deps: full ? deps : deps.filter((r) => r.st !== 'ok' || r.healed), audit: audit.map((a) => ({ name: a.name, total: a.total, stale: full ? a.stale : a.stale.slice(0, 30), fresh: full ? a.fresh : a.fresh.slice(0, 30), note: a.note })), diff: diff && !full ? dsCompactDiff(diff) : diff };
+    if (full) { rep.snapshot = cur; return rep; }
+    // Báo cáo nhanh: lược đồ các bộ dữ liệu Tool dùng + mã nguồn hàm đã đổi / thiếu (tối đa ~80k ký tự).
+    rep.content = {}; for (const k of Object.keys(cur.content)) if (DS_TOOL_COLLS.includes(k) || (diff && (diff.content.add.some((x) => x.startsWith(k)) || diff.content.count.some((x) => x.startsWith(k + ':'))))) rep.content[k] = cur.content[k];
+    const want = new Set(); if (diff) { for (const x of [...diff.core.body, ...diff.core.arity, ...dsCompactDiff(diff).core.add.slice(0, 20), ...diff.game.body, ...diff.game.arity]) want.add(x.split(' ')[0]); }
+    for (const r of deps) if (r.st !== 'ok') want.add(r.mod + '.' + r.name);
+    for (const r of deps) if (diff && diff.core.body.concat(diff.core.arity).some((x) => x.split(' ')[0] === r.mod + '.' + r.name)) want.add(r.mod + '.' + r.name);
+    // Hàm lõi mất hẳn: kèm danh sách export hiện có của module đó (và danh sách module) để Claude thấy ngay tên mới.
+    { const g = G(), gl = DS_GAME_USED.concat(DS_GAME_OPT).filter((n) => typeof g[n] !== 'function'); if (gl.length) rep.gameMissing = { missing: gl, gameMethods: Object.keys(cur.game.methods).sort() }; }
+    const lost = deps.filter((r) => r.st === 'missing');
+    if (lost.length) { const R = TT.core || {}; rep.lost = { moduleList: Object.keys(R).sort(), exportsOfModule: {} }; for (const r of lost) { if (rep.lost.exportsOfModule[r.mod]) continue; let ks = []; try { ks = R[r.mod] ? Object.keys(R[r.mod]).sort() : null; } catch (e) {} rep.lost.exportsOfModule[r.mod] = ks === null ? '(module không còn)' : ks; } }
+    let budget = 80000; rep.sources = {};
+    for (const id of want) { const s = cur.src[id]; if (!s) continue; if (s.length > budget) { rep.sources[id] = s.slice(0, Math.max(0, budget)) + '…[cắt]'; budget = 0; break; } rep.sources[id] = s; budget -= s.length; }
+    return rep;
+  }
+  const dsList = (arr, n) => arr.length ? arr.slice(0, n).map((x) => '<code>' + esc(x) + '</code>').join(', ') + (arr.length > n ? ' … <span class="vk-mu">(+' + (arr.length - n) + ' nữa)</span>' : '') : '';
+  function dsDiffHtml(d) {
+    const sec = (title, arr, cls) => arr.length ? `<div style="margin:6px 0;font-size:13px"><b class="${cls || ''}">${esc(title)} (${arr.length})</b><br>${dsList(arr, 14)}</div>` : '';
+    const dep = new Set(dsDeps().map((r) => r.mod + '.' + r.name));
+    const gUsed = new Set(DS_GAME_USED.concat(DS_GAME_OPT).map((n) => 'game.' + n));
+    const hit = [...d.core.body, ...d.core.arity, ...d.core.del].map((x) => x.split(' ')[0]).filter((x) => dep.has(x)).concat([...d.game.body, ...d.game.arity, ...d.game.del.map((n) => 'game.' + n)].map((x) => x.split(' ')[0]).filter((x) => gUsed.has(x)));
+    let h = `<div style="font-size:13px;margin:4px 0">Game <b>v${esc(d.ver[0])}</b> → <b>v${esc(d.ver[1])}</b> · tổng ${dsDiffCount(d)} khác biệt.</div>`;
+    if (!dsDiffCount(d)) return h + '<div class="vk-ok">Không có khác biệt nào so với mốc.</div>';
+    h += hit.length ? `<div class="vk-card" style="border-left-color:var(--bad)"><b class="vk-bad">Chạm vào hàm Tool đang dùng (${hit.length})</b><br>${dsList(hit, 20)}<div class="vk-mu" style="font-size:12px;margin-top:4px">Chạy Tự kiểm tra; nếu có LỖI, bấm “Sao chép báo cáo nhanh” gửi Claude — báo cáo đã kèm mã nguồn các hàm này.</div></div>` : '<div class="vk-ok" style="margin:4px 0">Không hàm nào Tool đang dùng bị đổi thân/tham số.</div>';
+    return h + sec('Hàm lõi đổi thân', d.core.body) + sec('Hàm lõi đổi tham số', d.core.arity) + sec('Hàm lõi mới', d.core.add) + sec('Hàm lõi mất', d.core.del, 'vk-bad') + sec('Module mới', d.core.addMod) + sec('Module mất', d.core.delMod, 'vk-bad') + sec('Hằng số đổi giá trị', d.core.cst) + sec('Bộ dữ liệu mới', d.content.add) + sec('Bộ dữ liệu mất', d.content.del, 'vk-bad') + sec('Số mục đổi', d.content.count) + sec('Trường dữ liệu mới', d.content.fAdd) + sec('Trường dữ liệu mất', d.content.fDel, 'vk-bad') + sec('Trường đổi kiểu', d.content.fType) + sec('Hàm game đổi thân', d.game.body) + sec('Hàm game đổi tham số', d.game.arity) + sec('Hàm/thuộc tính game mới', d.game.add) + sec('Hàm/thuộc tính game mất', d.game.del, 'vk-bad') + sec('Khóa state/env mới', d.state.add) + sec('Khóa state/env mất', d.state.del, 'vk-bad') + sec('Khóa tuTien mới', d.tt.add) + sec('Khóa tuTien mất', d.tt.del, 'vk-bad');
+  }
+  function dsAuditHtml(rows) {
+    return '<table class="vk-t"><tr><th>Bảng nhúng</th><th>Mục</th><th>Game đã xóa</th><th>Game có thêm</th></tr>' + rows.map((r) => `<tr><td>${esc(r.name)}<div class="vk-mu" style="font-size:11.5px">${esc(r.note)}</div></td><td>${r.total}</td><td class="${r.stale.length ? 'vk-bad' : ''}">${r.stale.length}${r.stale.length ? '<div class="vk-mu" style="font-size:11.5px">' + dsList(r.stale, 3) + '</div>' : ''}</td><td>${r.fresh.length}${r.fresh.length ? '<div class="vk-mu" style="font-size:11.5px">' + dsList(r.fresh, 3) + '</div>' : ''}</td></tr>`).join('') + '</table>';
+  }
+  function dsAuditAllHtml(A) {
+    const has = !!A.base, n = (l) => has ? l.length : '–';
+    const cell = (l, bad) => `<td class="${has && l.length && bad ? 'vk-bad' : ''}">${n(l)}</td>`;
+    let h = `<div style="font-size:13px;margin:4px 0">Game <b>v${esc(String(A.cur.v))}</b>${has ? ' so với mốc <b>v' + esc(String(A.base.v)) + '</b>' : ''} · đã đọc <b>${A.groups[0].total}</b> hàm lõi trong ${A.nMod} module và <b>${A.groups[2].total}</b> hàm của game; không gọi hàm nào nên không đổi save.</div>`;
+    if (!has) h += '<div class="vk-bad" style="font-size:13px;margin:4px 0">Chưa có mốc nên mới kiểm được hàm Tool cần còn hay mất. Bấm “So với mốc” một lần để lưu mốc, lần game cập nhật sau sẽ so được thay đổi.</div>';
+    h += '<table class="vk-t"><tr><th>Nhóm</th><th>Tổng</th><th>Đổi</th><th>Mới</th><th>Mất</th></tr>' + A.groups.map((r) => `<tr><td>${esc(r.name)}<div class="vk-mu" style="font-size:11.5px">${esc(r.note)}</div></td><td>${r.total}</td>${cell(r.chg, true)}${cell(r.add, false)}${cell(r.del, true)}</tr>`).join('') + '</table>';
+    const sec = (title, arr, cls) => arr.length ? `<div style="margin:6px 0;font-size:13px"><b class="${cls || ''}">${esc(title)} (${arr.length})</b><br>${dsList(arr, 12)}</div>` : '';
+    for (const r of A.groups) h += sec(r.name + ' · đổi', r.chg) + sec(r.name + ' · mới', r.add) + sec(r.name + ' · mất', r.del, 'vk-bad');
+    h += A.hit.length ? `<div class="vk-card" style="border-left-color:var(--bad)"><b class="vk-bad">Chạm vào hàm/dữ liệu Tool đang dùng (${A.hit.length})</b><br>${dsList(A.hit, 20)}<div class="vk-mu" style="font-size:12px;margin-top:4px">Chạy Tự kiểm tra; nếu có LỖI, bấm “Sao chép báo cáo nhanh” gửi Claude — báo cáo đã kèm mã nguồn các hàm này.</div></div>` : (has ? '<div class="vk-ok" style="margin:4px 0">Không hàm hay bộ dữ liệu nào Tool đang dùng bị đổi so với mốc.</div>' : '');
+    h += A.miss.length ? `<div class="vk-card" style="border-left-color:var(--bad)"><b class="vk-bad">Tool cần nhưng game không còn ở chỗ cũ (${A.miss.length})</b><br>${dsList(A.miss, 20)}</div>` : `<div class="vk-ok" style="margin:4px 0">Đủ ${A.nDep} hàm lõi và ${A.nGame} hàm game mà Tool gọi.</div>`;
+    h += '<div style="margin-top:8px;font-size:13px"><b>Bảng nhúng sẵn (Ngự Linh · Dị Bảo · Thể Chất)</b></div>' + dsAuditHtml(A.embedded) + (S.dsPrune && S.dsPrune.length ? '<div class="vk-mu" style="font-size:12px;margin-top:4px">Đã áp dụng: ' + esc(S.dsPrune.join(' · ')) + '</div>' : '');
+    return h;
+  }
+  function dsMount(host) {
+    const base = dsLoadBase(), ver = String(TT.gameVersion), K = S.core || {};
+    const changed = base && String(base.v) !== ver;
+    host.innerHTML = `<h3>Kho Dữ Liệu Game (API sống)</h3>
+      <div class="vk-mu" style="font-size:13px">Tool tự đọc hàm, hằng số và dữ liệu ngay từ game đang chạy — không cần tải source. Khi game cập nhật, bấm <b>So với mốc</b> để thấy chính xác cái gì đổi; cần Claude sửa thì bấm <b>Sao chép báo cáo nhanh</b> hoặc <b>Tải source game</b> rồi gửi.</div>
+      <div class="vk-row"><span>Game hiện tại</span><b>v${esc(ver)} · api ${esc(String(TT.apiVersion))}</b></div>
+      <div class="vk-row"><span>Mốc đã lưu</span><b class="${changed ? 'vk-bad' : ''}">${base ? 'v' + esc(String(base.v)) + ' · ' + esc(String(base.at || '').slice(0, 10)) + (changed ? ' (game đã đổi bản)' : '') : 'chưa có'}</b></div>
+      <div class="vk-row"><span>Hàm lõi tự dò lại</span><b class="${(K.healed || []).length ? 'vk-ok' : ''}">${(K.healed || []).length ? esc((K.healed || []).join(' · ')) : 'không cần'}</b></div>
+      <div class="vk-row"><span>Hàm lõi mất hẳn</span><b class="${(K.optMissing || []).length ? 'vk-bad' : 'vk-ok'}">${(K.optMissing || []).length ? esc(String(K.optMissing.length)) + ' (xem Tự kiểm tra)' : 'không'}</b></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button class="vk-btn" id="ds-diff">So với mốc</button><button class="vk-btn sec" id="ds-audit">Đối chiếu toàn bộ hàm game</button><button class="vk-btn sec" id="ds-copy">Sao chép báo cáo nhanh</button><button class="vk-btn sec" id="ds-src">Tải source game</button><button class="vk-btn sec" id="ds-base">Chốt mốc mới</button></div>
+      <div id="ds-out" style="margin-top:8px"></div>`;
+    const out = host.querySelector('#ds-out');
+    const busy = (b, fn) => async () => { b.disabled = true; try { await fn(); } catch (e) { out.innerHTML = '<div class="vk-bad">Lỗi: ' + esc(e && e.message || String(e)) + '</div>'; console.error(e); } b.disabled = false; };
+    const $ = (id) => host.querySelector(id);
+    $('#ds-diff').onclick = busy($('#ds-diff'), async () => { out.innerHTML = '<div class="vk-mu">Đang quét…</div>'; await sleep0(); const b = dsLoadBase(); if (!b) { dsSaveBase(dsSnapshot()); S.dsBaseVer = ver; out.innerHTML = '<div class="vk-ok">Chưa có mốc nên đã lưu bản chụp hiện tại làm mốc. Lần game cập nhật sau, bấm lại để so sánh.</div>'; return; } out.innerHTML = dsDiffHtml(dsDiff(b, dsSnapshot())); });
+    $('#ds-audit').onclick = busy($('#ds-audit'), async () => { out.innerHTML = '<div class="vk-mu">Đang đối chiếu toàn bộ hàm game…</div>'; await sleep0(); out.innerHTML = dsAuditAllHtml(dsAuditAll()); });
+    $('#ds-copy').onclick = busy($('#ds-copy'), async () => { out.innerHTML = '<div class="vk-mu">Đang dựng báo cáo…</div>'; await sleep0(); const txt = dsJson(dsReport(false), 0, 1); const ok = await copyText(txt); out.innerHTML = ok ? `<div class="vk-ok">Đã sao chép báo cáo nhanh (${Math.round(txt.length / 1024)} KB). Dán vào chat gửi Claude.</div>` : '<div class="vk-bad">Trình duyệt chặn sao chép. Dùng “Tải source game” thay thế.</div>'; });
+    // Tải source game: gom mọi tệp cùng nguồn gốc mà trang game đã nạp (trang, script, content…) thành game.zip.
+    $('#ds-src').onclick = busy($('#ds-src'), async () => {
+      out.innerHTML = '<div class="vk-mu">Đang nạp JSZip…</div>';
+      if (typeof window.JSZip === 'undefined') await new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'; sc.onload = res; sc.onerror = () => rej(new Error('Không nạp được JSZip từ cdnjs (mất mạng hoặc trang chặn script ngoài).')); document.head.append(sc); });
+      out.innerHTML = '<div class="vk-mu">Đang tải các tệp của game…</div>';
+      const z = new window.JSZip();
+      const urls = new Set([location.href, ...performance.getEntriesByType('resource').map((r) => r.name)]);
+      let okN = 0, failN = 0;
+      await Promise.all([...urls].filter((u) => u.startsWith(location.origin)).map(async (u) => {
+        try { const r = await fetch(u, { cache: 'no-store' }); if (r.ok) { z.file(new URL(u).pathname.replace(/^\/|\/$/g, '') || 'index.html', await r.blob()); okN++; } else failN++; } catch { failN++; }
+      }));
+      if (!okN) throw new Error('Không tải được tệp nào của game.');
+      out.innerHTML = '<div class="vk-mu">Đang nén ' + okN + ' tệp…</div>';
+      const blob = await z.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+      dsDownload('game.zip', blob);
+      out.innerHTML = `<div class="vk-ok">Đã tải game.zip (${(blob.size / 1048576).toFixed(1)} MB, ${okN} tệp${failN ? ', ' + failN + ' tệp không tải được' : ''}). Đính kèm file này khi gửi Claude.</div>`;
+    });
+    $('#ds-base').onclick = busy($('#ds-base'), async () => { if (!confirm('Lưu bản chụp hiện tại (game v' + ver + ') làm mốc mới? Mốc cũ sẽ bị thay.')) return; await sleep0(); const ok = dsSaveBase(dsSnapshot()); if (ok) S.dsBaseVer = ver; out.innerHTML = ok ? '<div class="vk-ok">Đã chốt mốc mới.</div>' : '<div class="vk-bad">Không lưu được (trình duyệt hết chỗ lưu hoặc chặn).</div>'; });
+  }
+
   async function selfTest(out) {
     const K = S.core, rows = [];
     const t = async (name, fnc) => { try { const r = await fnc(); rows.push([name, true, r || '']); } catch (e) { rows.push([name, false, e && e.message || String(e)]); } out.innerHTML = rows.map(([n, ok, m]) => `<div class="vk-row"><span>${esc(n)}</span><b class="${ok ? 'vk-ok' : 'vk-bad'}">${ok ? 'OK' : 'LỖI'}</b></div>${ok ? '' : `<div class="vk-mu" style="font-size:12px">${esc(m)}</div>`}`).join(''); await sleep0(); };
     await t('Đọc nhân vật', () => { const nv = nvNow(); if (!nv.kinhMach) throw new Error('thiếu kinh mạch'); });
     await t('Kinh mạch + đánh thử', () => { const r = evalCurrent(nvNow(), 'bal'); if (!r.P) throw new Error('không dựng được nhân vật'); const nv0 = nvNow(); nv0.kinhMach.manh = []; const { cand } = buildCandidates(nv0); const n = Object.values(cand).reduce((a, x) => a + x.length, 0); if (Object.keys(cand).length && !n) throw new Error('không tìm được chỗ đặt nào cho đồ trong túi'); return n + ' chỗ đặt'; });
     await t('Đột phá', () => { K.chuanBiDotPha(ctx(), { dan: [], thieuDot: 0 }); });
+    await t('Phẩm đạo cơ (7.6.0)', () => { if (typeof K.breakthroughGrade !== 'function') throw new Error('thiếu hàm breakthroughGrade (game cũ?), cột Phẩm ở tab Đột Phá sẽ ẩn'); const c = ctx(), h = K.chuanBiDotPha(c, { dan: [], thieuDot: 0 }); const g = K.breakthroughGrade(c, { dan: [], thieuDot: 0 }); if (h.len >= 2 && typeof g !== 'string') throw new Error('breakthroughGrade không trả về phẩm'); return h.len >= 2 ? 'phẩm: ' + g : 'chưa tới cảnh giới có phẩm'; });
     await t('Kế hoạch thọ', () => { if (!has('chuanBiBeQuan', 'retreatTargetGain', 'retreatGain')) throw new Error('thiếu hàm'); planData(); });
     await t('Thi nghề', () => { if (!has('phanBoKhaoHach')) throw new Error('thiếu hàm'); K.phanBoKhaoHach(ctx(), 'luyen_dan', 'thuong'); });
     await t('Luyện đan', () => { if (!has('chuanBiLuyen')) throw new Error('thiếu hàm'); recipeRows(ctx(), nvNow()); });
@@ -3196,7 +4134,7 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
       const g = G(), need = ['datManh', 'goManh', 'goHetManh', 'switchLoadout', 'unlockLoadoutSlot', 'moO'];
       const miss = need.filter((k) => typeof g[k] !== 'function');
       if (miss.length) throw new Error('game thiếu hàm điều khiển: ' + miss.join(', '));
-      const ln = ['namLinhNgo', 'masteryMult'].filter((k) => !S.core[k]);
+      const ln = ['namLinhNgo', 'masteryMult', 'effectiveStat'].filter((k) => typeof S.core[k] !== 'function');
       return 'đủ ' + need.length + ' hàm điều khiển · ' + (ln.length ? 'chưa đọc được hàm Lĩnh Ngộ (' + ln.join(', ') + '), chỉ ảnh hưởng nhãn năm Lĩnh Ngộ' : 'đọc được Lĩnh Ngộ từ game') + ' · ' + kmOpenable(nvNow()).length + ' ô mở được ngay';
     });
     await t('Hướng Build (quét hướng · chọn đồ · chia ô)', () => {
@@ -3207,6 +4145,12 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
       const B = hbBudget(hbNv(R, F.st, F, [])), plan = hbPlan(sel, B, 0.5), pool = hbPool(sel, plan);
       S.core.tinhKinhMach(hbNv(R, F.st, F, pool), C());
       return BUILDS.length + ' hướng (' + BUILDS.filter((x) => x.dyn).length + ' mới quét) · ' + sel.all.length + ' món khớp · ' + B + ' ô thông · kế hoạch ' + plan.tamUsed + '/' + plan.tamB + ' ô Tâm Pháp, ' + plan.chUsed + '/' + plan.chB + ' ô Chiến Pháp · ' + pool.length + ' món thử xếp';
+    });
+    await t('Trần Chỉ Số · Kiểm Tra Lưới (7.4.0)', () => {
+      const nv = nvNow(), X = statCapCtx(nv);
+      if (!(X.dp > 0 && X.ht > 0)) throw new Error('không đọc được trần chỉ số');
+      const A = hbGridAudit(nv, BUILDS[0]);
+      return 'trần Đột Phá ' + pct(X.dp, 1) + ' · Hộ Thể ' + pct(X.ht, 1) + (X.live ? ' (đọc từ game)' : ' (số dự phòng, game chưa xuất hằng)') + ' · lưới ' + A.cnt.thong + ' ô thông, ' + A.huyet.length + ' huyệt, ' + A.issues.length + ' gợi ý';
     });
     await t('Bản Mệnh Pháp Bảo', () => {
       const nv = nvNow(), D = bmD(), Cc = C();
@@ -3222,6 +4166,29 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     await t('Hằng số săn cạn', () => (S.core && S.core.san ? 'đọc từ game: ' : 'số dự phòng: ') + AU_T4 + ' lần mỗi nơi, hồi 1 lần mỗi ' + AU_ZAN + ' năm');
     await t('Độ nguy hiểm', () => { if (!has('doChenh', 'mucHiem')) throw new Error('thiếu hàm'); const c = ctx(); K.mucHiem(K.doChenh(c, c.run, c.run.viTri)); });
     await t('Nối lõi game (tuTien.core)', () => 'game v' + TT.gameVersion + ' · apiVersion ' + TT.apiVersion + ' · ' + (K.optMissing.length ? 'thiếu: ' + K.optMissing.join(', ') : 'đủ hàm lõi, không cần dò regex'));
+    await t('Chữ ký hàm lõi (so với game 0.0.2)', () => {
+      if (K.arityDrift && K.arityDrift.length) throw new Error('Game đổi tham số: ' + K.arityDrift.join('; ') + '. Bấm “Sao chép báo cáo nhanh” ở thẻ Kho Dữ Liệu Game gửi Claude.');
+      return Object.keys(CORE_ARITY).length + ' hàm khớp bảng chữ ký';
+    });
+    await t('Cửa mod của game (tuTien)', () => {
+      const miss = ['core', 'game', 'state', 'subscribe', 'on', 'ui', 'content'].filter((k) => { try { return TT[k] === undefined; } catch (e) { return true; } });
+      if (miss.length) throw new Error('tuTien thiếu: ' + miss.join(', '));
+      if (!(TT.apiVersion >= 1)) throw new Error('apiVersion lạ: ' + TT.apiVersion);
+      return 'phase ' + TT.phase + ' · apiVersion ' + TT.apiVersion + ' · ' + Object.keys(TT.core || {}).length + ' module lõi';
+    });
+    await t('Kho dữ liệu sống (API game)', () => {
+      const s = dsSnapshot(), nm = Object.keys(s.core).length, nf = Object.values(s.core).reduce((n, m) => n + Object.values(m).filter((x) => x[0] === 'fn').length, 0), b = dsLoadBase();
+      return nm + ' module · ' + nf + ' hàm · ' + Object.keys(s.content).length + ' bộ dữ liệu · ' + (b ? 'mốc v' + b.v : 'chưa có mốc') + ((K.healed || []).length ? ' · tự dò lại ' + K.healed.length + ' hàm' : '');
+    });
+    await t('Hàm game Tool gọi', () => {
+      const g = G(), miss = DS_GAME_USED.filter((k) => typeof g[k] !== 'function'), optMiss = DS_GAME_OPT.filter((k) => typeof g[k] !== 'function');
+      if (miss.length) throw new Error('game thiếu hàm: ' + miss.join(', '));
+      return 'đủ ' + DS_GAME_USED.length + ' hàm' + (optMiss.length ? ' · thiếu hàm tùy chọn: ' + optMiss.join(', ') : '');
+    });
+    await t('Bảng nhúng so với dữ liệu game', () => {
+      const a = dsAudit(), stale = a.reduce((n, r) => n + r.stale.length, 0), fresh = a.reduce((n, r) => n + (r.liveFirst ? 0 : r.fresh.length), 0);
+      return stale + ' mục game đã xóa (đã ẩn) · ' + fresh + ' mục game có thêm chưa có trong bảng nhúng' + (stale || fresh ? ' — xem Kho Dữ Liệu Game ở cuối tab Tổng Quan' : '');
+    });
     await t('Màn hình', () => UI.fitInfo());
     if ((K.optMissing || []).length) rows.push(['Hàm chưa nhận ra', false, K.optMissing.join(', ')]);
     out.innerHTML += `<div class="vk-mu" style="font-size:12px;margin-top:6px">Tool ${TOOL_VER} · game ${esc(K.bundle)}</div>`;
@@ -3243,6 +4210,8 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     }
     body.insertAdjacentHTML('beforeend', `<div class="vk-card"><h3>Tự kiểm tra</h3><div class="vk-mu" style="font-size:13px">Chạy thử mọi chức năng với bản game hiện tại. Nếu có dòng LỖI, chụp màn hình gửi Claude.</div><button class="vk-btn" id="vk-st">Tự kiểm tra</button><div id="vk-sto"></div></div>`);
     body.querySelector('#vk-st').onclick = async (ev) => { ev.target.disabled = true; await selfTest(body.querySelector('#vk-sto')); ev.target.disabled = false; };
+    body.insertAdjacentHTML('beforeend', '<div class="vk-card" id="vk-ds"></div>');
+    try { dsMount(body.querySelector('#vk-ds')); } catch (e) { console.error('[ds] mount', e); }
   }
 
   // ── Chợ: tìm bộ mua tốt nhất theo ngân sách
@@ -3474,6 +4443,7 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     const d = itemDesc(it); if (d) out.push(d);
     if (it.dot_pha && it.dot_pha.pham) out.push(`đột phá ra phẩm cao hơn ${it.dot_pha.pham} bậc`);
     if (it.dot_pha && it.dot_pha.ti_le) out.push(`+${pct(it.dot_pha.ti_le || 0)} tỉ lệ đột phá${it.dot_pha.canh_gioi !== undefined ? ' lên ' + realmName(it.dot_pha.canh_gioi) : ''}${it.dot_pha.tam_ma ? ', +' + it.dot_pha.tam_ma + ' tâm ma' : ''}`);
+    if (it.dot_pha && it.dot_pha.canh_gioi_toi_da !== undefined) { const mx = pillMax(it.dot_pha); out.push(`dược lực chỉ đủ tới ${realmName(mx !== undefined ? mx : it.dot_pha.canh_gioi_toi_da)}, lên cao hơn thì vô dụng`); }
     if (it.tu_luyen) out.push(`+${pct(it.tu_luyen.toc_do)} tu luyện trong ${it.tu_luyen.nam} năm${it.tu_luyen.canh_gioi !== undefined ? ' (' + realmName(it.tu_luyen.canh_gioi) + ')' : ''}`);
     for (const dd of it.dung || []) if (dd && typeof dd === 'object') out.push(DUNG_TXT(dd));
     if (it.tran) out.push('trong trận: ' + Object.entries(it.tran).map(([k, v]) => ({
@@ -3482,7 +4452,11 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     })[k]?.() || k).join(', '));
     if (it.loai === 'phuong_tien') out.push(`tốc độ đi ×${it.di_lai}${it.tam ? ', tầm ' + it.tam : ''}${it.bay ? ', bay' : ''}${it.vuot_bien ? ', vượt biển' : ''}${it.bo_chay !== undefined ? ', thời gian bỏ chạy ×' + it.bo_chay : ''}${it.phuc_kich !== undefined ? ', bị phục kích ×' + it.phuc_kich : ''}${it.duoi_theo ? ', đuổi theo +' + pct(it.duoi_theo) : ''}`);
     if (it.tru_vat) out.push(`+${it.tru_vat} ô túi`);
-    if (it.noi_tai && it.loai !== 'cong_phap' && it.loai !== 'phap_khi') out.push(Object.entries(it.noi_tai).map(([k, v]) => ({ gia_mua: `giá mua ×${v}`, gia_ban: `giá bán ×${v}`, nhin_hang: 'xem hàng tiệm từ xa', luyen_dan_them: `+${v} viên mỗi lò` })[k] || `${k} ${v}`).join(', '));
+    if (it.noi_tai && it.loai !== 'cong_phap' && it.loai !== 'phap_khi') out.push(Object.entries(it.noi_tai).map(([k, v]) => ({
+      gia_mua: `giá mua ×${num(v, 2)}`, gia_ban: `giá bán ×${num(v, 2)}`, nhin_hang: 'xem hàng tiệm từ xa', luyen_dan_them: `+${v} viên mỗi lò`,
+      linh_dien_toc: `hệ số thời gian sinh trưởng linh điền ×${num(v, 2)}`, hai_duoc_them: `bổ sung hải dược +${num(v, 0)}`,
+      be_quan_linh_khi: `hệ số linh khí bế quan ×${num(v, 2)}`, mang_qua_kiep: 'mang qua kiếp sau'
+    })[k] || `${k} ${v}`).join(', '));
     if (it.loai === 'dung_cu') out.push(`${({ luyen_dan: 'đan lô', luyen_bao: 'đỉnh', che_phu: 'phù bút', tran_phap: 'trận bút' })[it.dung_cu] || it.dung_cu} phẩm ${it.pham_cap}`);
     if (it.di_hoa) out.push(`dị hỏa +${it.di_hoa} điểm luyện chế, trang bị thì chiêu hệ ${(it.he && it.he.length ? it.he : ['hoa']).map(heTen).join('/')} +${DIHOA_PCT[(it.pham_cap || 1) - 1] || 0}%`);
     if (typeof it.khuon === 'string' && it.khuon.startsWith('enemy.')) { const en = C().enemies.get(it.khuon); if (en) out.push(`${it.loai === 'trung_thu' ? 'nở ra' : 'luyện ra'}: ${en.ten}`); }
@@ -3497,7 +4471,12 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
   function categorize(it) {
     const dung = JSON.stringify(it.dung || '');
     if (it.loai === 'cong_phap') return it.chieu ? 'Đấu pháp (công pháp có chiêu)' : 'Tâm pháp (tu luyện, bị động)';
-    if (it.loai === 'phap_khi') return it.chieu ? 'Pháp khí chiến đấu' : 'Pháp bảo bị động (giáp, ngọc…)';
+    if (it.loai === 'phap_khi') {
+      if (it.chieu) return 'Pháp khí chiến đấu';
+      const ng = it.ngu_linh || {};
+      if (ng.giam_gia || ng.duong_thuong !== undefined || ng.hoi_con !== undefined) return 'Bảo vật (Ngự Linh)';
+      return 'Pháp bảo bị động (giáp, ngọc…)';
+    }
     if (it.loai === 'dan_duoc') {
       if (it.dot_pha) return 'Đan tăng tỉ lệ đột phá';
       if (dung.includes('pha_binh_canh')) return 'Đan phá bình cảnh';
@@ -3525,7 +4504,7 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     if (it.loai === 'lenh_bai') return 'Lệnh bài';
     return 'Khác';
   }
-  const CAT_ORDER = ['Tâm pháp (tu luyện, bị động)', 'Đấu pháp (công pháp có chiêu)', 'Pháp khí chiến đấu', 'Pháp bảo bị động (giáp, ngọc…)', 'Đan tăng tỉ lệ đột phá', 'Đan tăng tu luyện / tu vi', 'Đan phá bình cảnh', 'Đan tăng thọ', 'Đan chữa thương', 'Đan giảm tâm ma', 'Đan nâng phẩm đạo cơ', 'Đan tăng chỉ số', 'Đan kinh mạch (khai thông, đổi màu)', 'Đan dùng trong trận', 'Đan khác', 'Đi lại (phương tiện)', 'Túi trữ vật', 'Đan lô', 'Đỉnh', 'Phù bút', 'Dị hỏa', 'Phù lục', 'Đơn phương (công thức)', 'Linh dược', 'Yêu tài', 'Nguyên liệu', 'Đặc sản vùng', 'Lệnh bài', 'Khác'];
+  const CAT_ORDER = ['Tâm pháp (tu luyện, bị động)', 'Đấu pháp (công pháp có chiêu)', 'Pháp khí chiến đấu', 'Bảo vật (Ngự Linh)', 'Pháp bảo bị động (giáp, ngọc…)', 'Đan tăng tỉ lệ đột phá', 'Đan tăng tu luyện / tu vi', 'Đan phá bình cảnh', 'Đan tăng thọ', 'Đan chữa thương', 'Đan giảm tâm ma', 'Đan nâng phẩm đạo cơ', 'Đan tăng chỉ số', 'Đan kinh mạch (khai thông, đổi màu)', 'Đan dùng trong trận', 'Đan khác', 'Đi lại (phương tiện)', 'Túi trữ vật', 'Đan lô', 'Đỉnh', 'Phù bút', 'Dị hỏa', 'Phù lục', 'Đơn phương (công thức)', 'Linh dược', 'Yêu tài', 'Nguyên liệu', 'Đặc sản vùng', 'Lệnh bài', 'Khác'];
   // ═════════════════════════ WIKI NGỰ LINH (dữ liệu đọc trực tiếp từ game, có bản dự phòng nhúng sẵn) ═════════════════════════
   const NLW_SCH = [['thu', 'Thú', '🐺'], ['linh_thu', 'Linh Thú', '🦌'], ['khoi_loi', 'Khôi Lỗi', '🤖'], ['trung', 'Cổ Trùng', '🐛'], ['thi', 'Thi Khôi', '🧟'], ['hon', 'Quỷ Hồn', '👻']];
   const NLW_TEN = Object.fromEntries(NLW_SCH.map((x) => [x[0], x[1]]));
@@ -4127,11 +5106,25 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     return { all, by, skip, traits };
   }
   // Phép tính ô: B ô thông (không tính đan điền) chia theo tỉ lệ t cho Tâm Pháp, phần còn lại cho Chiến Pháp (Đấu Pháp + Pháp Khí + Bảo Vật).
-  function hbPlan(sel, B, t) {
-    const T = t == null ? 0.5 : t, tamB = Math.round(B * T), chB = Math.max(0, B - tamB);
+  // 7.4.0: món chỉ có bị động Đột Phá / Hộ Thể / Kháng Tâm Ma mà chỉ số đó đã chạm trần (ước theo giá trị gốc của món) thì không lấy thêm.
+  function hbCapKeep(x, acc, X) {
+    const it = x.it, bd = it.bi_dong || {};
+    if (it.chieu || (it.linh_luc || 0) > 0) return true;
+    const dp = bd.dot_pha || 0, ht = bd.ho_the || 0, kt = bd.khang_tam_ma || 0;
+    if ((bd.toc_do || 0) + (bd.khi_huyet || 0) + (bd.an_tuc || 0) > 0 || Object.keys(bd.chi_so || {}).length) return true;
+    if (!(dp > 0 || ht > 0 || kt > 0)) return true;
+    return (dp > 0 && acc.dp < X.dp) || (ht > 0 && acc.ht + X.htBase < X.ht) || (kt > 0 && acc.kt < X.ktm);
+  }
+  function hbPlan(sel, B, t, X) {
+    const T = t == null ? 0.5 : t, tamB = Math.round(B * T), chB = Math.max(0, B - tamB), acc = { dp: 0, ht: 0, kt: 0 };
     const fill = (arr, budget, first) => {
       const out = []; let used = 0;
-      const add = (x) => { if (!x || out.includes(x) || used + x.cells > budget) return; out.push(x); used += x.cells; };
+      const add = (x) => {
+        if (!x || out.includes(x) || used + x.cells > budget) return;
+        if (X && !hbCapKeep(x, acc, X)) return;
+        out.push(x); used += x.cells;
+        const bd = x.it.bi_dong || {}; acc.dp += bd.dot_pha || 0; acc.ht += bd.ho_the || 0; acc.kt += bd.khang_tam_ma || 0;
+      };
       (first || []).forEach(add);
       for (const x of arr) { if (used >= budget) break; add(x); }
       return { out, used };
@@ -4186,7 +5179,7 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
   async function hbRun(b, F, prog) {
     const nvReal = nvNow(), sel = hbSelect(b, F.R, F, nvReal);
     const nv0 = hbNv(F.R, F.st, F, []), B = hbBudget(nv0), rt = HB_RATIO[F.ratio] || HB_RATIO['55'];
-    const plan = hbPlan(sel, B, rt[1]), pool = hbPool(sel, plan), nvH = hbNv(F.R, F.st, F, pool);
+    const plan = hbPlan(sel, B, rt[1], statCapCtx(nvReal)), pool = hbPool(sel, plan), nvH = hbNv(F.R, F.st, F, pool);
     if (!B) throw new Error('Không có ô thông nào ở cảnh giới này. Bật ô "giả định mọi ô đã thông" hoặc chọn cảnh giới cao hơn.');
     if (!pool.length) throw new Error('Không có món nào khớp bộ lọc. Nới khoảng phẩm, bỏ lọc nguyên tố, hoặc chọn nguồn đồ trong game.');
     const restore = auKmPin({ ...AU.cfg.km, kb: b.k, ratio: F.ratio }); S.hbLite = true;
@@ -4241,10 +5234,79 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
       ${hbBar(sh.tam, sh.chien)}
       <div class="vk-mu" style="font-size:12px">Chi tiết ô: Tâm Pháp ${sh.tam} · Đấu Pháp ${sh.dau} · Pháp Khí ${sh.pk} · Bảo Vật ${sh.bv}.</div>
       <div style="font-size:14px;margin:6px 0">Thắng ${res.wins}/${res.n} trận mẫu · tu luyện +${pct(res.R.biDong.toc_do || 0)} · đột phá +${pct(res.R.biDong.dot_pha || 0, 1)} · linh lực hồi ${num(res.P ? res.P.linhLucMoiLuot || 0 : 0)}/lượt · điểm nghịch ${res.R.diemNghich || 0}</div>
+      ${capLine(nvH, res.R)}
       ${drawGrid(nvH, res.manh)}
       ${miss.length ? `<div style="color:#b45309;font-size:13px;margin-top:6px">Còn thiếu ${miss.length} món chưa có trong túi: ${miss.map((it) => '<b>' + esc(it.ten) + '</b>').join(', ')}. Nút áp dụng chỉ mở khi đủ đồ.</div>` : '<div style="margin-top:8px"><button class="vk-btn" id="hb-apply">Áp dụng vào game</button></div>'}
       ${grp}${pieceTable(res.R)}
       <div class="vk-mu" style="font-size:12px;margin-top:6px">Trận mẫu: 9 loại quái cùng cảnh giới, tiểu cảnh giới quanh mức đã chọn. Chỉ số nhân vật (căn cốt, ngộ tính…) lấy theo nhân vật hiện tại nên kết quả ở cảnh giới cao hơn chỉ là ước lượng. Sức mỗi món tính ở mức Lĩnh Ngộ đã đầy.</div>`;
+  }
+  // ═════════════ BẢN 7.4.0: KIỂM TRA LƯỚI KINH MẠCH ═════════════
+  // Đọc lưới thật của nhân vật: huyệt (đúng vị trí huyetGoc + huyetThem), màu ô, món mạnh nhất đang nằm đâu, kinh lộ, trần chỉ số.
+  // Mọi gợi ý xếp theo mức ưu tiên từ trên xuống: món không thông → món mạnh chưa lên huyệt → lệch màu → phần thừa trần → kinh lộ → huyệt mở được / còn trống.
+  const ST_TEN = { thong: 'Thông', tac: 'Tắc', an: 'Ẩn', ton: 'Tổn' };
+  function hbGridAudit(nv, b) {
+    const K = S.core, c = C(), km = nv.kinhMach, g = K.luoiKinhMach(c, nv), hy = hySet(g, km), R = K.tinhKinhMach(nv, c);
+    const st = km.trangThai || [], mau = km.mau || [], rong = g.rong, open = new Set(kmOpenable(nv));
+    const own = new Map(), cellsOf = [];
+    km.manh.forEach((m, i) => { const it = c.items.get(m.item), cs = it ? (K.oCuaManh(g, m, it) || []) : []; cellsOf[i] = cs; cs.forEach((x) => own.set(x, i)); });
+    const cnt = { thong: 0, tac: 0, an: 0, ton: 0 }, hc = { thong: 0, tac: 0, an: 0, ton: 0 }, colors = {}, huyet = [];
+    for (let i = 0; i < g.vung.length; i++) {
+      if (g.vung[i] < 0 || i === g.danDien) continue;
+      const s0 = st[i] || 'an'; cnt[s0] = (cnt[s0] || 0) + 1;
+      if (s0 === 'thong') { const m = mau[i] || 'vo_sac'; colors[m] = (colors[m] || 0) + 1; }
+      if (hy.has(i)) { hc[s0] = (hc[s0] || 0) + 1; huyet.push({ i, s: s0, x: (i % rong) + 1, y: Math.floor(i / rong) + 1, mau: mau[i] || 'vo_sac', by: own.get(i), openable: open.has(i) }); }
+    }
+    const want = new Set((b && b.he) || []), wantRoot = new Set([...want].map(gocHe));
+    const fit = { ex: 0, gc: 0, ot: 0, vs: 0 };
+    for (const [m, n] of Object.entries(colors)) { if (m === 'vo_sac') fit.vs += n; else if (want.has(m)) fit.ex += n; else if (wantRoot.has(gocHe(m))) fit.gc += n; else fit.ot += n; }
+    const pw = powerMap(nv), pcs = [];
+    km.manh.forEach((m, i) => {
+      const rm = R.manh[i], it = c.items.get(m.item); if (!rm || !it) return;
+      pcs.push({ i, it, rm, pw: pw.get(m.item) ?? 0.5, k: (cellsOf[i] || []).filter((x) => hy.has(x)).length });
+    });
+    pcs.sort((a, d) => d.pw - a.pw);
+    const thongP = pcs.filter((p) => p.rm.thong), topP = thongP.filter((p) => p.pw >= 0.5).slice(0, 3);
+    const X = statCapCtx(nv), eff = statEff(X, R), mode = (AU && AU.cfg && AU.cfg.km && AU.cfg.km.mode) || 'bal';
+    const nm = (p) => '<b>' + esc(p.it.ten) + '</b>', xy = (a) => a.slice(0, 4).map((h) => '(' + h.x + ',' + h.y + ')').join(' ');
+    const freeH = huyet.filter((h) => h.s === 'thong' && h.by === undefined), issues = [];
+    const dead = pcs.filter((p) => !p.rm.thong);
+    if (dead.length) issues.push(`${dead.length} món không thông nên không có tác dụng: ${dead.slice(0, 4).map(nm).join(', ')}. Nối chúng chạm đan điền hoặc một công pháp đã thông, hoặc gỡ ra.`);
+    if (hc.thong > 0) for (const p of topP) {
+      if (p.k > 0) continue;
+      const occ = thongP.filter((q) => q.k > 0 && q.pw < p.pw - 0.2).map(nm);
+      issues.push(`${nm(p)} thuộc nhóm món mạnh nhất nhưng chưa nằm trên huyệt (hệ số huyệt ×1, trên huyệt ×2). ` + (freeH.length ? `Đang có ${freeH.length} huyệt thông còn trống ${xy(freeH)}.` : occ.length ? `Huyệt đang do ${occ.slice(0, 2).join(', ')} giữ, là món yếu hơn.` : 'Huyệt đang do món khác giữ.'));
+    }
+    for (const p of topP) if (p.rm.mau < 1 - 1e-9) issues.push(`${nm(p)} nằm trên ô lệch màu (hệ số màu ×${num(p.rm.mau, 2)}, đúng màu tối đa ×1,3). Hệ của món: ${esc((p.it.he || []).map(heTen).join('/') || 'Vô Sắc')}.`);
+    if (eff.htOver > 1e-9) issues.push(`Hộ Thể thừa ${pct(eff.htOver, 1)} so với trần ${pct(X.ht, 1)}: bớt món cộng Hộ Thể, dành ô cho món khác.`);
+    if (eff.dpOver > 1e-9) issues.push(`Đột Phá từ công pháp thừa ${pct(eff.dpOver, 1)} so với trần ${pct(X.dp, 1)} (game chỉ tính tới trần): bớt món cộng Đột Phá.`);
+    if (eff.ktOver > 1e-9) issues.push(`Kháng Tâm Ma thừa ${pct(eff.ktOver, 1)} so với trần ${pct(X.ktm, 1)}.`);
+    if (mode !== 'danh' && eff.dp < X.dp * 0.5) issues.push(`Đột Phá từ công pháp mới ${pct(eff.dp, 1)} trên trần ${pct(X.dp, 1)}: còn chỗ thêm công pháp cộng Đột Phá (đột phá là phần chiếm nhiều điểm ở chế độ Tu).`);
+    for (const p of topP) if (p.rm.thong && p.rm.kinhLoCap > 1 && p.rm.kinhLo < p.rm.kinhLoCap - 1e-9) issues.push(`${nm(p)} kinh lộ ×${num(p.rm.kinhLo, 2)} trên tối đa ×${num(p.rm.kinhLoCap, 2)}: nối thêm công pháp cùng họ hệ từ đan điền tới món này.`);
+    const openH = huyet.filter((h) => h.s === 'tac' && h.openable);
+    if (openH.length) issues.push(`${openH.length} huyệt đang tắc nhưng mở được ngay ${xy(openH)}: mở ô để thêm chỗ ×2 cho món mạnh.`);
+    if (freeH.length && thongP.some((p) => p.k === 0 && p.pw >= 0.3) && !issues.some((x) => x.includes('còn trống'))) issues.push(`${freeH.length} huyệt thông còn trống ${xy(freeH)}: đặt món mạnh kế tiếp lên.`);
+    return { cnt, hc, huyet, colors, fit, pcs, issues, X, eff, R, km, c, hy };
+  }
+  function hbGridHtml(nv, b) {
+    let A; try { A = hbGridAudit(nv, b); } catch (e) { return `<div class="vk-card"><h3>Kiểm Tra Lưới Kinh Mạch</h3>${errBox(e)}</div>`; }
+    const { cnt, hc, huyet, colors, fit, pcs, issues, X, eff, km, c } = A, tot = cnt.thong || 0;
+    const nameOf = (i) => { const m = km.manh[i], it = m && c.items.get(m.item); return it ? esc(it.ten) : '—'; };
+    const hRows = huyet.map((h) => `<tr><td>(${h.x},${h.y})</td><td>${ST_TEN[h.s] || h.s}</td><td>${esc(heTen(h.mau))}</td><td>${h.by !== undefined ? nameOf(h.by) + (A.pcs.find((p) => p.i === h.by) ? ' · ×' + num(A.pcs.find((p) => p.i === h.by).rm.heSo, 2) : '') : h.s === 'thong' ? '<span class="vk-bad">Trống</span>' : h.openable ? 'Tắc · mở được ngay' : '—'}</td></tr>`).join('');
+    const want = new Set((b && b.he) || []), wantRoot = new Set([...want].map(gocHe));
+    const cRows = Object.entries(colors).sort((p, q) => q[1] - p[1]).map(([m, n]) => `<tr><td>${esc(m === 'vo_sac' ? 'Vô Sắc' : heTen(m))}</td><td>${n}</td><td>${m !== 'vo_sac' && want.has(m) ? '<span class="vk-ok">Đúng hệ hướng</span>' : m !== 'vo_sac' && wantRoot.has(gocHe(m)) ? 'Cùng gốc (×0,5)' : '—'}</td></tr>`).join('');
+    const st = (v, cap, over) => over > 1e-9 ? `<span class="vk-bad">Thừa ${pct(over, 1)}</span>` : v >= cap - 1e-9 ? '<span class="vk-ok">Chạm trần</span>' : `<span class="vk-mu">Còn ${pct(cap - v, 1)}</span>`;
+    const capRows = `<tr><td>Đột Phá (Công Pháp)</td><td>${pct(eff.dp, 1)}</td><td>${pct(X.dp, 1)}</td><td>${st(eff.dp, X.dp, eff.dpOver)}</td></tr>
+      <tr><td>Hộ Thể</td><td>${pct(eff.ht, 1)}</td><td>${pct(X.ht, 1)}</td><td>${st(eff.ht, X.ht, eff.htOver)}</td></tr>
+      <tr><td>Kháng Tâm Ma</td><td>${pct(eff.kt, 1)}</td><td>${pct(X.ktm, 1)}</td><td>${st(eff.kt, X.ktm, eff.ktOver)}</td></tr>
+      <tr><td>Tốc Độ Tu Luyện · Khí Huyết</td><td>—</td><td>Không Trần</td><td><span class="vk-mu">Càng Nhiều Càng Tốt</span></td></tr>`;
+    const pRows = pcs.slice(0, 8).map((p) => `<tr><td>${esc(p.it.ten)}${p.rm.thong ? '' : ' <span class="vk-bad">không thông</span>'}</td><td>${num(p.pw, 2)}</td><td>${num(p.rm.heSo, 2)}</td><td>${num(p.rm.mau, 2)}</td><td>${p.k ? '×' + num(p.rm.huyet, 2) : '—'}</td><td>${num(p.rm.sinhKhac, 2)}</td><td>${p.rm.kinhLoCap > 1 ? num(p.rm.kinhLo, 2) : '—'}</td></tr>`).join('');
+    return `<div class="vk-card"><h3>Kiểm Tra Lưới Kinh Mạch</h3>
+      <div class="vk-mu" style="font-size:13px">Ô: <b>${cnt.thong}</b> thông · ${cnt.tac} tắc · ${cnt.an} ẩn · ${cnt.ton} tổn. Huyệt: <b>${huyet.length}</b> (${hc.thong} thông · ${hc.tac} tắc · ${hc.an} ẩn · ${hc.ton} tổn). Màu ô thông hợp hướng <b>${esc(b ? b.ten : '—')}</b>: ${tot ? `${fit.ex} đúng hệ · ${fit.gc} cùng gốc · ${fit.ot} lệch · ${fit.vs} Vô Sắc` : 'chưa có ô thông'}.</div>
+      <div style="margin-top:8px"><b>Việc Nên Làm (Ưu Tiên Từ Trên Xuống)</b>${issues.length ? `<ol style="margin:4px 0 0;padding-left:20px;font-size:13px">${issues.slice(0, 7).map((x) => `<li>${x}</li>`).join('')}</ol>` : '<div class="vk-ok" style="font-size:13px;margin-top:4px">Lưới đang dùng tốt huyệt, màu ô và trần chỉ số: chưa thấy chỗ cần sửa.</div>'}</div>
+      <details style="margin-top:8px"><summary><b>Trần Chỉ Số Của Game</b> <span class="vk-mu" style="font-size:12px">${X.live ? '(đọc từ game)' : '(số dự phòng)'}</span></summary><table class="vk-t"><tr><th>Chỉ Số</th><th>Hiện Có</th><th>Trần</th><th>Tình Trạng</th></tr>${capRows}</table></details>
+      <details style="margin-top:6px"><summary><b>Huyệt Đạo (${huyet.length})</b></summary>${hRows ? `<table class="vk-t"><tr><th>Ô</th><th>Trạng Thái</th><th>Màu</th><th>Đang Chứa</th></tr>${hRows}</table>` : '<div class="vk-mu" style="font-size:12px">Kiếp này chưa có huyệt nào.</div>'}</details>
+      <details style="margin-top:6px"><summary><b>Màu Ô Đang Thông</b></summary>${cRows ? `<table class="vk-t"><tr><th>Màu</th><th>Số Ô</th><th>Hợp Hướng</th></tr>${cRows}</table>` : '<div class="vk-mu" style="font-size:12px">Chưa có ô thông.</div>'}</details>
+      <details style="margin-top:6px"><summary><b>Món Mạnh Nhất Trên Lưới</b></summary>${pRows ? `<table class="vk-t"><tr><th>Món</th><th>Sức</th><th>Hệ Số</th><th>Màu</th><th>Huyệt</th><th>Sinh Khắc</th><th>Kinh Lộ</th></tr>${pRows}</table><div class="vk-mu" style="font-size:11px">Sức: tương đối so với món mạnh nhất trong túi (1 là mạnh nhất). Hệ số = màu × huyệt × sinh khắc × nội tại × kinh lộ, do game tính.</div>` : '<div class="vk-mu" style="font-size:12px">Chưa xếp món nào.</div>'}</details></div>`;
   }
   const HB_STEPS = {
     ngu_thu: { 1: 'Ấp trứng thú đầu tiên; đặt công pháp ngự thú để mở ô.', 2: 'Cho thú ăn đều; chuẩn bị nguyên liệu tiến hóa trước bình cảnh.' },
@@ -4274,7 +5336,7 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     const b = BUILDS.find((x) => x.k === cfg.kb) || ranked[0].b;
     F.k = b.k; F.mode = cfg.mode; F.iters = cfg.iters; F.ratio = cfg.ratio;
     const cat = hbCatalog(F.R), rt = HB_RATIO[F.ratio], sel = hbSelect(b, F.R, F, nv);
-    const nv0 = hbNv(F.R, F.st, F, []), B = hbBudget(nv0), plan = hbPlan(sel, B, rt[1]);
+    const nv0 = hbNv(F.R, F.st, F, []), B = hbBudget(nv0), plan = hbPlan(sel, B, rt[1], statCapCtx(nv));
     const groups = [...new Set(BUILDS.map((x) => x.nhom))];
     const o = (v, c2, txt) => `<option value="${esc(v)}" ${String(v) === String(c2) ? 'selected' : ''}>${esc(txt)}</option>`;
     const phOpts = (v, pre) => HB_PH.map((t, i) => o(i + 1, v, pre + t)).join('');
@@ -4282,10 +5344,13 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     const trOpts = [...sel.traits.entries()].sort((x, y) => hbTrLabel(x[0]).localeCompare(hbTrLabel(y[0]), 'vi')).map(([k, n]) => o(k, F.dt, 'Đặc Tính: ' + hbTrLabel(k) + ' (' + n + ')')).join('');
     const catRows = BUILDS.map((x) => { const s = cat.get(x.k); return `<tr data-hk="${esc(x.k)}" style="cursor:pointer"><td><b>${esc(x.ten)}</b>${x.dyn ? ' <span class="vk-ok" style="font-size:11px">mới</span>' : ''}${x.k === b.k ? ' ●' : ''}<br><span class="vk-mu" style="font-size:11px">${esc(x.nhom)}</span></td><td>${s.n.tam}</td><td>${s.n.dau}</td><td>${s.n.pk}</td><td>${s.n.bv}</td><td>${s.ok.tam}+${s.ok.chien}</td></tr>`; }).join('');
     const dropNote = HB_DROP.length ? `<div class=\"vk-mu\" style=\"font-size:12px;margin-top:6px\">Đã ẩn ${HB_DROP.length} hướng không đủ đồ để xếp kinh mạch: ${HB_DROP.map((d) => esc(d.ten) + ' (' + esc(d.why) + ')').join('; ')}.</div>` : '';
-    const dp = [...Cc.items.values()].filter((it) => it.loai === 'dan_duoc' && it.dot_pha && it.dot_pha.canh_gioi === F.R + 1);
+    const dp = [...Cc.items.values()].filter((it) => it.loai === 'dan_duoc' && it.dot_pha && pillFits(it.dot_pha, F.R + 1));
     const steps = (HB_STEPS[b.k] && HB_STEPS[b.k][F.R]) ? `<li><b>${esc(HB_STEPS[b.k][F.R])}</b></li>` : '';
     const slots = (nv.kinhMach.loadouts || [1]).length, moLeft = (nv.kinhMach.cho && nv.kinhMach.cho.mo) || 0, openable = kmOpenable(nv).length;
     const kbSel = auRow('Hướng Build', `<select class="vk-sel" id="au-km-kb" style="width:210px"><option value="">Không Ép (Theo Hệ Số Game)</option>${groups.map((g) => `<optgroup label="${esc(g)}">${BUILDS.filter((x) => x.nhom === g).map((x) => `<option value="${esc(x.k)}" ${cfg.kb === x.k ? 'selected' : ''}>${esc(x.ten)}${x.k === ranked[0].b.k ? ' ★ Hợp Nhân Vật' : ''}</option>`).join('')}</optgroup>`).join('')}</select>`);
+    const [kBag, kLoad, kOpen, kWhat, kCur, kThe] = kmManualHtml(nv), gridCard = hbGridHtml(nv, b);
+    // Thứ tự theo ưu tiên (cao → thấp): 1 Cài Đặt Chung · 2 Hiện Trạng Và Kiểm Tra Lưới · 3 Auto Kinh Mạch · 4 Xếp Từ Túi · 5 Hai Bộ · 6 Ô Nên Mở ·
+    // 7 Xếp Theo Cảnh Giới · 8 Phép Tính Giả Định · 9 Hướng Khả Dụng · 10 Cốt Lõi Và Thể Chất · 11 Nhật Ký · 12 Hướng Dẫn Và Luật.
     body.innerHTML = `
     <div class="vk-card"><h3>Hướng Build · Cài Đặt Chung</h3>
       <div class="vk-mu" style="font-size:13px">Một bộ cài đặt dùng cho Auto Kinh Mạch, xếp từ đồ trong túi và xếp theo cảnh giới bên dưới. Hợp nhân vật nhất lúc này: ${top3.map((x) => `<b>${esc(x.b.ten)}</b>${x.f.why.length ? ' (' + esc(x.f.why.join(', ')) + ')' : ''}`).join(' · ')}</div>
@@ -4297,6 +5362,8 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
       ${auSel('au-km-it', 'Độ Kỹ', AU_KM_IT, cfg.iters)}
       ${auChk('au-km-prio', 'Ưu Tiên Theo Hệ Linh Căn Và Huyệt Đạo', cfg.prio)}</div>
       <div class="vk-mu" style="font-size:12px;margin-top:4px">${cfg.kb ? 'Đã chọn <b>' + esc(b.ten) + '</b>: khi xếp, Tool cộng điểm cho món đúng hướng đang thông (thêm nếu nằm trên huyệt). ' : 'Chưa ép hướng: Auto và xếp từ túi theo hệ số game; phần Xếp Theo Cảnh Giới tạm dùng <b>' + esc(b.ten) + '</b>. '}Tâm Pháp (công pháp không chiêu) chiếm một nửa số ô thông, Đấu Pháp + Pháp Khí + Bảo Vật chiếm nửa còn lại khi chọn 5 : 5; mỗi ô lệch bị trừ ${HB_RATIO_W} điểm. Tool tính sức mỗi món ở mức Lĩnh Ngộ đã đầy.</div></div>
+    ${kCur}
+    ${gridCard}
     <div class="vk-card"><h3>Auto Kinh Mạch</h3>
       <div class="vk-mu" style="font-size:13px">Tool tìm cách xếp tốt nhất theo Cài Đặt Chung rồi <b>tự áp dụng vào game bằng chính các hàm của game</b>: gỡ mảnh sai, đặt mảnh mới, đổi bộ, mở ô. Chỉ đổi khi điểm tăng đủ lớn vì đổi cách xếp làm món mới phải Lĩnh Ngộ lại từ đầu; game bận thì Tool đợi hoặc dừng.</div>
       <div style="margin:10px 0 2px"><b style="font-size:13px">Hai Bộ Kinh Mạch</b> <span class="vk-mu" style="font-size:11px">(đang có ${slots}/3 bộ)</span></div>
@@ -4311,14 +5378,9 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button class="vk-btn au-go" id="au-run">Chạy Auto Kinh Mạch</button><button class="vk-btn sec au-go" id="au-prev">Xem Trước (Không Áp Dụng)</button><button class="vk-btn sec" id="au-stop">Dừng</button></div>
       <div id="au-info"></div></div>
     <div class="vk-card"><h3>Tiến Trình Auto</h3><div id="au-st"></div></div>
-    <div class="vk-card"><h3>Nhật Ký Auto</h3><div id="au-lg"></div></div>
-    <div class="vk-card"><h3>Hướng Build Khả Dụng (Quét Từ Game)</h3>
-      <div class="vk-mu" style="font-size:12px">Số món theo nhóm của từng hướng trong dữ liệu game hiện tại. Cột cuối: dùng được ở ${esc(realmName(F.R))} (Tâm Pháp + Chiến Pháp). Chạm một dòng để chọn hướng.</div>
-      <details open><summary><b>${BUILDS.length} hướng</b>${BUILDS.some((x) => x.dyn) ? ' · ' + BUILDS.filter((x) => x.dyn).map((x) => esc(x.ten)).join(', ') + ' là hướng mới quét thêm' : ''}</summary>
-      <table class="vk-t"><tr><th>Hướng</th><th>Tâm</th><th>Đấu</th><th>Khí</th><th>Bảo</th><th>Dùng Được</th></tr>${catRows}</table>${dropNote}</details>
-      <button class="vk-btn sec" id="hb-rescan" style="margin-top:6px">Quét Lại Dữ Liệu Game</button></div>
-    <div class="vk-card"><h3>${esc(b.ten)} · Cốt Lõi</h3><ul style="margin:0;padding-left:18px;font-size:14px">${b.core.map((x) => `<li>${resolveTC(x)}</li>`).join('')}</ul></div>
-    ${kmCard(b, nv)}
+    ${kBag}
+    ${kLoad}
+    ${kOpen}
     <div class="vk-card"><h3>Xếp Theo Cảnh Giới Và Bộ Lọc Đồ</h3>
       <div class="tc-row"><select class="vk-sel" id="hb-r">${[0, 1, 2, 3, 4, 5].map((r) => o(r, F.R, 'Cảnh Giới: ' + realmName(r) + (r === cur ? ' ●' : ''))).join('')}</select>
         <select class="vk-sel" id="hb-st">${STAGE.map((t, i) => o(i, F.st, 'Tiểu Cảnh Giới: ' + t)).join('')}</select></div>
@@ -4333,14 +5395,24 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     <div class="vk-card"><h3>Xếp Kinh Mạch Theo Hướng Này</h3>
       <div class="vk-mu" style="font-size:13px">Tool chọn đồ theo hướng, cảnh giới, phẩm, nguyên tố rồi xếp lên lưới của ${esc(realmName(F.R))} (đồ giả định, không đụng game), ép tỉ lệ ô Tâm Pháp : Chiến Pháp theo Cài Đặt Chung. Dùng chính hàm tính của game để chấm điểm.</div>
       <button class="vk-btn" id="hb-go" style="margin-top:8px">Xếp Kinh Mạch Theo Cảnh Giới</button>${progressHtml('hb-pr')}<div id="hb-out"></div></div>
-    ${kmManualHtml(nv)}
+    ${kWhat}
+    <div class="vk-card"><h3>Hướng Build Khả Dụng (Quét Từ Game)</h3>
+      <div class="vk-mu" style="font-size:12px">Số món theo nhóm của từng hướng trong dữ liệu game hiện tại. Cột cuối: dùng được ở ${esc(realmName(F.R))} (Tâm Pháp + Chiến Pháp). Chạm một dòng để chọn hướng.</div>
+      <details open><summary><b>${BUILDS.length} hướng</b>${BUILDS.some((x) => x.dyn) ? ' · ' + BUILDS.filter((x) => x.dyn).map((x) => esc(x.ten)).join(', ') + ' là hướng mới quét thêm' : ''}</summary>
+      <table class="vk-t"><tr><th>Hướng</th><th>Tâm</th><th>Đấu</th><th>Khí</th><th>Bảo</th><th>Dùng Được</th></tr>${catRows}</table>${dropNote}</details>
+      <button class="vk-btn sec" id="hb-rescan" style="margin-top:6px">Quét Lại Dữ Liệu Game</button></div>
+    <div class="vk-card"><h3>${esc(b.ten)} · Cốt Lõi</h3><ul style="margin:0;padding-left:18px;font-size:14px">${b.core.map((x) => `<li>${resolveTC(x)}</li>`).join('')}</ul></div>
+    ${kmCard(b, nv)}
+    <details class="vk-card"><summary><b>Nhật Ký Auto</b></summary><div id="au-lg"></div></details>
     <details class="vk-card"><summary><b>Ở ${esc(realmName(F.R))} Cần Làm Gì</b></summary><ul style="margin:6px 0 0;padding-left:18px;font-size:14px">
       ${steps}
       <li>Đồ nên dùng ở cảnh giới này: <b>${PHAM_TEN.filter((_, i) => TIER_CG[i] + 1 >= F.R && TIER_CG[i] <= F.R).join(', ')} phẩm</b>. Đồ phẩm thấp hơn bị kẹp uy lực, hiệu ứng phụ nhạt dần.</li>
       ${(REALM_STEPS[F.R] || []).map((x) => `<li>${x}</li>`).join('')}
       ${dp.length ? `<li>Đan đột phá lên ${esc(realmName(F.R + 1))}: ${dp.map((d) => `${esc(d.ten)} (+${pct(d.dot_pha.ti_le || 0)}${d.dot_pha.tam_ma ? ', +' + d.dot_pha.tam_ma + ' tâm ma' : ''}, ~${d.gia})`).join(', ')}</li>` : ''}
     </ul></details>
+    ${kThe}
     <details class="vk-card"><summary><b>Luật Chung (Đọc Từ Code Game)</b></summary><ul style="margin:6px 0 0;padding-left:18px;font-size:14px">
+      <li><b>Trần chỉ số (7.4.0):</b> Đột Phá từ công pháp tối đa ${pct(statCapCtx(nv).dp, 0)}, Hộ Thể trong trận tối đa ${pct(statCapCtx(nv).ht, 0)}, Kháng Tâm Ma tối đa 100%. Vượt trần là phí ô; Tốc Độ Tu Luyện và Khí Huyết không có trần.</li>
       <li><b>Bốn loại đồ trên kinh mạch:</b> Tâm Pháp (công pháp không chiêu, bị động) · Đấu Pháp (công pháp có chiêu) · Pháp Khí (pháp khí có chiêu) · Bảo Vật (pháp khí không chiêu, bị động). Tool xếp theo tỉ lệ ô Tâm Pháp : (Đấu Pháp + Pháp Khí + Bảo Vật), chuẩn là 5 : 5. Tâm Pháp còn là đường nối cho món khác thông, nên không nên để quá ít.</li>
       <li><b>Phẩm và cảnh giới:</b> Phàm/Hoàng phẩm đủ sức tới Luyện Khí, Huyền tới Trúc Cơ, Địa tới Kết Đan, Thiên tới Nguyên Anh, Tiên tới Hóa Thần. Quá mức đó uy chiêu bị kẹp; vượt 2 cảnh giới thì hiệu ứng còn một nửa, vượt 3 thì mất. ${fitNote()}</li>
       <li><b>Chính / tà:</b> mảnh tà (ma, nghịch, thi, quỷ, độc, hợp hoan) chiếm ≥ 1/3 ô đang thông thì lưới ngả tà; giữ đủ 5/5/10/20/40/60 năm (Phàm Nhân → Hóa Thần) thì đạo cơ đổi theo. Hướng chính đạo vì vậy không lấy mảnh tà.</li>
@@ -4429,10 +5501,12 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
   // Số dự phòng; khi đã nạp lõi game thì lấy số thật từ code game (K.rare).
   const TC_RARE = { dH: [1, 0.7, 0.4, 0.1, 0.07, 0.05, 0.03, 0.015], rank: { lau_la: 0.5, thuong: 1, tinh_anh: 1.5, boss: 2 }, nhanHo: 0.4 };
   const TC_F0 = {
-    v: { q: '', nhom: '', cg: '', he: '', own: false, desc: false, n: 40 },
+    v: { q: '', nhom: '', cg: '', he: '', phai: '', own: false, desc: false, n: 40 },
     q: { q: '', loai: '', muc: '', cg: '', he: '', dh: '', desc: false, n: 40 },
   };
+  const TC_SCHOOL_CATS = new Set(['Tâm pháp (tu luyện, bị động)', 'Đấu pháp (công pháp có chiêu)', 'Pháp khí chiến đấu', 'Bảo vật (Ngự Linh)', 'Pháp bảo bị động (giáp, ngọc…)']);
   S.tcs = S.tcs || { v: { ...TC_F0.v }, q: { ...TC_F0.q } };
+  S.tcs.v.phai ??= '';
 
   const tcRare = () => (S.core && S.core.rare) || TC_RARE;
   const tcRealm = (i) => realmName(i);
@@ -4540,13 +5614,135 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
   };
   const tcDropTxt = (d, it) => (d.kind === 'chac' ? 'Chắc Chắn' : d.kind === 'ngau' ? tcChance(d.p) : (d.kind === 'quy' ? '≈ ' + tcChance(tcDropP(d, it)) + ' · Rơi Hiếm' : '≈ ' + tcChance(tcDropP(d, it)) + (d.kind === 'ho' ? ' · Theo Họ' : ' · Theo Tộc')));
 
+  // Chi tiết công dụng: ưu tiên các hàm mô tả chính thức của game (core/character/describe).
+  // Nếu build hiện tại không export một helper thì chỉ hiển thị các trường dữ liệu YAML đã xác minh.
+  function tcItemOfficialHtml(it) {
+    const R = TT.core || {}, D = R['character/describe'] || {}, PH = R['character/pham'] || {};
+    const nv = G().state && G().state.run && G().state.run.nhanVat;
+    const Cc = C(), blocks = [], row = (a, b) => tcRow(a, b);
+    const linesHtml = (xs) => (xs || []).filter((v) => v !== undefined && v !== null && String(v).trim()).map((v) => `<div>• ${esc(String(v))}</div>`).join('');
+
+    if (it.chieu && typeof it.chieu === 'object') {
+      const ch = it.chieu, rows = [];
+      if (ch.ten) rows.push(row('Tên Chiêu', esc(ch.ten)));
+      const dang = { cong: 'Công', thu: 'Thủ', khong_che: 'Khống Chế', hoi_phuc: 'Hồi Phục' }[ch.dang] || ch.dang || 'Không ghi';
+      rows.push(row('Dạng Chiêu', esc(dang)));
+      let phi = ch.phi, phiEffective = false;
+      try {
+        if (Number.isFinite(ch.phi) && typeof PH.effectiveSkillCost === 'function') {
+          const effective = PH.effectiveSkillCost(it, ch.phi);
+          if (Number.isFinite(effective)) { phi = effective; phiEffective = true; }
+        }
+      } catch (e) { /* giữ giá trị khai báo, không giả làm phí đã quy đổi */ }
+      if (Number.isFinite(phi)) rows.push(row(phiEffective ? 'Phí thi triển hiện tại' : 'Phí theo dữ liệu món', `${num(phi, 1)} linh lực`));
+      if (Number.isFinite(ch.hoi)) rows.push(row('Hồi chiêu', `${ch.hoi} lượt`));
+      if (ch.bat) rows.push(row('Công dụng đặc biệt', 'Bắt linh thú'));
+      if (ch.nap) rows.push(row('Nhập Ma', `+${esc(String(ch.nap))} ma niệm khi dùng`));
+      if (ch.dot) rows.push(row('Đốt Ma Niệm', `-${esc(String(ch.dot))} ma niệm khi dùng`));
+      if (ch.ma_hoa) rows.push(row('Ma Hóa', 'Kích hoạt hiệu ứng ma hóa'));
+      if (ch.devour) rows.push(row('Phệ Hồn', 'Sát thương tăng theo số loại hiệu ứng bất lợi trên mục tiêu'));
+      blocks.push(`<div class="tc-sec"><b>Chiêu Thức</b>${rows.join('')}</div>`);
+
+      // Chỉ quy đổi uy tương đối khi lấy được sức đánh thực từ nhân vật.
+      // Game chỉ cấp bodyPower khi tâm pháp luyện thể đã thông; nếu chưa, đòn tag `the` vẫn dùng spellPower.
+      try {
+        if (nv && typeof S.core.taoBenTa === 'function' && typeof D.chieuGocCuaVat === 'function' && typeof D.moTaChieu === 'function') {
+          const actor = S.core.taoBenTa(nv, Cc);
+          const realm = nv.canhGioi ?? 0;
+          const isBodyStrike = !!(it.tag && it.tag.includes('the') && ch.dang === 'cong');
+          const bodyActive = isBodyStrike && Number.isFinite(actor.bodyPower) && actor.bodyPower > 0;
+          const power = bodyActive ? actor.bodyPower : actor.spellPower;
+          const basePower = actor.spellPower;
+          if (Number.isFinite(power) && power > 0) {
+            const grade = typeof PH.gradeMult === 'function' ? PH.gradeMult(it, realm) : 1;
+            // Trần chiêu của game dựa trên pháp lực gốc; riêng đòn thể tu dùng bodyPower làm sức đánh.
+            const cap = typeof PH.skillCapRatio === 'function' && Number.isFinite(basePower) && basePower > 0
+              ? PH.skillCapRatio(it, basePower) : 1;
+            const scale = power * (Number.isFinite(grade) ? grade : 1) * (Number.isFinite(cap) ? cap : 1);
+            if (Number.isFinite(scale) && scale > 0) {
+              const original = D.chieuGocCuaVat(it, scale, realm);
+              if (original) {
+                const desc = D.moTaChieu(original, false);
+                const notes = [];
+                if (isBodyStrike) notes.push(bodyActive
+                  ? `Đòn thể tu: dùng sức mạnh thân thể; uy lực hiện bằng ×${num(actor.bodyPower / actor.spellPower, 2)} so với pháp lực.`
+                  : 'Đòn thể tu này hiện vẫn tính theo pháp lực vì nhân vật chưa thông Tâm Pháp Luyện Thể.');
+                if (desc && desc.length) {
+                  blocks.push(`<div class="tc-sec"><b>Hiệu Quả Với Nhân Vật Hiện Tại</b>${notes.map((x) => `<div class="vk-mu" style="margin-bottom:5px">${esc(x)}</div>`).join('')}${linesHtml(desc)}</div>`);
+                }
+              }
+            }
+          }
+        }
+      } catch (e) { console.warn('[VKTT] Không dựng được hiệu quả chiêu theo nhân vật:', e); }
+    }
+
+    if (it.tran && typeof D.moTaVatTran === 'function') {
+      try {
+        const desc = D.moTaVatTran(it, undefined, false);
+        if (desc && desc.length) blocks.push(`<div class="tc-sec"><b>Hiệu Quả Khi Dùng Trong Trận</b>${linesHtml(desc)}</div>`);
+      } catch (e) { console.warn('[VKTT] Không dựng được tác dụng trong trận:', e); }
+    }
+    if (typeof D.itemUseEffectLines === 'function' && (it.dung || []).length) {
+      try {
+        const desc = D.itemUseEffectLines(it, nv ? { nv, content: Cc } : undefined);
+        if (desc && desc.length) blocks.push(`<div class="tc-sec"><b>Hiệu Quả Khi Sử Dụng</b>${linesHtml(desc)}</div>`);
+      } catch (e) { console.warn('[VKTT] Không dựng được hiệu ứng khi dùng:', e); }
+    }
+    if (nv && typeof D.itemDrugResistanceLines === 'function' && (it.dung || []).length) {
+      try { const desc = D.itemDrugResistanceLines(nv, Cc, it); if (desc && desc.length) blocks.push(`<div class="tc-sec"><b>Dược Kháng Của Nhân Vật Hiện Tại</b>${linesHtml(desc)}</div>`); } catch (e) {}
+    }
+    if (typeof D.fieldGrowthLines === 'function') {
+      try { const desc = D.fieldGrowthLines(it); if (desc && desc.length) blocks.push(`<div class="tc-sec"><b>Thời Gian / Điều Kiện Sinh Trưởng</b>${linesHtml(desc)}</div>`); } catch (e) {}
+    }
+    if (it.dot_pha && typeof D.breakthroughPillEffect === 'function') {
+      try { const v = D.breakthroughPillEffect(it.dot_pha); if (v) blocks.push(`<div class="tc-sec"><b>Hiệu Quả Đan Đột Phá</b>${linesHtml([v])}</div>`); } catch (e) {}
+    }
+    if (it.tu_luyen && typeof D.cultivationPillEffect === 'function') {
+      try { const v = D.cultivationPillEffect(it.tu_luyen); if (v) blocks.push(`<div class="tc-sec"><b>Hiệu Quả Đan Bế Quan</b>${linesHtml([v])}</div>`); } catch (e) {}
+    }
+    if (it.luyen_hoa && typeof D.refineCoreEffect === 'function') {
+      try { const v = D.refineCoreEffect(it.luyen_hoa); if (v) blocks.push(`<div class="tc-sec"><b>Hiệu Quả Yêu Đan</b>${linesHtml([v])}</div>`); } catch (e) {}
+    }
+    if (it.loai === 'di_hoa' && typeof D.diHoaLines === 'function') {
+      try {
+        const v = D.diHoaLines(it);
+        if (v && v.length) blocks.push(`<div class="tc-sec"><b>Tác Dụng Của Dị Hỏa</b>${linesHtml(v.map((x) => Array.isArray(x) ? `${x[0]}: ${x[1]}` : x))}</div>`);
+      } catch (e) {}
+    }
+    if (it.tran_phap && it.tran_phap.kieu) {
+      const ft = { phong_ho: 'Phòng Hộ', khon: 'Khốn', sat: 'Sát', me: 'Mê / Ẩn Nặc', toa_linh: 'Tỏa Linh', cau_hon: 'Câu Hồn', huyet_te: 'Huyết Tế', tuyet_sinh: 'Tuyệt Sinh', pha_thuan: 'Phá Thuẫn', ngu_hanh: 'Ngũ Hành', dan_linh: 'Dẫn Linh', tan_linh: 'Tán Linh', tu_linh: 'Tụ Linh', duc_linh: 'Dục Linh', truyen_tong: 'Truyền Tống' };
+      blocks.push(`<div class="tc-sec"><b>Trận Pháp</b>${row('Kiểu Trận', esc(ft[it.tran_phap.kieu] || tcWord(String(it.tran_phap.kieu).replace(/_/g, ' '))))}</div>`);
+    }
+    if (it.mang) {
+      const m = it.mang;
+      const payload = m.chieu ? `Kích hoạt chiêu ${tcWord(String(m.chieu).replace(/_/g, ' '))}`
+        : m.dac_tinh ? `Hiệu quả: ${TC_TRAIT[m.dac_tinh] || tcWord(String(m.dac_tinh).replace(/_/g, ' '))}` : '';
+      if (payload) blocks.push(`<div class="tc-sec"><b>Trận Văn</b>${row('Tác dụng', esc(payload))}</div>`);
+    }
+    if (it.cho_an) {
+      const species = (it.cho_an.loai || []).map((k) => ({ thu: 'Thú', linh_thu: 'Linh Thú', khoi_loi: 'Khôi Lỗi', trung: 'Cổ Trùng', thi: 'Thi Khôi', hon: 'Quỷ Hồn' })[k] || k).join(' / ');
+      blocks.push(`<div class="tc-sec"><b>Thức Ăn Ngự Linh</b>${row('Dùng Cho', esc(species || 'Không ghi'))}${it.cho_an.exp !== undefined ? row('Kinh Nghiệm', esc(String(it.cho_an.exp))) : ''}</div>`);
+    }
+    if (it.ngu_linh) {
+      const kinds = [].concat(it.ngu_linh.loai || []).map((k) => ({ thu: 'Thú', linh_thu: 'Linh Thú', khoi_loi: 'Khôi Lỗi', trung: 'Cổ Trùng', thi: 'Thi Khôi', hon: 'Quỷ Hồn' })[k] || k).join(' / ');
+      const rows = [
+        kinds ? row('Loại Ngự Linh', esc(kinds)) : '',
+        it.ngu_linh.giam_gia ? row('Ưu Đãi Ngự Linh', 'Con đúng loại tiêu hao ít ngự lực hơn') : '',
+        it.ngu_linh.hoi_con !== undefined ? row('Hồi Khí Huyết Linh Vật', `${esc(pct(it.ngu_linh.hoi_con, 1))} khí huyết tối đa đầu mỗi lượt`) : '',
+        it.ngu_linh.duong_thuong !== undefined ? row('Dưỡng Thương Linh Vật', `giảm ${esc(pct(it.ngu_linh.duong_thuong, 1))} thời gian lành và linh thạch trị thương`) : ''
+      ].filter(Boolean);
+      if (rows.length) blocks.push(`<div class="tc-sec"><b>Thông Tin Ngự Linh</b>${rows.join('')}</div>`);
+    }
+    return blocks.join('');
+  }
+
   function tcItemHtml(x) {
     const X = tcBuild(), it = x.it, Cc = C(), own = tcBag()[it.id] || 0, out = [];
     const lo = TC_LOAI[it.loai] || tcWord(String(it.loai || 'khac')), rows = [tcRow('Loại', esc(lo) + (fold(lo) === fold(x.cat) ? '' : ' · ' + esc(x.cat)))];
     if (it.pham_cap) rows.push(tcRow('Phẩm Cấp', String(it.pham_cap)));
-    if (it.canh_gioi !== undefined) rows.push(tcRow('Dùng Từ Cảnh Giới', esc(tcRealm(it.canh_gioi))));
+    if (it.canh_gioi !== undefined) rows.push(tcRow('Yêu Cầu', esc(tcRealm(it.canh_gioi))));
     if (it.he && it.he.length) rows.push(tcRow('Hệ', esc(it.he.map(heTen).join(' / '))));
-    try { const ti = itemTagInfo(it); if (ti.tags.length) rows.push(tcRow('Trường Phái', esc(ti.tags.join(' · ')))); if (ti.blood.length) rows.push(tcRow('Đặc Điểm Theo Máu', esc(ti.blood.join('; ')))); } catch (e) { /* bỏ qua */ }
     if (it.gia) rows.push(tcRow('Giá Gốc', it.gia + ' Linh Thạch'));
     if (own) rows.push(tcRow('Đang Có Trong Túi', `<span class="vk-ok">${own}</span>`));
     if (typeof it.khuon === 'string' && Cc.enemies.has(it.khuon)) rows.push(tcRow('Nở Ra', tcLk('q', it.khuon, tcMonName(it.khuon))));
@@ -4554,7 +5750,8 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     if (tcMoTa(it)) out.push(`<div style="margin:6px 0;font-size:13px;line-height:1.5">${esc(tcMoTa(it))}</div>`);
     let full = ''; try { full = itemFull(it); } catch (e) { full = ''; }
     out.push(tcSec('Công Dụng', full ? `<div>${full}</div>` : ''));
-    try { out.push(`<details style="margin:6px 0"><summary class="vk-mu" style="cursor:pointer">Dữ liệu gốc của game</summary><pre style="white-space:pre-wrap;word-break:break-all;font-size:11px;max-height:260px;overflow:auto">${esc(JSON.stringify(it, null, 1))}</pre></details>`); } catch (e) { /* bỏ qua */ }
+    const officialDetails = tcItemOfficialHtml(it);
+    if (officialDetails) out.push(officialDetails);
     const note = sourceNote(it).filter((s) => !s.startsWith('mọc/có ở'));
     if ((it.tag || []).includes('trung_quy')) note.push('món quý ngự linh: game không ghi nguồn bán / rơi cụ thể, xem thêm tab Ngự Linh');
     if (note.length) out.push(tcSec('Ghi Chú Nguồn', tcPills(note.map((s) => esc(tcWord(s))))));
@@ -4701,8 +5898,10 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     const isV = k === 'v', f = S.tcs[k], X = tcBuild(), list = isV ? X.items : X.mons;
     const realms = [0, 1, 2, 3, 4, 5].map((i) => [i, tcRealm(i)]), hes = Object.keys(HE).map((h) => [h, HE[h]]);
     const cats = isV ? [...new Set(X.items.map((x) => x.cat))].sort((a, b) => CAT_ORDER.indexOf(a) - CAT_ORDER.indexOf(b)).map((c) => [c, c]) : [];
+    const itemPhaiKeys = isV ? [...new Set(X.items.filter((x) => TC_SCHOOL_CATS.has(x.cat)).flatMap((x) => (x.it.tag || []).filter((k) => DD_PHAI[k])))].sort() : [];
+    const itemPhais = itemPhaiKeys.map((k) => [k, DD_PHAI[k] || tcWord(k)]);
     const sel = isV
-      ? `<select class="vk-sel" id="tc-nhom">${tcOpts(cats, f.nhom, 'Mọi Nhóm')}</select><select class="vk-sel" id="tc-cg">${tcOpts(realms, f.cg, 'Mọi Cảnh Giới')}</select><select class="vk-sel" id="tc-he">${tcOpts(hes, f.he, 'Mọi Hệ Linh Căn')}</select><select class="vk-sel" id="tc-phai">${tcOpts(Object.entries(SCH_INFO).map(([k, v]) => [k, v[0]]), f.phai, 'Mọi Phái Tu')}</select>`
+      ? `<select class="vk-sel" id="tc-nhom">${tcOpts(cats, f.nhom, 'Mọi Nhóm')}</select><select class="vk-sel" id="tc-cg">${tcOpts(realms, f.cg, 'Mọi Cảnh Giới')}</select><select class="vk-sel" id="tc-he">${tcOpts(hes, f.he, 'Mọi Hệ Linh Căn')}</select><span id="tc-phai-wrap" style="display:none;flex:1 1 30%;min-width:0"><select class="vk-sel" id="tc-phai" style="width:100%">${tcOpts(itemPhais, f.phai, 'Mọi Phái Tu')}</select></span>`
       : `<select class="vk-sel" id="tc-loai">${tcOpts(Object.entries(TC_LMON), f.loai, 'Yêu Thú Và Tu Sĩ')}</select><select class="vk-sel" id="tc-muc">${tcOpts(Object.entries(TC_MUC).filter((o) => o[0] !== 'lau_la'), f.muc, 'Mọi Mức')}</select><select class="vk-sel" id="tc-cg">${tcOpts(realms, f.cg, 'Mọi Cảnh Giới')}</select><select class="vk-sel" id="tc-he">${tcOpts(hes, f.he, 'Mọi Hệ')}</select><select class="vk-sel" id="tc-dh">${tcOpts(Object.entries(TC_DH), f.dh, 'Mọi Địa Hình')}</select>`;
     const chipGroups = isV ? [['tc-nhom', [['', 'Tất Cả'], ...cats]]] : [['tc-loai', [['', 'Tất Cả'], ...Object.entries(TC_LMON)]], ['tc-muc', [['', 'Mọi Mức'], ...Object.entries(TC_MUC).filter((o) => o[0] !== 'lau_la')]]];
     body.innerHTML = `<div class="tc-top"><div class="tc-sb"><span class="tc-sb-ic">🔍</span><input type="text" id="tc-q" placeholder="${isV ? 'Gõ tên món (không cần dấu): truc co dan, kiem, linh thao…' : 'Gõ tên quái (không cần dấu): lang, nhen, oan linh…'}" value="${esc(f.q)}" autocomplete="off"><button class="tc-clear" id="tc-clr" title="Xóa">✕</button></div>
@@ -4712,13 +5911,56 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
       <div class="tc-cnt" id="tc-cnt"></div></div><div id="tc-list"></div>`;
     const $ = (id) => body.querySelector('#' + id);
     let shown = [];
+    const chipStrip = $('tc-chips');
+    if (chipStrip) {
+      chipStrip.addEventListener('wheel', (e) => {
+        if (chipStrip.scrollWidth <= chipStrip.clientWidth + 1 || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+        e.preventDefault(); chipStrip.scrollLeft += e.deltaY;
+      }, { passive: false });
+      let drag = null;
+      chipStrip.addEventListener('pointerdown', (e) => {
+        if (e.pointerType !== 'mouse' || e.button !== 0) return;
+        drag = { x: e.clientX, left: chipStrip.scrollLeft, moved: false, id: e.pointerId };
+      });
+      chipStrip.addEventListener('pointermove', (e) => {
+        if (!drag || e.pointerId !== drag.id) return;
+        const dx = e.clientX - drag.x;
+        if (!drag.moved && Math.abs(dx) > 6) { drag.moved = true; chipStrip.classList.add('vkx-dragging'); try { chipStrip.setPointerCapture(e.pointerId); } catch (_) {} }
+        if (drag.moved) chipStrip.scrollLeft = drag.left - dx / ((UI.fit && UI.fit.k) || 1);
+      });
+      const endDrag = () => { if (drag && drag.moved) { chipStrip._noClick = true; setTimeout(() => { chipStrip._noClick = false; }, 0); } drag = null; chipStrip.classList.remove('vkx-dragging'); };
+      chipStrip.addEventListener('pointerup', endDrag); chipStrip.addEventListener('pointercancel', endDrag); chipStrip.addEventListener('lostpointercapture', endDrag);
+      chipStrip.addEventListener('click', (e) => { if (chipStrip._noClick) { e.stopPropagation(); e.preventDefault(); } }, true);
+    }
+    const scrollActiveChip = () => {
+      const strip = $('tc-chips'), active = strip && strip.querySelector('.tc-chip.on'); if (!strip || !active) return;
+      const a = active.getBoundingClientRect(), b = strip.getBoundingClientRect(), k = (UI.fit && UI.fit.k) || 1;
+      if (a.left < b.left) strip.scrollLeft -= (b.left - a.left + 8) / k;
+      else if (a.right > b.right) strip.scrollLeft += (a.right - b.right + 8) / k;
+    };
     const draw = () => {
       f.q = $('tc-q').value; f.desc = $('tc-desc').checked;
       let acc;
-      if (isV) { f.nhom = $('tc-nhom').value; f.cg = $('tc-cg').value; f.he = $('tc-he').value; f.phai = $('tc-phai').value; f.own = $('tc-own').checked; const bag = tcBag(); acc = (x) => (!f.nhom || x.cat === f.nhom) && (!f.phai || schoolsOf(x.it).includes(f.phai)) && (f.cg === '' || x.it.canh_gioi === +f.cg) && (!f.he || (x.it.he || []).includes(f.he)) && (!f.own || bag[x.id] > 0); }
+      if (isV) {
+        f.nhom = $('tc-nhom').value; f.cg = $('tc-cg').value; f.he = $('tc-he').value; f.own = $('tc-own').checked;
+        const schoolOn = TC_SCHOOL_CATS.has(f.nhom);
+        const pw = $('tc-phai-wrap'); if (pw) pw.style.display = schoolOn ? '' : 'none';
+        const phaiSel = $('tc-phai');
+        if (phaiSel && schoolOn) {
+          const phaiForCat = [...new Set(X.items.filter((x) => x.cat === f.nhom).flatMap((x) => (x.it.tag || []).filter((k) => DD_PHAI[k])))].sort().map((k) => [k, DD_PHAI[k] || tcWord(k)]);
+          const prior = phaiSel.value || f.phai;
+          phaiSel.innerHTML = tcOpts(phaiForCat, prior, 'Mọi Phái Tu');
+          if (prior && !phaiForCat.some((x) => x[0] === prior)) f.phai = '';
+          phaiSel.value = f.phai || '';
+        } else { f.phai = ''; if (phaiSel) phaiSel.value = ''; }
+        f.phai = schoolOn ? (phaiSel?.value || '') : '';
+        const bag = tcBag();
+        acc = (x) => (!f.nhom || x.cat === f.nhom) && (f.cg === '' || x.it.canh_gioi === +f.cg) && (!f.he || (x.it.he || []).includes(f.he)) && (!f.phai || (x.it.tag || []).includes(f.phai)) && (!f.own || bag[x.id] > 0);
+      }
       else { f.loai = $('tc-loai').value; f.muc = $('tc-muc').value; f.cg = $('tc-cg').value; f.he = $('tc-he').value; f.dh = $('tc-dh').value; acc = (x) => (!f.loai || x.e.loai === f.loai) && (!f.muc || (x.e.muc || 'thuong') === f.muc) && (f.cg === '' || x.e.canh_gioi === +f.cg) && (!f.he || (x.e.he || []).includes(f.he)) && (!f.dh || (x.e.dia_hinh || []).includes(f.dh)); }
       const res = tcSearch(list, f, isV, acc);
       $('tc-chips').innerHTML = chipGroups.map(([sid, opts]) => opts.map(([v, lb]) => `<button class="tc-chip${String($(sid).value) === String(v) ? ' on' : ''}" data-sid="${sid}" data-v="${esc(v)}">${esc(lb)}</button>`).join('')).join('<i class="tc-gap"></i>');
+      if (typeof requestAnimationFrame === 'function') requestAnimationFrame(scrollActiveChip); else scrollActiveChip();
       const act = [...body.querySelectorAll('.tc-row select')].filter((el) => el.value).length + (f.desc ? 1 : 0) + (isV && f.own ? 1 : 0);
       $('tc-fsum').textContent = 'Bộ Lọc Nâng Cao' + (act ? ' · ' + act + ' Đang Bật' : '');
       if (f.focus) { const i = res.findIndex((x) => x.id === f.focus); if (i > 0) res.unshift(res.splice(i, 1)[0]); }
@@ -4756,7 +5998,7 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
   const AU_KEY = 'vkx_auto_cfg';
   const AU_DEF = {
     buon: { maxY: 3, banY: 5, von: 60, giu: 100, lai: 20, chuyen: 5, hiem: 'ngang_suc', tho: 15, toc: 'nhanh' },
-    san: { maxY: 3, mau: ['an_toan', 'ngang_suc', 'hiem'], tran: 20, thuong: 2, tho: 15, kt: true, toc: 'nhanh' },
+    san: { maxY: 3, mau: ['an_toan', 'ngang_suc', 'hiem'], tran: 20, thuong: 2, tho: 15, kt: true, khongHac: true, khongThucThiet: true, toc: 'nhanh' },
     km: { mode: 'bal', dir: 'tien', kb: '', prio: true, bk: 5, ratio: '55', iters: 3000, mo: false, moMax: 1, two: false, keep: 'tu', moBo: false, watch: false },
     rr: { pham: ['thien', 'bien_di'], he: [], heMode: 'any', tc: [], join: 'and', max: 3000, toc: 'nhanh', swap: false, lp: false, dl: 'normal', lh: false, lhIds: [], lhKeep: 0 },
   };
@@ -4912,6 +6154,148 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     return 'hiem';
   }
 
+  // Nhận diện mục tiêu cần né theo tên Hạc và ID chính thức của Thực Thiết Thú/Ấu Thú.
+  function auAvoidTargets(tran, opt) {
+    const out = [], seen = new Set(), ids = new Set(['enemy.thuc_thiet_thu', 'enemy.thuc_thiet_au_thu']);
+    for (const e of (tran && tran.dich) || []) {
+      if (!e || (e.khiHuyet != null && e.khiHuyet <= 0)) continue;
+      let def = null; try { def = C().enemies.get(e.id); } catch (_) {}
+      const name = String((def && def.ten) || e.ten || e.id || ''), norm = fold(name).replace(/[^a-z0-9]+/g, ' ').trim();
+      const isHac = opt.khongHac && /(^|[^a-z])hac([^a-z]|$)/i.test(fold(name));
+      const isThucThiet = opt.khongThucThiet && (ids.has(e.id) || norm === 'thuc thiet thu' || norm === 'thuc thiet au thu');
+      if ((isHac || isThucThiet) && !seen.has(e.id || name)) { out.push({ id: e.id, name }); seen.add(e.id || name); }
+    }
+    return out;
+  }
+
+  // Chỉ đưa vào gói những món có thể thay thế; không dùng đồ khóa, phẩm 8 hoặc vật phẩm có tag đặc biệt.
+  // Phẩm 7 chỉ là phương án dự phòng khi giá game <= 26.000 và không có tag đánh dấu đồ quý.
+  function auBuildGiftOffer(tran, greed, cost) {
+    const core = S.core, content = C(), player = G().state.run.nhanVat;
+    if (!core || typeof core.giaTriGoiNem !== 'function' || typeof core.tiLeThoatNem !== 'function')
+      return { error: 'Game API thiếu giaTriGoiNem/tiLeThoatNem; không thể xác minh gói hối lộ.' };
+    if (!cost || !Number.isFinite(Number(cost.linhThach)) || Number(cost.linhThach) <= 0)
+      return { error: 'Không đọc được giá trị Linh Thạch cần để bỏ chạy.' };
+    const locked = new Set(Array.isArray(player.lockedItems) ? player.lockedItems : []);
+    const inventory = tran.ta && tran.ta.tui || {};
+    const protectedTags = new Set(['di_bao', 'chi_khai_bao', 'ngu_linh', 'nghich_thien', 'co']);
+    const candidates = [];
+    for (const [id, count0] of Object.entries(inventory)) {
+      const count = Math.floor(Number(count0) || 0);
+      if (count <= 0 || locked.has(id)) continue;
+      const item = content.items && content.items.get(id);
+      if (!item || item.loai === 'lenh_bai') continue;
+      const grade = Number(item.pham_cap), price = Number(item.gia);
+      if (!Number.isFinite(grade) || grade < 1 || grade >= 8 || !Number.isFinite(price) || price <= 0) continue;
+      const tags = Array.isArray(item.tag) ? item.tag : [];
+      if (tags.some((tag) => protectedTags.has(tag))) continue;
+      if (grade === 7 && price > 26000) continue;
+      candidates.push({ id, count, grade, price, name: item.ten || id });
+    }
+    candidates.sort((a, b) => a.grade - b.grade || a.price - b.price || a.id.localeCompare(b.id));
+
+    const offer = { linhThach: 0, items: {} };
+    const valueOf = () => Number(core.giaTriGoiNem(offer, content));
+    const chanceOf = () => Number(core.tiLeThoatNem(tran, offer, content));
+    const safe = () => {
+      const value = valueOf(), chance = chanceOf();
+      return Number.isFinite(value) && Number.isFinite(chance) && chance >= 1;
+    };
+    const result = () => ({ offer: { linhThach: offer.linhThach, items: { ...offer.items } }, value: valueOf(), chance: chanceOf(), items: candidates.filter((x) => offer.items[x.id]).map((x) => ({ name: x.name, count: offer.items[x.id] })) });
+    for (const item of candidates) {
+      const have = Math.max(0, Math.floor(item.count));
+      if (!have) continue;
+      const previous = offer.items[item.id] || 0;
+      offer.items[item.id] = previous + have;
+      if (safe()) {
+        // Tìm số lượng nhỏ nhất được chính helper game xác nhận chắc chắn thoát.
+        let lo = 1, hi = have;
+        while (lo < hi) {
+          const mid = Math.floor((lo + hi) / 2);
+          offer.items[item.id] = previous + mid;
+          if (safe()) hi = mid; else lo = mid + 1;
+        }
+        offer.items[item.id] = previous + lo;
+        return result();
+      }
+    }
+
+    // Chỉ policy all mới cho phép bù phần thiếu bằng Linh Thạch; policy items tuyệt đối không ném tiền.
+    if (greed === 'all') {
+      const available = Math.max(0, Math.floor(Number(tran.ta.linhThach || 0) - Number(tran.ta.linhThachMat || 0)));
+      if (available > 0) {
+        offer.linhThach = available;
+        if (safe()) {
+          let lo = 1, hi = available;
+          while (lo < hi) {
+            const mid = Math.floor((lo + hi) / 2);
+            offer.linhThach = mid;
+            if (safe()) hi = mid; else lo = mid + 1;
+          }
+          offer.linhThach = lo;
+          return result();
+        }
+      }
+    }
+    return null;
+  }
+
+  // Né mục tiêu trước Tốc Chiến/đòn đánh. Hối lộ chỉ thực hiện khi helper game xác nhận chắc chắn 100% thoát.
+  function auEscapeTargets(st, tran, targets) {
+    const g = G(), names = targets.map((x) => x.name).join('、');
+    if (!tran || tran.ketThuc) return { stop: 'Phát hiện ' + names + ' nhưng trận đã kết thúc; Auto không thể đảo ngược kết quả.' };
+    if (tran.pvp) return { stop: 'Gặp ' + names + ' trong trận có luật/đấu bạn; Auto không tự bỏ chạy.' };
+    if (tran.daGiaoChien && tran.luot !== 'ta') return { stop: 'Gặp ' + names + ' nhưng chưa tới lượt nhân vật. Auto dừng, không Tốc Chiến hay tung chiêu.' };
+    const core = S.core;
+    if (!core || typeof core.escapeBlock !== 'function' || typeof core.escapeGreed !== 'function' || typeof core.giaBoChay !== 'function')
+      return { stop: 'Gặp ' + names + ' nhưng Game API thiếu hàm kiểm tra đường chạy/greed/giá chạy. Auto dừng, không tấn công.' };
+    let blocked = '';
+    try { blocked = core.escapeBlock(tran) || ''; } catch (e) { blocked = String(e && e.message || e); }
+    if (blocked) return { stop: 'Gặp ' + names + ' nhưng game khóa đường bỏ chạy: ' + blocked + '. Auto dừng, không tấn công.' };
+
+    let greed, cost;
+    try { greed = core.escapeGreed(tran); cost = core.giaBoChay(tran); }
+    catch (e) { return { stop: 'Không đọc được policy/giá bỏ chạy từ game: ' + String(e && e.message || e) + '. Auto dừng, không tấn công.' }; }
+    if (!['none', 'items', 'all'].includes(greed)) return { stop: 'Game trả policy hối lộ không xác định (' + String(greed) + '). Auto dừng, không đoán.' };
+    if (!cost || !Number.isFinite(Number(cost.nam))) return { stop: 'Không đọc được giá Huyết Độn từ core game; Auto dừng để tránh tiêu thọ không kiểm soát.' };
+
+    let method = 'huyet_don', gift = null, giftFallbackReason = '';
+    if (greed === 'items' || greed === 'all') {
+      try { gift = auBuildGiftOffer(tran, greed, cost); }
+      catch (e) { giftFallbackReason = 'không kiểm tra được gói hối lộ: ' + String(e && e.message || e); }
+      if (gift && gift.error) { giftFallbackReason = gift.error; gift = null; }
+      if (gift) method = 'nem_do';
+      else if (!giftFallbackReason) giftFallbackReason = 'không có gói đạt xác suất thoát 100%';
+    } else giftFallbackReason = 'đối thủ không nhận Linh Thạch/vật phẩm';
+    if (method === 'huyet_don') {
+      const lifeLeft = auLifeLeft(), minLife = Math.max(0, Number(AU.cfg.san.tho) || 0), years = Number(cost.nam);
+      if (!Number.isFinite(lifeLeft) || !Number.isFinite(years) || years < 0)
+        return { stop: 'Không xác minh được Thọ Nguyên còn lại/chi phí Huyết Độn. Auto dừng, không tấn công.' };
+      if (lifeLeft - years < minLife) return { stop: 'Gặp ' + names + ': Huyết Độn cần ' + years + ' năm, sẽ làm Thọ Nguyên còn ' + Math.floor(lifeLeft - years) + ' năm, thấp hơn ngưỡng dừng ' + minLife + '. Auto dừng, không tấn công.' };
+      if (tran.daGiaoChien) {
+        const injury = Number(g.state.run.nhanVat.thuongThe);
+        const injuryLimit = Math.max(1, Math.floor(Number(AU.cfg.san.thuong) || 1));
+        if (!Number.isFinite(injury) || injury + 1 >= injuryLimit)
+          return { stop: 'Gặp ' + names + ': Huyết Độn khi đã giao chiến gây thêm 1 bậc Thương Thế; sẽ chạm ngưỡng dừng ' + AU_TT_TEN[injuryLimit] + '. Auto dừng, không tấn công.' };
+      }
+    }
+    if (typeof g.hanhDongTran !== 'function') return { stop: 'Gặp ' + names + ' nhưng Game API hiện tại không có hanhDongTran; Auto dừng để tránh giao chiến.' };
+    const action = method === 'nem_do'
+      ? { loai: 'bo_chay', gia: 'nem_do', nem: gift.offer }
+      : { loai: 'bo_chay', gia: 'huyet_don' };
+    const r = auCall(() => g.hanhDongTran(action));
+    if (!r.ok) return { stop: 'Gặp ' + names + ' nhưng game không cho bỏ chạy: ' + r.err + '. Auto dừng, không tấn công.' };
+    const after = G().state.run.tran;
+    if (!after || after.ketThuc !== 'bo_chay')
+      return { stop: 'Đã gửi lệnh bỏ chạy với ' + names + ' nhưng game chưa xác nhận kết quả bo_chay. Auto dừng ngay, không thử tấn công.' };
+    st.avoidedTargets = (st.avoidedTargets || 0) + 1;
+    const detail = method === 'nem_do'
+      ? 'gói đồ ' + gift.items.map((x) => x.name + (x.count > 1 ? ' ×' + x.count : '')).join(', ') + (gift.offer.linhThach ? ' + ' + gift.offer.linhThach + ' Linh Thạch' : '') + ' (giá trị ' + gift.value + ', xác suất ' + Math.round(gift.chance * 100) + '%)'
+      : 'Huyết Độn (đốt ' + cost.nam + ' năm Thọ Nguyên; ' + giftFallbackReason + ')';
+    auLog('Phát hiện ' + names + ' · tự bỏ chạy bằng ' + detail + ', không Tốc Chiến/không tấn công.', 'vk-ok');
+    return 'ok';
+  }
+
   // ── Xử lý việc đang dở (trận, sự kiện) dùng chung cho cả hai Auto.
   // Trả về 'idle' (không có việc dở), 'ok' (vừa xử lý một bước) hoặc { stop: lý do }.
   function auPending(st, opt) {
@@ -4920,6 +6304,10 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     if (run.thongBaoDai) auCall(() => g.closeLongNotice());
     if (run.tran) {
       if (run.tran.ketThuc) { const r = auCall(() => g.xongTran()); return r.ok ? 'ok' : { stop: 'Không kết thúc được trận: ' + r.err }; }
+      if (opt.hunt && (opt.khongHac || opt.khongThucThiet)) {
+        const targets = auAvoidTargets(run.tran, opt);
+        if (targets.length) return auEscapeTargets(st, run.tran, targets);
+      }
       const p = g.duKienTran();
       if (!p) return { stop: 'Không đọc được dự đoán của trận đang mở. Dừng để bạn tự đánh trong game.' };
       const lv = auBattleLevel(run, p), m = auMauOf(lv);
@@ -4970,7 +6358,7 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     if (g.state.run.ketThuc) { UI.notify('Kiếp này đã kết thúc.'); return; }
     auReadCfg(kind);
     AU.run = { kind, running: true, stop: false, once: !!once, fights: 0, wins: 0, trips: 0, profit: 0, steps: 0, stuck: 0,
-      phase: 'plan', route: null, bad: new Set(), tried: 0, msg: '', nam0: g.state.run.nam, lt0: g.state.run.nhanVat.linhThach, delay: (AU_TOC[AU.cfg[kind].toc] || AU_TOC.nhanh)[1], t0: performance.now() };
+      phase: 'plan', route: null, bad: new Set(), tried: 0, avoidedTargets: 0, msg: '', nam0: g.state.run.nam, lt0: g.state.run.nhanVat.linhThach, delay: (AU_TOC[AU.cfg[kind].toc] || AU_TOC.nhanh)[1], t0: performance.now() };
     auLog(kind === 'buon' ? 'Bắt đầu Auto Buôn Bán.' : 'Bắt đầu Auto Săn Yêu.', 'vk-ok');
     drawTabs(); auLoop();
   }
@@ -5174,7 +6562,7 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     // Bảng xác nhận đang hiện: đóng bằng nút Hủy rồi dừng (không bao giờ tự đồng ý).
     const cp = await auBypassConfirm();
     if (cp) return { stop: 'Phát hiện bảng xác nhận của game “' + (cp.title || 'không tên') + '”' + (cp.nguy ? ' (cảnh báo nguy hiểm)' : '') + ', Auto ' + (cp.closed ? 'đã đóng theo đường Hủy' : 'chưa đóng hẳn được, bạn đóng giúp') + ' và dừng, không tự đồng ý' };
-    const p = auPending(st, { hunt: true, mau: cfg.mau });
+    const p = auPending(st, { hunt: true, mau: cfg.mau, khongHac: cfg.khongHac !== false, khongThucThiet: cfg.khongThucThiet !== false });
     if (p !== 'idle') {
       if (p === 'ok') return null;
       if (p.danger) { const r = await auBypassConfirm(); if (r) p.stop += ' (đã đóng bảng xác nhận “' + (r.title || 'không tên') + '”)'; }
@@ -5507,6 +6895,8 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     } else {
       c.maxY = num0('au-maxy', 0.5, 30, c.maxY); c.tran = Math.floor(num0('au-tran', 1, 9999, c.tran)); c.tho = num0('au-tho', 0, 1e4, c.tho);
       c.thuong = Math.floor(num0('au-thuong', 1, AU_TT_MAX, c.thuong)); c.toc = sel('au-toc', c.toc);
+      const h = q('au-khong-hac'); if (h) c.khongHac = h.checked;
+      const tt = q('au-khong-thuc-thiet'); if (tt) c.khongThucThiet = tt.checked;
       const k = q('au-kt'); if (k) c.kt = k.checked;
       const mau = AU_MAU_ID.filter((id) => { const el = q('au-mau-' + id); return el ? el.checked : (c.mau || AU_MAU_DEF).includes(id); });
       if (mau.length) c.mau = mau;
@@ -5527,7 +6917,7 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     if (kind === 'km') return auKmStatus(st);
     const nv = run ? run.nhanVat : null;
     const rows = [['Trạng Thái', st.running ? '<span class="vk-ok">Đang chạy…</span>' : 'Đã dừng'], ['Lý Do Dừng', st.running ? '—' : esc(st.msg || '—')]];
-    if (kind === 'san') rows.push(['Số Trận Đã Đánh', st.fights + ' (thắng ' + st.wins + ')']);
+    if (kind === 'san') { rows.push(['Số Trận Đã Đánh', st.fights + ' (thắng ' + st.wins + ')']); rows.push(['Số Lần Bỏ Chạy Né Mục Tiêu', st.avoidedTargets || 0]); }
     else { rows.push(['Số Chuyến Đã Xong', st.trips]); rows.push(['Lãi Ròng', Math.round(st.profit) + ' Linh Thạch']); if (st.running && st.route) rows.push(['Đang Làm', esc(st.route.it.ten) + ' · ' + esc({ plan: 'Lập kế hoạch', toBuy: 'Đi tới nơi mua', buy: 'Đang mua', pickSell: 'Dò nơi bán', toSell: 'Đi tới nơi bán', sell: 'Đang bán' }[st.phase] || st.phase)]); }
     rows.push(['Tốc Độ Thực', num(st.steps / Math.max(0.001, ((st.tEnd || performance.now()) - st.t0) / 1000), 1) + ' bước/giây']);
     if (nv && run) { rows.push(['Năm Đã Trôi', num(run.nam - st.nam0)]); rows.push(['Linh Thạch Thay Đổi', (Math.floor(nv.linhThach) - st.lt0 >= 0 ? '+' : '') + (Math.floor(nv.linhThach) - st.lt0)]); rows.push(['Thọ Nguyên Còn', Math.floor(auLifeLeft()) + ' năm']); }
@@ -5845,6 +7235,8 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
       ${auFld('au-tran', 'Dừng Sau Số Trận', c.tran)}
       ${auTTSel(c.thuong)}
       ${auFld('au-tho', 'Dừng Khi Thọ Nguyên Còn Dưới', c.tho, '(năm)')}
+      <label style="display:flex;gap:6px;align-items:center;margin:6px 0;font-size:13px"><input type="checkbox" id="au-khong-hac" ${c.khongHac !== false ? 'checked' : ''}> <b>Không săn Hạc</b> <span class="vk-mu">(mặc định bật; gặp tên có “Hạc” sẽ bỏ chạy trước khi Tốc Chiến)</span></label>
+      <label style="display:flex;gap:6px;align-items:center;margin:6px 0;font-size:13px"><input type="checkbox" id="au-khong-thuc-thiet" ${c.khongThucThiet !== false ? 'checked' : ''}> <b>Không săn Thực Thiết Thú/Ấu Thú</b> <span class="vk-mu">(mặc định bật; nhận diện theo ID game, bỏ chạy trước khi Tốc Chiến)</span></label>
       <label style="display:flex;gap:6px;align-items:center;margin:6px 0;font-size:13px"><input type="checkbox" id="au-kt" ${c.kt ? 'checked' : ''}> Kiểm Tra Sức Trước Khi Chạy (cần thắng chắc từ ${Math.round(AU_KT * 100)}% yêu thú mẫu cùng cảnh giới)</label>
       ${auControls()}
       <button class="vk-btn sec" id="au-chk" style="margin-top:6px">Xem Sức Và Các Nơi Săn Được</button><div id="au-info"></div></div>
@@ -6091,14 +7483,89 @@ table.vk-t th { text-transform:none; letter-spacing:.2px; }
     var HINT = 'Bản Mod chạy trong game, chỉ gồm phần Trợ Lý; số bản của Trợ Lý (Bản 2.x) được đánh riêng, độc lập với số Phiên Bản của Tool.';
 
     var LOG = [
-            { t: 'Phiên Bản 7.0.5 · Bản Mod', d: '06/11/2026', now: true, pts: [
-                '<b>Nút 🔍 đổi thành cỡ cửa sổ theo màn hình trình duyệt, bỏ hẳn phần trăm:</b> bấm lần lượt <b>Thu Gọn (1/3 màn hình)</b> → <b>Nửa Màn Hình (1/2)</b> → <b>Toàn Màn Hình</b>. Màn dọc (điện thoại): cửa sổ trượt từ đáy, chiếm 1/3, 1/2 hoặc đủ chiều cao. Màn ngang (máy tính, điện thoại ngang): cửa sổ dính mép phải, chiếm 1/3, 1/2 hoặc đủ chiều rộng. Cỡ chữ và giao diện luôn tự thích ứng, tự bù khi trang ở “chế độ máy tính” hoặc màn hình rất lớn. Lựa chọn được nhớ; xoay máy hay đổi cỡ trình duyệt thì cửa sổ tự co giãn theo.',
-                '<b>Sửa nút và tab bị đứng khi cuộn, vuốt:</b> game còn gắn trình nghe pointerdown / pointermove cấp cửa sổ nên thao tác trong Tool vẫn bị game chen vào; nay các sự kiện này dừng ở cửa sổ Tool (pointerup / pointercancel vẫn qua để game không kẹt trạng thái kéo). Bố cục không còn dựng lại liên tục khi trình duyệt báo cuộn hay đổi viewport, nên không còn giật giữa lúc vuốt. Vùng cuộn, nút, ô chọn có khai báo cử chỉ rõ ràng.',
-                '<b>Đối chiếu game mới (index-3sf_zlOV · content-DLypLmvt):</b> cả 76 hàm lõi Tool dùng đều còn đúng tên và đúng module trong <code>tuTien.core</code>. Bảng dự phòng Ngự Linh bổ sung 3 linh thú mới (Dạ Ảnh Kiêu, Huyền Dực Ấu Bức, Huyền Dực Bức) và 2 loại trứng tương ứng; sửa hệ của 10 sinh vật hồn / thi / quỷ nay là Ám (trước ghi Thủy).'
+            { t: 'Phiên Bản 7.5.0 · Bản Mod', d: '07/11/2026', now: true, pts: [
+                '<b>Cập nhật lõi theo game 0.0.2 (cửa mod apiVersion 1):</b> đã chạy mod thẳng trên bản build game 0.0.2 và đối chiếu từng hàm, hằng số Tool dùng với <code>tuTien.core</code> thật. Đủ 20 hàm bắt buộc, 42 hàm phụ, 4 hằng sống, 49 hằng bản mệnh và 28 hàm <code>game.*</code>; Tự Kiểm Tra qua toàn bộ.',
+                '<b>Bảng chữ ký hàm lõi:</b> Tool nhớ số tham số của 62 hàm lõi theo game 0.0.2. Game đổi tham số hàm nào thì Tự Kiểm Tra báo LỖI đúng hàm đó (kèm cảnh báo ở Tổng Quan), không cần chờ mốc cũ.',
+                '<b>Dòng kiểm tra mới:</b> “Chữ ký hàm lõi” và “Cửa mod của game (tuTien)”. Sửa dòng Auto Kinh Mạch còn đòi bốn khóa Lĩnh Ngộ cũ của thời dò regex (<code>sy, xl, lt, qo</code>) nên luôn báo thiếu dù Tool đã đọc đủ <code>namLinhNgo</code>.',
+                '<b>Dị Bảo ngẫu nhiên:</b> game 0.0.2 có sự kiện Dị Bảo chỉ cho vật ngẫu nhiên theo loại (Nhẫn trong hố sét, Hộp ba khóa, Kéo đỉnh giữa hồ). Tab Dị Bảo giờ đọc sống các sự kiện này từ dữ liệu game, hiện trạng thái trên bản đồ, hồi chiêu và cảnh giới cần.'
             ] },
-            { t: 'Phiên Bản 7.0.4 · Bản Mod', d: '05/11/2026', now: false, pts: [
-                '<b>Tra Cứu có nhãn Trường Phái và Đặc Điểm Theo Máu</b> cho công pháp, pháp khí (Kiếm, Thể, Phật, Ma, Độc Cổ, Hợp Hoan, Luyện Thi, Luyện Hồn, Ngự Thú, Khôi Lỗi). Có mục “Dữ liệu gốc của game” bấm mở để đối chiếu. Nhãn máu lấy từ ghi chú Hướng Build của Tool và hiệu ứng Chảy Máu trong chiêu; chưa nhận diện sát thương theo % máu vì chưa biết trường dữ liệu.',
-                '<b>Thêm ô chọn Hệ Linh Căn và Phái Tu</b> ở Tra Cứu Vật Phẩm (Tâm Pháp, Đấu Pháp, Pháp Khí, Bảo Vật…) và ở Tra Cứu Địa Danh (Tông Môn).',
+            { t: 'Phiên Bản 7.4.0 · Bản Mod', d: '07/11/2026', now: false, pts: [
+                '<b>Hướng Build: xếp chạm trần chỉ số, không thừa:</b> Tool đọc trần từ game (Đột Phá từ công pháp tối đa 12%, Hộ Thể trong trận tối đa 60% cộng phần nới của thể chất, Kháng Tâm Ma tối đa 100%). Chỉ số tới trần mới được thưởng, phần vượt bị trừ nhẹ để nhường ô cho món khác; Tốc Độ Tu Luyện và Khí Huyết game không kẹp nên vẫn càng nhiều càng tốt. Kế hoạch chọn đồ cũng bỏ qua món chỉ cộng chỉ số đã chạm trần.',
+                '<b>Dồn buff cho công pháp mạnh nhất:</b> mỗi món được chấm sức tương đối so với món mạnh nhất trong túi; điểm huyệt, sinh, khắc và kinh lộ nay nhân theo sức món nên huyệt ×2, màu đúng, món sinh kề bên và chuỗi kinh lộ dồn cho món mạnh. Sau bước tinh chỉnh còn thêm một bước thử đặt riêng từng món trong nhóm mạnh nhất vào mọi chỗ hợp lệ (ưu tiên chỗ phủ huyệt), kể cả chiếm huyệt của món yếu hơn rồi thử đặt lại món bị đẩy.',
+                '<b>Thẻ Kiểm Tra Lưới Kinh Mạch (mới):</b> đếm ô thông / tắc / ẩn / tổn, liệt kê từng huyệt (trạng thái, màu, món đang chứa hoặc còn trống), thống kê màu ô thông so với hướng đang chọn, bảng trần chỉ số và món mạnh nhất với hệ số màu, huyệt, sinh khắc, kinh lộ. Có danh sách “Việc Nên Làm” xếp ưu tiên: món không thông → món mạnh chưa lên huyệt → lệch màu → thừa trần → kinh lộ chưa đủ → huyệt mở được hoặc còn trống.',
+                '<b>Sắp lại tab Hướng Build theo ưu tiên:</b> Cài Đặt Chung → Đang Xếp Trong Game và Kiểm Tra Lưới → Auto Kinh Mạch → Xếp Từ Đồ Trong Túi → Hai Bộ → Ô Nên Mở → Xếp Theo Cảnh Giới → Phép Tính Giả Định → Hướng Khả Dụng → Cốt Lõi và Thể Chất → Nhật Ký Auto → hướng dẫn và luật chung. Nhật Ký Auto và Nguyên Lý Kinh Mạch thu gọn sẵn.',
+                '<b>Kết quả xếp hiện thêm dòng trần chỉ số</b> (Đột Phá, Hộ Thể, Kháng Tâm Ma so với trần, đánh dấu chạm trần hoặc thừa). Mục Tự Kiểm Tra có thêm phép thử đọc trần và chạy thẻ Kiểm Tra Lưới.'
+            ] },
+            { t: 'Phiên Bản 7.3.0 · Bản Mod', d: '06/11/2026', now: false, pts: [
+                '<b>Đối chiếu source game mới (index-B9-KhXqd · content-CsJvUlAl):</b> mọi hàm bắt buộc và tùy chọn của Tool vẫn có đủ, không hàm nào mất hay phải dò lại. Phần đổi thật nằm ở Bản Mệnh, đan đột phá và dữ liệu Ngự Linh (xem các dòng dưới).',
+                '<b>Sửa lỗi đọc số liệu văn Bản Mệnh:</b> game đổi bảng giá trị văn từ 3 mốc lên 5 mốc, bản trước đòi đúng 3 mốc nên có thể bỏ qua số liệu của game và rơi về bảng dự phòng. Nay nhận bảng từ 3 mốc trở lên, bảng dự phòng cập nhật đủ 5 mốc.',
+                '<b>Văn Bản Mệnh nay có 5 cấp:</b> cấp 1–3 vẫn lên theo điểm nuốt món (nay có thêm 20% hụt không cộng điểm và 10% được nhân đôi); cấp 3→4 và 4→5 là bình cảnh, không cộng điểm mà bồi bằng xác suất (20% rồi 10%), hụt thì lần sau cộng thêm may mắn (10% rồi 5%), món phải không thấp hơn bản mệnh quá 1 phẩm. Tab hiện đúng xác suất, mức may mắn đã tích và lý do món quá yếu. Văn đã tối đa không còn nằm trong ứng viên.',
+                '<b>Dị văn:</b> mỗi lần văn lên cấp có 5% hóa Dị văn (15% khi chạm cấp tối đa), uy lực ×1,5 (nhóm Phân Ảnh/Vạn Ảnh/Quy Nhất cộng 5% thay vì nhân). Tab đánh dấu Dị văn ở văn bẩm sinh, văn đang khắc và kho văn, mô tả hiệu quả đã tính theo Dị văn. Bảng tra cứu văn thêm Cấp 5 và Dị văn cấp 5.',
+                '<b>Văn mới:</b> Tuyệt Hồi (nhóm hiệu ứng), Nhiễm Lôi, Nhiễm Băng, Nhiễm Phong, Nhiễm Ám (nhóm hệ). Văn Nhiễm nay ghi rõ uy chiêu chỉ cộng khi khắc địch; xác suất gây hiệu ứng được chặn ở 100% như game.',
+                '<b>Đan đột phá có trần dược lực:</b> game thêm trường canh_gioi_toi_da (Thiên Nguyên Quả tới Kết Đan, Tử Phủ Linh Quả tới Nguyên Anh, cộng độ nới theo độ khó). Các bảng “Đan cho lần đột phá tới”, danh sách đan ở Luân Hồi và mục kế hoạch nay chỉ liệt kê đan còn hiệu lực ở cửa sắp lên (dùng hàm pillFitsRealm của game; thiếu hàm thì tính lại theo trường dữ liệu). Chi tiết vật phẩm thêm dòng “dược lực chỉ đủ tới …”.',
+                '<b>Dữ liệu Ngự Linh:</b> thêm trứng Dạ Ảnh Kiêu, trứng Huyền Dực Bức và bốn sự kiện khôi lỗi trong tông môn (Khôi lỗi gác núi, Trưởng lão tìm liệu, Khôi lỗi phát cuồng, Khôi tổ sư) vào bảng nhúng. Các mục này trước đó vẫn hiện nhờ luật đoán nhóm.'
+            ] },
+            { t: 'Phiên Bản 7.2.0 · Bản Mod', d: '06/11/2026', now: false, pts: [
+                '<b>Giả Định Full Tẩy Tủy Theo Linh Căn</b> (Kinh Mạch → Phép Tính Giả Định): từ góp ý người chơi. Tool lấy linh căn kiếp này, xét các hệ liên quan (hệ linh căn, hệ sinh ra nó, hệ sinh nó và Vô sắc), giả định đã có món mạnh nhất của từng hệ trong cả game, cho phép đổi màu mọi ô sang hệ linh căn rồi xếp lại tối ưu và đánh trận mẫu.',
+                '<b>Kết quả:</b> bảng so các kịch bản với mốc hiện tại, kịch bản nghiêng về, ảnh cách xếp, danh sách đồ nên săn (kèm giá, nơi có) và số ô cần đổi màu. Chỉ tính trên bản sao, không đụng game. Có chọn độ kỹ Nhanh/Chuẩn/Kỹ.'
+            ] },
+            { t: 'Phiên Bản 7.1.2 · Bản Mod', d: '06/11/2026', now: false, pts: [
+                '<b>Auto Săn Yêu · Né mục tiêu:</b> tùy chọn Không săn Hạc và Không săn Thực Thiết Thú/Ấu Thú (mặc định bật); nhận diện Thực Thiết bằng ID dữ liệu game.',
+                '<b>Hối lộ để bỏ chạy:</b> dùng helper game escapeGreed/giaBoChay/giaTriGoiNem/tiLeThoatNem; chỉ gửi gói được game tính xác suất thoát 100%. Ưu tiên đồ phẩm thấp, tôn trọng khóa vật phẩm; không ném phẩm 8, đồ có tag đặc biệt/cổ/Ngự Linh và chỉ xét phẩm 7 thông thường có giá không quá 26.000 khi cần.',
+                '<b>An toàn:</b> nếu không có gói hối lộ chắc thoát thì mới xét Huyết Độn theo ngưỡng Thọ Nguyên; nếu đã giao chiến, còn kiểm tra bậc Thương Thế vì Huyết Độn gây thêm 1 bậc. Không xác minh được API/trạng thái thì dừng Auto, không chuyển sang tấn công.'
+            ] },
+            { t: 'Phiên Bản 7.1.1 · Bản Mod', d: '06/11/2026', now: false, pts: [
+                '<b>Đối chiếu toàn bộ hàm game:</b> nút “Đối chiếu bảng nhúng” đổi thành “Đối chiếu toàn bộ hàm game”. Thay vì chỉ so bảng Ngự Linh, Tool nay quét mọi hàm và hằng số của <code>tuTien.core</code>, mọi hàm của đối tượng game, các bộ dữ liệu content, thuộc tính/state và khóa <code>tuTien</code>, so với mốc: hàm nào đổi thân, đổi tham số, mới, mất; rồi đánh dấu cái nào chạm vào hàm Tool đang dùng. Bảng nhúng Ngự Linh/Dị Bảo/Thể Chất vẫn được kiểm ở cuối kết quả.',
+                '<b>Chỉ đọc, không gọi hàm game:</b> việc so dựa trên chữ ký và mã nguồn hàm nên không đổi save, không tốn linh thạch hay năm tuổi.',
+                '<b>Dấu vân tay hàm game:</b> mốc mới lưu thêm thân hàm của đối tượng game. Mốc cũ của 7.1.0 chưa có nên lần đầu chỉ so được số tham số; sau khi Tự kiểm tra sạch lỗi, bấm <b>Chốt mốc mới</b> để lần game cập nhật sau so được cả thân hàm. Báo cáo nhanh cũng kèm mã nguồn hàm game đã đổi.',
+                '<b>Tải source game:</b> bỏ hai nút “Tải gói đầy đủ (.json)” và “Tải gói nén (.json.gz)”, thay bằng nút <b>Tải source game</b>: gom mọi tệp cùng nguồn gốc mà trang game đã nạp (trang, script, content) thành <code>game.zip</code> rồi tải xuống (cần tải được JSZip từ cdnjs).',
+                '<b>Tự kiểm tra:</b> thêm mục “Hàm game Tool gọi”, báo rõ hàm nào của game đã mất.'
+            ] },
+            { t: 'Phiên Bản 7.1.0 · Bản Mod', d: '06/11/2026', now: false, pts: [
+                '<b>Kho Dữ Liệu Game (API sống):</b> thẻ mới ở cuối tab Tổng Quan. Tool tự quét <code>tuTien.core</code> (module, hàm, hằng số), <code>game.env.content</code> (lược đồ từng bộ dữ liệu) và state của game, rồi lưu làm mốc. Game cập nhật thì bấm <b>So với mốc</b> để thấy chính xác hàm/hằng/trường dữ liệu nào đổi, và cái nào chạm vào Tool.',
+                '<b>Không cần tải source game nữa:</b> <b>Sao chép báo cáo nhanh</b> (kèm mã nguồn các hàm đã đổi/thiếu) hoặc <b>Tải gói đầy đủ</b> (.json / .json.gz: mã nguồn mọi hàm lõi + toàn bộ dữ liệu content) để gửi Claude.',
+                '<b>Tự dò lại hàm lõi:</b> hàm đổi chỗ hoặc đổi tên được tìm lại theo tên ở module khác, hoặc theo dấu vân tay thân hàm của mốc; Tool báo rõ hàm nào đã được tự nối lại.',
+                '<b>Bảng nhúng đối chiếu với game:</b> sự kiện Ngự Linh, nghi thức, Dị Bảo mà game đã xóa thì tự ẩn (có ngưỡng an toàn nếu game đổi cấu trúc); mục game thêm mới được liệt kê trong Đối chiếu bảng nhúng.',
+                '<b>Chưa kiểm được:</b> chưa chạy trong game thật (chỉ thử với game giả lập). Mục game thêm vào Ngự Linh/Dị Bảo chưa tự hiện được vì chưa biết cấu trúc dữ liệu thật; hãy bấm Tải gói đầy đủ một lần để Claude đọc cấu trúc và nối thẳng vào dữ liệu sống.'
+            ] },
+            { t: 'Phiên Bản 7.0.7 · Bản Mod', d: '06/11/2026', now: false, pts: [
+                '<b>Đi tới không hỏi xác nhận thừa:</b> nút Đi tới ở Bản Đồ/Dị Bảo và nút Đi Đến ở Tra Cứu Địa Danh gọi thẳng game.travelTo; giữ xác nhận riêng cho truyền tống tiêu linh thạch.',
+                '<b>Auto Săn Yêu · Không săn Hạc:</b> thêm tùy chọn mặc định bật; phát hiện bất kỳ địch sống nào có chữ Hạc trong tên trước Tốc Chiến, bỏ chạy bằng linh thạch nếu game cho phép, nếu không thì Huyết Độn theo đúng luật game. Không tự ném vật phẩm trong túi.',
+                '<b>Thanh nhóm Tra Cứu Vật Phẩm/Quái Vật:</b> hỗ trợ kéo chuột, lăn chuột ngang và tự cuộn tới chip đang chọn khi đổi bộ lọc; vẫn giữ vuốt ngang trên mobile.',
+                '<b>Đồng bộ ô tìm kiếm:</b> Tra Cứu Địa Danh và Tra cứu quái trong tab Trận dùng cùng kiểu thanh tìm kiếm với Vật Phẩm/Quái Vật.'
+            ] },
+            { t: 'Phiên Bản 7.0.6 · Bản Mod', d: '06/11/2026', now: false, pts: [
+                '<b>Nút Đi tới ở Bản Đồ:</b> đổi từ thao tác truyền tống sang gọi <code>game.travelTo</code>, để nhân vật tự đi theo cơ chế đường đi của game; thời gian, phương tiện và biến cố giữa đường do game xử lý.',
+                '<b>Nút Đi tới ở Dị Bảo:</b> dùng cùng cơ chế <code>game.travelTo</code> tới địa điểm được xác định từ node hoặc dữ liệu encounter; không tiêu phù truyền tống hay yêu cầu đang đứng tại trận pháp.',
+                '<b>Phân biệt rõ:</b> Đi tới là tự di chuyển, không phải Dịch Chuyển/Truyền Tống. Nếu game đang có biến cố, chiến đấu hoặc việc dở, thao tác sẽ báo lý do và không tự bỏ qua.'
+            ] },
+            { t: 'Phiên Bản 7.0.5 · Bản Mod', d: '06/11/2026', now: false, pts: [
+                '<b>Nút Bay tới trên Bản Đồ là nút hành động thực:</b> luôn hiển thị tại từng sự kiện còn trên bản đồ; khi game có thể xem trước điểm đến thì hiện phí và nguồn, nếu chưa xem trước được vẫn cho bấm để thử qua luồng truyền tống chính thức và báo nguyên nhân game từ chối. Không còn chỉ có cột tiêu đề Bay trống.',
+                '<b>Nút Bay tới trong Dị Bảo:</b> lấy vị trí từ node đang tồn tại hoặc ID địa danh khai báo trực tiếp trong <code>requires.dia_danh</code> của encounter game; chỉ dùng tên hiển thị làm phương án dự phòng. Nhờ đó không phụ thuộc tên địa điểm viết tắt trong danh sách companion.',
+                '<b>Giao diện nút:</b> dùng kiểu nút hành động dễ nhận biết, có vùng bấm rõ ràng, trạng thái và thông báo lý do nếu game không cho truyền tống.'
+            ] },
+            { t: 'Phiên Bản 7.0.4 · Bản Mod', d: '06/11/2026', now: false, pts: [
+                '<b>Bay tới ngay từ Bản Đồ:</b> mỗi sự kiện đang xuất hiện có nút nhỏ Bay tới nếu game đang cung cấp ít nhất một nguồn truyền tống hợp lệ. Nút dùng đúng Trận Truyền Tống hoặc phù trong túi; game tự kiểm tra tầm, nơi đã biết và linh thạch.',
+                '<b>Bay tới từ Dị Bảo:</b> nếu có node sự kiện đang hiện trên bản đồ hoặc dữ liệu chỉ rõ địa danh, thẻ dị bảo có nút Bay tới ngay. Dị bảo hoang dã không có địa danh cố định sẽ không hiện nút giả.',
+                '<b>Gọn thanh đầu:</b> bỏ thanh lựa chọn Trợ Lý/Nhật Ký Cập Nhật. Nhật ký chuyển thành icon quyển thư cạnh nút đóng; bấm icon lần nữa để quay về Trợ Lý.',
+                '<b>Đổi kích thước cửa sổ trên PC:</b> kéo các cạnh hoặc góc cửa sổ để thu/phóng theo ý; kích thước và vị trí được lưu trên thiết bị. Điện thoại vẫn tự mở toàn màn hình; giới hạn kích thước bảo vệ nội dung không tràn khỏi màn hình.',
+                '<b>Màu nút Bay tới:</b> xanh lá ở Mực Ngọc, tím nhạt ở Tử Tiêu, xanh lam ở Giấy Cổ và xanh ngọc ở Huyền Ảnh.'
+            ] },
+            { t: 'Phiên Bản 7.0.3 · Bản Mod', d: '05/11/2026', now: false, pts: [
+                '<b>Làm sạch thông tin chiêu:</b> bỏ các dòng kỹ thuật không giúp người chơi như phí gốc YAML, uy × tương đối và raw tag nội bộ. Chỉ hiện phí thi triển thực tế, hồi chiêu và hiệu quả chiêu đã quy đổi theo nhân vật nếu tính được.',
+                '<b>Sửa quy đổi chiêu thể tu:</b> nếu nhân vật chưa thông Tâm Pháp Luyện Thể, game vẫn dùng pháp lực; nếu đã thông, dùng sức mạnh thân thể. Không gọi helper với scale mặc định 1 để tránh hiển thị “1 sát thương” giả như số thực.',
+                '<b>Chuẩn hóa mô tả mọi loại vật phẩm:</b> giữ thông tin chuyên biệt có ích theo dữ liệu/core game; bỏ nhãn “theo core game”, “payload” và không hiện dòng chung chung khi item không có nội dung tương ứng.'
+            ] },
+            { t: 'Phiên Bản 7.0.2 · Bản Mod', d: '05/11/2026', now: false, pts: [
+                '<b>Lọc Tông Môn theo Hệ Linh Căn và Phái Tu:</b> hai ô lọc chỉ hiện khi chọn loại Tông Môn ở Tra Cứu Địa Danh; danh sách lấy từ dữ liệu địa danh hiện có.',
+                '<b>Lọc công pháp / pháp khí theo Phái Tu:</b> thêm ô lọc theo tag phái đã khai báo trong dữ liệu game cho Tâm Pháp, Đấu Pháp, Pháp Khí Chiến Đấu, Bảo Vật Ngự Linh và Pháp Bảo bị Động; không tự gán phái cho món thiếu tag. Bảo Vật được tách theo các trường Ngự Linh mà schema game định nghĩa.',
+                '<b>Chi tiết vật phẩm mở rộng:</b> dùng helper mô tả chính thức của game để hiện phí chiêu hiệu dụng, phí gốc, hồi, uy tương đối, sát thương nền theo nhân vật, hiệu ứng chiêu, đan/phù dùng trong trận, tác dụng khi dùng, đan đột phá/bế quan, yêu đan, dị hỏa, trận pháp, trận văn và thông tin Ngự Linh khi dữ liệu có khai báo. Đòn thể tu dùng chỉ số thân thể của nhân vật, không ghi cứng hệ số hay sát thương.',
+                '<b>Đối chiếu dữ liệu:</b> rà 1.640 vật phẩm thuộc 18 loại trong content game; trường nào không có trong dữ liệu hoặc core thì không tự bịa.'
+            ] },
+            { t: 'Phiên Bản 7.0.1 · Bản Mod', d: '05/11/2026', now: false, pts: [
+                '<b>Sửa lỗi Auto Kinh Mạch và đánh thử:</b> thay hai tên hàm rút gọn cũ <code>xo</code>/<code>al</code> còn sót trong phép tính bằng tên API chính thức <code>luoiKinhMach</code>/<code>oCuaManh</code>. Không đổi thuật toán xếp, dữ liệu, ID mod hoặc cách áp dụng vào game.'
+            ] },
+            { t: 'Phiên Bản 7.0.0 · Bản Mod', d: '05/11/2026', now: false, pts: [
                 '<b>Chuyển thành mod của game (.zip):</b> cài ở Cấu hình → Mods → Cài mod, bật rồi tải lại trang. Không cần Tampermonkey hay dấu trang nữa.',
                 '<b>Nối thẳng vào lõi game (<code>tuTien.core</code>):</b> bỏ hẳn việc tải <code>index-[hash].js</code>, hơn 70 mẫu dò regex, vá khởi động và bản sao thứ hai của game. Mỗi hàm lấy theo tên gốc trong mã nguồn nên không còn vỡ khi game đổi tên rút gọn sau mỗi lần cập nhật (lỗi “chưa nhận ra tên cấp bậc tông môn” là do vậy).',
                 '<b>Tính trên ctx chính thức:</b> mọi phép tính dùng <code>game.readCtx()</code> (bản sao chỉ đọc của kiếp đang chơi). Hằng số bản mệnh, tỉ lệ rơi hiếm, số lần săn cạn, ngưỡng chặn giữa đường đọc sống từ <code>core[\'balance/…\']</code>.',
