@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261105-autofarm-v44',ID='vkt2',g=window.game;
+const BUILD='20261107-autofarm-v45',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -1929,6 +1929,7 @@ const AutoFarm={
     healMinLevel:1,
     pauseIfNoHeal:true,
     pursuit:'release',
+    apex:'fallback',
     xuTri:'tha',
     radiusWorld:55,
     radiusYears:0.25,
@@ -2017,8 +2018,14 @@ const AutoFarm={
       }:null,
       tran:r.tran?{
         ketThuc:!!r.tran.ketThuc,
+        ketQua:typeof r.tran.ketThuc==='string'?r.tran.ketThuc:null,
         phe:r.tran.phe||null,
-        luot:r.tran.luot??null
+        luot:r.tran.luot??null,
+        daGiaoChien:r.tran.daGiaoChien??null,
+        hiep:r.tran.hiep??null,
+        ta:r.tran.ta?{kh:Math.round(r.tran.ta.khiHuyet||0),khMax:Math.round(r.tran.ta.khiHuyetToiDa||0),ll:r.tran.ta.linhLuc??null,llTurn:r.tran.ta.linhLucMoiLuot??null,ddt:!!r.tran.ta.daDanhThuong,hoi:r.tran.ta.hoi||null,
+          chieu:A(r.tran.ta.chieu).map(c=>({id:c.id,ten:c.ten,dang:c.dang,phi:c.phi,hoi:c.hoi,uy:c.uy}))}:null,
+        dich:A(r.tran.dich).slice(0,4).map(d=>({id:d.id,ten:d.ten,kh:Math.round(d.khiHuyet||0),khMax:Math.round(d.khiHuyetToiDa||0),muc:d.muc||null}))
       }:null,
       bienCo:r.bienCo?{encounter:r.bienCo.encounter||r.bienCo.id||true,slot:r.bienCo.slot||null}:null,
       thongBao:r.thongBao?{text:String(r.thongBao.text||r.thongBao||'').slice(0,120)}:null,
@@ -2268,6 +2275,17 @@ const AutoFarm={
   pickHealItem(){
     const nv=me(),need=this.injuryLevel();
     if(need<=0)return null;
+    /* Ưu tiên hàm chọn đan của chính game (core/character/heal_item): đã tính sẵn cảnh giới đan, đan vô dụng, rẻ nhất đủ chữa */
+    try{
+      const hi=window.tuTien?.core?.['character/heal_item'];
+      if(hi&&typeof hi.pickHealItem==='function'){
+        const p=hi.pickHealItem(nv,C.items,'cheapest',run().flags||nv.flags||{});
+        if(p&&p.id&&(nv.tuiDo?.[p.id]||0)>0){
+          const it=C.items?.get?.(p.id);
+          return{id:p.id,heal:Number(p.heal)||1,gia:Number(it?.gia||0),ten:T(it?.ten||p.id)};
+        }
+      }
+    }catch{}
     const bag=nv.tuiDo||{};
     const cand=[];
     for(const [id,qty] of Object.entries(bag)){
@@ -2699,7 +2717,7 @@ const AutoFarm={
     };
     const isBuy=c=>{
       const t=strip(c.text);
-      return /^mua\b/i.test(t)||/\(\s*\d+\s*linh thạch\s*\)/i.test(t);
+      return /^(mua|trả|đặt cược|bỏ ra|chi|nộp|đổi|thuê|bố thí|quyên|cúng|biếu|hối lộ|đặt hàng)\b/i.test(t)||/\(\s*[\d.,]+\s*linh thạch\s*\)/i.test(t)||/[\d][\d.,]*\s*linh thạch\s+(lấy|để|mua|đổi)/i.test(t);
     };
     const activeId=run().active?.id||'';
     // Chợ / cửa hàng / đấu giá… → luôn Rời, không mua
@@ -2728,7 +2746,17 @@ const AutoFarm={
       if(rel)return rel;
     }
 
-    const hunts=list.filter(c=>!isCancel(c)&&!isBuy(c)&&!BAN.has(this.riskLevel(c)));
+    let hunts=list.filter(c=>!isCancel(c)&&!isBuy(c)&&!BAN.has(this.riskLevel(c)));
+    /* Săn yêu: "Lùng con đầu đàn" tốn 2 lượt săn và luôn vào trận với tinh anh. Khi tay bạn farm thì chọn "Săn <tên>" thường trước (34/43 lần trong bản ghi);
+       chỉ lùng đầu đàn khi săn thường bị loại vì hiểm. Chế độ: never / fallback (mặc định) / prefer (kiểu bản cũ). */
+    {
+      const isApex=c=>/đầu đàn/i.test(strip(c.text));
+      if(hunts.some(isApex)){
+        const mode=this.opts.apex||'fallback',reg=hunts.filter(c=>!isApex(c));
+        if(mode==='never')hunts=reg;
+        else if(mode==='fallback'&&reg.length)hunts=reg;
+      }
+    }
     if(!hunts.length){
       const esc=list.find(isCancel);
       if(esc){this.push('Không săn an toàn → Thôi','dbg');return esc}
@@ -2831,7 +2859,7 @@ const AutoFarm={
     }
     try{
       if(typeof g.targetedHunt==='function'){
-        g.targetedHunt(beastId);
+        g.targetedHunt(beastId,false);
         this.push('targetedHunt('+beastId+')','ok');
         // Đánh dấu đã thử — nếu tick sau không có active thì coi như cạn/thất bại
         this._pendingHunt={slot,beastId,at:Date.now(),nam:nowYear()};
@@ -3016,112 +3044,96 @@ const AutoFarm={
       return false;
     }
   },
+  combatNoProgress(why){
+    this._noProg=(this._noProg||0)+1;
+    this.push('Trận chưa tiến triển ('+why+') ×'+this._noProg,'dbg');
+    if(this._noProg>=3){this._noProg=0;return 'stuck'}
+    return 'combat-wait';
+  },
   handleCombat(){
     const tran=run().tran;
     const waitingCombat=run().active?.waiting?.kind==='combat';
-    // Trận mới (waiting combat mà chưa có tran / tran mới): reset cờ
     if(waitingCombat&&!tran)this._combatStarted=null;
     if(tran?.ketThuc){
-      this._combatStarted=null;
-      try{g.xongTran();this.push('xongTran (Enter sau trận)','ok');return 'combat-end'}
+      this._combatStarted=null;this._turnSig=null;this._turnSame=0;this._noProg=0;
+      try{g.xongTran();this.push('xongTran (kết trận'+(typeof tran.ketThuc==='string'?': '+tran.ketThuc:'')+')','ok');return 'combat-end'}
       catch(e){this.push('xongTran: '+(e.message||e),'err');return 'stuck'}
     }
-    // Đã bấm Giao chiến / tốc chiến rồi → chơi lượt hoặc chờ
-    if(tran&&this._combatStarted&&!tran.ketThuc){
-      // Tốc chiến đang resolve hoặc cần đánh tay từng lượt
-      if(!this.opts.tocChien||!(typeof g.duKienTran==='function'&&g.duKienTran()?.duocTocChien)){
-        const turn=this.playCombatTurn();
-        if(turn)return turn;
-      }
-      return 'combat-wait';
+    if(!tran)return 'combat-wait';
+    /* Màn vào trận: run.tran đã có sẵn nhưng daGiaoChien=false. PHẢI Giao chiến (hoặc Tốc chiến) trước rồi mới ra chiêu được.
+       Khớp bản ghi tay: giao_chien → chieu… → danh_thuong → ket_luot → … → xongTran. */
+    const started=typeof tran.daGiaoChien==='boolean'?tran.daGiaoChien:!!this._combatStarted;
+    if(started){
+      const turn=this.playCombatTurn();
+      return turn||'combat-wait';
     }
-    if(!tran&&this.injuryLevel()>=1)this.ensureHealthy(true);
-
+    this._turnSig=null;this._turnSame=0;
     let dk=null;
     try{dk=typeof g.duKienTran==='function'?g.duKienTran():null}catch{}
     const allowFast=this.opts.tocChien&&this.injuryLevel()<2&&dk?.duocTocChien!==false;
     if(allowFast){
       try{
-        if(typeof g.tocChienTran==='function'){
-          g.tocChienTran();
-          this._combatStarted=true;
-          this.push('Tốc chiến','ok');
-          return 'combat-fast';
-        }
-      }catch(e){this.push('Tốc chiến fail: '+(e.message||e)+' → Enter giao chiến','dbg')}
+        g.tocChienTran();
+        this._combatStarted=true;
+        this.push('Tốc chiến','ok');
+        return 'combat-fast';
+      }catch(e){this.push('Tốc chiến lỗi: '+(e.message||e)+' → giao chiến','dbg')}
     }else if(this.opts.tocChien&&dk&&dk.duocTocChien===false){
-      this.push('Game không cho tốc chiến → Enter giao chiến','dbg');
-    }else if(this.injuryLevel()>=2){
-      this.push('Thương nặng — không tốc chiến','dbg');
-    }
-    // Chỉ bỏ khi CHƯA bị buộc vào combat wait; nếu waiting=combat thì phải đánh
-    const forced=run().active?.waiting?.kind==='combat'||!!tran;
-    if(!forced&&dk&&dk.thang===false&&this.opts.skipTuDia!==false){
-      this.push('Bỏ giao chiến — dự kiến khó/không thắng','dbg');
-      try{
-        const ch=this.viewChoices();
-        const esc=A(ch).find(c=>c&&(c.thoat||/thôi|đóng|rời|bỏ|không/i.test(String(c.text||''))));
-        if(esc){
-          g.choose?.(esc.index);
-          this.push('Thoát thay vì đánh khó','ok');
-          return 'combat-skip';
-        }
-      }catch{}
-    }
-    // Đã vào trận (không tốc chiến): đánh theo lượt như bản ghi tay
-    if(tran&&!tran.ketThuc){
-      const turn=this.playCombatTurn();
-      if(turn)return turn;
+      this.push('Trận này không tốc chiến được → giao chiến','dbg');
     }
     try{
       if(typeof g.hanhDongTran!=='function')throw new Error('Không có hanhDongTran');
       g.hanhDongTran({loai:'giao_chien'});
       this._combatStarted=true;
-      const tip=dk?(dk.thang?'dự kiến thắng':'dự kiến khó')+', hiệp~'+(dk.nHiep??'?'):'manual';
-      this.push('Enter giao_chien ('+tip+')','ok');
-      // Ngay sau giao_chien nếu trận vẫn mở → thử 1 lượt
-      if(run().tran&&!run().tran.ketThuc){
-        const turn=this.playCombatTurn();
-        if(turn)return turn;
-      }
-      return 'combat-manual';
+      this.push('Giao chiến ('+(dk?(dk.thang?'dự kiến thắng':'dự kiến khó')+', hiệp~'+(dk.nHiep??'?'):'không có dự kiến')+')','ok');
     }catch(e){
-      this.push('giao_chien: '+(e.message||e),'dbg');
-      return 'wait';
+      this.push('giao_chien: '+(e.message||e),'err');
+      return this.combatNoProgress('giao_chien lỗi');
     }
+    const t2=run().tran;
+    if(t2&&!t2.ketThuc)return this.playCombatTurn()||'combat-manual';
+    return 'combat-manual';
   },
+  /* Một lượt của ta. Dữ liệu thật: run.tran.ta.chieu[] (id dạng "item.xxx#6", dang, phi, uy), ta.linhLuc, ta.hoi[id] = hiệp dùng lại được.
+     (Bản cũ đọc tran.phe.ta.chieu — đường dẫn không tồn tại, nên danh sách chiêu luôn rỗng.) */
   playCombatTurn(){
-    // Bản ghi tay: chieu → danh_thuong → ket_luot khi không tốc chiến
     const tran=run().tran;
     if(!tran||tran.ketThuc||typeof g.hanhDongTran!=='function')return null;
-    try{
-      // Ưu tiên chiêu còn dùng được (nếu API/state lộ danh sách)
-      const chieu=A(tran.phe?.ta?.chieu||tran.chieu||tran.skills).filter(c=>c&&c.id&&(c.dang!==false));
-      // Fallback: lấy từ nhanVat kinh mạch — không chắc; chỉ thử chieu nếu có id rõ
-      if(chieu.length){
-        const c=chieu[0];
-        g.hanhDongTran({loai:'chieu',id:c.id});
-        this.push('Trận: chiêu '+c.id,'dbg');
-        return 'combat-chieu';
-      }
-    }catch(e){this.push('chieu: '+(e.message||e),'dbg')}
-    try{
-      g.hanhDongTran({loai:'danh_thuong'});
-      this.push('Trận: đánh thường','dbg');
-    }catch(e){
-      // có thể đã hết action trong hiệp
-      this.push('danh_thuong: '+(e.message||e),'dbg');
+    const ta0=tran.ta||{};
+    const sig=[tran.hiep,tran.luot,Math.round(Number(ta0.khiHuyet)||0),Math.round(Number(ta0.linhLuc)||0),A(tran.dich).map(d=>Math.round(Number(d?.khiHuyet)||0)).join(',')].join('|');
+    if(sig===this._turnSig){
+      if(++this._turnSame>=4){this._turnSame=0;this.push('Trận không đổi sau 4 lượt thử — dừng để xử tay','err',{sig});return 'stuck'}
+    }else{this._turnSig=sig;this._turnSame=0}
+    if(tran.luot&&tran.luot!=='ta')return 'combat-wait';
+    const ended=()=>{const t=run().tran;return !t||!!t.ketThuc};
+    const act=a=>{
+      try{g.hanhDongTran(a);return true}
+      catch(e){this.push('Trận: '+a.loai+(a.id?' '+a.id:'')+' lỗi: '+String(e.message||e).slice(0,60),'dbg');return false}
+    };
+    const tried=new Set();
+    const usable=()=>{
+      const t=run().tran;if(!t||t.ketThuc)return [];
+      const ta=t.ta||{},hiep=Number(t.hiep)||0,ll=Number(ta.linhLuc)||0;
+      const hpR=(Number(ta.khiHuyet)||0)/Math.max(1,Number(ta.khiHuyetToiDa)||1);
+      return A(ta.chieu).filter(c=>c&&c.id&&!tried.has(c.id)&&(Number(c.phi)||0)<=ll&&(Number(ta.hoi?.[c.id])||0)<=hiep).map(c=>{
+        const uy=Number(c.uy)||0;let w;
+        if(c.dang==='hoi_phuc')w=hpR<0.5?900:-1;
+        else if(c.dang==='thu')w=hpR<0.7?500:-1;
+        else if(c.dang==='khong_che')w=200+uy;
+        else w=300+uy*10;
+        return{c,w};
+      }).filter(x=>x.w>=0).sort((a,b)=>b.w-a.w).map(x=>x.c);
+    };
+    let n=0,cast=0;
+    while(n++<10&&!ended()){
+      const list=usable();if(!list.length)break;
+      const c=list[0];tried.add(c.id);
+      if(act({loai:'chieu',id:c.id})){cast++;this.push('Trận: chiêu '+(c.ten||c.id),'dbg')}
     }
-    try{
-      if(run().tran&&!run().tran.ketThuc){
-        g.hanhDongTran({loai:'ket_luot'});
-        this.push('Trận: kết lượt','dbg');
-      }
-    }catch(e){this.push('ket_luot: '+(e.message||e),'dbg')}
-    if(run().tran?.ketThuc){
-      try{g.xongTran();this.push('xongTran','ok');return 'combat-end'}catch{}
-    }
-    return 'combat-turn';
+    if(!ended()&&!run().tran?.ta?.daDanhThuong)act({loai:'danh_thuong'});
+    if(!ended())act({loai:'ket_luot'});
+    this._noProg=0;
+    return ended()?'combat-end':'combat-turn';
   },
   _combatKey(tran){
     if(!tran)return 'x';
@@ -3249,6 +3261,19 @@ const AutoFarm={
     if(this.paused){this.schedule();return}
     try{
       if(run().ketThuc){this.stop('kiếp đã kết thúc');return}
+
+      /* Watchdog: cùng một thế cục quá lâu (không năm trôi, không đổi encounter/trận) → tạm dừng thay vì lặp vô hạn */
+      {
+        const t=run().tran,sig=[run().nam,run().viTri,run().oNoi,run().active?.id,run().active?.done,run().active?.waiting?.kind,t?.hiep,t?.daGiaoChien,t?.ketThuc,Math.round(Number(t?.ta?.khiHuyet)||0),Math.round(Number(t?.ta?.linhLuc)||0),!!run().thongBao].join('|');
+        if(sig===this._wdSig){
+          if(++this._wdN>=25){
+            this._wdN=0;this.stats.err++;
+            this.push('Watchdog: 25 nhịp liền không có gì đổi — tạm dừng','err');
+            try{this.dumpState('watchdog')}catch{}
+            this.paused=true;this.syncFab();toast('Auto tạm dừng (đứng yên 25 nhịp) — bấm Xuất log gửi lại','',4500);return;
+          }
+        }else{this._wdSig=sig;this._wdN=0}
+      }
 
       // Ưu tiên chữa thương khi rảnh
       if(!this.busy()&&this.injuryLevel()>=Math.max(1,Number(this.opts.healMinLevel||1))){
@@ -3421,6 +3446,7 @@ const AutoFarm={
     try{
       const x=store.get('xuTri',null);if(x)this.opts.xuTri=x;
       const p=store.get('afPursuit',null);if(p)this.opts.pursuit=p;
+      const ap=store.get('afApex',null);if(ap)this.opts.apex=ap;
       const h=store.get('afAutoHeal',null);if(h!==null&&h!==undefined)this.opts.autoHeal=!!h;
       const ht=store.get('afHaiThuoc',null);if(typeof ht==='boolean')this.opts.includeHaiThuoc=ht;
     }catch{}
@@ -3530,6 +3556,13 @@ VIEWS.auto=()=>{
         <option value="suu_hon" ${o.xuTri==='suu_hon'?'selected':''}>Sưu hồn (nếu có)</option>
       </select>
     </label>
+    <label class="sub grow">Lùng con đầu đàn (săn yêu)
+      <select id="af-apex">
+        <option value="fallback" ${o.apex==='fallback'?'selected':''}>Săn thường trước (khi hiểm mới lùng đầu đàn)</option>
+        <option value="never" ${o.apex==='never'?'selected':''}>Không bao giờ</option>
+        <option value="prefer" ${o.apex==='prefer'?'selected':''}>Ưu tiên lùng đầu đàn</option>
+      </select>
+    </label>
     <label class="sub grow">Đuổi theo / buông tha
       <select id="af-pursuit">
         <option value="release" ${o.pursuit==='release'?'selected':''}>Buông tha (an toàn)</option>
@@ -3566,6 +3599,7 @@ VIEWS.auto=()=>{
   $(body,'#af-heal').onchange=e=>{o.autoHeal=e.target.checked;store.set('afAutoHeal',o.autoHeal)};
   $(body,'#af-pauseheal').onchange=e=>{o.pauseIfNoHeal=e.target.checked};
   $(body,'#af-xutri').onchange=e=>{o.xuTri=e.target.value;store.set('xuTri',o.xuTri);toast('Đã nhớ: xử tù binh = '+o.xuTri,'ok',2200)};
+  $(body,'#af-apex').onchange=e=>{o.apex=e.target.value;store.set('afApex',o.apex);toast('Lùng đầu đàn = '+o.apex,'ok',2000)};
   $(body,'#af-pursuit').onchange=e=>{o.pursuit=e.target.value;store.set('afPursuit',o.pursuit);toast('Đuổi/tha = '+o.pursuit,'ok',2000)};
 };
 
