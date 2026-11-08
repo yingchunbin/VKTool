@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261108-autofarm-v69',ID='vkt2',g=window.game;
+const BUILD='20261108-autofarm-v71',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -408,8 +408,16 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     let pool;
     if (!hypo) {
       // Cùng rule với giả định, chỉ giới hạn trong túi
-      const pw = Number(p.pathW || p.w || 0);
+      let pw = Number(p.pathW || p.w || 0);
       const tags0 = BUILD_TAGS[school] || [];
+      if (school !== 'tu_do' && pw >= 2) {
+        const nBag = Object.keys(nv0.tuiDo || {}).filter((id) => {
+          const it0 = c.items.get(id);
+          if (!it0 || (it0.loai !== 'cong_phap' && it0.loai !== 'phap_khi') || !it0.hinh || (it0.canh_gioi ?? 0) > cg) return false;
+          return schoolMatch(school, tags0, [...A(it0.tag), ...TP(it0.tran_phai)].map(String), it0);
+        }).length;
+        if (nBag < 6) { S.pref._relaxed = nBag; pw = 1; } else S.pref._relaxed = 0;
+      }
       pool = Object.keys(nv0.tuiDo || {}).filter((id) => {
         const it = c.items.get(id);
         if (!it || (it.loai !== 'cong_phap' && it.loai !== 'phap_khi') || !it.hinh) return false;
@@ -439,7 +447,19 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
       // Ngoài lối: cg-1..cg · Đúng lối: cg-3..cg (thêm 1 bậc thấp hơn để đủ mảnh lấp / phủ lối)
       const cgMin = Math.max(0, cg - 1);
       const cgMinPath = Math.max(0, cg - 3);
-      const pw = Number(p.pathW || p.w || 0);
+      let pw = Number(p.pathW || p.w || 0);
+      if (school !== 'tu_do' && pw >= 2) {
+        // Lối có ít đồ trong cảnh giới này (vd. Phù tu / Trận tu / Khí tu): ép "chỉ đồ lối" sẽ để trống lưới → nới về "ưu tiên"
+        let nMatch = 0;
+        for (const [, it0] of c.items) {
+          if (!it0 || (it0.loai !== 'cong_phap' && it0.loai !== 'phap_khi') || !it0.hinh) continue;
+          const i0 = it0.canh_gioi ?? 0; if (i0 > cg || i0 < cgMinPath) continue;
+          const t0 = [...(it0.tag || []), ...(typeof it0.tran_phai === 'string' ? [it0.tran_phai] : [])].map(String);
+          if (t0.includes('nghich_thien') || it0.tran_phai) continue;
+          if (schoolMatch(school, BUILD_TAGS[school] || [], t0, it0)) nMatch++;
+        }
+        if (nMatch < 10) { S.pref._relaxed = nMatch; pw = 1; } else S.pref._relaxed = 0;
+      }
       for (const [id, it] of c.items) {
         if (!it || (it.loai !== 'cong_phap' && it.loai !== 'phap_khi') || !it.hinh) continue;
         const icg = it.canh_gioi ?? 0;
@@ -622,7 +642,10 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     const K = S.core, c = C();
     const nv2 = clone(nv); nv2.kinhMach.manh = manh;
     const g = K.xo(c, nv2), km = nv2.kinhMach;
-    const hy = new Set(km.huyetThem || []); g.huyet.forEach((v, i) => v && hy.add(i));
+    const hy = new Set(km.huyetThem || []);
+    // Huyệt gốc của KIẾP này đã lệch so với khuôn (km.huyetGoc, gdd 11 §2.3); không có (save cũ) mới lấy đúng khuôn
+    if (Array.isArray(km.huyetGoc) && km.huyetGoc.length) km.huyetGoc.forEach((i) => hy.add(i));
+    else g.huyet.forEach((v, i) => v && hy.add(i));
     const own = {}, cols = [], used = {}, pieces = [];
     const R = K.Rt(nv2, c);
     manh.forEach((m, n) => {
@@ -1589,7 +1612,7 @@ const PATH_MUC=[['0','Không theo lối (chỉ xét sức mạnh)'],['1','Ưu ti
 
 
 const MODES=[['danh','Chiến đấu'],['tu','Tu luyện'],['can','Cân bằng']];
-const bld={pref:{body:'current',mainElement:'auto',subs:[],school:'tu_do',alignment:'auto'},iters:500,busy:false,results:null,mode:'danh',msg:''};
+const bld={pref:{body:'current',mainElement:'auto',subs:[],school:'tu_do',alignment:'auto'},iters:900,busy:false,results:null,mode:'danh',msg:''};
 const opt=(arr,v)=>arr.map(([k,n])=>`<option value="${E(k)}" ${k===v?'selected':''}>${E(n)}</option>`).join('');
 function rootText(){const lc=me().linhCan;if(!lc||typeof lc!=='object')return'—';return[({vo:'Vô linh căn',tap:'Tạp linh căn',song:'Song linh căn',thien:'Thiên linh căn',bien_di:'Biến dị linh căn'})[lc.pham]||lc.pham,A(lc.he).map(h=>ELEMENT_NAMES[h]||h).join(' · ')].filter(Boolean).join(' · ')}
 function bodyOptions(){const cur=me().theChat,col=C.theChat,out=[['current',`Hiện tại · ${T(col?.get?.(cur)?.ten||cur||'—')}`]];if(col instanceof Map)for(const[id,r] of col)if(id!==cur)out.push([id,T(r?.ten||id)]);return out}
@@ -1682,7 +1705,7 @@ VIEWS.build=()=>{
 
   const schoolSel='<select id="b-school" class="grow">'+[['tu_do','Tự do (không theo lối)'],...BUILDS.map(b=>[b.k,'['+b.nhom+'] '+b.ten])].map(([k,n])=>'<option value="'+E(k)+'" '+(k===(pathK||'tu_do')?'selected':'')+'>'+E(n)+'</option>').join('')+'</select>';
   const wSel='<select id="b-pw" class="grow">'+PATH_MUC.map(([v,t])=>'<option value="'+v+'" '+(String(pathW)===v?'selected':'')+'>'+E(t)+'</option>').join('')+'</select>';
-  const itSel='<select id="b-it" class="grow">'+[['250','Nhanh'],['500','Cân bằng'],['900','Tính kỹ']].map(([k,n])=>'<option value="'+k+'" '+(String(bld.iters)===k?'selected':'')+'>'+n+'</option>').join('')+'</select>';
+  const itSel='<select id="b-it" class="grow">'+[['400','Nhanh'],['900','Cân bằng'],['1600','Tính kỹ'],['2800','Rất kỹ']].map(([k,n])=>'<option value="'+k+'" '+(String(bld.iters)===k?'selected':'')+'>'+n+'</option>').join('')+'</select>';
   const rSel='<div class="chips" style="flex-wrap:wrap;margin:6px 0">'+[1,2,3,4,5].map(r=>'<button type="button" class="chip '+(r===R?'on':'')+'" data-br="'+r+'">'+E(cgTen(r))+(r===R0?' · hiện':'')+'</button>').join('')+'</div>';
 
   let picksHtml='';
@@ -1735,7 +1758,8 @@ VIEWS.build=()=>{
 
   const syncPath=()=>{
     const k=$(body,'#b-school')?.value||'tu_do';
-    const w=+($(body,'#b-pw')?.value||0);
+    let w=+($(body,'#b-pw')?.value||0);
+    if(k!=='tu_do'&&w===0)w=2; // chọn lối mà mức vẫn 0 thì bộ lọc bị tắt ngầm → mặc định "Ưu tiên mạnh"
     bld.path={k:k==='tu_do'?'':k,w:k==='tu_do'?0:w};
     p.school=k==='tu_do'?'tu_do':k;
     bld.iters=+($(body,'#b-it')?.value||bld.iters);
@@ -1762,7 +1786,7 @@ VIEWS.build=()=>{
     try{
       await BuildEngine.ensureCore(x=>{if(msg())msg().textContent=x});
       bld.results=await BuildEngine.optimizeThree(p,bld.iters,(f,m,l)=>{if(bar())bar().style.width=Math.round(f*100)+'%';if(msg())msg().textContent=(MODES.find(x=>x[0]===m)?.[1]||'')+' · '+l+' · '+Math.round(f*100)+'%'});
-      bld.msg=hypo?'Xong giả định. Có thể xếp vào bộ (sẽ thêm món thiếu vào túi nếu được).':'Xong. Chọn hướng, bấm xếp vào bộ 1/2/3 hoặc xếp cả 3 bộ.';
+      bld.msg=(hypo?'Xong giả định. Có thể xếp vào bộ (sẽ thêm món thiếu vào túi nếu được).':'Xong. Chọn hướng, bấm xếp vào bộ 1/2/3 hoặc xếp cả 3 bộ.')+(p._relaxed?(' Lối này chỉ có '+p._relaxed+' món phù hợp — đã nới từ "chỉ đồ lối" về "ưu tiên" để không bỏ trống lưới.'):'');
     }catch(e){console.error(e);bld.msg='Chưa tính được: '+(e?.message||e)}
     finally{bld.busy=false;if(ui.tab==='build'&&ui.isOpen)VIEWS.build()}
   };
