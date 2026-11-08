@@ -83,6 +83,8 @@ const CSS=`
 #${ID} input,#${ID} select{background:rgba(255,255,255,.35);color:var(--ink);border:1px solid var(--line2);border-radius:7px;padding:7px 8px;font-size:14px;min-width:0}
 #${ID} input[type=search],#${ID} .grow{flex:1 1 140px}
 #${ID} .sum{color:var(--ink2);font-size:12px;margin:2px 0 8px}
+#${ID} .grp-h{color:var(--gold);font-weight:700;font-size:12.5px;letter-spacing:.02em;margin:12px 0 4px}
+#${ID} .grp-h:first-of-type{margin-top:4px}
 #${ID} .card{position:relative;display:grid;grid-template-columns:34px 1fr auto;gap:4px 10px;background:rgba(255,255,255,.3);border:1px solid var(--line);border-left:3px solid var(--jade);border-radius:9px;padding:9px 10px;margin-bottom:8px}
 #${ID} .card.d2{border-left-color:var(--amber)}#${ID} .card.d3{border-left-color:var(--red)}
 #${ID} .ico{grid-row:1/3;width:34px;height:34px;border-radius:8px;border:1px solid var(--line2);color:var(--gold);display:grid;place-items:center;font-size:18px;background:rgba(0,0,0,.05)}
@@ -351,6 +353,43 @@ const AutoFarm={
       bump(acc.chiSo[k], Number(prev.chiSo?.[k]||0), Number(now.chiSo?.[k]||0));
     }
     this.gainsPrev=now;
+  },
+  /* Đọc "transcript" của sự kiện/trận đang mở hoặc vừa đóng, lấy các dòng loại 'system'/'result'
+   * (nơi game show thay đổi chỉ số, vật phẩm…), dò số đi kèm "tu vi"/"linh thạch" để cộng dồn
+   * vào rewardEst — không phụ thuộc việc nhân vật có thật sự tăng chỉ số hay không. */
+  harvestRewardLines(a){
+    if(!a)return;
+    try{
+      const key=(a.id||'')+'|'+(a.slot||'');
+      if(this._txKey!==key){this._txKey=key;this._txN=0}
+      const lines=A(a.transcript);
+      if(lines.length<this._txN)this._txN=0; // phòng khi transcript bị reset
+      if(lines.length<=this._txN)return;
+      const fresh=lines.slice(this._txN);
+      this._txN=lines.length;
+      for(const ln of fresh){
+        if(!ln||(ln.kind!=='system'&&ln.kind!=='result'))continue;
+        const text=String(ln.text||'').trim();
+        if(!text)continue;
+        this.rewardLog.push({nam:nowYear(),kind:ln.kind,text});
+        if(this.rewardLog.length>500)this.rewardLog.splice(0,this.rewardLog.length-500);
+        this.accumulateRewardGuess(text);
+      }
+    }catch(e){try{console.warn('[AutoFarm] harvestRewardLines',e)}catch{}}
+  },
+  /* Dò chữ best-effort — KHÔNG đảm bảo khớp 100% với mọi cách game diễn đạt; mục đích là ước
+   * tính tham khảo. Nếu số không khớp thực tế, xem lại rewardLog (nhật ký trận gốc) để chỉnh. */
+  accumulateRewardGuess(text){
+    const toNum=s=>{
+      if(s==null)return null;
+      const v=Number(String(s).replace(/\./g,'').replace(/,/g,''));
+      return Number.isFinite(v)?v:null;
+    };
+    const grab=(re)=>{const m=re.exec(text);return m?toNum(m[1]):null};
+    const tv=grab(/([+-]?\d[\d.,]*)\s*tu\s*vi\b/i)??grab(/tu\s*vi\b[^0-9+-]{0,12}([+-]?\d[\d.,]*)/i);
+    const lt=grab(/([+-]?\d[\d.,]*)\s*linh\s*th[ạa]ch\b/i)??grab(/linh\s*th[ạa]ch\b[^0-9+-]{0,12}([+-]?\d[\d.,]*)/i);
+    if(tv!=null)this.rewardEst.tuVi+=tv;
+    if(lt!=null)this.rewardEst.linhThach+=lt;
   },
   gainsHtml(){
     const d=this.gainsDelta();
@@ -702,6 +741,8 @@ const AutoFarm={
       state:this.dumpState('export'),
       gains:this.gainsDelta(),
       gainsBase:this.gainsBase||null,
+      rewardEstimate:{...this.rewardEst,note:'Ước tính dò chữ từ nhật ký trận/sự kiện — xem rewardLog để đối chiếu nguyên văn'},
+      rewardLog:this.rewardLog,
       log:this.log,
       record:this.rec.events.slice(-200)
     };
@@ -728,7 +769,18 @@ const AutoFarm={
       return `<div class="sub${cls}">[${E(t)}]${k?` <b>${E(k)}</b>`:''} ${E(x.msg)}</div>`;
     }).join('')||'<div class="sub">Chưa có nhật ký.</div>';
     const st=$(body,'#af-stats');
-    if(st)st.textContent=`OK ${this.stats.ok} · bỏ ${this.stats.skip} · lỗi ${this.stats.err} · chữa ${this.stats.heal||0}${this.running?(this.paused?' · TẠM DỪNG':' · ĐANG CHẠY'):''}`;
+    if(st)st.textContent=`Thành công ${this.stats.ok} · Bỏ qua ${this.stats.skip} · Gặp lỗi ${this.stats.err} · Đã chữa thương ${this.stats.heal||0}${this.running?(this.paused?' · TẠM DỪNG':' · ĐANG CHẠY'):''}`;
+    try{
+      const re=this.rewardEst||{tuVi:0,linhThach:0};
+      const rs=$(body,'#af-reward-sum');
+      if(rs)rs.innerHTML=`Tu vi ước tính: <b class="g">${re.tuVi>=0?'+':''}${F(re.tuVi)}</b> · Linh thạch ước tính: <b class="g">${re.linhThach>=0?'+':''}${F(re.linhThach)}</b>`;
+      const rd=$(body,'#af-reward-detail');
+      if(rd){
+        const lines=(this.rewardLog||[]).slice(-30).reverse();
+        rd.innerHTML=lines.map(x=>`<div class="sub">[năm ${F(x.nam)}] ${E(x.text)}</div>`).join('')||'<div class="sub">Chưa có dòng nào — bắt đầu chạy auto để thu thập.</div>';
+        const rc=$(body,'#af-reward-count');if(rc)rc.textContent=lines.length;
+      }
+    }catch{}
     this.syncGainsBar?.();
   },
 
@@ -1923,6 +1975,7 @@ const AutoFarm={
   tryEncounter(){
     if(run().thongBao||run().thongBaoDai){this.dismissNotices();return 'notice'}
     const a=run().active;if(!a)return 'idle';
+    try{this.harvestRewardLines(a)}catch{}
     const w=a.waiting;
     // Đấu giá / không farm: chọn thoát ngay nếu có choice
     if(!w&&this.isNonFarmEnc(a.id)){
@@ -2300,6 +2353,7 @@ const AutoFarm={
       chiSo:Object.fromEntries(this.STAT_KEYS.map(k=>[k,{plus:0,minus:0}]))
     };
     this.gainsLog=[];
+    this.rewardLog=[];this.rewardEst={tuVi:0,linhThach:0};this._txKey=null;this._txN=0;
     try{
       const x=store.get('xuTri',null);if(x)this.opts.xuTri=x;
       const p=store.get('afPursuit',null);if(p)this.opts.pursuit=p;
@@ -2312,7 +2366,7 @@ const AutoFarm={
     this.push('Bắt đầu Auto Farm','ok',{opts:{...this.opts},thuong:this.injuryName(this.injuryLevel())});
     this.dumpState('start');
     if(!this.targets().length)this.push('Cảnh báo: 0 mục tiêu lúc start','err');
-    toast('Auto Farm chạy. Tạm dừng/Dừng cạnh icon tool.','ok',3000);
+    toast('Auto Farm đang chạy. Tạm dừng/Dừng ở 2 nút cạnh biểu tượng 自.','ok',3000);
     this.syncFab();
     try{ui.isOpen=false;panel.classList.remove('open');fab.classList.remove('open');fab.style.display='';fab.style.visibility='visible'}catch{}
     this.schedule();
@@ -2434,16 +2488,17 @@ const AutoFarm={
       phamAll.push(`<div class="af-row"><span class="af-k">${E(ten)}</span><span class="net">${cell(v)}</span></div>`);
     }
     body.innerHTML=`
-      <div class="af-sec">Tài nguyên</div>
+      <div class="af-sec">Tài nguyên (đã cộng vào nhân vật)</div>
       <div class="af-row3 head"><span></span><span>+</span><span>−</span><span>Thực tế</span></div>
       ${row3('Tu vi', d.tuVi)}
       ${row3('Linh thạch', d.linhThach)}
+      <div class="af-sub" style="margin-top:4px">Ước tính từ trận/sự kiện (kể cả khi tu vi đã kịch trần): Tu vi ${cell(this.rewardEst?.tuVi||0)} · Linh thạch ${cell(this.rewardEst?.linhThach||0)}</div>
       <div class="af-sec">Chỉ số</div>
       <div class="af-row3 head"><span></span><span>+</span><span>−</span><span>Thực tế</span></div>
       ${this.STAT_KEYS.map(k=>row3(this.STAT_LABELS[k]||k, d.chiSo?.[k])).join('')}
       <div class="af-sec">Vật phẩm</div>
       ${phamAll.join('')}
-      <div class="af-sub">OK ${this.stats.ok||0} · bước ${this.stepN||0}${this.paused?' · tạm dừng':''}<br>Năm ${F(d.base.nam)} → ${F(d.now.nam)}</div>`;
+      <div class="af-sub">Thành công ${this.stats.ok||0} · Đã thực hiện ${this.stepN||0} hành động${this.paused?' · tạm dừng':''}<br>Năm ${F(d.base.nam)} → ${F(d.now.nam)}</div>`;
   },
 
   syncFab(){
@@ -2494,28 +2549,48 @@ VIEWS.auto=()=>{
   const injLine=inj>0
     ? `<div class="panel" style="border-color:var(--red,#c4472c)"><b class="r">Thương thế: ${E(AutoFarm.injuryName(inj))}</b><div class="sub">${heal?`Sẽ dùng: ${E(heal.ten)} (heal ${heal.heal})`:'Túi không có đan chữa — nên mua Hồi Xuân Đan / Kim Sang Dược / Sinh Cơ Đan'}</div></div>`
     : '';
+  const re=AutoFarm.rewardEst||{tuVi:0,linhThach:0};
+  const rewardLines=(AutoFarm.rewardLog||[]).slice(-30).reverse();
   body.innerHTML=`<div class="panel"><b style="color:var(--gold)">Auto Farm</b>
-    <div class="sub">Tự đi quanh vùng: săn yêu, làm việc trên bản đồ, ghé nơi gần có việc. Bấm Bắt đầu sẽ thu panel; tạm dừng/dừng ở nút cạnh icon tiên.</div></div>
+    <div class="sub">Tự đi quanh vùng: săn yêu thú, làm việc vặt trên bản đồ, ghé nơi gần có việc. Khi bắt đầu, khung này sẽ gọn lại — mở ra tiếp bằng biểu tượng 自 ở góc màn hình.</div></div>
   ${injLine}
   <div class="bar">
-    <button class="btn pri" id="af-toggle">▶ Bắt đầu (thu panel)</button>
-    <button class="btn" id="af-export">Xuất log</button>
+    <button class="btn pri" id="af-toggle">▶ Bắt đầu Auto Farm</button>
+    <button class="btn" id="af-export">Xuất nhật ký</button>
+  </div>
+
+  <div class="grp-h">Phạm vi càn quét</div>
+  <div class="bar" style="flex-wrap:wrap;gap:8px">
+    <label class="sub"><input type="checkbox" id="af-san" ${o.onlySanYeu?'checked':''}> Chỉ săn yêu thú, bỏ qua việc khác</label>
+    <label class="sub"><input type="checkbox" id="af-near" ${o.preferNear!==false?'checked':''}> Ưu tiên nơi gần trước</label>
+    <label class="sub"><input type="checkbox" id="af-places" ${o.includeNearPlaces!==false?'checked':''}> Ghé thành thị / trấn gần khi rảnh</label>
+    <label class="sub"><input type="checkbox" id="af-nodes" ${o.includeMapNodes!==false?'checked':''}> Làm việc vặt trên bản đồ</label>
+    <label class="sub"><input type="checkbox" id="af-wild" ${o.includeWildSan!==false?'checked':''}> Săn yêu thú hoang dã</label>
+    <label class="sub"><input type="checkbox" id="af-herb" ${o.includeHaiThuoc?'checked':''}> Hái thuốc dại</label>
+  </div>
+
+  <div class="grp-h">Chiến đấu</div>
+  <div class="bar" style="flex-wrap:wrap;gap:8px">
+    <label class="sub"><input type="checkbox" id="af-toc" ${o.tocChien?'checked':''}> Đánh nhanh khi có thể</label>
+    <label class="sub"><input type="checkbox" id="af-tudia" ${o.skipTuDia?'checked':''}> Tránh tử địa / trận khó thắng</label>
+    <label class="sub"><input type="checkbox" id="af-choose" ${o.autoChoose?'checked':''}> Tự động chọn phương án khi gặp sự kiện</label>
   </div>
   <div class="bar" style="flex-wrap:wrap;gap:8px">
-    <label class="sub"><input type="checkbox" id="af-san" ${o.onlySanYeu?'checked':''}> Chỉ săn yêu</label>
-    <label class="sub"><input type="checkbox" id="af-near" ${o.preferNear!==false?'checked':''}> Ưu tiên nơi gần</label>
-    <label class="sub"><input type="checkbox" id="af-places" ${o.includeNearPlaces!==false?'checked':''}> Ghé thành thị / trấn gần</label>
-    <label class="sub"><input type="checkbox" id="af-nodes" ${o.includeMapNodes!==false?'checked':''}> Việc trên bản đồ</label>
-    <label class="sub"><input type="checkbox" id="af-wild" ${o.includeWildSan!==false?'checked':''}> Săn yêu hoang dã</label>
-    <label class="sub"><input type="checkbox" id="af-herb" ${o.includeHaiThuoc?'checked':''}> Hái thuốc dại</label>
-    <label class="sub"><input type="checkbox" id="af-toc" ${o.tocChien?'checked':''}> Tốc chiến (khi game cho phép)</label>
-    <label class="sub"><input type="checkbox" id="af-tudia" ${o.skipTuDia?'checked':''}> Tránh tử địa / khó thắng</label>
-    <label class="sub"><input type="checkbox" id="af-choose" ${o.autoChoose?'checked':''}> Tự chọn lựa chọn</label>
-    <label class="sub"><input type="checkbox" id="af-heal" ${o.autoHeal?'checked':''}> Tự dùng thuốc chữa thương</label>
-    <label class="sub"><input type="checkbox" id="af-pauseheal" ${o.pauseIfNoHeal?'checked':''}> Dừng nếu hết thuốc (nặng+)</label>
-  </div>
-  <div class="bar">
-    <label class="sub grow">Sau thắng (tù binh)
+    <label class="sub grow">Khi săn yêu, có lùng con đầu đàn không
+      <select id="af-apex">
+        <option value="fallback" ${o.apex==='fallback'?'selected':''}>Săn thường trước, hết mới lùng đầu đàn</option>
+        <option value="never" ${o.apex==='never'?'selected':''}>Không bao giờ</option>
+        <option value="prefer" ${(o.apex==='prefer'||o.apex==='always')?'selected':''}>Ưu tiên lùng đầu đàn</option>
+      </select>
+    </label>
+    <label class="sub grow">Khi địch bỏ chạy
+      <select id="af-pursuit">
+        <option value="release" ${o.pursuit==='release'?'selected':''}>Buông tha (an toàn)</option>
+        <option value="chase" ${o.pursuit==='chase'?'selected':''}>Đuổi theo</option>
+        <option value="auto" ${o.pursuit==='auto'?'selected':''}>Tự động (tha nếu đang bị thương)</option>
+      </select>
+    </label>
+    <label class="sub grow">Sau khi thắng, xử lý tù binh
       <select id="af-xutri">
         <option value="tha" ${o.xuTri==='tha'?'selected':''}>Tha mạng</option>
         <option value="ket_lieu" ${o.xuTri==='ket_lieu'?'selected':''}>Kết liễu</option>
@@ -2523,29 +2598,35 @@ VIEWS.auto=()=>{
         <option value="suu_hon" ${o.xuTri==='suu_hon'?'selected':''}>Sưu hồn (nếu có)</option>
       </select>
     </label>
-    <label class="sub grow">Lùng con đầu đàn (săn yêu)
-      <select id="af-apex">
-        <option value="fallback" ${o.apex==='fallback'?'selected':''}>Săn thường trước (khi hiểm mới lùng đầu đàn)</option>
-        <option value="never" ${o.apex==='never'?'selected':''}>Không bao giờ</option>
-        <option value="prefer" ${(o.apex==='prefer'||o.apex==='always')?'selected':''}>Ưu tiên lùng đầu đàn</option>
-      </select>
-    </label>
-    <label class="sub grow">Né săn quái (tên, cách nhau dấu phẩy)
+    <label class="sub grow">Né những con quái sau (cách nhau bằng dấu phẩy)
       <input id="af-avoid" type="text" value="${E(o.avoidBeasts||'')}">
     </label>
-    <label class="sub grow">Dừng khi thọ nguyên còn ≤ (năm)
+  </div>
+
+  <div class="grp-h">An toàn &amp; sức khoẻ</div>
+  <div class="bar" style="flex-wrap:wrap;gap:8px">
+    <label class="sub"><input type="checkbox" id="af-heal" ${o.autoHeal?'checked':''}> Tự dùng thuốc khi bị thương</label>
+    <label class="sub"><input type="checkbox" id="af-pauseheal" ${o.pauseIfNoHeal?'checked':''}> Dừng lại nếu hết thuốc mà đang thương nặng</label>
+  </div>
+  <div class="bar">
+    <label class="sub grow">Dừng lại khi thọ nguyên chỉ còn (năm)
       <input id="af-minlife" type="number" min="0" step="1" value="${o.minLifeYears??3}">
     </label>
-    <label class="sub grow">Đuổi theo / buông tha
-      <select id="af-pursuit">
-        <option value="release" ${o.pursuit==='release'?'selected':''}>Buông tha (an toàn)</option>
-        <option value="chase" ${o.pursuit==='chase'?'selected':''}>Đuổi theo</option>
-        <option value="auto" ${o.pursuit==='auto'?'selected':''}>Tự động (tha nếu đang thương)</option>
-      </select>
-    </label>
   </div>
-  <div class="sum" id="af-stats">OK ${AutoFarm.stats.ok} · bỏ ${AutoFarm.stats.skip} · lỗi ${AutoFarm.stats.err} · chữa ${AutoFarm.stats.heal||0}${AutoFarm.running?(AutoFarm.paused?' · TẠM DỪNG':' · ĐANG CHẠY'):''}</div>
-  <div class="panel" style="max-height:32vh;overflow:auto;font-size:12px" id="af-log">${AutoFarm.log.slice().reverse().map(x=>`<div class="sub${x.kind==='err'?' r':x.kind==='ok'?' g':''}">[${E(x.tShow||x.t||'')}] ${E(x.msg)}</div>`).join('')||'<div class="sub">Chưa có nhật ký. Bấm Bắt đầu rồi gửi file log nếu lỗi.</div>'}</div>
+
+  <div class="sum" id="af-stats">Thành công ${AutoFarm.stats.ok} · Bỏ qua ${AutoFarm.stats.skip} · Gặp lỗi ${AutoFarm.stats.err} · Đã chữa thương ${AutoFarm.stats.heal||0}${AutoFarm.running?(AutoFarm.paused?' · TẠM DỪNG':' · ĐANG CHẠY'):''}</div>
+
+  <div class="panel">
+    <b style="color:var(--gold)">Tài nguyên có thể nhận được trong lượt chạy này</b>
+    <div class="sub">Tính từ lời tường thuật của từng trận/sự kiện, nên vẫn hiện số ngay cả khi nhân vật đã kịch trần (max tu vi/cảnh giới) và phần cộng thật vào nhân vật là 0. Đây là số ước tính — xem chi tiết bên dưới để đối chiếu.</div>
+    <div class="sum" id="af-reward-sum" style="margin:6px 0 0">Tu vi ước tính: <b class="g">${re.tuVi>=0?'+':''}${F(re.tuVi)}</b> · Linh thạch ước tính: <b class="g">${re.linhThach>=0?'+':''}${F(re.linhThach)}</b></div>
+    <details style="margin-top:6px">
+      <summary class="sub" style="cursor:pointer">Xem nguyên văn (<span id="af-reward-count">${rewardLines.length}</span> dòng gần nhất)</summary>
+      <div id="af-reward-detail" style="max-height:22vh;overflow:auto;font-size:12px;margin-top:6px">${rewardLines.map(x=>`<div class="sub">[năm ${F(x.nam)}] ${E(x.text)}</div>`).join('')||'<div class="sub">Chưa có dòng nào — bắt đầu chạy auto để thu thập.</div>'}</div>
+    </details>
+  </div>
+
+  <div class="panel" style="max-height:32vh;overflow:auto;font-size:12px" id="af-log">${AutoFarm.log.slice().reverse().map(x=>`<div class="sub${x.kind==='err'?' r':x.kind==='ok'?' g':''}">[${E(x.tShow||x.t||'')}] ${E(x.msg)}</div>`).join('')||'<div class="sub">Chưa có nhật ký. Bấm Bắt đầu rồi xuất nhật ký nếu gặp lỗi.</div>'}</div>
   <div class="sum">${list.length} mục tiêu gần → xa</div>
   ${list.map(t=>`<article class="card ${t.danger.rank>=2?'d'+t.danger.rank:''}" data-slot="${E(t.slot)}" data-title="${E(t.title)}">
     <div class="ico">戰</div>
