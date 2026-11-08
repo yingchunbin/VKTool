@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261108-autofarm-v68',ID='vkt2',g=window.game;
+const BUILD='20261108-autofarm-v69',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -1223,7 +1223,11 @@ const CSS=`
 #${ID}-chip{display:none!important;pointer-events:none!important;visibility:hidden}
 #${ID}-afbar{position:fixed;z-index:2147483001;display:flex;flex-direction:column-reverse;align-items:center;gap:6px;pointer-events:auto}
 #${ID}-afstats{position:fixed;z-index:2147483646;left:12px;bottom:12px;width:min(380px,calc(100vw - 24px));max-height:min(70vh,520px);overflow:auto;background:linear-gradient(180deg,rgba(22,28,40,.97),rgba(10,12,18,.97));border:1px solid #a8843f;border-radius:12px;padding:0 0 10px;color:#e8dcc8;font:13px/1.4 system-ui,sans-serif;box-shadow:0 8px 28px rgba(0,0,0,.55);pointer-events:auto}
-#${ID}-afstats .af-drag{cursor:move;padding:10px 14px 6px;user-select:none;touch-action:none}
+#${ID}-afstats .af-drag{cursor:move;padding:8px 14px 6px;user-select:none;touch-action:none;display:flex;align-items:center;gap:8px}
+#${ID}-afstats .af-tg{flex:none;border:1px solid #a8843f;background:transparent;color:#e2b765;border-radius:6px;width:24px;height:24px;cursor:pointer;font-size:13px;line-height:1;padding:0}
+#${ID}-afstats.col{width:auto;max-width:min(380px,calc(100vw - 24px))}
+#${ID}-afstats.col .af-drag{padding:6px 10px}
+#${ID}-afstats .af-row .pos{color:#9fe6a0}#${ID}-afstats .af-row .neg{color:#ff8d80}
 #${ID}-afstats .af-h{color:#e2b765;font-weight:700;font-size:14px;letter-spacing:.02em}
 #${ID}-afstats .af-body{padding:0 14px}
 #${ID}-afstats .af-row{display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px solid rgba(168,132,63,.12)}
@@ -1804,7 +1808,29 @@ async function addItemToBag(id,qty){
   return{ok:true,msg:`Đã thêm ${F(got)} ${T(rec.ten||id)} vào túi${wait>0?` · ${F(wait)} đang chờ cất vì túi đầy`:''}.`};
 }
 /* ───────── Tab con: Tìm theo hình (công pháp / pháp khí) ───────── */
-const shapeUi={cells:new Set(),loai:'all',mirror:false,grade:'all',mode:'all',res:null,limit:20};
+const PHAM_COLOR_DEF={1:'#b8b8b8',2:'#e6d36b',3:'#6ea8ff',4:'#5fd08a',5:'#ff9a4d',6:'#4fe0e6',7:'#ffd24a',8:'#ff5f8a'};
+let gameColors=null;
+function detectGameColors(){
+  if(gameColors)return gameColors;
+  const out={he:{},pham:{}};
+  try{
+    for(const sh of document.styleSheets){
+      let rules;try{rules=sh.cssRules}catch{continue}
+      for(const r of rules||[]){
+        const sel=r.selectorText,col=r.style&&r.style.color;
+        if(!sel||!col)continue;
+        let m=sel.match(/\.(?:pham|grade|rarity|q|p)[-_]?([1-8])\b/i);if(m&&!out.pham[m[1]])out.pham[m[1]]=col;
+        m=sel.match(/\.(?:he|el|element|hanh)[-_](kim|moc|thuy|hoa|tho|bang|loi|phong|am|vo_sac)\b/i);if(m&&!out.he[m[1].toLowerCase()])out.he[m[1].toLowerCase()]=col;
+      }
+    }
+  }catch{}
+  return gameColors=out;
+}
+const heColor=h=>detectGameColors().he[h]||(h==='am'?'#9a86c8':HE_COLOR[h])||'#ccc';
+const phamColor=p=>detectGameColors().pham[p]||PHAM_COLOR_DEF[p]||'#ccc';
+const heHtml=list=>A(list).map(h=>`<span style="color:${heColor(h)};font-weight:600">${E(ELEMENT_NAMES[h]||h)}</span>`).join('<span style="opacity:.5">/</span>');
+const gradeHtml=p=>N(p)?`<span style="color:${phamColor(p)};font-weight:700">${E(GRADE_NAMES[p]||('Phẩm '+p))}</span>`:'';
+const shapeUi={cells:new Set(),tab:'exact',loai:'all',mirror:false,grade:'all',res:null,limit:20};
 const SHAPE_N=7;
 const parseHinh=h=>{
   const out=[];
@@ -1871,13 +1897,13 @@ function shapeCardHtml(r,id){
   if(ch)lines.push(`Chiêu <b>${E(T(ch.ten||''))}</b> · ${E(DANG_NAME[ch.dang]||ch.dang||'')} · phí ${F(ch.phi||0)} · hồi ${F(ch.hoi||0)} · uy ${F(ch.uy||0)}`);
   const pl=passiveLines(r.bi_dong);
   if(pl.length)lines.push('Bị động: '+E(pl.join(' · ')));
-  if(A(r.he).length>1)lines.push('Mảnh đa hệ: '+E(A(r.he).map(h=>ELEMENT_NAMES[h]||h).join(' + ')));
+  if(A(r.he).length>1)lines.push('Mảnh đa hệ: '+heHtml(r.he));
   if(r.tran_phai)lines.push('Trận phái: '+E(String(r.tran_phai)));
   const tags=A(r.tag).filter(Boolean);
   const own=inBag(id);
-  return `<article class="card" data-item="${E(id)}" style="grid-template-columns:auto 1fr;gap:10px;align-items:start">${mini}<div>
-    <b>${E(T(r.ten||id))}</b>${own>0?` <small>(túi: ${F(own)})</small>`:''}
-    <small style="display:block">${E(kind)} · ${E(GRADE_NAMES[r.pham_cap]||'')}${N(r.canh_gioi)?` · ${E(cgTen(r.canh_gioi)||('cảnh '+r.canh_gioi))}`:''}${A(r.he).length?' · '+E(A(r.he).map(h=>ELEMENT_NAMES[h]||h).join('/')):''} · ${pts.length} ô</small>
+  return `<article class="card" data-item="${E(id)}" style="grid-template-columns:auto 1fr;gap:10px;align-items:start;border-left:3px solid ${phamColor(r.pham_cap)}">${mini}<div>
+    <b style="color:${phamColor(r.pham_cap)}">${E(T(r.ten||id))}</b>${own>0?` <small>(túi: ${F(own)})</small>`:''}
+    <small style="display:block">${E(kind)} · ${gradeHtml(r.pham_cap)}${N(r.canh_gioi)?` · ${E(cgTen(r.canh_gioi)||('cảnh '+r.canh_gioi))}`:''}${A(r.he).length?' · '+heHtml(r.he):''} · ${pts.length} ô</small>
     ${lines.map(l=>`<small style="display:block;margin-top:2px">${l}</small>`).join('')}
     ${r.mo_ta?`<small style="display:block;margin-top:3px;opacity:.75">${E(T(r.mo_ta))}</small>`:''}
     ${tags.length?`<small style="display:block;margin-top:2px;opacity:.6">${E(tags.join(' · '))}</small>`:''}
@@ -1926,17 +1952,17 @@ function renderShapeResults(){
   const box=$(body,'#sh-res');if(!box)return;
   const r=shapeUi.res;
   if(!r){box.innerHTML='<div class="sub">Vẽ tới đâu lọc tới đó. Chưa vẽ ô nào.</div>';return}
-  const groups=[
-    ['exact','Khớp đúng hình',r.exact],
-    ['fit','Ráp vừa vào hình vẽ (mảnh nhỏ hơn, đặt lọt trong vùng đã vẽ)',r.fit],
-    ['contain','Chứa hình vẽ (mảnh lớn hơn, hình vẽ nằm trọn trong mảnh)',r.contain]
-  ].filter(([k])=>shapeUi.mode==='all'||shapeUi.mode===k);
+  const tabs=[['exact','Khớp đúng',r.exact],['fit','Ráp vừa',r.fit],['contain','Chứa hình',r.contain]];
+  if(!tabs.find(t=>t[0]===shapeUi.tab&&t[2].length)){const f=tabs.find(t=>t[2].length);if(f)shapeUi.tab=f[0]}
+  const cur=tabs.find(t=>t[0]===shapeUi.tab)||tabs[0];
+  const hint={exact:'Cùng hình với hình vẽ (xoay 90° vẫn khớp).',fit:'Mảnh nhỏ hơn, đặt lọt trong vùng đã vẽ — nhiều ô nhất trước.',contain:'Mảnh lớn hơn, hình vẽ nằm trọn bên trong — sát hình nhất trước.'}[cur[0]];
   const lim=shapeUi.limit;
-  box.innerHTML=`<div class="sum">Hình ${r.n} ô · khớp đúng ${F(r.exact.length)} · ráp vừa ${F(r.fit.length)} · chứa ${F(r.contain.length)}${shapeUi.mirror?' · cho lật gương':''}</div>`
-    +groups.map(([k,title,ids])=>`<h3 style="margin:10px 0 4px">${E(title)} <small>(${F(ids.length)})</small></h3>`
-      +(ids.slice(0,lim).map(id=>shapeCardHtml(C.items.get(id),id)).join('')||'<div class="sub">Không có.</div>')
-      +(ids.length>lim?`<button class="btn" data-more="${k}" style="width:100%">Xem thêm</button>`:'')).join('');
-  $$(box,'[data-more]').forEach(b=>b.onclick=()=>{shapeUi.limit+=20;renderShapeResults()});
+  box.innerHTML=`<div class="bar" style="gap:6px;flex-wrap:wrap">${tabs.map(([k,t,ids])=>`<button class="chip ${k===cur[0]?'on':''}" data-shtab="${k}">${t} (${F(ids.length)})</button>`).join('')}</div>
+    <div class="sub">Hình ${r.n} ô${shapeUi.mirror?' · cho lật gương':''} — ${E(hint)}</div>`
+    +(cur[2].slice(0,lim).map(id=>shapeCardHtml(C.items.get(id),id)).join('')||'<div class="sub">Không có mảnh nào ở nhóm này.</div>')
+    +(cur[2].length>lim?'<button class="btn" id="sh-more" style="width:100%">Xem thêm</button>':'');
+  $$(box,'[data-shtab]').forEach(b=>b.onclick=()=>{shapeUi.tab=b.dataset.shtab;shapeUi.limit=20;renderShapeResults()});
+  $(box,'#sh-more')?.addEventListener('click',()=>{shapeUi.limit+=20;renderShapeResults()});
 }
 function viewShapeSearch(){
   const grades=[...new Set(shapeIndex().map(x=>x.r.pham_cap).filter(N))].sort((a,b)=>a-b);
@@ -1946,12 +1972,11 @@ function viewShapeSearch(){
     cells+=`<div class="shc" data-c="${x},${y}" style="aspect-ratio:1;border-radius:4px;cursor:pointer;border:1px solid rgba(226,183,101,.3);background:${on?'var(--gold)':'rgba(255,255,255,.05)'}"></div>`;
   }
   body.insertAdjacentHTML('beforeend',`<div class="panel"><b style="color:var(--gold)">Tìm công pháp / pháp khí theo hình</b>
-    <div class="sub">Chấm hoặc kéo để vẽ (lưới ${SHAPE_N}×${SHAPE_N}); kết quả lọc ngay khi vẽ. Vị trí trên lưới không quan trọng, xoay 90° vẫn khớp. Nếu không có mảnh đúng hình, xem nhóm \u201cRáp vừa\u201d (mảnh nhỏ hơn đặt lọt vào vùng bạn vẽ) hoặc \u201cChứa\u201d.</div>
+    <div class="sub">Chấm hoặc kéo để vẽ (lưới ${SHAPE_N}×${SHAPE_N}); kết quả lọc ngay khi vẽ. Vị trí trên lưới không quan trọng, xoay 90° vẫn khớp.</div>
     <div id="sh-grid" style="display:grid;grid-template-columns:repeat(${SHAPE_N},1fr);gap:3px;max-width:300px;margin:8px 0;touch-action:none;user-select:none">${cells}</div>
     <div class="bar" style="flex-wrap:wrap;gap:6px">
       <select id="sh-loai"><option value="all">Công pháp + Pháp khí</option><option value="cong_phap" ${shapeUi.loai==='cong_phap'?'selected':''}>Chỉ công pháp</option><option value="phap_khi" ${shapeUi.loai==='phap_khi'?'selected':''}>Chỉ pháp khí</option></select>
       <select id="sh-grade"><option value="all">Mọi phẩm</option>${grades.map(g2=>`<option value="${g2}" ${String(shapeUi.grade)===String(g2)?'selected':''}>${E(GRADE_NAMES[g2]||('Phẩm '+g2))}</option>`).join('')}</select>
-      <select id="sh-mode"><option value="all">Hiện tất cả nhóm</option><option value="exact" ${shapeUi.mode==='exact'?'selected':''}>Chỉ khớp đúng</option><option value="fit" ${shapeUi.mode==='fit'?'selected':''}>Chỉ ráp vừa (nhỏ hơn)</option><option value="contain" ${shapeUi.mode==='contain'?'selected':''}>Chỉ chứa hình vẽ (lớn hơn)</option></select>
       <button class="chip ${shapeUi.mirror?'on':''}" id="sh-mirror">Cho lật gương</button>
     </div>
     <div class="bar" style="gap:6px"><button class="btn pri" id="sh-go">Tìm lại</button><button class="btn" id="sh-clear">Xóa hình</button><span class="sub" id="sh-cnt">${shapeUi.cells.size} ô</span></div>
@@ -1972,7 +1997,6 @@ function viewShapeSearch(){
   const stop=()=>{painting=null};
   grid.addEventListener('pointerup',stop);grid.addEventListener('pointercancel',stop);
   $(body,'#sh-loai').onchange=e=>{shapeUi.loai=e.target.value;shapeLive()};
-  $(body,'#sh-mode').onchange=e=>{shapeUi.mode=e.target.value;renderShapeResults()};
   $(body,'#sh-grade').onchange=e=>{shapeUi.grade=e.target.value;shapeLive()};
   $(body,'#sh-mirror').onclick=e=>{shapeUi.mirror=!shapeUi.mirror;e.currentTarget.classList.toggle('on',shapeUi.mirror);shapeLive()};
   $(body,'#sh-clear').onclick=()=>{shapeUi.cells.clear();shapeUi.res=null;$$(body,'.shc').forEach(el=>el.style.background='rgba(255,255,255,.05)');$(body,'#sh-cnt').textContent='0 ô';renderShapeResults()};
@@ -2027,7 +2051,7 @@ VIEWS.itemsList=()=>{
     <button class="chip ${itemUi.bag?'on':''}" id="i-bag">Đang có</button>
   </div>
   <div class="sum">${F(all.length)} / ${F(allIdx.length)} vật phẩm${all.length>shown.length?` · hiện ${shown.length}`:''}</div>
-  ${shown.map(({id,r})=>`<article class="card" data-item="${E(id)}" style="grid-template-columns:1fr auto"><div><b>${E(T(r.ten||id))}</b><small>${E(TYPE_NAMES[r.loai]||r.loai||'')} · ${E(GRADE_NAMES[r.pham_cap]||'')}${N(r.canh_gioi)?` · ${E(cgTen(r.canh_gioi)||('cảnh '+r.canh_gioi))}`:''}${A(r.he).length?' · '+E(A(r.he).map(h=>ELEMENT_NAMES[h]||h).join('/')):''}</small></div><div class="side">${inBag(id)?`Túi: ${F(inBag(id))}`:''}${waiting(id)?`<small>Chờ cất: ${F(waiting(id))}</small>`:''}</div>${r.mo_ta?`<small style="grid-column:1/3">${E(T(r.mo_ta).slice(0,140))}</small>`:''}<div class="acts" style="grid-column:1/3"><input class="qty" type="number" inputmode="numeric" min="1" max="${BAG_MAX}" value="1" aria-label="Số lượng"><button class="btn pri" data-add="${E(id)}">Thêm vào túi</button></div><small class="addmsg" style="grid-column:1/3"></small></article>`).join('')||'<div class="empty">Không tìm thấy vật phẩm.</div>'}
+  ${shown.map(({id,r})=>`<article class="card" data-item="${E(id)}" style="grid-template-columns:1fr auto"><div><b style="color:${phamColor(r.pham_cap)}">${E(T(r.ten||id))}</b><small>${E(TYPE_NAMES[r.loai]||r.loai||'')} · ${gradeHtml(r.pham_cap)}${N(r.canh_gioi)?` · ${E(cgTen(r.canh_gioi)||('cảnh '+r.canh_gioi))}`:''}${A(r.he).length?' · '+heHtml(r.he):''}</small></div><div class="side">${inBag(id)?`Túi: ${F(inBag(id))}`:''}${waiting(id)?`<small>Chờ cất: ${F(waiting(id))}</small>`:''}</div>${r.mo_ta?`<small style="grid-column:1/3">${E(T(r.mo_ta).slice(0,140))}</small>`:''}<div class="acts" style="grid-column:1/3"><input class="qty" type="number" inputmode="numeric" min="1" max="${BAG_MAX}" value="1" aria-label="Số lượng"><button class="btn pri" data-add="${E(id)}">Thêm vào túi</button></div><small class="addmsg" style="grid-column:1/3"></small></article>`).join('')||'<div class="empty">Không tìm thấy vật phẩm.</div>'}
   ${all.length>shown.length?'<button class="btn" id="i-more" style="width:100%">Xem thêm</button>':''}`;
   let t;$(body,'#i-q').oninput=e=>{itemUi.q=e.target.value;itemUi.limit=30;clearTimeout(t);t=setTimeout(()=>{VIEWS.items();const i=$(body,'#i-q');i.focus();i.setSelectionRange(i.value.length,i.value.length)},250)};
   $(body,'#i-type').onchange=e=>{itemUi.type=e.target.value;if(itemUi.type!=='cong_phap'&&itemUi.type!=='phap_khi')itemUi.he='all';itemUi.limit=30;render()};
@@ -2221,6 +2245,8 @@ const AutoFarm={
       nam:nowYear(),
       linhThach:Number(nv.linhThach||0),
       tuVi:Number(nv.tuVi||0),
+      binhCanh:Number(nv.binhCanh||0),
+      tuViTong:Number(nv.tuVi||0)+Number(nv.binhCanh||0),
       tieu:Number(nv.tieuCanhGioi||0),
       canhGioi:Number(nv.canhGioi||0),
       thuongThe:Number(nv.thuongThe||0),
@@ -2284,10 +2310,10 @@ const AutoFarm={
     bump(acc.linhThach, prev.linhThach, now.linhThach);
     // Tu vi: cộng dồn theo phiên. Lên tiểu/đại cảnh giới thì tu vi về 0 → không tính là mất, phần mới có sau khi lên tính là nhận.
     if(now.canhGioi>prev.canhGioi||(now.canhGioi===prev.canhGioi&&now.tieu>prev.tieu)){
-      acc.tuVi.plus+=Math.max(0,Number(now.tuVi)||0);
+      acc.tuVi.plus+=Math.max(0,Number(now.tuViTong)||0);
     }else if(now.canhGioi<prev.canhGioi||now.tieu<prev.tieu){
       // tụt cảnh giới: không suy ra được mất bao nhiêu, bỏ qua nhịp này
-    }else bump(acc.tuVi, prev.tuVi, now.tuVi);
+    }else bump(acc.tuVi, prev.tuViTong??prev.tuVi, now.tuViTong??now.tuVi);
     bump(acc.canhGioi, prev.canhGioi, now.canhGioi);
     for(const k of keys){
       if(!acc.chiSo[k])acc.chiSo[k]={plus:0,minus:0};
@@ -4287,7 +4313,15 @@ const AutoFarm={
     if(!panel){
       panel=document.createElement('div');
       panel.id=ID+'-afstats';
-      panel.innerHTML='<div class="af-drag" data-afdrag="1"><div class="af-h">Thống kê Auto</div></div><div class="af-body"></div>';
+      panel.innerHTML='<div class="af-drag" data-afdrag="1"><button type="button" class="af-tg" data-aftoggle="1" title="Thu gọn / mở rộng">▾</button><div class="af-h">Thống kê Auto</div></div><div class="af-body"></div>';
+      try{if(store.get('afStatsCol',false))panel.dataset.col='1'}catch{}
+      panel.querySelector('[data-aftoggle]').addEventListener('click',e=>{
+        e.stopPropagation();
+        if(panel.dataset.col)delete panel.dataset.col;else panel.dataset.col='1';
+        try{store.set('afStatsCol',!!panel.dataset.col)}catch{}
+        this.syncGainsBar();
+      });
+      panel.querySelector('[data-aftoggle]').addEventListener('pointerdown',e=>e.stopPropagation());
       document.body.appendChild(panel);
       // Kéo di chuyển
       const head=panel.querySelector('[data-afdrag]');
@@ -4334,44 +4368,35 @@ const AutoFarm={
       body.innerHTML='<div class="af-sub">Đang bắt đầu…</div>';
       return;
     }
-    const cell=(n)=>{const x=Number(n)||0;return (x>0?'+':'')+F(x)};
     const pair=p=>{
       if(p&&typeof p==='object'&&('net' in p||'plus' in p))return p;
       const n=Number(p)||0;return{plus:Math.max(0,n),minus:Math.max(0,-n),net:n};
     };
-    const row3=(label,p)=>{
+    const sg=n=>{const x=Number(n)||0;return (x>0?'+':'')+F(x)};
+    const line=(label,p)=>{
       const x=pair(p);
-      return `<div class="af-row3"><span class="af-k">${E(label)}</span><span class="pos">${cell(x.plus)}</span><span class="neg">${x.minus?('-'+F(x.minus)):'0'}</span><span class="net">${cell(x.net)}</span></div>`;
+      return `<div class="af-row"><span class="af-k">${E(label)}</span><span><span class="pos">${sg(x.plus)}</span> <span class="neg">${x.minus?('−'+F(x.minus)):'−0'}</span> = <b class="net">${sg(x.net)}</b></span></div>`;
     };
-    // Phẩm: Phàm → Nghịch Thiên (1→8)
-    const phamRows=[];
+    const short=p=>{const x=pair(p);return sg(x.net)};
+    const collapsed=!!panel.dataset.col;
+    panel.classList.toggle('col',collapsed);
+    const tg=panel.querySelector('[data-aftoggle]');if(tg)tg.textContent=collapsed?'▸':'▾';
+    const hh=panel.querySelector('.af-h');
+    if(hh)hh.textContent=collapsed?`Auto · Tu vi ${short(d.tuVi)} · LT ${short(d.linhThach)}`:'Thống kê Auto';
+    if(collapsed){body.innerHTML='';return}
+    const stats=this.STAT_KEYS.map(k=>[this.STAT_LABELS[k]||k,pair(d.chiSo?.[k])]).filter(([,x])=>x.plus||x.minus);
+    const bag=[];
     for(let p=1;p<=8;p++){
-      const v=Number(d.bagByPham?.[p]||d.bagByPham?.[String(p)]||0);
-      if(!v&&!d.bagByPham?.[p]&&!d.bagByPham?.[String(p)]){
-        // vẫn hiện 0 nếu muốn đủ hàng — chỉ hiện khi có đổi hoặc luôn hiện
-        continue;
-      }
-      const ten=this.PHAM_TEN[p]||('Phẩm '+p);
-      phamRows.push(`<div class="af-row"><span class="af-k">${E(ten)}</span><span class="net">${cell(v)}</span></div>`);
-    }
-    // luôn liệt kê đủ 8 phẩm
-    const phamAll=[];
-    for(let p=1;p<=8;p++){
-      const v=Number((d.bagByPham&& (d.bagByPham[p]??d.bagByPham[String(p)]))||0);
-      const ten=this.PHAM_TEN[p]||('Phẩm '+p);
-      phamAll.push(`<div class="af-row"><span class="af-k">${E(ten)}</span><span class="net">${cell(v)}</span></div>`);
+      const v=Number((d.bagByPham&&(d.bagByPham[p]??d.bagByPham[String(p)]))||0);
+      if(v)bag.push(`<div class="af-row"><span class="af-k">${E(this.PHAM_TEN[p]||('Phẩm '+p))}</span><b class="net">${sg(v)}</b></div>`);
     }
     body.innerHTML=`
-      <div class="af-sec">Tài nguyên</div>
-      <div class="af-row3 head"><span></span><span>+</span><span>−</span><span>Thực tế</span></div>
-      ${row3('Tu vi', d.tuVi)}
-      ${row3('Linh thạch', d.linhThach)}
-      <div class="af-sec">Chỉ số</div>
-      <div class="af-row3 head"><span></span><span>+</span><span>−</span><span>Thực tế</span></div>
-      ${this.STAT_KEYS.map(k=>row3(this.STAT_LABELS[k]||k, d.chiSo?.[k])).join('')}
-      <div class="af-sec">Vật phẩm</div>
-      ${phamAll.join('')}
-      <div class="af-sub">OK ${this.stats.ok||0} · bước ${this.stepN||0}${this.paused?' · tạm dừng':''}<br>Năm ${F(d.base.nam)} → ${F(d.now.nam)}</div>`;
+      ${line('Tu vi',d.tuVi)}
+      ${line('Linh thạch',d.linhThach)}
+      ${N(d.canhGioi?.net)&&d.canhGioi.net?line('Cảnh giới',d.canhGioi):''}
+      ${stats.map(([l,x])=>line(l,x)).join('')||'<div class="af-sub">Chỉ số: chưa đổi</div>'}
+      ${bag.length?'<div class="af-sec">Vật phẩm trong túi</div>'+bag.join(''):''}
+      <div class="af-sub">Năm ${F(d.base.nam)} → ${F(d.now.nam)} · bước ${this.stepN||0}${this.paused?' · tạm dừng':''} · (+ nhận, − mất, = thực)</div>`;
   },
 
   syncFab(){
