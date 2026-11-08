@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261107-autofarm-v65',ID='vkt2',g=window.game;
+const BUILD='20261108-autofarm-v68',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -1803,7 +1803,193 @@ async function addItemToBag(id,qty){
   if(got<=0&&wait<=0)return{ok:false,msg:'Không thêm được vật phẩm này.'};
   return{ok:true,msg:`Đã thêm ${F(got)} ${T(rec.ten||id)} vào túi${wait>0?` · ${F(wait)} đang chờ cất vì túi đầy`:''}.`};
 }
+/* ───────── Tab con: Tìm theo hình (công pháp / pháp khí) ───────── */
+const shapeUi={cells:new Set(),loai:'all',mirror:false,grade:'all',mode:'all',res:null,limit:20};
+const SHAPE_N=7;
+const parseHinh=h=>{
+  const out=[];
+  A(h).forEach((row,y)=>{[...String(row)].forEach((ch,x)=>{if(ch!==' '&&ch!=='.'&&ch!=='-'&&ch!=='_'&&ch!=='0')out.push([x,y])})});
+  return out;
+};
+const canonShape=(pts,mirror)=>{
+  if(!pts.length)return '';
+  const norm1=p=>{const mx=Math.min(...p.map(q=>q[0])),my=Math.min(...p.map(q=>q[1]));return p.map(q=>[q[0]-mx,q[1]-my]).sort((a,b)=>a[1]-b[1]||a[0]-b[0]).map(q=>q.join(',')).join(';')};
+  const rot=p=>p.map(([x,y])=>[-y,x]);
+  const flip=p=>p.map(([x,y])=>[-x,y]);
+  let best=null;
+  for(const base of mirror?[pts,flip(pts)]:[pts]){
+    let cur=base;
+    for(let r=0;r<4;r++){const k=norm1(cur);if(best===null||k<best)best=k;cur=rot(cur)}
+  }
+  return best;
+};
+let shapeIdxCache=null;
+const shapeIndex=()=>{
+  if(shapeIdxCache)return shapeIdxCache;
+  const rows=[];
+  for(const [id,r] of C.items){
+    if(r.loai!=='cong_phap'&&r.loai!=='phap_khi')continue;
+    if(!Array.isArray(r.hinh))continue;
+    const pts=parseHinh(r.hinh);
+    if(!pts.length)continue;
+    rows.push({id,r,pts,n:pts.length,k0:canonShape(pts,false),k1:canonShape(pts,true)});
+  }
+  return shapeIdxCache=rows;
+};
+const PASSIVE_LABEL={toc_do:'Tốc độ tu luyện',dot_pha:'Tỉ lệ đột phá',khi_huyet:'Khí huyết',ho_the:'Hộ thể',khang_tam_ma:'Kháng tâm ma'};
+function passiveLines(bd){
+  const out=[];if(!bd)return out;
+  let defs=null;
+  try{const core=window.tuTien?.core||{};defs=core['character/statDefs']?.STAT_DEFS||null}catch{}
+  const fmt=(v,unit)=>unit==='pct'?('+'+F(v*100)+'%'):((v>0?'+':'')+F(v));
+  const byKey=new Map();
+  if(defs)for(const d of defs)byKey.set(d.key,d);
+  for(const [k,v] of Object.entries(bd)){
+    if(k==='chi_so'&&v&&typeof v==='object'){
+      for(const [c,x] of Object.entries(v)){const d=byKey.get('chi_so.'+c);out.push((d?.label||c)+' '+fmt(Number(x),d?.unit||'flat'))}
+      continue;
+    }
+    if(!N(v))continue;
+    const d=byKey.get(k);
+    out.push((d?.label||PASSIVE_LABEL[k]||k)+' '+fmt(Number(v),d?.unit||(Math.abs(v)<1?'pct':'flat')));
+  }
+  return out;
+}
+const DANG_NAME={cong:'Công',thu:'Thủ',khong_che:'Khống chế',hoi_phuc:'Hồi phục'};
+function shapeCardHtml(r,id){
+  const pts=parseHinh(r.hinh);
+  const w=Math.max(...pts.map(p=>p[0]))+1,h=Math.max(...pts.map(p=>p[1]))+1;
+  const on=new Set(pts.map(p=>p.join(',')));
+  let mini=`<div style="display:grid;grid-template-columns:repeat(${w},13px);gap:2px;flex:none">`;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++)mini+=`<i style="width:13px;height:13px;border-radius:2px;background:${on.has(x+','+y)?'var(--gold)':'rgba(255,255,255,.06)'}"></i>`;
+  mini+='</div>';
+  let kind=TYPE_NAMES[r.loai]||r.loai||'';
+  try{const f=window.tuTien?.core?.['character/pieces']?.itemKindName||window.tuTien?.core?.['index']?.itemKindName;if(typeof f==='function')kind=f(r)||kind}catch{}
+  const ch=r.chieu;
+  const lines=[];
+  if(N(r.linh_luc))lines.push(`Linh lực gốc/lượt: <b>${F(r.linh_luc)}</b>`);
+  if(ch)lines.push(`Chiêu <b>${E(T(ch.ten||''))}</b> · ${E(DANG_NAME[ch.dang]||ch.dang||'')} · phí ${F(ch.phi||0)} · hồi ${F(ch.hoi||0)} · uy ${F(ch.uy||0)}`);
+  const pl=passiveLines(r.bi_dong);
+  if(pl.length)lines.push('Bị động: '+E(pl.join(' · ')));
+  if(A(r.he).length>1)lines.push('Mảnh đa hệ: '+E(A(r.he).map(h=>ELEMENT_NAMES[h]||h).join(' + ')));
+  if(r.tran_phai)lines.push('Trận phái: '+E(String(r.tran_phai)));
+  const tags=A(r.tag).filter(Boolean);
+  const own=inBag(id);
+  return `<article class="card" data-item="${E(id)}" style="grid-template-columns:auto 1fr;gap:10px;align-items:start">${mini}<div>
+    <b>${E(T(r.ten||id))}</b>${own>0?` <small>(túi: ${F(own)})</small>`:''}
+    <small style="display:block">${E(kind)} · ${E(GRADE_NAMES[r.pham_cap]||'')}${N(r.canh_gioi)?` · ${E(cgTen(r.canh_gioi)||('cảnh '+r.canh_gioi))}`:''}${A(r.he).length?' · '+E(A(r.he).map(h=>ELEMENT_NAMES[h]||h).join('/')):''} · ${pts.length} ô</small>
+    ${lines.map(l=>`<small style="display:block;margin-top:2px">${l}</small>`).join('')}
+    ${r.mo_ta?`<small style="display:block;margin-top:3px;opacity:.75">${E(T(r.mo_ta))}</small>`:''}
+    ${tags.length?`<small style="display:block;margin-top:2px;opacity:.6">${E(tags.join(' · '))}</small>`:''}
+    ${r.gia?`<small style="display:block;opacity:.6">Giá ${F(r.gia)}</small>`:''}
+  </div></article>`;
+}
+/* small ⊆ big (cho phép xoay 90°, tuỳ chọn lật gương, tịnh tiến): mảnh `small` đặt vừa vào vùng `big` */
+function shapeFits(small,big,mirror){
+  if(!small.length||small.length>big.length)return false;
+  const bigSet=new Set(big.map(q=>q.join(',')));
+  const rot=p=>p.map(([x,y])=>[-y,x]),flip=p=>p.map(([x,y])=>[-x,y]);
+  for(const base of mirror?[small,flip(small)]:[small]){
+    let cur=base;
+    for(let r=0;r<4;r++){
+      const a0=cur[0];
+      for(const b0 of big){
+        const dx=b0[0]-a0[0],dy=b0[1]-a0[1];
+        if(cur.every(q=>bigSet.has((q[0]+dx)+','+(q[1]+dy))))return true;
+      }
+      cur=rot(cur);
+    }
+  }
+  return false;
+}
+function shapeSearch(){
+  const pts=[...shapeUi.cells].map(s=>s.split(',').map(Number));
+  if(!pts.length){shapeUi.res=null;return}
+  const key=canonShape(pts,shapeUi.mirror);
+  const pass=x=>(shapeUi.loai==='all'||x.r.loai===shapeUi.loai)&&(shapeUi.grade==='all'||String(x.r.pham_cap)===shapeUi.grade);
+  const exact=[],fit=[],contain=[];
+  for(const x of shapeIndex()){
+    if(!pass(x))continue;
+    if(x.n===pts.length&&(shapeUi.mirror?x.k1:x.k0)===key){exact.push(x);continue}
+    if(x.n<pts.length&&shapeFits(x.pts,pts,shapeUi.mirror))fit.push(x);
+    else if(x.n>pts.length&&shapeFits(pts,x.pts,shapeUi.mirror))contain.push(x);
+  }
+  const byGrade=(a,b)=>(b.r.pham_cap||0)-(a.r.pham_cap||0)||String(a.r.ten).localeCompare(String(b.r.ten),'vi');
+  exact.sort(byGrade);
+  fit.sort((a,b)=>b.n-a.n||byGrade(a,b));       // lấp được nhiều ô nhất trước
+  contain.sort((a,b)=>a.n-b.n||byGrade(a,b));   // sát hình vẽ nhất trước
+  shapeUi.res={n:pts.length,exact:exact.map(x=>x.id),fit:fit.map(x=>x.id),contain:contain.map(x=>x.id)};
+}
+let shapeTimer=null;
+const shapeLive=()=>{clearTimeout(shapeTimer);shapeTimer=setTimeout(()=>{shapeSearch();renderShapeResults()},120)};
+function renderShapeResults(){
+  const box=$(body,'#sh-res');if(!box)return;
+  const r=shapeUi.res;
+  if(!r){box.innerHTML='<div class="sub">Vẽ tới đâu lọc tới đó. Chưa vẽ ô nào.</div>';return}
+  const groups=[
+    ['exact','Khớp đúng hình',r.exact],
+    ['fit','Ráp vừa vào hình vẽ (mảnh nhỏ hơn, đặt lọt trong vùng đã vẽ)',r.fit],
+    ['contain','Chứa hình vẽ (mảnh lớn hơn, hình vẽ nằm trọn trong mảnh)',r.contain]
+  ].filter(([k])=>shapeUi.mode==='all'||shapeUi.mode===k);
+  const lim=shapeUi.limit;
+  box.innerHTML=`<div class="sum">Hình ${r.n} ô · khớp đúng ${F(r.exact.length)} · ráp vừa ${F(r.fit.length)} · chứa ${F(r.contain.length)}${shapeUi.mirror?' · cho lật gương':''}</div>`
+    +groups.map(([k,title,ids])=>`<h3 style="margin:10px 0 4px">${E(title)} <small>(${F(ids.length)})</small></h3>`
+      +(ids.slice(0,lim).map(id=>shapeCardHtml(C.items.get(id),id)).join('')||'<div class="sub">Không có.</div>')
+      +(ids.length>lim?`<button class="btn" data-more="${k}" style="width:100%">Xem thêm</button>`:'')).join('');
+  $$(box,'[data-more]').forEach(b=>b.onclick=()=>{shapeUi.limit+=20;renderShapeResults()});
+}
+function viewShapeSearch(){
+  const grades=[...new Set(shapeIndex().map(x=>x.r.pham_cap).filter(N))].sort((a,b)=>a-b);
+  let cells='';
+  for(let y=0;y<SHAPE_N;y++)for(let x=0;x<SHAPE_N;x++){
+    const on=shapeUi.cells.has(x+','+y);
+    cells+=`<div class="shc" data-c="${x},${y}" style="aspect-ratio:1;border-radius:4px;cursor:pointer;border:1px solid rgba(226,183,101,.3);background:${on?'var(--gold)':'rgba(255,255,255,.05)'}"></div>`;
+  }
+  body.insertAdjacentHTML('beforeend',`<div class="panel"><b style="color:var(--gold)">Tìm công pháp / pháp khí theo hình</b>
+    <div class="sub">Chấm hoặc kéo để vẽ (lưới ${SHAPE_N}×${SHAPE_N}); kết quả lọc ngay khi vẽ. Vị trí trên lưới không quan trọng, xoay 90° vẫn khớp. Nếu không có mảnh đúng hình, xem nhóm \u201cRáp vừa\u201d (mảnh nhỏ hơn đặt lọt vào vùng bạn vẽ) hoặc \u201cChứa\u201d.</div>
+    <div id="sh-grid" style="display:grid;grid-template-columns:repeat(${SHAPE_N},1fr);gap:3px;max-width:300px;margin:8px 0;touch-action:none;user-select:none">${cells}</div>
+    <div class="bar" style="flex-wrap:wrap;gap:6px">
+      <select id="sh-loai"><option value="all">Công pháp + Pháp khí</option><option value="cong_phap" ${shapeUi.loai==='cong_phap'?'selected':''}>Chỉ công pháp</option><option value="phap_khi" ${shapeUi.loai==='phap_khi'?'selected':''}>Chỉ pháp khí</option></select>
+      <select id="sh-grade"><option value="all">Mọi phẩm</option>${grades.map(g2=>`<option value="${g2}" ${String(shapeUi.grade)===String(g2)?'selected':''}>${E(GRADE_NAMES[g2]||('Phẩm '+g2))}</option>`).join('')}</select>
+      <select id="sh-mode"><option value="all">Hiện tất cả nhóm</option><option value="exact" ${shapeUi.mode==='exact'?'selected':''}>Chỉ khớp đúng</option><option value="fit" ${shapeUi.mode==='fit'?'selected':''}>Chỉ ráp vừa (nhỏ hơn)</option><option value="contain" ${shapeUi.mode==='contain'?'selected':''}>Chỉ chứa hình vẽ (lớn hơn)</option></select>
+      <button class="chip ${shapeUi.mirror?'on':''}" id="sh-mirror">Cho lật gương</button>
+    </div>
+    <div class="bar" style="gap:6px"><button class="btn pri" id="sh-go">Tìm lại</button><button class="btn" id="sh-clear">Xóa hình</button><span class="sub" id="sh-cnt">${shapeUi.cells.size} ô</span></div>
+  </div><div id="sh-res"></div>`);
+  const grid=$(body,'#sh-grid');
+  const paint=(el,val)=>{
+    const c=el?.dataset?.c;if(!c)return;
+    if(val)shapeUi.cells.add(c);else shapeUi.cells.delete(c);
+    el.style.background=val?'var(--gold)':'rgba(255,255,255,.05)';
+    $(body,'#sh-cnt').textContent=shapeUi.cells.size+' ô';
+    shapeLive();
+  };
+  let painting=null;
+  const rootN=panel.getRootNode();
+  const at=e=>{const el=(rootN.elementFromPoint?rootN:document).elementFromPoint(e.clientX,e.clientY);return el&&el.closest?el.closest('.shc'):null};
+  grid.addEventListener('pointerdown',e=>{const el=at(e);if(!el)return;e.preventDefault();painting=!shapeUi.cells.has(el.dataset.c);paint(el,painting);try{grid.setPointerCapture(e.pointerId)}catch{}});
+  grid.addEventListener('pointermove',e=>{if(painting===null)return;const el=at(e);if(el)paint(el,painting)});
+  const stop=()=>{painting=null};
+  grid.addEventListener('pointerup',stop);grid.addEventListener('pointercancel',stop);
+  $(body,'#sh-loai').onchange=e=>{shapeUi.loai=e.target.value;shapeLive()};
+  $(body,'#sh-mode').onchange=e=>{shapeUi.mode=e.target.value;renderShapeResults()};
+  $(body,'#sh-grade').onchange=e=>{shapeUi.grade=e.target.value;shapeLive()};
+  $(body,'#sh-mirror').onclick=e=>{shapeUi.mirror=!shapeUi.mirror;e.currentTarget.classList.toggle('on',shapeUi.mirror);shapeLive()};
+  $(body,'#sh-clear').onclick=()=>{shapeUi.cells.clear();shapeUi.res=null;$$(body,'.shc').forEach(el=>el.style.background='rgba(255,255,255,.05)');$(body,'#sh-cnt').textContent='0 ô';renderShapeResults()};
+  $(body,'#sh-go').onclick=()=>{shapeSearch();renderShapeResults()};
+  if(shapeUi.cells.size&&!shapeUi.res)shapeSearch();
+  renderShapeResults();
+}
+
+const itemSub={v:'list'};
 VIEWS.items=()=>{
+  if(itemSub.v==='shape')body.innerHTML='';else VIEWS.itemsList();
+  const bar=`<div class="bar" id="i-sub" style="gap:6px"><button class="chip ${itemSub.v==='list'?'on':''}" data-sub="list">Danh sách</button><button class="chip ${itemSub.v==='shape'?'on':''}" data-sub="shape">Tìm theo hình</button></div>`;
+  body.insertAdjacentHTML('afterbegin',bar);
+  $$(body,'#i-sub [data-sub]').forEach(b=>b.onclick=()=>{itemSub.v=b.dataset.sub;VIEWS.items()});
+  if(itemSub.v==='shape')viewShapeSearch();
+};
+VIEWS.itemsList=()=>{
   // Đủ mọi entry trong content.items (Map game); bộ lọc loai/phẩm khớp enum game
   const allIdx=itemIndex();
   const typeOrder=['cong_phap','phap_khi','dan_duoc','linh_duoc','nguyen_lieu','yeu_tai','phu_luc','tran_ban','don_phuong','dung_cu','di_hoa','dac_san','phuong_tien','tru_vat','trung_thu','lenh_bai','tran_van','khac'];
@@ -2034,8 +2220,7 @@ const AutoFarm={
     return{
       nam:nowYear(),
       linhThach:Number(nv.linhThach||0),
-      tuVi:this.tuViCum(nv),
-      tuViRaw:Number(nv.tuVi||0),
+      tuVi:Number(nv.tuVi||0),
       tieu:Number(nv.tieuCanhGioi||0),
       canhGioi:Number(nv.canhGioi||0),
       thuongThe:Number(nv.thuongThe||0),
@@ -2067,7 +2252,7 @@ const AutoFarm={
     }
     return{
       linhThach:pair('linhThach', now.linhThach-base.linhThach),
-      tuVi:pair('tuVi', now.tuVi-base.tuVi),
+      tuVi:(()=>{const a=acc.tuVi||{plus:0,minus:0};return{net:a.plus-a.minus,plus:a.plus,minus:a.minus}})(),
       canhGioi:pair('canhGioi', now.canhGioi-base.canhGioi),
       bagTotal:now.bagTotal-base.bagTotal,
       bagByPham:dPham,
@@ -2097,7 +2282,12 @@ const AutoFarm={
       else if(d<0)bucket.minus+=-d;
     };
     bump(acc.linhThach, prev.linhThach, now.linhThach);
-    bump(acc.tuVi, prev.tuVi, now.tuVi);
+    // Tu vi: cộng dồn theo phiên. Lên tiểu/đại cảnh giới thì tu vi về 0 → không tính là mất, phần mới có sau khi lên tính là nhận.
+    if(now.canhGioi>prev.canhGioi||(now.canhGioi===prev.canhGioi&&now.tieu>prev.tieu)){
+      acc.tuVi.plus+=Math.max(0,Number(now.tuVi)||0);
+    }else if(now.canhGioi<prev.canhGioi||now.tieu<prev.tieu){
+      // tụt cảnh giới: không suy ra được mất bao nhiêu, bỏ qua nhịp này
+    }else bump(acc.tuVi, prev.tuVi, now.tuVi);
     bump(acc.canhGioi, prev.canhGioi, now.canhGioi);
     for(const k of keys){
       if(!acc.chiSo[k])acc.chiSo[k]={plus:0,minus:0};
