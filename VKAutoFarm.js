@@ -194,6 +194,15 @@ const AutoFarm={
   recentSlots:null,
   /* ── Ghi hành động tay (để học pattern farm) ── */
   rec:{on:false,events:[],hooks:null,unsub:null,lastSnap:null},
+  /* ── Ước tính tài nguyên nhận được, kể cả khi nhân vật đã kịch trần (max cảnh giới/tu vi) ──
+   * gainsDelta() ở trên so sánh nhân vật TRƯỚC/SAU nên khi đã kịch trần, phần vượt mức bị
+   * game bỏ qua và hiện ra là 0 — đúng với số thật đã CỘNG VÀO nhân vật, nhưng không cho biết
+   * lượt chạy đáng lẽ kiếm được bao nhiêu. Để bù, đọc trực tiếp "transcript" (lời tường thuật)
+   * của từng sự kiện/trận vừa đóng — nơi game show rõ phần thưởng — rồi dò số đi kèm từ khoá
+   * tu vi / linh thạch. Đây là số ƯỚC TÍNH (dò chữ), không phải số nội bộ chính xác tuyệt đối. */
+  rewardLog:[],
+  rewardEst:{tuVi:0,linhThach:0},
+  _txKey:null,_txN:0,
   push(msg,kind='',extra){
     const line={
       t:new Date().toISOString(),
