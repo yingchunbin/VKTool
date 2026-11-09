@@ -1473,9 +1473,16 @@ const CSS=`
 #${ID}-fab.docked.has{color:#b52a24}
 #${ID}-fab.docked b{top:-2px;right:-4px;min-width:14px;height:14px;font-size:10px;line-height:14px;padding:0 3px;border-radius:7px}
 .hud-trang-thai.thu-gon>#${ID}-fab{display:block!important}
-#${ID}-afbar.docked{position:static!important;flex-direction:row;align-self:flex-end;gap:6px;pointer-events:auto}
-#${ID}-afbar.docked button{width:30px;height:30px;border-width:1px;box-shadow:0 2px 6px #2b2b2b40}
-#${ID}-afbar.docked button svg{width:14px;height:14px}
+#${ID}-afbar.incard{position:absolute!important;top:0;right:48px;left:auto!important;bottom:auto!important;flex-direction:row;gap:0;z-index:2}
+#${ID}-afbar.incard button{width:30px;height:30px;border:0!important;border-radius:2px;background:transparent!important;box-shadow:none!important;color:#7a1f1a}
+#${ID}-afbar.incard button:hover{background:#7a1f1a1a!important}
+#${ID}-afbar.incard button svg{width:15px;height:15px}
+.hud-trang-thai.thu-gon>#${ID}-afbar{display:flex!important}
+#${ID}-afsum{position:absolute;top:27px;right:6px;z-index:2;text-align:left;font-size:11px;line-height:1.3;color:var(--paper);cursor:pointer;white-space:nowrap;padding:1px 3px;border-radius:1px}
+#${ID}-afsum span{display:block}#${ID}-afsum.one span{display:inline}#${ID}-afsum:not(.one) .sep{display:none}
+#${ID}-afsum:hover{background:#7a1f1a14;color:#7a1f1a}
+#${ID}-afsum b{color:#7a1f1a;font-weight:600}
+.hud-trang-thai.thu-gon>#${ID}-afsum{display:block!important}
 /* dropdown kiểu game */
 .vk-sel{display:inline-flex;align-items:center;gap:6px;min-width:0;text-align:left;font:inherit;font-size:13px;color:#2b2b2b;background:linear-gradient(180deg,#ffffff8c,#f0e9d699);border:1px solid rgba(43,43,43,.55);border-radius:1px;padding:5px 8px;cursor:pointer;box-shadow:inset 0 0 0 2px #ffffff59,inset 0 -1px 0 2px #2b2b2b0f}
 .vk-sel:hover:not(:disabled),.vk-sel[aria-expanded=true]{color:#7a1f1a;border-color:#7a1f1a;background:#7a1f1a12}
@@ -4495,18 +4502,21 @@ const AutoFarm={
     let panel=document.getElementById(ID+'-afstats');
     if(!this.running){
       if(panel)panel.remove();
+      document.getElementById(ID+'-afsum')?.remove();this.statsOpen=false;
       return;
+    }
+    let sum=document.getElementById(ID+'-afsum');
+    if(!sum){
+      sum=document.createElement('div');sum.id=ID+'-afsum';sum.title='Bấm để xem thống kê Auto';
+      sum.addEventListener('click',e=>{e.stopPropagation();this.statsOpen=!this.statsOpen;this.syncGainsBar()});
+      document.body.appendChild(sum);try{vkDock()}catch{}
     }
     if(!panel){
       panel=document.createElement('div');
       panel.id=ID+'-afstats';
       panel.innerHTML='<div class="af-drag" data-afdrag="1"><button type="button" class="af-tg" data-aftoggle="1" title="Thu gọn / mở rộng">▾</button><div class="af-h">Thống kê Auto</div></div><div class="af-body"></div>';
-      try{if(store.get('afStatsCol',false))panel.dataset.col='1'}catch{}
       panel.querySelector('[data-aftoggle]').addEventListener('click',e=>{
-        e.stopPropagation();
-        if(panel.dataset.col)delete panel.dataset.col;else panel.dataset.col='1';
-        try{store.set('afStatsCol',!!panel.dataset.col)}catch{}
-        this.syncGainsBar();
+        e.stopPropagation();this.statsOpen=false;this.syncGainsBar();
       });
       panel.querySelector('[data-aftoggle]').addEventListener('pointerdown',e=>e.stopPropagation());
       document.body.appendChild(panel);
@@ -4514,6 +4524,7 @@ const AutoFarm={
       const head=panel.querySelector('[data-afdrag]');
       let drag=null;
       const onDown=(e)=>{
+        if(panel.classList.contains('docked'))return;
         if(e.button!=null&&e.button!==0)return;
         const r=panel.getBoundingClientRect();
         drag={x:e.clientX,y:e.clientY,l:r.left,t:r.top};
@@ -4541,17 +4552,20 @@ const AutoFarm={
         }
       }catch{}
       head.addEventListener('pointerup',()=>{
+        if(panel.classList.contains('docked'))return;
         try{
           const r=panel.getBoundingClientRect();
           store.set('afStatsPos',{l:r.left,t:r.top});
         }catch{}
       });
     }
+    panel.style.display=this.statsOpen?'':'none';
     const body=panel.querySelector('.af-body')||panel;
     // Snapshot lại mỗi lần vẽ — tránh miss delta giữa các tick
     try{this.trackGains()}catch{}
     const d=this.gainsDelta();
     if(!d){
+      sum.innerHTML='Auto…';
       body.innerHTML='<div class="af-sub">Đang bắt đầu…</div>';
       return;
     }
@@ -4565,11 +4579,12 @@ const AutoFarm={
       return `<div class="af-row"><span class="af-k">${E(label)}</span><span><span class="pos">${sg(x.plus)}</span> <span class="neg">${x.minus?('−'+F(x.minus)):'−0'}</span> = <b class="net">${sg(x.net)}</b></span></div>`;
     };
     const short=p=>{const x=pair(p);return sg(x.net)};
-    const collapsed=!!panel.dataset.col;
+    const collapsed=false;
     panel.classList.toggle('col',collapsed);
     const tg=panel.querySelector('[data-aftoggle]');if(tg)tg.textContent=collapsed?'▸':'▾';
     const hh=panel.querySelector('.af-h');
-    if(hh)hh.textContent=collapsed?`Auto · Tu vi ${short(d.tuVi)} · LT ${short(d.linhThach)}`:'Thống kê Auto';
+    if(hh)hh.textContent='Thống kê Auto';
+    sum.innerHTML=`<span>Linh thạch: <b>${short(d.linhThach)}</b></span><span class="sep"> · </span><span>Tu vi: <b>${short(d.tuVi)}</b></span>`;try{vkDock()}catch{}
     if(collapsed){body.innerHTML='';return}
     const stats=this.STAT_KEYS.map(k=>[this.STAT_LABELS[k]||k,pair(d.chiSo?.[k])]).filter(([,x])=>x.plus||x.minus);
     const bag=[];
@@ -4612,7 +4627,7 @@ const AutoFarm={
     this.syncGainsBar();
     bar.dataset.paused=this.paused?'1':'0';
     try{vkDock()}catch{}
-    if(!bar.classList.contains('docked'))try{
+    if(!bar.classList.contains('incard'))try{
       const fr=fab.getBoundingClientRect();
       const w=40;
       bar.style.left=Math.max(4,fr.left+fr.width/2-w/2)+'px';
@@ -4966,14 +4981,25 @@ try{vkMo.observe(panel,{childList:true,subtree:true});vkEnhance()}catch{}
 /* Gắn icon + nút Auto vào thẻ nhân vật của game (nếu có); không có thẻ thì trôi tự do như cũ */
 function vkDock(){
   const card=document.querySelector('.hud-trang-thai');
+  const bar=document.getElementById(ID+'-afbar'),sum=document.getElementById(ID+'-afsum');
   if(card){
     if(fab.parentElement!==card){card.appendChild(fab);fab.classList.add('docked');fab.style.display=''}
-    const bar=document.getElementById(ID+'-afbar');
-    if(bar&&bar.previousElementSibling!==card){card.after(bar);bar.classList.add('docked')}
+    for(const el of [bar,sum])if(el&&el.parentElement!==card){card.appendChild(el);el.classList.add('incard');el.style.cssText=''}
+    if(sum){
+      try{
+        const nm=card.querySelector('.hud-danh .ten'),cr=card.getBoundingClientRect();
+        if(nm&&cr.width){
+          const rg=document.createRange();rg.selectNodeContents(nm);const nr=rg.getBoundingClientRect(),sw=sum.offsetWidth,left=nr.right-cr.left+12,limit=cr.width-108;
+          sum.classList.add('one');const w1=sum.offsetWidth;
+          if(left+w1<=limit){sum.style.left=left+'px';sum.style.top=(nr.top-cr.top+2)+'px';sum.style.right='auto'}
+          else{sum.classList.remove('one');sum.style.left='auto';sum.style.right='6px';sum.style.top='30px'}
+        }
+      }catch{}
+    }
   }else{
     if(fab.classList.contains('docked')){document.body.appendChild(fab);fab.classList.remove('docked')}
-    const bar=document.getElementById(ID+'-afbar');
-    if(bar&&bar.classList.contains('docked')){document.body.appendChild(bar);bar.classList.remove('docked');try{AutoFarm.running&&AutoFarm.syncFab()}catch{}}
+    for(const el of [bar,sum])if(el&&el.classList.contains('incard')){document.body.appendChild(el);el.classList.remove('incard')}
+    if(bar&&!bar.classList.contains('incard')){try{AutoFarm.running&&AutoFarm.syncFab()}catch{}}
   }
   try{placeToasts()}catch{}
 }
@@ -4987,6 +5013,6 @@ iv=setInterval(tick,5000);
 /* Không tự vẽ đường khi mở tool */
 try{Route.clear()}catch{try{stopDrawing()}catch{}}
 Alerts.check();ui.syncRouteChip();
-window.__VKT2__={destroy(){try{AutoFarm.stopRecord()}catch{}try{AutoFarm.stop()}catch{}try{document.getElementById(ID+'-afbar')?.remove();document.getElementById(ID+'-afstats')?.remove()}catch{}clearInterval(iv);clearTimeout(timer);try{dkMo.disconnect()}catch{}try{vkMo.disconnect();vkClose()}catch{}try{qsMo.disconnect();qsStop();qsCss.remove();for(const ev of ['pointerdown','mousedown','click','dblclick','contextmenu'])document.removeEventListener(ev,qsPick,true);document.removeEventListener('keydown',qsKey,true);document.querySelectorAll('.vkt-qs-btn').forEach(x=>x.remove())}catch{}try{unsub?.()}catch{}stopDrawing();panel.remove();fab.remove();chip.remove();toasts.remove();styleEl.remove()},ui,Route,build:BUILD,VIEWS,BuildEngine,hooks:{realmRows,eventRows,treasureRows,jobRows,peopleRows,sectRows,checks,safePath,placeWindow,closedYears,openOnArrival,focusMap,startDrawing,stopDrawing,mapRoot,addItemToBag,coreContext,Alerts,AutoFarm}};
+window.__VKT2__={destroy(){try{AutoFarm.stopRecord()}catch{}try{AutoFarm.stop()}catch{}try{document.getElementById(ID+'-afbar')?.remove();document.getElementById(ID+'-afstats')?.remove()}catch{}clearInterval(iv);clearTimeout(timer);try{dkMo.disconnect();document.getElementById(ID+'-afsum')?.remove()}catch{}try{vkMo.disconnect();vkClose()}catch{}try{qsMo.disconnect();qsStop();qsCss.remove();for(const ev of ['pointerdown','mousedown','click','dblclick','contextmenu'])document.removeEventListener(ev,qsPick,true);document.removeEventListener('keydown',qsKey,true);document.querySelectorAll('.vkt-qs-btn').forEach(x=>x.remove())}catch{}try{unsub?.()}catch{}stopDrawing();panel.remove();fab.remove();chip.remove();toasts.remove();styleEl.remove()},ui,Route,build:BUILD,VIEWS,BuildEngine,hooks:{realmRows,eventRows,treasureRows,jobRows,peopleRows,sectRows,checks,safePath,placeWindow,closedYears,openOnArrival,focusMap,startDrawing,stopDrawing,mapRoot,addItemToBag,coreContext,Alerts,AutoFarm}};
 
 })();
