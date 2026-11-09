@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261108-autofarm-v71',ID='vkt2',g=window.game;
+const BUILD='20261109-autofarm-v73',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -361,7 +361,23 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     else score+=ll*3+(castReady?20:-1500)+(sustain?15:-400);
     return{score,dead,connected,heSo,huyet,nghich,ll,maxll,minCost,maxCost,castReady,burstReady}}
   function meridianAudit(nv,R,P){const Cc=C(),roles={tam:0,dau:0,phap:0,bao:0},pieces=[];for(let i=0;i<(nv.kinhMach.manh||[]).length;i++){const m=nv.kinhMach.manh[i],it=Cc.items.get(m.item),rm=(R.manh||[])[i];if(!it)continue;let role='Khác';if(it.loai==='cong_phap'){if(it.chieu){roles.dau++;role='Đấu pháp'}else{roles.tam++;role='Tâm pháp'}}else if(it.loai==='phap_khi'){if(it.chieu){roles.phap++;role='Pháp khí'}else{roles.bao++;role='Bảo vật'}}pieces.push({id:m.item,ten:it.ten,role,thong:!!rm?.thong,heSo:rm?.heSo||0,huyet:(rm?.huyet||1)>1,kinhLo:rm?.kinhLo||1,mau:rm?.mau||1,sinhKhac:rm?.sinhKhac||1,noiTai:rm?.noiTai||1})}return{roles,pieces,...meridianQuality(R,P,'danh')}}
-  function makeEval(nv0,enemies,mode){const K=S.core,c=C(),cache=new Map();return manh=>{const key=mode+'|'+manh.map(p=>p.key).sort().join('|');if(cache.has(key))return cache.get(key);const nv=clone(nv0);nv.kinhMach.manh=manh.map(p=>({...p.m}));const R=K.Rt(nv,c),P=K.Vr(nv,c),mq=meridianQuality(R,P,mode),dead=mq.dead;let fightScore=0,wins=0;if(!dead)for(const{E}of enemies){const r=fight(P,E),hp=Math.max(0,Math.min(1,(r.khiHuyetThapNhat||0)/Math.max(1,P.khiHuyetToiDa))),dealt=Math.min(1,(r.stTa||0)*Math.max(1,r.nHiep||1)/Math.max(1,E.khiHuyetToiDa));if(r.thang){wins++;fightScore+=100+30*hp+50/Math.max(1,r.nHiep||1)}else if(r.ketQua&&r.ketQua.enemyFled){wins++;fightScore+=70+15*hp}else fightScore+=45*dealt}const toc=R.biDong?.toc_do||0,dp=R.biDong?.dot_pha||0,ktm=R.biDong?.khang_tam_ma||0,nghich=mq.nghich||0;
+  /* Thành thạo (masteryMult): Hg = 0.5 + 0.5·thành thạo; món mới chưa lĩnh ngộ bắt đầu ở 0 (×0.5), viên mãn 500 năm ×1.1.
+     Game xem trước đúng như vậy; Rt không tự đặt, nên phải đặt tay — nếu không món mới bị chấm cao hơn thực tế gấp đôi. */
+  function applyMastery(nv){
+    if(S.pref&&S.pref.hypo)return nv; // giả định: coi như đã tu thành thạo
+    try{
+      const km=nv.kinhMach,learned=new Set(km.daLinhNgo||[]),m={...(km.mastery||{})};
+      const nlf=window.tuTien?.core?.['character/kinh_mach']?.namLinhNgo,c=C();
+      for(const p of A(km.manh)){
+        if(learned.has(p.item)||m[p.item]!==undefined)continue;
+        const it=c.items.get(p.item);
+        if(it&&(typeof nlf!=='function'||Number(nlf(it))>0))m[p.item]=0;
+      }
+      km.mastery=m;
+    }catch{}
+    return nv;
+  }
+  function makeEval(nv0,enemies,mode){const K=S.core,c=C(),cache=new Map();return manh=>{const key=mode+'|'+manh.map(p=>p.key).sort().join('|');if(cache.has(key))return cache.get(key);const nv=clone(nv0);nv.kinhMach.manh=manh.map(p=>({...p.m}));applyMastery(nv);const R=K.Rt(nv,c),P=K.Vr(nv,c),mq=meridianQuality(R,P,mode),dead=mq.dead;let fightScore=0,wins=0;if(!dead)for(const{E}of enemies){const r=fight(P,E),hp=Math.max(0,Math.min(1,(r.khiHuyetThapNhat||0)/Math.max(1,P.khiHuyetToiDa))),dealt=Math.min(1,(r.stTa||0)*Math.max(1,r.nHiep||1)/Math.max(1,E.khiHuyetToiDa));if(r.thang){wins++;fightScore+=100+30*hp+50/Math.max(1,r.nHiep||1)}else if(r.ketQua&&r.ketQua.enemyFled){wins++;fightScore+=70+15*hp}else fightScore+=45*dealt}const toc=R.biDong?.toc_do||0,dp=R.biDong?.dot_pha||0,ktm=R.biDong?.khang_tam_ma||0,nghich=mq.nghich||0;
       // Code game: phản phệ đột phá = min(0.15, 0.03*diemNghich*phanPhe); trần công pháp dot_pha = 0.12 (md)
       // Điểm nghịch: mảnh tương khắc kề nhau / nằm quá nửa trên ô khắc (tooltip game)
       const phaPhe=Math.min(0.15,0.03*nghich),dpEff=Math.min(0.12,Math.max(0,dp));
@@ -493,6 +509,15 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
         if (modeHint === 'tu') {
           sc += ((it.bi_dong && it.bi_dong.toc_do) || 0) * 22 + ((it.bi_dong && it.bi_dong.dot_pha) || 0) * 28;
         }
+        try {
+          // gradeMult (Phàm ×0.6; Nghịch Thiên theo cảnh giới) và skillCapRatio (chiêu phẩm thấp bị chặn khi pháp lực vượt trần)
+          const core = window.tuTien?.core || {};
+          const gm = core['character/pham']?.gradeMult?.(it, cg);
+          const sp = core['balance/combat']?.spellPower?.(cg, nv0.tieuCanhGioi || 0);
+          const cap = it.chieu && sp > 0 ? core['character/pham']?.skillCapRatio?.(it, sp) : 1;
+          const fac = (Number.isFinite(gm) ? gm : 1) * (Number.isFinite(cap) ? cap : 1);
+          sc += (fac - 1) * 160;
+        } catch {}
         scored.push({ id, sc });
       }
       scored.sort((a, b) => b.sc - a.sc);
@@ -526,7 +551,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
   async function greedy(nv0, mode) {
     const K = S.core, c = C(), { cand } = buildCandidates(nv0, !!(S.pref && S.pref.hypo));
     const quick = (manh) => {
-      const nv = clone(nv0); nv.kinhMach.manh = manh.map((p) => ({ ...p.m }));
+      const nv = clone(nv0); nv.kinhMach.manh = manh.map((p) => ({ ...p.m })); applyMastery(nv);
       const R = K.Rt(nv, c);
       const uy = (R.chieu || []).reduce((a, x) => a + (x.uyLuc || x.uy || 0) / 10, 0);
       const toc = R.biDong.toc_do || 0, dp = R.biDong.dot_pha || 0;
@@ -583,8 +608,45 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
   async function anneal({ nv0, mode, iters, init, onProg, label }) {
     const enemies = benchEnemies(nv0.canhGioi, nv0.tieuCanhGioi || 0);
     const ev = makeEval(nv0, enemies, mode);
-    const { cand } = buildCandidates(nv0, !!(S.pref && S.pref.hypo));
+    const { cand, g: gg } = buildCandidates(nv0, !!(S.pref && S.pref.hypo));
     const ids = Object.keys(cand).filter((k) => cand[k].length);
+    // ── Gợi ý theo luật game (đọc từ source): mảnh phải nối đan điền mới "thông"; phủ huyệt ×2 (+25%/huyệt thêm); ô cùng màu hệ 1.0 / cùng họ 0.5 ──
+    const kmA = nv0.kinhMach || {};
+    const hyS = new Set(kmA.huyetThem || []);
+    if (Array.isArray(kmA.huyetGoc) && kmA.huyetGoc.length) kmA.huyetGoc.forEach((i) => hyS.add(i)); else (gg.huyet || []).forEach((v, i) => v && hyS.add(i));
+    const orH = (h) => ({ loi: 'moc', phong: 'moc', bang: 'thuy', am: 'thuy' }[h] || h);
+    const sgH = (e, t) => (e === 'vo_sac' ? (t === 'vo_sac' ? 1 : 0.5) : (t === e ? 1 : (t === 'vo_sac' || orH(t) === orH(e)) ? 0.5 : 0));
+    const nbrs = (i) => { const o = [], x = i % gg.rong, y = Math.floor(i / gg.rong); if (x > 0) o.push(i - 1); if (x < gg.rong - 1) o.push(i + 1); if (y > 0) o.push(i - gg.rong); if (y < gg.cao - 1) o.push(i + gg.rong); return o.filter((k) => gg.vung[k] >= 0); };
+    const prior = {};
+    for (const id of ids) {
+      const it = C().items.get(id); const he = (A(it?.he)[0]) || 'vo_sac';
+      for (const cd of cand[id]) {
+        let hy = 0, mau = 0;
+        for (const x of cd.cells) { if (hyS.has(x)) hy++; mau += sgH(he, (kmA.mau || [])[x] || 'vo_sac'); }
+        cd._hy = hy; cd._mau = mau / Math.max(1, cd.cells.length);
+        cd._nb = new Set(); for (const x of cd.cells) for (const k of nbrs(x)) cd._nb.add(k);
+      }
+    }
+    let _seed2 = 987654321; const rnd2 = () => { _seed2 = (_seed2 + 0x6D2B79F5) | 0; let t = Math.imul(_seed2 ^ (_seed2 >>> 15), 1 | _seed2); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    // Chọn vị trí cho món `id` theo giải đấu nhỏ: ưu tiên nối với chuỗi đã đặt / đan điền, phủ huyệt, đúng màu; vẫn giữ 25% ngẫu nhiên để đa dạng
+    const pickC = (id, next, skip = -1) => {
+      const arr = cand[id]; if (!arr || !arr.length) return null;
+      const used = new Set(); const front = new Set([gg.danDien]);
+      next.forEach((p, i) => { if (i !== skip) p.cells.forEach((x) => used.add(x)); });
+      next.forEach((p, i) => { if (i !== skip) p.cells.forEach((x) => front.add(x)); });
+      const ok = [];
+      for (let t = 0; t < 14 && ok.length < 6; t++) { const cd = arr[Math.floor(rnd2() * arr.length)]; if (!cd.cells.some((x) => used.has(x))) ok.push(cd); }
+      if (!ok.length) return arr[Math.floor(rnd2() * arr.length)];
+      if (rnd2() < 0.25) return ok[Math.floor(rnd2() * ok.length)];
+      let best = null, bs = -1e9;
+      for (const cd of ok) {
+        let touch = 0; for (const x of cd.cells) if (front.has(x)) { touch = 1; break; }
+        if (!touch) for (const k of cd._nb) if (front.has(k)) { touch = 1; break; }
+        const sc = touch * 3 + cd._hy * 1.4 + cd._mau * 1.2 + rnd2() * 0.5;
+        if (sc > bs) { bs = sc; best = cd; }
+      }
+      return best;
+    };
     let seed = 12345; const rnd = () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
     const overlaps = (manh, c, skip = -1) => { const used = new Set(); manh.forEach((p, i) => { if (i !== skip) p.cells.forEach((x) => used.add(x)); }); return c.cells.some((x) => used.has(x)); };
     let cur = [];
@@ -598,10 +660,10 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
       const T = Math.max(T0 * 0.01, T0 * (1 - it / iters));
       const next = cur.slice(); const r = rnd();
       const free = () => ids.filter((id) => !next.some((p) => p.m.item === id));
-      if (r < 0.62 || next.length === 0) { const f = free(); if (!f.length) continue; const id = f[Math.floor(rnd() * f.length)]; const c = cand[id][Math.floor(rnd() * cand[id].length)]; if (overlaps(next, c)) continue; next.push(c); }
+      if (r < 0.62 || next.length === 0) { const f = free(); if (!f.length) continue; const id = f[Math.floor(rnd() * f.length)]; const c = pickC(id, next); if (!c || overlaps(next, c)) continue; next.push(c); }
       else if (r < 0.72) next.splice(Math.floor(rnd() * next.length), 1);
-      else if (r < 0.9) { const i = Math.floor(rnd() * next.length); const id = next[i].m.item; const c = cand[id][Math.floor(rnd() * cand[id].length)]; if (overlaps(next, c, i)) continue; next[i] = c; }
-      else { const i = Math.floor(rnd() * next.length); const f = free(); if (!f.length) continue; const id = f[Math.floor(rnd() * f.length)]; const c = cand[id][Math.floor(rnd() * cand[id].length)]; if (overlaps(next, c, i)) continue; next[i] = c; }
+      else if (r < 0.9) { const i = Math.floor(rnd() * next.length); const id = next[i].m.item; const c = pickC(id, next, i); if (!c || overlaps(next, c, i)) continue; next[i] = c; }
+      else { const i = Math.floor(rnd() * next.length); const f = free(); if (!f.length) continue; const id = f[Math.floor(rnd() * f.length)]; const c = pickC(id, next, i); if (!c || overlaps(next, c, i)) continue; next[i] = c; }
       const e = ev(next);
       if (it < 40 && Math.abs(e.s) < 1e9 && Math.abs(curS) < 1e9 && e.s !== curS) dSamples.push(Math.abs(e.s - curS));
       if (e.s >= curS || rnd() < Math.exp((e.s - curS) / T)) { cur = next; curS = e.s; if (e.s > bestS) { best = next; bestS = e.s; } }
