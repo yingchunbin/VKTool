@@ -1402,6 +1402,15 @@ const CSS=`
 #${ID} .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0}
 #${ID} .stats div{background:rgba(0,0,0,.25);border-radius:7px;padding:6px;text-align:center;font-size:11.5px;color:var(--mute)}
 #${ID} .stats b{display:block;color:var(--gold);font-size:15px}
+#${ID} .grp .gh{display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--vien2,rgba(43,43,43,.15))}
+#${ID} .grp .gt{flex:1;text-align:left;background:none;border:0;color:inherit;font:inherit;cursor:pointer;padding:2px 0}
+#${ID} .grp .gb{padding:2px 0 6px 22px;display:grid;grid-template-columns:1fr;gap:2px}
+#${ID} .grp .gb[hidden]{display:none}
+#${ID} .grp .gb label{display:flex;gap:6px;align-items:flex-start;line-height:1.35}
+#${ID} .grp input[type=checkbox],#${ID} .pol input[type=checkbox]{margin-top:2px}
+#${ID} .pol label{display:flex;gap:6px;align-items:flex-start;margin:3px 0}
+#${ID} .jrn summary{cursor:pointer;line-height:1.4;padding:3px 0}
+#${ID} .jrn{border-bottom:1px solid var(--vien2,rgba(43,43,43,.15))}
 #${ID} .bar2{height:5px;background:rgba(43,43,43,.1);border-radius:3px;overflow:hidden;margin:8px 0}
 #${ID} .bar2 i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--jade),var(--gold))}
 #${ID} .grid svg,#${ID} .grid img{max-width:100%;height:auto;border-radius:8px}
@@ -2329,6 +2338,9 @@ VIEWS.breakthrough=()=>{
 };
 
 /* ───────── Tab: Auto Farm (API game: enterNode / tocChienTran / leavePlace) ───────── */
+/* ───────── Phân nhóm sự kiện (từ content game 2026-11-09): [nhóm, khóa, nhãn, số sự kiện, số sự kiện có cửa nguy, danh sách id bỏ "ev."] ───────── */
+const AF_GROUPS=[["san","Săn yêu & thú dữ"],["hoang","Hoang dã & thám hiểm"],["bicanh","Bí cảnh · dị bảo · di tích"],["bienco","Biến cố dọc đường"],["thanh","Thành trấn & phong thổ"],["nhan","Nhân mạch & duyên"],["nghe","Nghề & ngự linh"],["treo","Treo thưởng & nhiệm vụ"],["tongmon","Tông môn"],["ta","Tà đạo & tâm ma"],["khac","Khác"]];
+const AF_SUBS=[["nhan","ban_menh","Bản mệnh",2,0,"ev.ban_menh_lao_tho ev.ban_menh_truong_lao_giang"],["bicanh","bi_canh/chan_truyen","Bí cảnh · Chân truyền",3,1,"ev.bc_lien_thu_pha_cam ev.bc_chan_truyen_trong_thuong ev.bc_chan_truyen_chan_loi"],["bicanh","bi_canh/hung_dia","Bí cảnh · Hung địa",3,0,"ev.thien_co_cac ev.huyet_tri ev.hong_hoang_coc"],["bicanh","bi_canh/linh_vat","Bí cảnh · Linh vật",3,0,"ev.van_duoc_vien ev.han_bang_dong ev.thien_loi_tri"],["bicanh","bi_canh/loi_tat","Bí cảnh · Lối tắt",5,0,"ev.loi_tat_thu_cua ev.loi_tat_dan_duong ev.loi_tat_mo_cua_som ev.loi_tat_hon_giu_cong ev.loi_tat_yeu_vuc"],["bienco","bien_co/an_tinh_the_luc","Biến cố · Ẩn tình thế lực",9,0,"ev.bc_at_bi_vay_giua_duong ev.bc_at_trung_doc_trong_rung ev.bc_at_lo_dinh ev.at_trong_trung_linh_can ev.at_do_ba_chieu ev.at_son_mon_giu_khach ev.at_the_gia_moi_khach ev.at_tong_mon_moi_khach ev.at_uy_ap_ep_moi"],["bienco","bien_co/be_quan","Biến cố · Bế quan",35,6,"ev.bq_rung_hoi_am ev.bq_rung_tan_tu_rinh ev.bq_rung_to_nhen ev.bq_son_chu_hang ev.bq_son_tranh_linh_nhan ev.bq_son_bong_ung ev.bq_ho_suong_tanh ev.bq_ho_thuy_quy ev.bq_ho_tieng_hat ev.bq_mac_cat_dong ev.bq_mac_xin_nuoc ev.bq_mac_chuot_mo ev.bq_bang_tim_hoi_am ev.bq_bang_xac_trong_bang ev.bq_yv_tuan_lanh_dia ev.bq_yv_bay_nho ev.bq_yv_ma_tu_luyen_hon ev.bq_tt_trom_phong ev.bq_tt_ke_say_dap_cua ev.bq_tt_dom_tui ev.bq_tt_bo_khoai_kham ev.bq_tt_linh_don_kham ev.bq_tt_tieu_nhi_ban_tin ev.bq_tm_pha_cam_che ev.bq_tm_ma_tu_lan_vao ev.bq_tm_su_huynh_doi_cho ev.bq_tm_than_thuc_dom ev.bq_tm_tieng_tieu ev.bq_tm_chien_thu ev.bq_dp_yeu_doi_dat ev.bq_dp_tan_tu_chiem_phu ev.bq_dp_ke_lan_dau ev.bq_dp_thu_dao_vach ev.bq_dp_ke_thu_tim_toi ev.bq_dp_tham_bau"],["bienco","bien_co/di_tuong","Biến cố · Dị tượng",20,4,"ev.bc_dt_bao_quang ev.bc_dt_o_thu_giu_bao ev.bc_dt_tong_mon_phong_nui ev.bc_dt_lo_dan_co ev.bc_dt_co_bia_hien_chu ev.bc_dt_kiep_loi_xua_thu ev.bc_dt_tam_ma_lac_chu ev.bc_dt_di_vat_do_kiep ev.bc_dt_bam_tu_phuong_thi ev.bc_dt_thich_khach_quan_tro ev.bc_dt_chan_duong_doat_bao ev.bc_dt_bang_huu_moi_quen ev.bc_dt_mat_na_dong ev.bc_dt_tan_hon_duoi_nui ev.bc_dt_ngoc_gian_co_tu ev.bc_dt_tieng_noi_trong_dau ev.bc_dt_thon_vang_nguoi ev.bc_dt_gieng_hoa_do ev.bc_dt_doan_nguoi_bi_xich ev.bc_dt_te_dan_chin_cot"],["bienco","bien_co/duong","Biến cố · Đường đi",26,1,"ev.dc_cay_do_chan_loi ev.dc_bui_ram_dong ev.dc_tho_san_chay_toi ev.dc_doan_buon_bi_vay ev.dc_cau_treo ev.dc_nghi_gian_te ev.dc_bo_khoai_bat_nham ev.dc_tram_thu_phi ev.dc_thuy_quai_keo_chan ev.dc_hang_tru_bao_tuyet ev.dc_cat_sut ev.dc_bay_vay_lua_trai ev.dc_gia_nguoi_gap_nan ev.dc_ung_sa_xuong ev.dc_chan_giua_may ev.dc_huyet_te_tran ev.dc_ten_tam_doc ev.dc_bang_truy_na ev.dc_suong_do ev.dc_co_trung_giang ev.dc_canh_bang_che_troi ev.dc_nguyen_anh_doat_xa ev.dc_lao_ganh_cui ev.dc_nguoi_ngoi_xem ev.dau_gia_bam_duoi ev.dc_ganh_hang_rong"],["san","bien_co/hoang_da","Biến cố · Hoang dã",18,2,"ev.bc_hd_danh_hoi_linh_khi ev.bc_hd_soi_vay ev.bc_hd_gau_thuc_giac ev.bc_hd_thuy_yeu_keo_nguoi ev.bc_hd_bong_ung ev.bc_hd_bao_cat ev.bc_hd_thu_me_tim_con ev.bc_hd_bang_nut ev.bc_hd_tuan_son ev.bc_hd_dai_yeu_ve_hang ev.bc_hd_son_tac_vay ev.bc_hd_tan_tu_dom_ngo ev.bc_hd_cuu_kiem_khach ev.bc_hd_sat_thu_nham_nguoi ev.bc_hd_ma_tu_bat_hon ev.bc_hd_am_phong ev.bc_hd_linh_duoc_chin ev.bc_hd_to_nhen"],["bienco","bien_co/lao_quai","Biến cố · Lão quái",12,5,"ev.lq_thieu_nien_mat_gia ev.lq_khach_thuc_hai ev.lq_lao_ma_thay_xac ev.lq_lenh_truy_sat ev.lq_lao_to_xuat_quan ev.lq_cuoc_ba_chieu ev.lq_lao_quai_mua_tho ev.lq_dan_co_tieng_khoc ev.lq_nguoi_lam_chung ev.lq_lien_thu_tru_ma ev.lq_ho_phap_do_kiep ev.lq_nguyen_anh_lanh_nan"],["bienco","bien_co/noi_gian","Biến cố · Nội gián",3,2,"ev.bc_noi_gian_ma_dao ev.bc_noi_gian_chinh_dao ev.bc_noi_gian_lo"],["bienco","bien_co/phan_do","Biến cố · Phản đồ",3,0,"ev.bc_pd_chay_tron ev.bc_pd_hang_an ev.bc_pd_gui_boc"],["ta","bien_co/tam_ma","Biến cố · Tâm ma",9,9,"ev.tam_ma_tieng_go_cua ev.tam_ma_bong_tren_vach ev.tam_ma_mau_tren_tay ev.tam_ma_co_nhan_ve ev.tam_ma_tieng_thi_tham ev.tam_ma_guong_dong ev.tam_ma_doat_than ev.tam_ma_tram_mat ev.tam_ma_ho_mau"],["bienco","bien_co/thanh_tran","Biến cố · Thành trấn",25,5,"ev.bc_yeu_thu_vao_lang ev.bc_yeu_thu_so_cui ev.bc_ac_ba_thu_tien ev.bc_ke_say_gay_su ev.bc_ke_cap_cat_tui ev.bc_vu_gian_bac ev.bc_cong_tu_phi_xe ev.bc_gioi_nghiem_luong ev.bc_bo_khoai_doi_le ev.bc_khe_uoc_gia ev.bc_co_trong_tra ev.bc_gac_cong_dem_tuyet ev.bc_thuy_quy_ben ev.bc_mo_quang_thi_bien ev.bc_gian_te_bat_con_tin ev.bc_tu_cau_ken_re ev.bc_cuop_tien_trang ev.bc_ta_tu_khach_diem ev.bc_bi_bat_nham ev.bc_kiem_khach_doi_dau ev.bc_xac_chet_day ev.bc_sat_thu_trong_quan ev.bc_thu_trieu_pha_cong ev.bc_suong_den_nuot_pho ev.bc_lao_quai_doat_xa"],["san","bien_co/the_cuc","Biến cố · Thú cuồng",23,3,"ev.bc_hn_thu_cuong_vao_lang ev.bc_hn_bay_thu_danh_hoi ev.bc_hn_huyet_nguyet_lang ev.bc_hn_tu_si_mat_tri ev.bc_hn_mo_mo_dau_lang ev.dc_hn_quy_hoa_dan_loi ev.tt_giu_cong_thanh ev.tt_dot_thu_hai ev.tt_thu_vuong ev.bc_tt_dan_chay_nan ev.bc_tt_thu_lac_dan ev.gc_chieu_mo_ngoai_vien ev.dc_gc_hoi_theo_phe ev.dc_gc_nghi_gian_te ev.dc_gc_thuong_binh ev.bc_gc_trung_thu_luong ev.bc_hn_cong_dong_som ev.bc_hn_cho_te_huyet ev.bc_hn_co_nhan_phat_cuong ev.bc_hn_gieng_nhuom_do ev.bc_hn_cuong_si_go_cua ev.bc_mt_hem_toi_bat_nguoi ev.bc_mt_xac_kho_giua_pho"],["bienco","bien_co/the_luc","Biến cố · Thế lực",23,0,"ev.bc_tl_nhuong_duong ev.bc_tl_cuop_hang ev.bc_tl_treo_gheo ev.bc_tl_doi_mua_bao_vat ev.bc_tl_uc_hiep_tan_tu ev.bc_tl_danh_phu_khuan ev.bc_tl_hoi_muon_tien ev.bc_tl_tranh_cho_tra_lau ev.bc_tl_tranh_linh_duoc ev.bc_tl_thu_kiem ev.bc_tl_chan_truyen_ngua_mat ev.bc_tl_tuan_nui ev.bc_tl_tranh_con_moi ev.bc_tl_thu_chan_cua_tiem ev.bc_tl_thu_vay_quan_tro ev.bc_tl_thu_chien_thu ev.bc_tl_thu_cao_thi ev.bc_tl_cg_trieu_dinh_moi ev.bc_tl_cg_ep_ky_minh_uoc ev.bc_tl_cg_hich_tru_ma ev.bc_tl_cg_hoa_dam ev.bc_tl_cg_huyet_lenh ev.bc_tl_cg_bien_ai_cau_vien"],["bienco","bien_co/the_luc_dap_mat","Biến cố · Thế lực chạm mặt",7,0,"ev.tl_dm_ao_vai_vao_tiem ev.tl_dm_nha_gian_dau_gia ev.tl_dm_dung_ngoai_cua ev.tl_dm_dong_tien_duoi_dat ev.tl_dm_ba_chieu_giua_cho ev.tl_dm_lao_to_xuat_quan ev.tl_dm_uy_ap_cong_thanh"],["bienco","bien_co/tho_nguyen","Biến cố · Thọ nguyên",7,2,"ev.tho_dien_tho_dan ev.tho_tin_thai_tue ev.tho_huyet_tho_dan ev.tho_ho_phap_lan_cuoi ev.tho_ngo_dao_la_roi ev.tho_co_nhan_lam_chung ev.tho_mo_dong_nien"],["ta","bien_co/tru_ma","Biến cố · Trừ ma",9,0,"ev.tru_ma_kiem_tu_tuan_son ev.tru_ma_phu_chieu_ma ev.tru_ma_dao_si_giu_lang ev.tru_ma_chap_su_tran ev.tru_ma_kinh_chieu_ma ev.tru_ma_mieu_chuc_go_chuong ev.tru_ma_cam_ve_kinh_thanh ev.tru_ma_chap_phap_son_mon ev.tru_ma_la_han_tran"],["bienco","bien_co/truy_na","Biến cố · Truy nã",19,1,"ev.tn_chap_phap_quan_tro ev.tn_bo_khoai_bang_truy_na ev.tn_tho_san_tien_thuong ev.tn_tieu_nhi_bao_tin ev.tn_dam_dong_lanh_thuong ev.tn_truong_lao_dich_than ev.tn_ho_ve_thuong_hoi ev.tn_linh_don_ai_quan ev.tn_co_su_mieu ev.td_quan_tro ev.td_cong_thanh ev.td_bat_bong_giua_duong ev.td_lan_theo_khi_tuc ev.td_bao_vay_luc_dieu_tuc ev.td_rung_sau ev.gt_su_gia_doi_boi_thuong ev.gt_nho_trung_gian ev.gt_lap_cong ev.gt_thinh_toi_son_mon"],["nhan","chung","Chung",6,1,"ev.nhap_mon_tien_duyen ev.linh_duoc_canh_giu ev.linh_duoc_canh_giu_manh ev.lao_gia_hap_hoi ev.tan_tu_chan_duong ev.ma_tu_ra_tay"],["nhan","chuyen_xua","Chuyện xưa",16,1,"ev.cx_tra_lau_ngu_to ev.cx_hat_toc_canh_dien ev.cx_bich_hoa_doan_thien ev.cx_lao_binh_ke_chuyen ev.cx_lang_gia_ke_chuyen ev.cx_so_tran_huyet_sat ev.cx_bia_vong_hai ev.cx_ngu_dan_dem_trieu ev.cx_rua_gia_bai_bien ev.cx_lao_lai_do ev.cx_bia_kim_cuong ev.cx_ngu_to_tu ev.cx_thien_that_trong ev.cx_thay_boi_loi_sam ev.cx_tam_thien_su ev.cx_dai_tinh_tuong"],["tongmon","cong_pha_son_mon","Công phá sơn môn",3,0,"ev.cong_pha_son_mon ev.cong_pha_tong_mon ev.cong_pha_dai_tong"],["bicanh","di_bao","Dị bảo",22,6,"ev.di_bao_u_hon_dien ev.di_bao_kiem_trach ev.di_bao_tien_van_dien ev.di_bao_yeu_phong_mo ev.di_bao_han_giao_linh ev.di_bao_kiem_dai ev.bien_trieu_khu ev.bien_thuyen_rong ev.di_bao_hon_thap ev.di_bao_u_dien ev.di_bao_lan_dai ev.di_bao_tan_phong ev.di_bao_van_dan_trung ev.di_bao_tuyen_phong ev.di_bao_dan_coc ev.di_bao_xich_trung ev.di_bao_van_son ev.di_bao_kim_dao_dien ev.di_bao_bang_hon_trung ev.di_bao_ho_set ev.di_bao_hop_ba_khoa ev.di_bao_keo_dinh"],["bicanh","di_tich","Di tích",30,2,"ev.dao_boi_di_tich ev.ditich_bia_da ev.ditich_cam_che_tan ev.ditich_ngoc_gian_vo ev.ditich_mo_gio ev.ditich_thach_su ev.ditich_ke_dao_trom ev.ditich_tran_phap_cu ev.ditich_kiem_gay ev.ditich_quan_tai_xich ev.ditich_den_truong_minh ev.ditich_tieng_go ev.ditich_tre_chep_bia ev.ditich_hanh_lang_no ev.ditich_dong_ho_cat ev.ditich_hu_tro ev.ditich_guong_co ev.ditich_khoi_cho_lenh ev.ditich_nguoi_trong_xich ev.ditich_cua_da_uong_mau ev.ditich_thu_chua_gui ev.ditich_dien_ngung_thoi ev.ditich_vong_thien_dai ev.ditich_dinh_dong ev.ditich_nguoi_hoa_da ev.ditich_am_binh_tuan ev.ditich_sap_co_vat ev.ditich_truyen_thua_chon_mot ev.ditich_tran_nhan_song ev.ditich_mo_co_chu"],["hoang","dia_diem/an_si","Địa điểm · Ẩn sĩ",3,0,"ev.as_chi_diem ev.as_doi_kinh ev.as_vuon_thuoc"],["hoang","dia_diem/khoang_mach","Địa điểm · Khoáng mạch",6,0,"ev.km_dao_khoang ev.km_phu_mo_bi_xich ev.km_sap_ham ev.km_son_mon_doi_phi ev.km_tranh_mo ev.km_da_song"],["hoang","dia_diem/linh_mach","Địa điểm · Linh mạch",5,0,"ev.lm_tan_tu_chiem_mach ev.lm_son_mon_rao_mach ev.lm_thu_giu_mat_mach ev.lm_ke_tron_ben_mach ev.lm_mach_reo"],["hoang","dia_diem/phuong_thi","Địa điểm · Phường thị",4,2,"ev.pt_doi_chac ev.pt_phap_khi_gia ev.pt_leu_tra_tin_tuc ev.pt_ban_sach_tra_no"],["hoang","dia_diem/quan_ai","Địa điểm · Quan ải",6,1,"ev.qa_phi_qua_ai ev.qa_hang_lau ev.qa_linh_ai_sach_nhieu ev.qa_tham_bao_vuot_bien ev.tn_quan_ai_doi_chieu ev.tn_quan_ai_phuc_binh"],["hoang","dong_phu","Động phủ",8,4,"ev.dp_vach_rong ev.dp_khach_tru_mua ev.dp_ong_truc_hut_mach ev.dp_dan_xin_nuoc ev.dp_kiem_y_trong_da ev.dp_chu_cu_ve ev.dp_kiep_van_nho ev.dp_guong_chu_cu"],["san","giao_chien","Giao chiến",1,0,"ev.yeu_thu_lang_thang"],["san","hang","Hang ổ",8,0,"ev.hang_xa_quat ev.hang_lang_oa ev.hang_hat_sao ev.co_tu_dong_phu ev.thu_luyen_thap ev.vuong_lang ev.van_thi_quat ev.am_thanh"],["san","hanh_dong","Hành động (săn yêu, bế quan…)",10,0,"ev.be_quan ev.be_quan_tiep ev.khai_phu ev.dot_pha ev.luyen_che ev.san_yeu ev.truy_tim_yeu ev.truy_tim_dau_dan ev.td_quay_lai ev.truy_thu"],["hoang","hoang_da/cam_dia","Hoang dã · Cấm địa",8,5,"ev.hd_cd_cam_dia_mo_cua ev.hd_cd_xich_phong_an ev.hd_cd_ket_trong_cam_dia ev.hd_cd_dao_van_vach ev.hd_cd_trang_mau ev.hd_cd_ngu_tinh_lien_chau ev.hd_cd_khe_nut_troi ev.hd_cd_thien_hoa_roi"],["san","hoang_da/chu_o","Hoang dã · Lãnh thổ có chủ",2,0,"ev.chu_o_lanh_tho ev.chu_o_hang_trong"],["hoang","hoang_da/chung","Hoang dã · Chung",16,3,"ev.hd_chung_bia_vo_tu ev.hd_chung_hang_rong ev.hd_chung_xac_vo_danh ev.hd_chung_nguoi_nha_tim ev.hd_chung_kiem_khach ev.hd_chung_duoc_dai_nhan_ra ev.hd_chung_chuong_duoi_dat ev.hd_chung_binh_tro chain.hd_chung_binh_tro ev.hd_chung_binh_tro_tha ev.hd_chung_thien_kiep_nguoi_khac ev.hd_chung_dong_phu_tu_mo ev.hd_chung_than_thuc_do_xet ev.hd_chung_nguyen_anh_duoi_giet ev.hd_chung_dai_nang_toa_hoa ev.hd_chung_linh_khi_trieu"],["san","hoang_da/dai_yeu","Hoang dã · Đại yêu",10,3,"ev.hd_dy_vuong_chiem_mach ev.hd_dy_yeu_su_thu_cong ev.hd_dy_vuong_trong_thuong ev.hd_dy_hai_vuong_tranh_mach ev.hd_dy_vuong_mung_tho ev.hd_dy_vuong_lac_con ev.hd_dy_lang_duoi_mach_can ev.hd_dy_thu_trieu_dau_song ev.hd_dy_bai_xac_sau_trieu ev.hd_dy_thuong_doan_giua_trieu"],["bicanh","hoang_da/di_bao","Hoang dã · Dị bảo",4,0,"ev.hd_db_linh_quang_khe ev.hd_db_bao_quang_day_ho ev.hd_db_thap_dong_duoi_cat ev.hd_db_qua_chin_vong_vay"],["san","hoang_da/di_thu","Hoang dã · Dị thú",6,0,"ev.di_thu_huy_oc_dao chain.di_thu_huy ev.di_thu_huy_hang ev.di_thu_quy_nguu ev.di_thu_tuong_da ev.di_thu_hung_thu"],["hoang","hoang_da/hai_dao","Hoang dã · Hải đảo",15,3,"ev.hd_dao_ke_bi_day ev.hd_dao_chim_non_tren_ghenh ev.hd_dao_thuyen_ma ev.hd_dao_thu_trong_chai ev.hd_dao_hai_tac_giu_nguoi ev.hd_dao_so_hai_than ev.hd_dao_xac_kinh ev.hd_dao_hai_thi ev.hd_dao_dao_troi ev.hd_dao_nguoi_giu_den ev.hd_dao_duong_da_duoi_trieu ev.hd_dao_dao_cam_kiem ev.hd_dao_bang_trung_lao ev.hd_dao_dao_dang_chim ev.hd_dao_bong_cua_troi"],["hoang","hoang_da/ho_nuoc","Hoang dã · Hồ nước",16,6,"ev.hd_ho_trai_ngoc_dem_trang ev.hd_ho_dien_trieu_khu ev.hd_ho_giao_thuc_day ev.hd_ho_lao_chai_ca_la ev.hd_ho_dan_dem_tren_nuoc ev.hd_ho_thuyen_khong_nguoi chain.hd_ho_hop_nguoi_chet ev.hd_ho_hop_b2 ev.hd_ho_bang_giua_he ev.hd_ho_ke_luyen_ho ev.hd_ho_ly_ngu_do_kiep ev.hd_ho_cho_day_ho ev.hd_ho_bong_khong_theo ev.hd_ho_luoi_cau_thang ev.hd_ho_giao_nhan_bi_xich ev.hd_ho_bia_tren_mai_rua"],["hoang","hoang_da/hoang_mac","Hoang dã · Hoang mạc",16,1,"ev.hd_mac_gieng_co ev.hd_mac_di_chi_duoi_cat ev.hd_mac_bao_cat ev.hd_mac_lai_buon_can_nuoc ev.hd_mac_thanh_ao_anh chain.hd_mac_dao_mo ev.hd_mac_nguoi_dao_mo ev.hd_mac_ham_mo_thu_hai ev.hd_mac_oc_dao_di ev.hd_mac_nguoi_mua_bong ev.hd_mac_mo_than_giu_nuoc ev.hd_mac_phan_do_cho_chet ev.hd_mac_chuot_buon_mo ev.hd_mac_sao_roi ev.hd_mac_doan_lac_da_ma ev.hd_mac_nguoi_dem_cat"],["hoang","hoang_da/hoang_nguyen","Hoang dã · Hoang nguyên",14,3,"ev.hd_bang_suoi_am ev.hd_bang_bang_phong_co_tu ev.hd_bang_hang_hung_ngu_dong ev.hd_bang_linh_gac_dai_canh ev.hd_bang_chim_bang_goi_bay ev.hd_bang_bang_nguyen_dap_loi ev.hd_bang_diem_danh_duoi_bang ev.hd_bang_sen_tuyet_bo_chay ev.hd_bang_xac_di_ve_bac ev.hd_bang_sam_duoi_bang ev.hd_bang_bai_nga_cu_tuong ev.hd_bang_tuong_bang_giong_nguoi ev.hd_bang_ai_bang_thu_phi ev.hd_bang_be_trong_bang"],["hoang","hoang_da/khoi_loi","Hoang dã · Khôi lỗi",4,0,"ev.khoi_loi_dong_phu_bo ev.khoi_loi_cam_che_co ev.khoi_loi_lo_luyen_thi ev.khoi_loi_ai_co"],["san","hoang_da/linh_thu","Hoang dã · Linh thú",4,3,"ev.linh_thu_loc_dan_duong ev.linh_thu_dieu_trom ev.linh_thu_cam_ly ev.linh_thu_thuc_thiet"],["hoang","hoang_da/rung_ram","Hoang dã · Rừng rậm",16,6,"ev.hd_rung_qua_chin ev.hd_rung_dong_phu_goc_co ev.hd_rung_cay_thanh_tinh ev.hd_rung_tho_san_ket_bay ev.hd_rung_hac_mua_trang ev.hd_rung_cay_gia_xin_nuoc chain.hd_rung_cay_gia ev.hd_rung_cay_gia_b2 ev.hd_rung_ken_nguoi ev.hd_rung_mua_hat ev.hd_rung_vo_ho ev.hd_rung_lao_don_cay ev.hd_rung_cho_dem_yeu ev.hd_rung_kiem_trong_cay ev.hd_rung_tang_le_vuon ev.hd_rung_hoa_ru_ngu"],["hoang","hoang_da/son_mach","Hoang dã · Sơn mạch",14,6,"ev.hd_son_vach_ngan_kim ev.hd_son_long_mach_thuc_tinh ev.hd_son_dai_yeu_thuc_giac ev.hd_son_hai_nguoi_tranh_chi ev.hd_son_kiem_gay_tren_suon ev.hd_son_nui_don_dem ev.hd_son_son_than_sap_tan ev.hd_son_van_co_tren_dinh ev.hd_son_yeu_nup_tranh_kiep ev.hd_son_quan_tai_tren_vach ev.hd_son_lao_ganh_da ev.hd_son_da_va_troi_roi ev.hd_son_bac_da_len_may ev.hd_son_yeu_ruoc_dau"],["hoang","hoang_da/tien_ich","Hoang dã · Tiện ích",2,0,"ev.hd_nghi_chan ev.hd_hai_thuoc_dai"],["san","hoang_da/yeu_vuc","Hoang dã · Yêu vực",16,7,"ev.hd_yeu_bai_xuong ev.hd_yeu_lang_vuong_mo_ban ev.hd_yeu_ranh_gioi ev.hd_yeu_tu_binh ev.hd_yeu_bang_cho_nguoi chain.hd_yeu_hung_loi_the ev.hd_yeu_hung_loi_the ev.hd_yeu_hung_tra_loi ev.hd_yeu_hoc_lam_nguoi ev.hd_yeu_xu_an ev.hd_yeu_do_hoa_hinh ev.hd_yeu_dem_quy ev.hd_yeu_ba_nuoi_yeu ev.hd_yeu_nguoi_hoa_yeu ev.hd_yeu_van_bat_up ev.hd_yeu_non_bam_theo"],["san","ke_dich_nguoi","Kẻ địch là người",10,4,"ev.kdn_son_tac_chan_deo ev.kdn_thuy_tac_moc_thuyen ev.kdn_luu_khau_vao_lang ev.kdn_ung_bo_khoai_duoi ev.kdn_luong_dao_binh ev.kdn_thinh_ap_tieu ev.kdn_viem_thay_cung_nuoi_co ev.kdn_am_sat_chen_tra ev.kdn_bang_truy_na ev.kdn_nghia_dao_tren_mai"],["nghe","nghe/che_phu","Nghề · Chế phù",6,5,"ev.cp_phu_thuong_doi ev.cp_lang_ta_khi ev.cp_bua_gia ev.cp_hoc_tro_chep_len ev.cp_dau_phu ev.cp_phu_su_mu"],["nghe","nghe/chung","Nghề · Chung",17,8,"ev.mui_dan_yeu_thu ev.mui_dan_ke_cuop ev.mui_dan_tan_tu ev.mui_dan_ke_xin ev.di_hoa_dia_tam ev.di_hoa_cuu_u ev.di_hoa_tam_muoi ev.di_hoa_huyen_bang ev.di_hoa_tu_loi ev.di_hoa_cot_linh ev.di_hoa_thai_duong ev.di_hoa_niet_ban ev.di_hoa_cuu_thien ev.di_hoa_canh_kim ev.di_hoa_hau_tho ev.di_hoa_cuong_phong ev.lo_co_ngu_to"],["nghe","nghe/luyen_bao","Nghề · Luyện bảo",6,4,"ev.lb_lao_binh_dat_kiem ev.lb_phoi_doi_mau ev.lb_hoc_viec_chep_trom ev.lb_hoi_dau_khi ev.lb_dao_gia_quan_ai ev.lb_lo_co_dia_hoa"],["nghe","nghe/luyen_dan","Nghề · Luyện đan",9,4,"ev.ld_sam_mung_tho ev.ld_phu_de_do_benh chain.ld_phu_de_do_benh ev.ld_phu_de_toi_han ev.ld_dan_ha_chan_cho ev.ld_thu_tu_cau_dan ev.ld_don_phuong_bi_chep ev.ld_hoi_dau_dan ev.ld_lo_cuoi_cua_lao"],["nghe","nghe/tran_phap","Nghề · Trận pháp",6,1,"ev.tp_rao_thon_mua_dong ev.tp_me_tran_chan_duong ev.tp_thieu_chu_thay_tran ev.tp_tran_giu_kho ev.tp_doi_gia_thu_tran ev.tp_va_dai_tran"],["nghe","ngu_linh/khoi_loi","Ngự linh · Khôi lỗi",7,0,"ev.kl_sap_tho_khoi ev.kl_lau_co_quan ev.kl_tho_khoi_gap_nan ev.kl_xuong_khoi_bo_hoang ev.kl_dien_co_quan ev.kl_mo_thien_cong ev.kl_dau_khoi_an_cuoc"],["nghe","ngu_linh/linh_thu","Ngự linh · Linh thú",14,0,"ev.lt_danh_hoi_bui_ram ev.lt_danh_hoi_mat_ho ev.lt_danh_hoi_nen_gach ev.lt_danh_hoi_cat_vang ev.lt_loc_bay_tho_san ev.lt_tho_dem_trang ev.lt_cam_ly_lao_ngu ev.lt_thanh_dieu_bay_dan ev.lt_bach_trach_vach_da ev.lt_tam_bao_cho_chon ev.lt_thuc_thiet_tho_ren ev.lt_tinh_net ev.lt_kho_cua_no ev.lt_hoa_hinh"],["nghe","ngu_linh/linh_thu_ket_giao","Ngự linh · Kết giao linh thú",12,3,"ev.nl_lt_ho_trang_mac_bay ev.nl_lt_chuot_vang_tha_bac ev.nl_lt_soi_con_theo_chan ev.nl_lt_ho_me_trung_ten ev.nl_lt_ran_xanh_nghe_kinh ev.nl_lt_hac_dau_dinh_nui ev.nl_lt_qua_lua_dau_xom ev.nl_lt_mat_troi_thu_hai ev.nl_lt_trau_xanh_dao_truong ev.nl_lt_meo_den_tren_noc ev.nl_lt_ngua_lua_bat_kham ev.nl_lt_khi_tim_don_set"],["nghe","ngu_linh/than_thu","Ngự linh · Thần thú",8,0,"ev.nl_than_ly_long_doi_te ev.nl_than_lan_hoa_cuong ev.nl_than_dao_biet_lan ev.nl_than_loan_thu_suc ev.nl_than_rong_mac_can ev.nl_than_lan_trung_ten ev.nl_than_quy_len_bai ev.nl_than_to_loan_hoa_da"],["nghe","ngu_linh/thi_hon","Ngự linh · Thi hồn",8,1,"ev.cho_am_dem ev.thi_ke_dao_mo ev.thi_xac_than_lang ev.thi_mo_tuong_quan ev.thi_lang_thi_vuong ev.hon_phien_vo_chu ev.hon_quy_thanh ev.hon_dien_quy_mau"],["nghe","ngu_linh/thu_trung","Ngự linh · Thú / trùng",16,1,"ev.nl_thu_lao_chan_yeu ev.nl_thu_xac_trong_hang ev.nl_trung_co_su_doi_ruong ev.nl_trung_o_co_trong_dam ev.nl_cho_dem_thu_co ev.nl_thu_mo_ngu_thu_su ev.nl_thu_hai_cot_thu_hoang ev.nl_trung_dong_co_vuong ev.nl_trung_co_mau_ngu_dong ev.nl_thu_cam_ly_vuot_thac ev.nl_thu_chon_vang_duoi_trom ev.nl_thu_to_thanh_dieu ev.nl_thu_dinh_gio ev.nl_thu_luyen_huyet_tinh ev.nl_thu_bai_tu_lan ev.nl_thu_ho_phach_co"],["nghe","ngu_linh/trung_hoa_than","Ngự linh · Trùng hóa thần",3,0,"ev.nl_thu_to_liet_khong_ung ev.nl_thu_to_phan_son_ho ev.nl_thu_to_bich_lan_mang"],["nhan","nhan_mach/ban_be","Nhân mạch · Bạn bè",23,2,"ev.ban_luan_dao ev.ban_doi_vat ev.ban_xem_dau ev.ban_thu_nha ev.ban_thu_nha_toi ev.ban_chen_mung ev.ban_chuyen_que ev.ban_say_ruou ev.ban_cho_phien ev.ban_tung_thieu ev.ban_ti_thi ev.ban_gui_gam ev.ban_toc_bac ev.ban_goi_tien_boi ev.ban_giua_hai_ben ev.ban_hoa_giai ev.ban_dan_nguoi_toi ev.ban_nhac_no ev.ban_giu_ho ev.ban_lac_loi ev.ban_do_de ev.ban_mua_do_gia ev.rung_dong"],["nhan","nhan_mach/chung","Nhân mạch · Chung",10,1,"ev.ruou_luan_dao ev.ban_cu_ghe_tham ev.ban_cu_dai_khach ev.ban_gap_nan ev.tien_ban ev.ke_gay_kho ev.ke_thu_phuc_kich ev.ke_thu_vu_oan ev.tu_thu_sat_thu ev.tu_thu_cai_bay"],["nhan","nhan_mach/chuoc_nguoi","Nhân mạch · Chuộc người",5,5,"ev.chuoc_ban_hon_phien ev.chuoc_ket_nghia_tong_giam ev.chuoc_dao_lu_yeu_vuong ev.chuoc_tri_ky_khe_uoc ev.chuoc_su_phu_ke_thu_cu"],["nhan","nhan_mach/dao_lu","Nhân mạch · Đạo lữ",25,2,"ev.song_tu ev.dl_ky_niem ev.dl_ho_phap ev.dl_gap_nan ev.dl_xa_cach ev.dl_tranh_cai ev.dl_vuot_truoc ev.dl_hop_kich ev.dl_ke_theo_duoi ev.dl_du_ngoan ev.dl_luyen_dan ev.dl_con_tin_ke_thu ev.dl_ghen ev.dl_ghen_thai_bo ev.dl_gian_doi ev.dl_tho_nguyen ev.dl_linh_duoc ev.dl_nguoi_cu ev.dl_don_thoi ev.dl_dat_ten ev.dl_linh_dien ev.dl_bat_trom ev.dl_chieu_toi ev.dl_bay_phu ev.ly_tan"],["nhan","nhan_mach/doi_su","Nhân mạch · Đối sự",8,4,"ev.ban_thuong_xin_dan ev.ban_thuong_ho_phap ev.ban_thuong_ke_danh_len ev.ban_mat_di_vat ev.ban_mat_dap_mo ev.ban_mat_ke_nhat_xac ev.ban_mat_truy_hung ev.ban_mat_yeu_thu_giu_xac"],["nhan","nhan_mach/doi_thu","Nhân mạch · Đối thủ",4,0,"ev.dt_bia_co ev.dt_canh_bao ev.dt_tranh_suat ev.dt_ten_tren_loi_dai"],["nhan","nhan_mach/hau_boi","Nhân mạch · Hậu bối",5,1,"ev.hau_boi_quy_cua ev.hau_boi_loi_dai ev.hau_boi_chon_truyen_nhan ev.hau_boi_de_truyen_thua ev.hau_boi_hoi_dao"],["nhan","nhan_mach/hiem_khich","Nhân mạch · Hiềm khích",5,0,"ev.hiem_tranh_hang ev.hiem_chan_cau ev.hiem_sa_co ev.hiem_linh_tuyen ev.hiem_thue_nguoi"],["ta","nhan_mach/hop_hoan","Nhân mạch · Hợp hoan",1,0,"ev.thai_bo"],["nhan","nhan_mach/ket_nghia","Nhân mạch · Kết nghĩa",6,3,"ev.ket_nghia_huyet_thu ev.ket_nghia_mua_chuoc ev.ket_nghia_em_nho ev.ket_nghia_mung_tho ev.ket_nghia_che_cho ev.ket_nghia_chia_phuc"],["nhan","nhan_mach/nhan_vat","Nhân mạch · Nhân vật",12,0,"ev.gap_thien_kieu ev.gap_nguoi_su_mon ev.gap_ninh_tam_sinh ev.thach_dau ev.tam_su ev.tri_ky ev.ket_nghia ev.nhan_duyen ev.tham_ban_cu ev.anh_mat_khac_thuong ev.ban_phan_boi ev.ninh_tranh_co_duyen"],["nhan","nhan_mach/quen_biet","Nhân mạch · Quen biết",7,0,"ev.qb_mon_do_cu ev.qb_ru_hai_thuoc ev.qb_hoi_muon ev.qb_hoi_muon_toi ev.qb_tin_don ev.qb_canh_duoc_vien ev.qb_muon_but_ky"],["nhan","nhan_mach/sam_hoi","Nhân mạch · Sám hối",5,2,"ev.sam_hoi_quy_ke_thu ev.sam_hoi_no_mau ev.sam_hoi_chen_tra ev.sam_hoi_ke_mang_oan ev.sam_hoi_tre_mo_coi"],["nhan","nhan_mach/su_mon","Nhân mạch · Sư môn",10,2,"ev.bai_su ev.thinh_giao ev.su_phu_giao_viec ev.su_phu_viec_ban ev.su_phu_gap_nan ev.su_phu_toa_hoa ev.dau_hieu_an_y ev.doat_xa ev.dong_mon_nho_giup ev.dong_mon_ham_hai"],["nhan","nhan_mach/su_phu","Nhân mạch · Sư phụ",6,1,"ev.su_phu_khao_hach ev.su_phu_goi_ve ev.su_phu_dua_thu ev.su_phu_chuyen_cu ev.su_phu_trach_phat ev.su_phu_chi_diem"],["nhan","nhan_mach/tham_bi_canh","Nhân mạch · Thám bí cảnh",14,0,"ev.bc_thap_loi_moi ev.bc_thap_ban_do ev.bc_thap_cua_da ev.bc_thap_thu_ho ev.bc_thap_tro_mat ev.bc_thap_chia_bau ev.bc_cao_loi_moi ev.bc_cao_lenh_bai ev.bc_cao_tran_nhan ev.bc_cao_thu_ho ev.bc_cao_tro_mat ev.bc_cao_chia_bau chain.tham_bi_canh_thap chain.tham_bi_canh_cao"],["nhan","nhan_mach/thu_oan","Nhân mạch · Thù oán",15,2,"ev.oan_tra_lau_cham_mat ev.oan_dau_gia_tranh_mua ev.oan_cong_thanh_vu_cao ev.oan_chung_chuyen_do ev.oan_tuu_lau_say ev.oan_cho_ngoai_cua ev.oan_su_phu_ra_mat ev.oan_tran_vay_cho_ngoi ev.oan_con_tin_the_luc ev.oan_con_tin_ma_tu ev.oan_con_tin_son_trai ev.oan_con_tin_dao_lu ev.oan_duoc_tha_dan_duong ev.oan_duoc_tha_do_don ev.oan_duoc_tha_bao_oan"],["nhan","nhan_mach/tinh_y","Nhân mạch · Tình ý",8,0,"ev.ty_ngam_trang ev.ty_vat_ky_niem ev.ty_hieu_lam ev.ty_cham_thuong ev.ty_ke_thu_ba ev.ty_hoi_dao_tam ev.ty_giai_vay ev.ty_lo_hen"],["nhan","nhan_mach/tri_ky","Nhân mạch · Tri kỷ",6,0,"ev.tk_dem_luan_dao ev.tk_hau_su ev.tk_cung_ngo ev.tk_bong_tam_ma ev.tk_lau_ngay ev.tk_van_co_do"],["nhan","nhan_qua","Nhân quả",5,0,"ev.bao_an ev.bao_an_co_ten ev.bao_thu ev.bao_thu_co_ten ev.bao_thu_thue_nguoi"],["treo","noi_chon","Nơi chốn (nhiệm vụ lớn)",46,4,"ev.tra_lau_nghe_tin ev.bang_cao_thi ev.ke_moc_tui ev.dan_lang_cau_cuu ev.dau_gia_hoi ev.dau_gia_lau ev.dau_gia_hanh ev.thu_trieu_cong_thanh ev.ma_tu_tan_sat ev.son_mon_dong_kin ev.tuyen_do_dai_hoi ev.nhiem_vu_tong_mon ev.dong_mon_khieu_khich ev.cam_dia_hau_son ev.bi_canh_tham_hiem ev.truyen_thua_co_tu ev.tranh_doat_bao_vat ev.san_yeu_thu ev.diet_sao_huyet ev.ngoa_son_ngo_dao ev.hai_thuoc_son_da ev.dong_phu_an ev.phe_tich_hoang_vu ev.khai_dong_phu_son_thuy ev.dong_phu ev.teleport_talisman ev.dp_thu_pha_linh_dien ev.dp_tan_tu_luc_loi ev.dp_khach_tru_nho ev.dp_ke_thu_do_toi ev.dp_yeu_toc_doi_dat ev.dp_am_khi_vach_sau ev.dp_linh_duoc_dot_bien ev.dp_mach_nuoc_doi_dong ev.dp_ban_cu_ghe ev.dp_cam_che_hu ev.dp_mach_khoang ev.tru_ma_lenh ev.lien_minh_tram_yeu ev.phe_tich_luc_loi ev.phe_tich_am_khi ev.co_mo_ta_vat ev.khach_diem ev.thuong_doan_tuyen_ho_ve ev.du_dan_su ev.thien_kieu_qua_duong"],["hoang","phe_tich","Phế tích",8,3,"ev.pt_bia_cong_duc ev.pt_bua_com_con_nong ev.pt_ke_dao_mo ev.pt_gieng_biet_noi ev.pt_tran_cu_con_chay ev.pt_den_truong_minh ev.pt_vo_phong_an ev.pt_pho_ngung_dong"],["thanh","phong_tho/bac_minh","Phong thổ · Bạc mệnh",20,4,"ev.minh_luat_khach ev.minh_khach_ke_thu ev.minh_tuan_bien ev.minh_mieu_huyen_vu ev.minh_rua_mac_can ev.minh_dai_canh ev.minh_ro_tien_co ev.minh_chung_lo ev.minh_tam_bang ev.minh_tre_tap_giao ev.minh_sinh_le_da_thu ev.minh_on_khong_qua_dem ev.minh_linh_nho_nha ev.minh_dong_da_do ev.minh_ngan_hac_tram_tran ev.minh_cau_ca_lo_bang ev.minh_xe_tiep_te ev.minh_khach_dong_cung ev.minh_vach_bang_lo_dien ev.minh_bang_do_tham"],["thanh","phong_tho/lac_dao_thanh","Phong thổ · Lạc Đao Thành",10,2,"ev.lac_dao_mat_dam ev.lac_dao_thu_ben_kia chain.lac_dao_thanh ev.lac_dao_ba_loi_moi ev.lac_dao_chan_su_gia ev.lac_dao_vay_phu ev.lac_dao_ke_bao_tin ev.lac_dao_yen_ba_phe ev.lac_dao_so_tuan_thuyen ev.lac_dao_ben_vang"],["thanh","phong_tho/le_hoi","Phong thổ · Lễ hội",14,1,"ev.vong_to_thich_khach ev.vong_to_truong_lao ev.vong_to_kiem_gay ev.dang_hoi_khe_uoc ev.dang_hoi_den_nguoc_dong ev.te_quan_thieu_do_cung ev.te_quan_ten_khong_doc ev.te_quan_linh_ve_an_co ev.dai_han_dai_canh ev.dai_han_cuc_quang ev.dai_han_thu_doi ev.ruoc_than_kieu_nang ev.ruoc_than_cam_hoi ev.ruoc_than_ran_trang"],["thanh","phong_tho/luong","Phong thổ · Lương",6,2,"ev.luong_doi_dau_yeu ev.luong_ngoai_quan_ai ev.luong_le_te_quan ev.luong_den_do ev.luong_trung_binh ev.luong_chuong_ngan_chung"],["thanh","phong_tho/thinh","Phong thổ · Thịnh",7,2,"ev.thinh_khe_uoc ev.thinh_tien_mang ev.thinh_hai_than ev.thinh_ban_tin ev.thinh_van_bao_cho_vay ev.thinh_doi_no ev.thinh_hang_lau"],["thanh","phong_tho/ung","Phong thổ · Ưng",6,1,"ev.ung_tu_bai ev.ung_to_mieu ev.ung_thu_sinh ev.ung_ngu_dan_vot_do ev.ung_luat_phu_thanh ev.ung_cuu_hac"],["thanh","phong_tho/viem","Phong thổ · Viêm",6,2,"ev.viem_mieu_than ev.viem_ruoc_than ev.viem_su_tru_ta ev.viem_rung_thuoc ev.viem_khat_thuc ev.viem_luc_soat_ta_vat"],["ta","ta_phai/dac_trung","Tà phái · Đặc trưng",20,11,"ev.hac_thi_ta_phai ev.hac_thi_tang_vat ev.hac_thi_treo_dau ev.hac_thi_dan_khong_nhan ev.phan_da_ma_tiem_quan_tai ev.phan_da_ma_do_tham ev.phan_da_ma_le_nhap ev.phan_da_ma_vay_bat ev.hop_hoan_lau_huong_phong ev.hop_hoan_lau_lo_dinh ev.hop_hoan_lau_me_huong ev.hop_hoan_lau_hoa_khoi ev.cho_no_san_sau ev.cho_no_tu_si_phe ev.cho_no_bo_tron ev.cho_no_ho_dau ev.mieu_ta_than_te_song ev.mieu_ta_than_mo_mat ev.mieu_ta_than_tu_tu ev.cho_thi_hon_ta_phai"],["ta","ta_phai/gay_su","Tà phái · Gây sự",7,0,"ev.gay_su_tuan_khu ev.gay_su_thi_danh_hoi ev.gay_su_lang_tat_den ev.gay_su_ba_dong ev.gay_su_quan_ruou ev.gay_su_my_nhan ev.gay_su_huyet_ky"],["ta","ta_phai/thon_tran","Tà phái · Thôn trấn",17,6,"ev.dat_ta_bang_treo_dau ev.dat_ta_hang_cam ev.dat_ta_mua_tin ev.dat_ta_canh_lo_thi ev.dat_ta_u_co ev.dat_ta_thu_mua_mau ev.dat_ta_hu_hon ev.dat_ta_cho_nguoi ev.dat_ta_dang_nguoi ev.dat_ta_ke_tron ev.dat_ta_doi_no_thue ev.dat_ta_ke_do_duong ev.dat_ta_dai_sinh_tu ev.dat_ta_thue_vao_thanh ev.dat_ta_quan_tro_kin ev.dat_ta_phan_do ev.dat_ta_ma_dau_xem_cot"],["ta","ta_tu","Tà tu",10,10,"ev.ta_tu_tre_linh_can ev.ta_tu_dao_co_xin_tha ev.ta_tu_co_nhan ev.ta_tu_thon_dich ev.ta_tu_thu_non ev.ta_tu_xac_cha ev.ta_tu_oan_hon ev.ta_tu_be_quan_khach ev.ta_tu_long_tu ev.ta_tu_hoi_den"],["ta","ta_vat","Tà vật",11,5,"ev.tv_lh_thay_phap_nuoi_quy ev.tv_lh_co_mat_chu ev.tv_mq_thi_trong_ham ev.tv_mq_da_den_goi ev.tv_pt_tuong_chet_tuan_thanh ev.tv_pt_tieng_hat_ru ev.tv_ho_thuy_quy_tim_the ev.tv_rung_thu_sinh_mieu_hoang ev.tv_mac_han_bat ev.tv_phi_cuong ev.tv_quy_vuong"],["san","than_thu","Thần thú",20,2,"ev.than_thu_lan_dau_chan chain.than_thu_ky_lan ev.than_thu_lan_tho_san ev.than_thu_lan_nguoi_nga ev.than_thu_ky_lan ev.than_thu_vu_da_lan chain.than_thu_huyen_vu ev.than_thu_vu_lai_do ev.than_thu_vu_huyen_quy ev.than_thu_huyen_vu ev.than_thu_phuong_ngo_dong chain.than_thu_phuong ev.than_thu_phuong_cuop_trung ev.than_thu_phuong_thu_vay ev.than_thu_phuong ev.than_thu_long_vay_luoi chain.than_thu_long ev.than_thu_long_giao_canh ev.than_thu_long_xoay ev.than_thu_long_hon"],["thanh","thanh_tran/buon_chuyen","Thành trấn · Buôn chuyến",23,2,"ev.bc_ung_kiem_phoi ev.bc_ung_van_phong ev.bc_ung_te_khi ev.bc_thinh_cang_thi ev.bc_luong_quan_thi ev.bc_minh_cho_bang ev.bc_viem_cho_thao ev.bc_thu_mua_hang_xa ev.bc_thinh_thuong_hoi ev.bc_tram_thue ev.bc_thuong_doan_ho_tong ev.bc_cuop_hang ev.bc_buon_lau_qua_ai ev.bc_hang_gia ev.bc_lai_buon_tinh_ranh ev.bc_khe_uoc_van_bao ev.bc_giao_hang_van_bao ev.bc_ngu_nhan_doi_hang ev.bc_co_tien_chi_lo ev.van_bao_phan_hoi ev.van_bao_phan_hoi_ngoai ev.van_bao_truy_no ev.van_bao_treo_thuong"],["thanh","thanh_tran/cho_den","Thành trấn · Chợ đen",2,0,"ev.cd_an_tuc_phuong ev.cd_hac_thi"],["thanh","thanh_tran/chung","Thành trấn · Chung",31,5,"ev.thon_dam_cuoi ev.thon_tre_linh_can ev.thon_bo_ruong ev.thon_gieng_can ev.thon_cu_gia_gap_tien ev.thon_soi_ve_lang ev.tran_quan_tro_dem ev.tran_ly_truong_nho ev.tran_kiem_khach ev.tran_phu_xe_dem ev.tran_doan_hat ev.thanh_nha_mon_oan ev.thanh_lau_xanh ev.thanh_dai_tran_nut ev.thanh_de_tu_xuong_nui ev.thanh_tri_phu_cau_dan ev.kinh_hoang_tu_chieu_mo ev.kinh_cam_quan_tra_xet ev.kinh_quoc_su ev.kinh_ung_the_gia_chon_phe ev.kinh_thinh_van_bao_khach_khanh ev.ky_van_mua_ca ev.ky_van_dam_cuoi_chuot ev.ky_van_tieng_dan_dem ev.ky_van_nguoi_dien_tien_tri ev.ky_van_bong_tren_mai ev.ky_van_sao_roi ev.tiem_tap_hoa ev.public_teleport ev.tinh_that_thue ev.ganh_hang_rong"],["thanh","thanh_tran/dau_gia","Thành trấn · Đấu giá",2,2,"ev.dau_gia_rinh_doat ev.dau_gia_rinh_bay"],["thanh","thanh_tran/gia_toc","Thành trấn · Gia tộc",18,6,"ev.gia_toc_khao_linh_can ev.gia_toc_thu_tu_chuong_ngua ev.gia_toc_dem_te_to ev.gia_toc_hon_dang ev.gia_toc_chen_com_khach_cu ev.gia_toc_thoai_hon ev.gia_toc_khach_khanh_mot_ngay ev.gia_toc_kk_noi_gian ev.gia_toc_kk_dau_thiep ev.gia_toc_kk_tang_thu ev.gia_toc_ung_chao_loang ev.gia_toc_thinh_khe_uoc ev.gia_toc_luong_ra_ai ev.gia_toc_viem_than_tu_duong ev.gia_toc_minh_thu_phuong_nam ev.gia_toc_tranh_mo chain.gia_toc_mo_doi ev.gia_toc_mo_sap"],["thanh","thanh_tran/hoai_bich","Thành trấn · Hoài bích",3,3,"ev.hb_thieu_gia_ep_gia ev.hb_chan_truyen_nhan_vo ev.hb_noi_mon_ty_thi"],["thanh","thanh_tran/lam_cong","Thành trấn · Làm công",28,3,"ev.lam_cong_boc_vac ev.lam_cong_dung_bep ev.lam_cong_ganh_nuoc ev.lam_cong_thu_gap chain.lam_cong_thu_gap ev.lam_cong_thu_gap_chan_duong ev.lam_cong_gac_kho ev.lam_cong_keo_be ev.lam_cong_kiem_dau_tay ev.lam_cong_lao_tho_giu_chan ev.lam_cong_dung_nha ev.lam_cong_gat_thue ev.lam_cong_chan_trau ev.lam_cong_hai_sam ev.lam_cong_viet_thu ev.lam_cong_tu_duong ev.lam_cong_dao_gieng ev.lam_cong_chuot_kho ev.lam_cong_canh_ruong ev.lam_cong_dap_de ev.lam_cong_ke_chuyen ev.lam_cong_quet_cho ev.lam_cong_tuong_thanh ev.lam_cong_cheo_do ev.lam_cong_trong_lo_dan ev.lam_cong_thuong_doan chain.lam_cong_thuong_doan ev.lam_cong_thuong_doan_ha_trai"],["thanh","thanh_tran/lam_phat","Thành trấn · Làm phát",4,0,"ev.lam_phat_tuu_lau_dan ev.lam_phat_tra_quan_phu ev.lam_phat_chuong_quy_than ev.lam_phat_thuong_nhan_nghi"],["thanh","thanh_tran/loi_dai","Thành trấn · Lôi đài",3,0,"ev.loi_dai_treo_thuong ev.dau_truong_ngam ev.loi_dai_danh_thay"],["thanh","thanh_tran/mua_tin","Thành trấn · Mua tin",24,1,"ev.mua_tin_dong_phu chain.mua_tin_dong_phu ev.mua_tin_dong_phu_toi ev.mua_tin_dong_phu_rong ev.mua_tin_linh_duoc chain.mua_tin_linh_duoc ev.mua_tin_linh_duoc_toi ev.mua_tin_linh_duoc_rong ev.mua_tin_khe_uoc chain.mua_tin_khe_uoc ev.mua_tin_khe_uoc_toi ev.mua_tin_khe_uoc_rong ev.mua_tin_dai_yeu chain.mua_tin_dai_yeu ev.mua_tin_dai_yeu_toi ev.mua_tin_dai_yeu_rong ev.mua_tin_que_mieu chain.mua_tin_que_mieu ev.mua_tin_que_mieu_toi ev.mua_tin_que_mieu_rong ev.mua_tin_xac_bang chain.mua_tin_xac_bang ev.mua_tin_xac_bang_toi ev.mua_tin_xac_bang_rong"],["thanh","thanh_tran/pham_nhan","Thành trấn · Phàm nhân",24,2,"ev.pn_hoi_dap_nieu ev.pn_hoi_vat_lang ev.pn_choi_ga_dau_dinh ev.pn_tre_dong_tuong ev.pn_an_gio_nha_la ev.pn_dam_ma_thieu_nguoi ev.pn_ca_de_kho ev.pn_sot_ret_dau_mua ev.pn_thay_cung_danh_ta ev.pn_lu_ve_dem ev.pn_le_cau_mua ev.pn_ban_con_mua_doi ev.pn_quan_thu_thue ev.pn_leu_chong_di_thi ev.pn_lop_hoc_truong_lang ev.pn_tu_si_lam_phep ev.pn_lang_thang_xem_cot ev.pn_an_may_doi_com ev.pn_nguoi_cung_que ev.pn_tin_tong_mon_thu_do ev.pn_cuop_mua_gat ev.pn_den_troi_nguoc ev.pn_ga_gay_nua_dem ev.pn_cay_da_ke_chuyen"],["thanh","thanh_tran/pho_thi","Thành trấn · Phố thị",42,13,"ev.song_bac_chieu_bac ev.song_bac_con_no ev.song_bac_tu_si_bip ev.song_bac_cam_phap_khi ev.song_bac_van_cuoc_tho ev.tra_trang_quan_tra ev.tra_trang_tra_vuong_hoi ev.tra_trang_che_co_thanh_tinh ev.tra_trang_no_mua_che ev.tra_trang_bai_hat_hai_che ev.y_quan_kham_benh ev.y_quan_dich_benh ev.y_quan_lang_trung_an_the ev.y_quan_thu_thuoc ev.y_quan_benh_nhan_ngu ev.y_quan_cau_dan ev.tuu_phuong_quan_ruou ev.tuu_phuong_chum_tram_nam ev.tuu_phuong_say_ruou_lo_loi ev.tuu_phuong_dau_ruou_hao_kiet ev.tuu_phuong_khi_gia_doi_ruou ev.dien_trang_tru_hai_ruong ev.dien_trang_ta_dien_noi_day ev.dien_trang_ruong_linh_mach ev.dien_trang_bu_nhin ev.dien_trang_tieu_thu_linh_can ev.phuong_thi_cho_tu_si ev.phuong_thi_hang_tu_tong_mon ev.phuong_thi_dau_gia_nho ev.phuong_thi_bi_bam_duoi ev.phuong_thi_sap_khong_nguoi ev.phuong_thi_dat_luyen ev.phuong_thi_mua_dan_doc ev.the_gia_phu_de ev.the_gia_bong_loc ev.the_gia_hon_su_ep_buoc ev.the_gia_tranh_ngoi_gia_chu ev.the_gia_con_chau_y_the ev.the_gia_ban_bau_vat ev.the_gia_biet_vien_bi_diet ev.the_gia_toc_hoi_so_tai ev.the_gia_lao_to_be_quan"],["thanh","thanh_tran/son_thuy","Thành trấn · Sơn thủy",47,11,"ev.lc_cho_ca ev.lc_luoi_vot_do_co ev.lc_te_ha_ba ev.lc_thu_du_bai_lau ev.lc_dem_ca_noi ev.bd_thue_do ev.bd_do_dem ev.bd_khach_la_tren_do ev.bd_thuy_tac_chan_do ev.bd_kien_hang_nang_tay ev.mq_lo_quang ev.mq_sap_ham ev.mq_ap_boc_lot ev.mq_mach_linh_thach ev.mq_tieng_cuoc_dem ev.ls_leu_thuoc_da ev.ls_di_san_cung_tho ev.ls_bay_yeu_thu ev.ls_tho_san_mat_tich ev.ls_le_tra_xuong ev.dt_nha_thu_thuoc ev.dt_vuon_thuoc_bi_trom ev.dt_sam_hoa_hinh ev.dt_thu_thuoc_moi ev.dt_ep_ban_ruong_thuoc ev.lr_lo_ren ev.lr_ban_ve_co ev.lr_doi_kiem ev.lr_kiem_khoc_trong_lo ev.lr_ren_lai_phap_khi ev.lr_dat_luyen ev.lr_khi_su_luu_lac ev.st_chuong_chua_hoang ev.st_ban_nui ev.st_che_vach_da ev.st_phu_ong_cau_tien ev.st_coc_vong ev.st_hai_vang_trang ev.st_hac_dua_thu ev.st_cam_su_ben_thac ev.st_phong_nui_ngam_trang ev.st_da_tam_sinh ev.st_do_thu_tho ev.st_tan_hon_muon_than ev.st_lao_doi_tho ev.st_hac_chet_tren_dinh ev.st_da_vong_phu"],["thanh","thanh_tran/tin_nguong","Thành trấn · Tín ngưỡng",37,8,"ev.cho_phien_sap_hang ev.cho_phien_ngoc_phat_sang ev.cho_phien_sap_khong_nguoi ev.cho_phien_thu_phi_cho ev.cho_phien_ke_bam_duoi ev.mieu_tho_thap_huong ev.mieu_tho_the_cau_khan ev.mieu_tho_xa_nuong ev.mieu_tho_den_do ev.mieu_tho_tuong_nut ev.mieu_tho_bua_tran_trach ev.mieu_tho_phu_su_qua_duong ev.lang_hoang_lua_xanh ev.lang_hoang_xuong_duoi_gieng ev.lang_hoang_lao_dao_lap_dan ev.lang_hoang_ruoc_dau_dem ev.lang_hoang_gieng_co ev.tran_bien_quan_nhu ev.tran_bien_bat_phu ev.tran_bien_buon_lau ev.tran_bien_lua_hieu ev.tran_bien_cot_moc ev.tram_dich_quay ev.tram_dich_thu_khan ev.tram_dich_ho_tong ev.tram_dich_ngua_ve_mot_minh ev.tram_dich_ngua_kho_mau ev.hoc_duong_tang_thu ev.hoc_duong_thu_sinh_bi_bat ev.hoc_duong_sach_chep_sai ev.hoc_duong_ban_de ev.hoc_duong_chu_bo ev.co_tu_thien_duong ev.cung_duong_cao_tang ev.cung_duong_dao_quan ev.cung_duong_mieu_xa ev.cung_duong_phap_hoi"],["thanh","thanh_tran/treo_thuong","Thành trấn · Treo thưởng",1,0,"ev.bang_treo_thuong"],["thanh","thanh_tran/vu_oan","Thành trấn · Vụ oan",6,0,"ev.vu_oan_ben_gieng ev.vu_oan_nha_tro ev.vu_oan_den_hon chain.vu_oan_tim_hung ev.vu_oan_lan_dau ev.vu_oan_bat_hung"],["nhan","tien_duyen","Tiên duyên",9,1,"ev.td_lao_dao_tro_nho ev.td_sap_sach_cu ev.td_van_co_ben_ho ev.td_tan_quyen_mieu_hoang ev.td_nguoi_dat_ben ev.td_hoc_viec_y_quan ev.td_nghe_giang_ngoai_tuong ev.td_ngoc_gian_bai_bun ev.td_theo_xe_tieu"],["tongmon","tong_mon","Tông môn",24,1,"ev.chap_su_duong ev.tang_kinh_cac ev.bao_kho ev.linh_mach_tong_mon ev.dai_bi ev.truy_na ev.dan_phong ev.khi_phong ev.phu_duong ev.dan_ha_khao_hach ev.son_mon_tu_thu ev.son_mon_khac_phe ev.son_mon_khac_phe_truy ev.son_mon_khac_phe_truy_2 ev.son_mon_khac_phe_truy_nang ev.son_mon_khac_phe_truy_cuc ev.nhan_su_tong_mon ev.tinh_tam_chua ev.tm_cg_lao_to_xuat_quan ev.tm_cg_ghe_truong_lao ev.tm_cg_moc_gioi_linh_mach ev.tm_cg_su_gia_chien_thu ev.tm_cg_tong_kho_can ev.tm_cg_ma_tong_vay_nui"],["tongmon","tong_mon_khoi_loi","Tông môn · khôi lỗi",6,1,"ev.kl_tm_khoi_gac_nui ev.kl_tm_xuong_co_quan ev.kl_tm_tim_lieu ev.kl_tm_khoi_phat_cuong ev.kl_tm_dau_khoi ev.kl_tm_khoi_to_su"],["tongmon","tong_mon_noi","Tông môn · nội bộ",13,0,"ev.tm_duoc_vien ev.tm_khoang_mach ev.tm_phu_cac ev.tm_tran_cac ev.tm_kiem_trung ev.tm_thu_vien ev.tm_luyen_the_tri ev.tm_giang_duong ev.tm_am_cac ev.tm_huyet_tri ev.tm_co_hon_quat ev.tm_luyen_hon_dien ev.tm_huong_cac"],["tongmon","tong_mon_tinh_that","Tông môn · tĩnh thất",2,0,"ev.tinh_that_tong_mon ev.tinh_that_mat_do"],["tongmon","tong_mon_xet_an","Tông môn · xét án",1,0,"ev.chap_phap_xet_an"],["treo","treo_thuong/bat_cuop","Treo thưởng · Bắt cướp",6,0,"ev.tt_bat_cuop ev.tt_bat_cuop_thuy_tac ev.tt_bat_cuop_trom_trau ev.tt_bat_cuop_phu_nha ev.tt_bat_cuop_van_bao ev.tt_bat_cuop_linh_mach"],["treo","treo_thuong/ho_tong","Treo thưởng · Hộ tống",5,0,"ev.tt_ho_tong_thuong_doan ev.tt_ho_tong_van_bao ev.tt_ho_tong_dan_chay_nan ev.tt_ho_tong_dich_tram ev.tt_ho_tong_tuan_bien"],["treo","treo_thuong/ta_dao","Treo thưởng · Trừ tà đạo",5,0,"ev.tt_ta_vat ev.tt_ta_vat_phe_tich ev.tt_ma_tu ev.tt_ta_vat_chua ev.tt_thi_tu_dao_mo"],["treo","treo_thuong/theo_phe","Treo thưởng · Theo phe",8,0,"ev.tm_tru_ma_gieng_co ev.tm_tru_ma_lang_trung_gia ev.tm_tru_ma_chuong_hon ev.tm_tru_ma_ma_dau ev.tm_cuop_xe_dan ev.tm_san_de_tu ev.tm_cuop_dan_lu ev.tm_phuc_chan_truyen"],["tongmon","treo_thuong/tong_mon","Treo thưởng · Tông môn",19,0,"ev.tm_tru_yeu ev.tm_ap_tai ev.tm_yeu_duoc_vien ev.tm_yeu_dam_nuoc ev.tm_yeu_dau_dan ev.tm_yeu_ho_toc ev.tm_diet_ma_tu ev.tm_tru_ta_vat ev.tm_ta_tu_huyet_te ev.tm_phan_do_bi_kip ev.tm_phan_do_dan_phong ev.tm_phan_do_chan_truyen ev.tm_ap_tai_dan ev.tm_ho_tong_tan_de_tu ev.tm_ap_tai_linh_thach ev.tm_mo_linh_thach ev.tm_doat_duoc_vien ev.tm_dong_phu_cu ev.tm_mat_tham"],["treo","treo_thuong/tru_yeu","Treo thưởng · Trừ yêu",7,0,"ev.tt_tru_yeu ev.tt_tru_yeu_ben_do ev.tt_tru_yeu_deo_nui ev.tt_tru_yeu_hai_thuoc ev.tt_tru_yeu_lang_bay ev.tt_tru_yeu_xa_mieu ev.tt_tru_yeu_tuyet_bang"],["treo","treo_thuong/truy_na","Treo thưởng · Truy nã",5,0,"ev.tt_truy_na_dao_pham ev.tt_truy_na_trai_chu ev.tt_truy_na_yeu_vuong ev.tt_truy_na_huyet_lenh ev.tt_truy_na_ma_dau"],["treo","treo_thuong/viec_co_ten","Treo thưởng · Việc có tên",9,0,"ev.tm_ve_que_dong_mon ev.tm_tim_dai_de_tu ev.tm_noi_gian ev.tm_hoa_giai ev.tm_dua_thu ev.tm_doi_kiem ev.tm_dan_thi_luyen ev.tm_doi_thu_so_tai ev.tm_mo_co_nhan"],["hoang","vuot_bien","Vượt biên",11,0,"ev.ben_ngao_duong ev.bien_bang_troi ev.bien_tuan_thuyen_minh ev.ben_vinh_trieu ev.bien_giao_tuan ev.bien_trieu_rut ev.ben_lac_khu ev.bien_hai_tac ev.bien_dao_dam ev.bien_cuong_phong ev.bien_ngu_nhan"],["nhan","xuat_than/khoi_dau","Xuất thân · Khởi đầu",3,0,"chain.nhan_co_tan_hon ev.nhan_phat_sang ev.tan_hon_thuc_tinh"],["nhan","xuat_than/theo_nuoc","Xuất thân · Theo nước",16,5,"ev.xt_tu_bai_lac_de ev.xt_mo_dung_doi_an ev.xt_hop_niem_sap ev.xt_khe_uoc_dan_ha ev.xt_lo_dan_bo_hoang ev.xt_trieu_binh_cu ev.xt_dong_doi_dao_binh ev.xt_huyet_thu_goi_ve ev.xt_truy_con_tin ev.xt_so_binh_goi_ten ev.xt_mo_ong_duoi_tuyet ev.xt_lua_dai_tat ev.xt_khoi_hieu_la ev.xt_xa_toc_doi_an ev.xt_so_bach_an ev.xt_chen_ruou_gio_ret"],["tongmon","tongmon/dac_biet","Tuyển đồ · đại bỉ · công phá (nhận theo tên/ID đặc biệt)",0,0,""],["khac","khac","Sự kiện mới / chưa phân loại",0,0,""]];
 const AutoFarm={
   running:false,timer:null,stepN:0,paused:false,emptyScans:0,needInteractHere:false,
   opts:{
@@ -2350,6 +2362,10 @@ const AutoFarm={
     minLifeYears:3,
     avoidBeasts:'Bạch Hạc Linh',
     xuTri:'tha',
+    focus:'balanced',
+    llFull:'tiep',
+    grpOff:null,
+    pol:null,
     radiusWorld:55,
     radiusYears:0.25,
     delayMs:800
@@ -2378,6 +2394,7 @@ const AutoFarm={
       try{line.snap=this.richSnap?.()||null}catch{line.snap=null}
     }
     this.log.push(line);
+    if(this._decOpen&&this._dec)this._dec.notes.push(String(msg).slice(0,160));
     if(this.log.length>400)this.log.shift();
     try{console.log('[AutoFarm]',line.kind||'info',line.msg,line)}catch{}
     this.refreshLogOnly();
@@ -2441,6 +2458,7 @@ const AutoFarm={
       tuVi:Number(nv.tuVi||0),
       binhCanh:Number(nv.binhCanh||0),
       tuViTong:Number(nv.tuVi||0)+Number(nv.binhCanh||0),
+      lichLuyen:this.llInfo(nv).cur,
       tieu:Number(nv.tieuCanhGioi||0),
       canhGioi:Number(nv.canhGioi||0),
       thuongThe:Number(nv.thuongThe||0),
@@ -2474,6 +2492,7 @@ const AutoFarm={
       linhThach:pair('linhThach', now.linhThach-base.linhThach),
       tuVi:(()=>{const a=acc.tuVi||{plus:0,minus:0};return{net:a.plus-a.minus,plus:a.plus,minus:a.minus}})(),
       canhGioi:pair('canhGioi', now.canhGioi-base.canhGioi),
+      lichLuyen:pair('lichLuyen', (now.lichLuyen||0)-(base.lichLuyen||0)),
       bagTotal:now.bagTotal-base.bagTotal,
       bagByPham:dPham,
       chiSo:chi,
@@ -2489,7 +2508,7 @@ const AutoFarm={
     const prev=this.gainsPrev||this.gainsBase;
     if(!this.gainsAcc){
       this.gainsAcc={
-        linhThach:{plus:0,minus:0},tuVi:{plus:0,minus:0},canhGioi:{plus:0,minus:0},
+        linhThach:{plus:0,minus:0},tuVi:{plus:0,minus:0},lichLuyen:{plus:0,minus:0},canhGioi:{plus:0,minus:0},
         chiSo:Object.fromEntries(keys.map(k=>[k,{plus:0,minus:0}]))
       };
     }
@@ -2502,6 +2521,8 @@ const AutoFarm={
       else if(d<0)bucket.minus+=-d;
     };
     bump(acc.linhThach, prev.linhThach, now.linhThach);
+    if(!acc.lichLuyen)acc.lichLuyen={plus:0,minus:0};
+    bump(acc.lichLuyen, prev.lichLuyen??now.lichLuyen, now.lichLuyen);
     // Tu vi: cộng dồn theo phiên. Lên tiểu/đại cảnh giới thì tu vi về 0 → không tính là mất, phần mới có sau khi lên tính là nhận.
     if(now.canhGioi>prev.canhGioi||(now.canhGioi===prev.canhGioi&&now.tieu>prev.tieu)){
       acc.tuVi.plus+=Math.max(0,Number(now.tuViTong)||0);
@@ -2536,6 +2557,7 @@ const AutoFarm={
       <div class="af-row3 head"><span></span><span>+</span><span>−</span><span>Thực</span></div>
       ${row3('Tu vi', d.tuVi)}
       ${row3('Linh thạch', d.linhThach)}
+      ${row3('Lịch luyện', d.lichLuyen)}
       <div class="af-sec">Chỉ số</div>
       <div class="af-row3 head"><span></span><span>+</span><span>−</span><span>Thực</span></div>
       ${this.STAT_KEYS.map(k=>row3(this.STAT_LABELS[k]||k, d.chiSo?.[k])).join('')}
@@ -2570,6 +2592,7 @@ const AutoFarm={
       thuongThe:Number(r.nhanVat?.thuongThe||0),
       canhGioi:Number(r.nhanVat?.canhGioi||0),
       linhThach:Number(r.nhanVat?.linhThach||0),
+      lichLuyen:this.llInfo(r.nhanVat||{}).cur,
       tuVi:Number(r.nhanVat?.tuVi||0),tieu:Number(r.nhanVat?.tieuCanhGioi||0),tuViCum:this.tuViCum(r.nhanVat||{}),
       active:a?{id:a.id,slot:a.slot,done:!!a.done,waiting:a.waiting?.kind||null}:null,
       encKind:view?.kind||(this.encDef?this.encDef(a?.id)?.kind:null)||null,
@@ -3128,15 +3151,232 @@ const AutoFarm={
   encDef(id){
     try{return C.encounters?.get?.(id)||null}catch{return null}
   },
+  /* ───────── Nhật ký sự kiện: gặp gì, có lựa chọn nào, vì sao chọn, kết quả ra sao (để sửa lỗi / tối ưu) ───────── */
+  jr:{cur:null,list:[],loaded:false,saveT:null,seq:0},
+  jrnLoad(){
+    if(this.jr.loaded)return;this.jr.loaded=true;
+    try{const a=store.get('afJrn',[]);if(Array.isArray(a)){this.jr.list=a.slice(-150);this.jr.seq=Number(this.jr.list[this.jr.list.length-1]?.n||0)}}catch{}
+  },
+  jrnSave(){
+    clearTimeout(this.jr.saveT);
+    this.jr.saveT=setTimeout(()=>{try{store.set('afJrn',this.jr.list.slice(-150))}catch{}},1500);
+  },
+  jrnSnap(){
+    try{
+      const s=this.charSnapshot(),nv=me()||{};
+      return{nam:s.nam,lt:s.linhThach,tv:s.tuViTong,ll:+Number(s.lichLuyen||0).toFixed(1),th:s.thuongThe,cg:s.canhGioi,tieu:s.tieu,chi:s.chiSo,bag:s.bagTotal,tho:Number(nv.thoNguyen??NaN)}
+    }catch{return null}
+  },
+  jrnDelta(a,b){
+    if(!a||!b)return null;
+    const d={};
+    for(const k of ['lt','tv','ll','th','cg','tieu','bag']){const x=Number(b[k])-Number(a[k]);if(Number.isFinite(x)&&Math.abs(x)>1e-9)d[k]=+x.toFixed(2)}
+    if(Number.isFinite(a.tho)&&Number.isFinite(b.tho)&&a.tho!==b.tho)d.tho=+(b.tho-a.tho).toFixed(2);
+    const nam=Number(b.nam)-Number(a.nam);if(nam>1e-9)d.nam=+nam.toFixed(2);
+    for(const k of Object.keys(b.chi||{})){const x=Number(b.chi[k])-Number(a.chi?.[k]||0);if(Math.abs(x)>1e-9)d[k]=+x.toFixed(2)}
+    return d;
+  },
+  jrnTail(a,n=10){
+    try{return A(a?.transcript).slice(-n).map(x=>this.stripText(typeof x==='string'?x:(x.text||x.msg||JSON.stringify(x))).trim().slice(0,240)).filter(Boolean)}catch{return[]}
+  },
+  jrnBegin(a,view){
+    const gi=this.groupOf(a.id),def=this.encDef(a.id)||{};
+    const sub=AF_SUBS.find(r=>r[1]===gi.k);
+    let noi=view?.noi;if(noi&&typeof noi==='object')noi=noi.ten||noi.name||null;
+    this.jr.cur={
+      n:++this.jr.seq,id:a.id,ten:T(String(def.ten||view?.ten||'')).slice(0,80),kind:def.kind||view?.kind||null,
+      nhom:gi.g,sub:gi.k,subLabel:sub?sub[2]:null,tags:def.tags?.tinh_chat||null,cg:def.tags?.canh_gioi||null,
+      t:new Date().toISOString(),nam:nowYear(),slot:a.slot||run().viTri||null,noi:noi?String(noi).slice(0,60):null,
+      start:this.jrnSnap(),text:this.stripText(view?.text||'').trim().slice(0,600),steps:[]
+    };
+    return this.jr.cur;
+  },
+  jrnEnd(reason){
+    const cur=this.jr.cur;if(!cur)return;this.jr.cur=null;
+    cur.end=this.jrnSnap();cur.d=this.jrnDelta(cur.start,cur.end);cur.te=new Date().toISOString();cur.why=reason||null;
+    this.jr.list.push(cur);
+    if(this.jr.list.length>400)this.jr.list.shift();
+    this.jrnSave();this.refreshJournal();
+  },
+  /* Gọi mỗi nhịp: encounter đổi / đóng → chốt bản ghi; còn mở → cập nhật kết quả cuối */
+  jrnSync(){
+    const cur=this.jr.cur;if(!cur)return;
+    const a=run().active;
+    if(a&&a.id===cur.id){
+      if(a.ketQua)cur.ket=String(a.ketQua);
+      cur.done=!!a.done;if(run().tran)cur.combat=true;
+      cur.tail=this.jrnTail(a);
+      return;
+    }
+    this.jrnEnd(a?'đổi sang '+a.id:'đã đóng');
+  },
+  jrnStep(view,choices,pick,tag){
+    try{
+      this.jrnLoad();
+      const a=run().active;if(!a)return null;
+      if(this.jr.cur&&this.jr.cur.id!==a.id)this.jrnEnd('đổi sang '+a.id);
+      const cur=this.jr.cur||this.jrnBegin(a,view);
+      const D=this._dec||{drops:[],scores:[],notes:[]};this._dec=null;
+      const why={};D.drops.forEach(d=>{(why[d.i]=why[d.i]||[]).push(d.w)});
+      const sc={};D.scores.forEach(x=>{sc[x.i]=x});
+      const strip=t=>this.stripText(t).trim();
+      const opts=A(choices).map(c=>{
+        let hz=null,sp=null;
+        try{const h=this.choiceHazard(c);hz={};if(h.injury)hz.inj=h.injury;if(h.tamMa)hz.tm=+h.tamMa.toFixed(2);if(h.karma)hz.oan=1;if(h.lose)hz.mat=1;if(h.join)hz.mon=1;if(h.kill)hz.giet=1;if(!Object.keys(hz).length)hz=null}catch{}
+        try{const q=this.choiceSpendsResource(c);if(q.spends)sp={lt:q.linhThach||0,ch:q.congHien||0,tho:q.thoNguyen||0,txt:q.textHint?1:0}}catch{}
+        const o={i:c.index,tx:strip(c.text).slice(0,110),av:c.available!==false};
+        if(c.lockedReason)o.lock=strip(c.lockedReason).slice(0,80);
+        const rk=String(c?.risk?.level||c?.risk||'');if(rk)o.rk=rk;
+        if(c.chance!=null)o.ch=c.chance;
+        if(c.thoat)o.th=1;if(c.phucHet)o.het=1;
+        if(hz)o.hz=hz;if(sp)o.sp=sp;
+        const x=sc[c.index];if(x){o.sc=x.s;if(x.ev!=null)o.ev=x.ev}
+        if(why[c.index])o.why=why[c.index];
+        return o;
+      });
+      const step={
+        k:cur.steps.length+1,scene:a.scene||null,tag:tag||null,
+        text:cur.steps.length?this.stripText(view?.text||'').trim().slice(0,400):undefined,
+        opts,pick:pick?pick.index:null,notes:D.notes.slice(0,8),
+        pol:{...this.P()},before:this.jrnSnap(),trLen:A(a.transcript).length
+      };
+      cur.steps.push(step);
+      return step;
+    }catch(e){try{console.warn('[AutoFarm] jrnStep',e)}catch{};return null}
+  },
+  jrnAfter(step){
+    if(!step)return;
+    try{
+      const a=run().active;
+      step.out=A(a?.transcript).slice(step.trLen).map(x=>this.stripText(typeof x==='string'?x:(x.text||x.msg||JSON.stringify(x))).trim().slice(0,260)).filter(Boolean).slice(0,10);
+      step.d=this.jrnDelta(step.before,this.jrnSnap());
+      step.sceneAfter=a?.scene||null;step.waitAfter=a?.waiting?.kind||null;
+      if(run().tran)step.combat=true;
+      delete step.trLen;
+    }catch{}
+  },
+  jrnSummary(r){
+    const last=A(r.steps).slice().reverse().find(x=>x.pick!=null);
+    const o=last?A(last.opts).find(x=>x.i===last.pick):null;
+    return{pick:o?o.tx:(last?'(không chọn)':'(không có bước)')};
+  },
+  jrnPayload(){
+    this.jrnLoad();
+    const all=this.jr.list.slice();if(this.jr.cur)all.push({...this.jr.cur,dangMo:true});
+    return{
+      build:BUILD,at:new Date().toISOString(),
+      note:'Nhật ký sự kiện AutoFarm. Mỗi bản ghi = 1 sự kiện: steps[] có opts (mọi lựa chọn: tx text, rk risk, ch cơ hội, hz nguy cơ theo effects, sp tốn tài nguyên, ev giá trị kỳ vọng, sc điểm, why lý do bị loại), pick là index đã chọn, out là dòng kết quả, d là thay đổi (lt linh thạch, tv tu vi, th thương thế, chiSo…).',
+      opts:{...this.opts,grpOff:[...(this.opts.grpOff||[])]},
+      pol:this.P(),
+      state:this.jrnSnap(),
+      count:all.length,entries:all
+    };
+  },
+  jrnText(){
+    const P=this.jrnPayload(),L=[];
+    L.push('# Nhật ký AutoFarm · '+P.at+' · build '+P.build);
+    L.push('Chính sách: '+Object.entries(P.pol).map(([k,v])=>k+'='+(v?1:0)).join(' ')+' · nhóm tắt: '+(P.opts.grpOff.join(', ')||'(không)'));
+    for(const r of P.entries){
+      L.push('');
+      L.push(`## #${r.n} · năm ${r.nam} · ${r.nhom}/${r.sub} · ${r.id} "${r.ten}"${r.slot?' · ô '+r.slot:''}${r.noi?' · '+r.noi:''}${r.dangMo?' · (đang mở)':''}`);
+      if(r.text)L.push('> '+r.text.replace(/\s+/g,' ').slice(0,300));
+      for(const st of A(r.steps)){
+        L.push(`  Bước ${st.k}${st.scene?' [cảnh '+st.scene+']':''}${st.tag?' ('+st.tag+')':''}`);
+        if(st.text)L.push('  > '+st.text.replace(/\s+/g,' ').slice(0,200));
+        for(const o of A(st.opts)){
+          const f=[];if(o.rk)f.push(o.rk);if(o.ch!=null)f.push(String(o.ch));if(o.ev!=null)f.push('ev '+o.ev);if(o.sc!=null)f.push('đ '+o.sc);
+          if(o.hz)f.push('nguy:'+Object.entries(o.hz).map(([k,v])=>k+(v===1?'':v)).join('/'));
+          if(o.sp)f.push('tốn:'+(o.sp.lt||o.sp.ch||o.sp.tho||'có'));
+          if(!o.av)f.push('KHÓA'+(o.lock?': '+o.lock:''));
+          L.push(`   ${o.i===st.pick?'▶':' '} [${o.i+1}] ${o.tx}${f.length?'  ('+f.join(' · ')+')':''}${o.why?'  ✗ loại: '+o.why.join('; '):''}`);
+        }
+        if(st.notes?.length)L.push('   ghi chú: '+st.notes.join(' | '));
+        if(st.out?.length)L.push('   → '+st.out.join(' / '));
+        if(st.d&&Object.keys(st.d).length)L.push('   Δ '+Object.entries(st.d).map(([k,v])=>k+(v>0?' +':' ')+v).join(', '));
+      }
+      if(r.ket)L.push('  Kết quả: '+r.ket);
+      if(r.combat)L.push('  (có giao chiến)'+(r.tail?.length?' '+r.tail.slice(-4).join(' / '):''));
+      if(r.d&&Object.keys(r.d).length)L.push('  Tổng Δ: '+Object.entries(r.d).map(([k,v])=>k+(v>0?' +':' ')+v).join(', '));
+    }
+    return L.join('\n');
+  },
+  exportJournal(){
+    const text=JSON.stringify(this.jrnPayload(),null,1);
+    try{const blob=new Blob([text],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`autofarm-nhat-ky-${Date.now()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),20_000)}catch{}
+    toast('Đã tải nhật ký sự kiện ('+this.jr.list.length+' bản ghi)','ok',3000);
+  },
+  copyJournalText(){
+    const t=this.jrnText();
+    try{navigator.clipboard?.writeText?.(t);toast('Đã copy bản đọc nhanh ('+t.length+' ký tự)','ok',3000)}catch{toast('Không copy được — dùng Tải JSON','err',3000)}
+  },
+  clearJournal(){this.jr.list=[];this.jr.cur=null;try{store.set('afJrn',[])}catch{}this.refreshJournal();toast('Đã xóa nhật ký sự kiện','ok',2000)},
+  refreshJournal(){
+    if(!ui.isOpen||ui.tab!=='auto')return;
+    const el=$(body,'#af-jrn');if(!el)return;
+    const now=Date.now();if(this._jrnT&&now-this._jrnT<600)return;this._jrnT=now;
+    el.innerHTML=this.jrnListHtml();
+  },
+  jrnListHtml(){
+    this.jrnLoad();
+    const rows=this.jr.list.slice(-25).reverse();
+    const cur=this.jr.cur;
+    const one=r=>{
+      const sm=this.jrnSummary(r),d=r.d||{};
+      const dd=Object.entries(d).filter(([k])=>k!=='nam').slice(0,5).map(([k,v])=>`${k} ${v>0?'+':''}${v}`).join(' · ');
+      return `<details class="jrn"><summary>#${r.n} <b>${E(r.ten||r.id)}</b> <small>${E(r.sub||'')}</small> → ${E(sm.pick.slice(0,40))}${dd?` <small class="g">${E(dd)}</small>`:''}</summary>
+        <div class="sub">${E(r.id)} · năm ${E(r.nam)}${r.ket?' · '+E(r.ket):''}</div>
+        ${A(r.steps).map(st=>`<div class="sub"><b>Bước ${st.k}</b>${st.scene?' ['+E(st.scene)+']':''}${A(st.opts).map(o=>`<div style="margin-left:8px">${o.i===st.pick?'▶ ':'· '}${E(o.tx)} <small>${E([o.rk,o.ch!=null?o.ch:'',o.ev!=null?'ev '+o.ev:'',o.hz?'nguy '+Object.keys(o.hz).join('/'):'',o.why?'✗ '+o.why.join('; '):''].filter(Boolean).join(' · '))}</small></div>`).join('')}${A(st.out).length?`<div style="margin-left:8px" class="g">→ ${E(st.out.join(' / ').slice(0,300))}</div>`:''}</div>`).join('')}
+      </details>`;
+    };
+    return (cur?`<div class="sub"><b>Đang mở:</b> ${E(cur.ten||cur.id)} (${A(cur.steps).length} bước)</div>`:'')+(rows.map(one).join('')||'<div class="sub">Chưa có bản ghi. Chạy Auto, mỗi sự kiện gặp sẽ được ghi lại ở đây.</div>');
+  },
+  /* ── Nhóm sự kiện + chính sách lựa chọn (người dùng tự chọn theo lối tu: chính đạo / ma tu / liều…) ── */
+  POL_DEF:{tamMa:false,oan:false,thuongNang:false,tonLT:false,matVat:false,thoNguyen:false,giaNhap:false,giet:false},
+  POL_INFO:[
+    ['tamMa','Tâm ma tăng','Cho phép lựa chọn làm tăng tâm ma (hợp ma tu / tà đạo)'],
+    ['oan','Gieo oán · đắc tội người','Gieo oán hận (plant_seed), quan hệ NPC xấu đi'],
+    ['thuongNang','Có thể trọng thương','Lựa chọn có thể gây thương thế từ cấp 2 trở lên'],
+    ['tonLT','Tốn linh thạch / công hiến','Mua, nộp phí, đổi vật, hối lộ, chuộc người…'],
+    ['matVat','Mất vật phẩm','Giao nộp, bị lấy mất đồ hoặc đặc sản trong túi'],
+    ['thoNguyen','Hao thọ nguyên','Đổi thọ nguyên lấy lợi ích'],
+    ['giaNhap','Gia nhập / rời môn phái','Thay đổi tông môn của nhân vật'],
+    ['giet','Sát nhân · diệt khẩu','Giết NPC trong lựa chọn']],
+  POL_PRESET:{
+    chinh:{tamMa:false,oan:false,thuongNang:false,tonLT:false,matVat:false,thoNguyen:false,giaNhap:false,giet:false},
+    ma:{tamMa:true,oan:true,thuongNang:false,tonLT:false,matVat:false,thoNguyen:false,giaNhap:false,giet:true},
+    lieu:{tamMa:true,oan:true,thuongNang:false,tonLT:true,matVat:false,thoNguyen:false,giaNhap:true,giet:true}},
+  GRP_DEF_OFF:['tongmon/dac_biet'],
+  _grpIdx:null,
+  loadCfg(){
+    try{const o=store.get('afGrpOff',null);this.opts.grpOff=new Set(Array.isArray(o)?o:this.GRP_DEF_OFF)}catch{this.opts.grpOff=new Set(this.GRP_DEF_OFF)}
+    try{const q=store.get('afPol',null);this.opts.pol={...this.POL_DEF,...(q&&typeof q==='object'?q:{})}}catch{this.opts.pol={...this.POL_DEF}}
+  },
+  P(){if(!this.opts.pol)this.loadCfg();return this.opts.pol},
+  saveCfg(){try{store.set('afGrpOff',[...this.opts.grpOff]);store.set('afPol',this.opts.pol)}catch{}},
+  grpIndex(){
+    if(this._grpIdx)return this._grpIdx;
+    const m=new Map();
+    for(const r of AF_SUBS){if(!r[5])continue;for(const id of r[5].split(' '))m.set(id,{g:r[0],k:r[1]})}
+    return this._grpIdx=m;
+  },
+  groupOf(id){
+    const s=String(id||'');
+    let sect=false;try{sect=this.isSectExcluded(s)}catch{}
+    if(sect)return{g:'tongmon',k:'tongmon/dac_biet'};
+    return this.grpIndex().get(s)||{g:'khac',k:'khac'};
+  },
+  subOn(k){if(!(this.opts.grpOff instanceof Set))this.loadCfg();return !this.opts.grpOff.has(k)},
+  grpBlocked(id){return !this.subOn(this.groupOf(id).k)},
   /* Farm theo content source (kind/tags/nhom/choices) — mọi loại sự kiện, không chỉ săn yêu */
   isFarmEncounter(id){
     const s=String(id||'');
     if(!s)return false;
+    if(this.grpBlocked(s))return false;
     if(s==='ev.san_yeu')return true;
     if(this.opts.onlySanYeu)return false;
     if(this.isNonFarmEnc(s))return false;
     // Tông môn tuyển đồ — không tham gia
-    if(/tuyen_do|tuyen_do_de|tuyen_de|nhap_mon|nhan_do_de/i.test(s))return false;
+    if(/tuyen_do|tuyen_do_de|tuyen_de|nhap_mon|nhan_do_de/i.test(s)&&!this.subOn('tongmon/dac_biet'))return false;
     const def=this.encDef(s);
     if(def){
       const kind=String(def.kind||'');
@@ -3147,12 +3387,11 @@ const AutoFarm={
       const blob=(tc+' '+nhom+' '+s+' '+ten).toLowerCase();
       // Cửa hàng / tu luyện / đột phá / tông môn nội bộ — không farm ngoài
       if(kind==='cua_hang'||kind==='tu_luyen'||kind==='dot_pha')return false;
-      if(kind==='tong_mon'&&this.isSectExcluded(s))return false;
       if(/song_bac|dau_gia|cho_vay|vay_no/.test(blob))return false;
       // Phế tích chỉ để lập động phủ
       if(/phe_tich|lap_dong_phu|khai_phu/.test(blob))return false;
       // Tuyển đồ / nhận đệ tử tông môn
-      if(/tuyển đồ|tuyen do|nhận đệ|nhap mon|nhập môn/.test(blob))return false;
+      if(/tuyển đồ|tuyen do|nhận đệ|nhap mon|nhập môn/.test(blob)&&!this.subOn('tongmon/dac_biet'))return false;
       // Chiến đấu / bí cảnh — luôn farm
       if(kind==='chien_dau'||kind==='bi_canh')return true;
       // Sự kiện thành/thôn/hoang dã: nhận, trừ các loại đã loại ở trên
@@ -3196,7 +3435,7 @@ const AutoFarm={
   isNonFarmEnc(id){
     const s=String(id||'');
     if(!s)return false;
-    if(this.isSectExcluded(s))return true;
+    if(this.grpBlocked(s))return true;
     if(this.SKIP_PLACE_ACTS.has(s))return true;
     try{
       const k=String(C.encounters?.get?.(s)?.kind||'');
@@ -3505,6 +3744,124 @@ const AutoFarm={
       return score(b)-score(a);
     });
   },
+
+  /* ── Lịch luyện (đọc từ source game) ──
+     Thắng trận cộng lịch luyện: thường +2, tinh anh +6, boss +10, thua +1, nhân hệ số theo đại cảnh giới [1,1,.9,.8,.7,.6]; trần theo cảnh giới [20,20,25,30,35,40].
+     Bế quan tiêu lịch luyện để có tu vi đủ; cạn thì tu vi chỉ còn ~50% (đan chỉ còn 30%). Lịch luyện đầy thì săn thêm không còn cộng tu vi tiềm năng, chỉ còn đồ rơi. */
+  LL_CAP:[20,20,25,30,35,40],LL_GAIN:{thuong:2,tinh_anh:6,boss:10,thua:1},LL_REALM:[1,1,.9,.8,.7,.6],LL_DEF:10,
+  llInfo(nv){
+    nv=nv||me()||{};
+    const cg=Math.max(0,Math.min(5,Math.floor(Number(nv.canhGioi||0))));
+    const cap=this.LL_CAP[cg];
+    const raw=nv.lichLuyen;
+    const cur=(raw!=null&&Number.isFinite(Number(raw)))?Number(raw):this.LL_DEF;
+    const k=this.LL_REALM[cg];
+    return{cur,cap,pct:Math.max(0,Math.min(1,cur/cap)),full:cur>=cap-0.01,gain:{thuong:this.LL_GAIN.thuong*k,tinh_anh:this.LL_GAIN.tinh_anh*k,boss:this.LL_GAIN.boss*k}};
+  },
+  /* ── Giá trị kỳ vọng của một lựa chọn, đọc từ effects trong content game ──
+     Đơn vị "điểm" so sánh được giữa các lựa chọn của cùng một sự kiện. Rủi ro/an toàn vẫn do bộ lọc phía trên quyết định. */
+  FOCUS_W:{
+    balanced:{tuVi:12,ll:3,lt:1.2,item:7,stat:45,khiVan:60,daoTam:40,tamMa:-50,injury:-40,tho:-9,dv:4,ch:3,time:-25,linhNgo:25,nghe:2,heal:5,tuLuyen:14},
+    tuvi:{tuVi:24,ll:7,lt:.8,item:5,stat:35,khiVan:50,daoTam:40,tamMa:-55,injury:-40,tho:-9,dv:2,ch:2,time:-25,linhNgo:25,nghe:2,heal:5,tuLuyen:28},
+    taiNguyen:{tuVi:8,ll:2,lt:2.4,item:12,stat:30,khiVan:50,daoTam:30,tamMa:-45,injury:-40,tho:-9,dv:5,ch:5,time:-25,linhNgo:20,nghe:2,heal:5,tuLuyen:9},
+    chiSo:{tuVi:8,ll:2,lt:1,item:6,stat:90,khiVan:110,daoTam:70,tamMa:-60,injury:-40,tho:-9,dv:3,ch:3,time:-25,linhNgo:30,nghe:3,heal:5,tuLuyen:9}
+  },
+  _evCache:Object.create(null),
+  evCond(cond,pWin){
+    if(cond==null)return 1;
+    if(cond==='won')return pWin;
+    if(cond==='lost')return 1-pWin;
+    if(cond==='fled')return .08;
+    if(typeof cond==='object'){
+      if(cond.ngau_nhien!=null)return Math.max(0,Math.min(1,Number(cond.ngau_nhien)||0));
+      if(Array.isArray(cond.all))return cond.all.reduce((p,x)=>p*this.evCond(x,pWin),1);
+      if(Array.isArray(cond.any))return 1-cond.any.reduce((p,x)=>p*(1-this.evCond(x,pWin)),1);
+      if(cond.not!=null)return 1-this.evCond(cond.not,pWin);
+    }
+    return .6; // điều kiện khác (cờ, cảnh giới…): chưa biết trước → trung bình
+  },
+  evList(list,pWin,W,out,weight,muc){
+    for(const ef of A(list)){
+      if(!ef||typeof ef!=='object')continue;
+      const w=weight*this.evCond(ef.if,pWin);
+      if(!w)continue;
+      const add=(k,v)=>{out.pts+=v*w;out.parts[k]=(out.parts[k]||0)+v*w};
+      const num=x=>{const n=typeof x==='number'?x:(x&&typeof x==='object'?(x.bac??x.so??x.nam??0):0);return Number(n)||0};
+      if(ef.tu_vi!=null)add('tuVi',num(ef.tu_vi)*W.tuVi);
+      if(ef.tu_luyen&&typeof ef.tu_luyen==='object')add('tuVi',Number(ef.tu_luyen.nam||0)*Number(ef.tu_luyen.he_so||1)*W.tuLuyen);
+      if(ef.linh_thach!=null)add('lt',num(ef.linh_thach)*W.lt);
+      if(ef.add_item!=null){const so=typeof ef.add_item==='object'?Number(ef.add_item.so||1):1;add('item',so*W.item)}
+      if(ef.stat&&typeof ef.stat==='object')for(const v of Object.values(ef.stat))add('stat',(Number(v)||0)*W.stat);
+      if(ef.khi_van!=null)add('khiVan',num(ef.khi_van)*W.khiVan);
+      if(ef.dao_tam!=null)add('daoTam',num(ef.dao_tam)*W.daoTam);
+      if(ef.tam_ma!=null)add('tamMa',num(ef.tam_ma)*W.tamMa);
+      if(ef.injury!=null)add('injury',Math.max(1,num(ef.injury))*W.injury);
+      if(ef.tho_nguyen!=null)add('tho',num(ef.tho_nguyen)*(W.tho<0?-W.tho:W.tho));
+      if(ef.danh_vong!=null)add('dv',(typeof ef.danh_vong==='object'?Object.values(ef.danh_vong).reduce((t,v)=>t+(Number(v)||0),0):num(ef.danh_vong))*W.dv);
+      if(ef.cong_hien!=null)add('ch',num(ef.cong_hien)*W.ch*0.1);
+      if(ef.linh_ngo!=null)add('linhNgo',W.linhNgo);
+      if(ef.kinh_nghiem_nghe&&typeof ef.kinh_nghiem_nghe==='object')add('nghe',Object.values(ef.kinh_nghiem_nghe).reduce((a,b)=>a+(Number(b)||0),0)*W.nghe);
+      if(ef.heal!=null)add('heal',(this.injuryLevel()>0?num(ef.heal):0)*W.heal*3);
+      if(ef.time!=null)add('time',num(ef.time)*W.time);
+      if(ef.combat!=null){
+        const m=ef.muc||muc||'thuong';
+        const ll=this.llInfo(),g1=ll.gain[m==='boss'?'boss':m==='tinh_anh'?'tinh_anh':'thuong'];
+        add('ll',ll.full?0:g1*W.ll);
+        add('item',(m==='boss'?3:m==='tinh_anh'?1.6:1)*W.item*.6); // đồ rơi từ trận
+      }
+    }
+  },
+  /* Lựa chọn thô của game, đúng cảnh đang mở (scene) — cùng logic vm() của game */
+  rawChoice(c){
+    const a=run().active;const id=a?.id;const def=id?(C.encounters?.get?.(id)||this.encDef?.(id)):null;
+    if(!def)return null;
+    const list=(a.scene&&def.scenes?.[a.scene]?.choices)||def.choices;
+    if(A(list).some(x=>x&&x.nguon))return null; // nguồn động: không ánh xạ được chỉ số
+    return A(list)[c.index]||null;
+  },
+  /* Phân tích rủi ro từ effects thật (kể cả success/failure/partial và cảnh kế tiếp) */
+  choiceHazard(c){
+    const h={injury:0,tamMa:0,karma:false,lose:false,join:false,kill:false};
+    try{
+      const raw=this.rawChoice(c);if(!raw)return h;
+      const a=run().active,def=C.encounters?.get?.(a.id)||this.encDef?.(a.id);
+      const scan=(list,depth)=>{
+        for(const ef of A(list)){
+          if(!ef||typeof ef!=='object')continue;
+          if(ef.injury!=null)h.injury=Math.max(h.injury,Math.max(1,Number(typeof ef.injury==='object'?(ef.injury.so??ef.injury.cap??1):ef.injury)||1));
+          if(ef.tam_ma!=null&&Number(typeof ef.tam_ma==='object'?(ef.tam_ma.so??0):ef.tam_ma)>0)h.tamMa+=1;
+          if((ef.plant_seed!=null&&/oan|han/.test(JSON.stringify(ef.plant_seed)))||(ef.npc_relation!=null&&/-\d/.test(JSON.stringify(ef.npc_relation))))h.karma=true;
+          if(ef.remove_item!=null||ef.mat_dac_san!=null)h.lose=true;
+          if(ef.gia_nhap_mon_phai!=null||ef.roi_mon_phai!=null)h.join=true;
+          if(ef.npc_giet!=null)h.kill=true;
+          if(ef.goto_scene&&depth<2&&def?.scenes?.[ef.goto_scene]){
+            for(const ch of A(def.scenes[ef.goto_scene].choices))for(const sec of ['effects','failure'])scan(ch[sec],depth+1);
+          }
+        }
+      };
+      scan(raw.effects,0);scan(raw.failure,0);scan(raw.partial,0);
+      // thành công không thương tích nhưng đòn đánh bại có thể: lấy cả success (tác dụng phụ)
+      scan(raw.success,0);
+    }catch{}
+    return h;
+  },
+  choiceEV(c,chanceN,risk){
+    try{
+      const raw=this.rawChoice(c);if(!raw)return{pts:0,parts:{}};
+      const W0=this.FOCUS_W[this.opts.focus]||this.FOCUS_W.balanced;
+      const W=this.P().tamMa?{...W0,tamMa:0}:W0;
+      const pWin=risk==='an_toan'?.92:risk==='ngang_suc'?.62:(chanceN!=null?chanceN:.75);
+      const out={pts:0,parts:{}};
+      this.evList(raw.effects,pWin,W,out,1);
+      if(raw.check||A(raw.success).length||A(raw.failure).length){
+        const p=chanceN!=null?chanceN:.5;
+        this.evList(raw.success,pWin,W,out,p);
+        this.evList(raw.partial,pWin,W,out,Math.max(0,(1-p))*.4);
+        this.evList(raw.failure,pWin,W,out,1-p);
+      }
+      return out;
+    }catch{return{pts:0,parts:{}}}
+  },
   busy(){const r=run();return Boolean(r.active||r.tran||r.bienCo||r.thongBao||r.thongBaoDai)},
   chanceScore(ch){
     if(ch==null||ch==='')return 0.45;
@@ -3526,9 +3883,7 @@ const AutoFarm={
     /* effects content: linh_thach.bac < 0 = trừ LT (source ht "linh_thach") */
     const out={linhThach:0,congHien:0,textHint:false,spends:false};
     try{
-      const id=run().active?.id;
-      const def=id?(C.encounters?.get?.(id)||this.encDef?.(id)):null;
-      const raw=def&&A(def.choices)[c.index];
+      const raw=this.rawChoice(c);
       if(raw){
         for(const sec of ['effects','success','partial','failure']){
           for(const eff of A(raw[sec])){
@@ -3542,7 +3897,7 @@ const AutoFarm={
               const v=typeof eff.cong_hien==='number'?eff.cong_hien:(eff.cong_hien.bac??eff.cong_hien.so??0);
               if(Number(v)<0)out.congHien+=Number(v);
             }
-            if(eff.mua!=null)out.textHint=true;
+            if(eff.mua!=null||eff.doi!=null)out.textHint=true;
             for(const k of ['tho_nguyen','thoNguyen','tho_nguyen_mat']){
               if(eff[k]!=null){const v=typeof eff[k]==='number'?eff[k]:(eff[k].nam??eff[k].so??0);if(Number(v)<0){out.thoNguyen=(out.thoNguyen||0)+Number(v);out.textHint=true}}
             }
@@ -3559,6 +3914,14 @@ const AutoFarm={
     return out;
   },
   pickChoice(choices){
+    const D={drops:[],scores:[],notes:[]};
+    this._dec=D;this._decOpen=true;
+    let r=null;
+    try{r=this._pickChoice(choices,D)}finally{this._decOpen=false}
+    D.picked=r?r.index:null;
+    return r;
+  },
+  _pickChoice(choices,D){
     /* Gợi ý game (encounterView): available, risk (zgt), chance (Imt), thoat, phucHet.
        Ưu tiên: an_toan / dễ / có phần thưởng; thoát khi hết việc hoặc không an toàn. */
     const list=A(choices).filter(c=>c&&c.available!==false&&c.index!=null);
@@ -3596,16 +3959,18 @@ const AutoFarm={
 
     // Lọc bỏ tử địa / hiểm nếu còn lựa chọn khác
     let pool=list.slice();
+    const narrow=(next,why)=>{if(next.length&&next.length<pool.length){pool.forEach(c=>{if(!next.includes(c))D.drops.push({i:c.index,w:why})});pool=next}};
+    const pol=this.P();
     const notDead=pool.filter(c=>{
       const l=lv(c);
       if(this.opts.skipTuDia&&(l==='tu_dia'||l==='hiem'))return false;
       return true;
     });
-    if(notDead.length)pool=notDead;
+    narrow(notDead,'tử địa / hiểm');
 
     // Có an_toan → chỉ chọn trong nhóm an_toan (gợi ý combat của game)
     const safe=pool.filter(c=>lv(c)==='an_toan');
-    if(safe.length)pool=safe;
+    if(safe.length)narrow(safe,'có cửa an_toan hơn');
     else{
       // Không an_toan: bỏ ngang_suc nếu còn lựa chọn không combat
       const healthy=this.injuryLevel()===0;
@@ -3613,9 +3978,9 @@ const AutoFarm={
       const noCombat=pool.filter(c=>!lv(c));
       const even=pool.filter(c=>lv(c)==='ngang_suc');
       // Chưa bị thương: ngang sức vẫn nhận (thưởng thường tốt hơn lui đi); đang bị thương: né
-      if(healthy&&even.length)pool=pool.filter(c=>!lv(c)||lv(c)==='ngang_suc');
-      else if(noCombat.length)pool=noCombat;
-      else if(soft.length)pool=soft;
+      if(healthy&&even.length)narrow(pool.filter(c=>!lv(c)||lv(c)==='ngang_suc'),'combat quá khó');
+      else if(noCombat.length)narrow(noCombat,'tránh combat');
+      else if(soft.length)narrow(soft,'combat quá khó');
       else{
         const esc=list.find(isThoat);
         if(esc){this.push('Không an toàn → thoát','dbg');return esc}
@@ -3624,14 +3989,43 @@ const AutoFarm={
 
     // Bỏ phucHet nếu còn cửa khác (duyên đã hết)
     const notHet=pool.filter(c=>!c.phucHet);
-    if(notHet.length)pool=notHet;
+    narrow(notHet,'đã hết duyên');
 
-    // Không chọn lựa chọn làm giảm tài nguyên (nộp/trả LT…)
-    const free=pool.filter(c=>!this.choiceSpendsResource(c).spends);
-    if(free.length)pool=free;
+    // Chính sách tài nguyên: tốn LT/công hiến/thọ nguyên chỉ bị loại khi người dùng KHÔNG cho phép
+    const spendBad=c=>{const q=this.choiceSpendsResource(c);if(q.thoNguyen&&!pol.thoNguyen)return true;return !pol.tonLT&&q.spends&&!q.thoNguyen};
+    const free=pool.filter(c=>!spendBad(c));
+    if(free.length)narrow(free,'tốn tài nguyên');
     else{
       const esc=list.find(isThoat);
       if(esc){this.push('Chỉ còn lựa chọn tốn tài nguyên → thoát','dbg');return esc}
+    }
+
+    // Chính sách rủi ro (người dùng chọn): trọng thương, tâm ma, oán nghiệp, mất vật, môn phái, sát nhân
+    {
+      const viol=c=>{
+        const h=this.choiceHazard(c);c._hz=h;const v=[];
+        if(h.injury>=2&&!pol.thuongNang)v.push('có thể trọng thương');
+        if(h.tamMa>0&&!pol.tamMa)v.push('tăng tâm ma');
+        if(h.karma&&!pol.oan)v.push('gieo oán / đắc tội');
+        if(h.lose&&!pol.matVat)v.push('mất vật phẩm');
+        if(h.join&&!pol.giaNhap)v.push('đổi môn phái');
+        if(h.kill&&!pol.giet)v.push('sát nhân');
+        c._viol=v;return v;
+      };
+      pool.forEach(viol);
+      const ok=pool.filter(c=>!c._viol.length);
+      if(ok.length&&ok.length<pool.length){
+        pool.forEach(c=>{if(c._viol.length)D.drops.push({i:c.index,w:'chính sách: '+c._viol.join(', ')})});
+        pool=ok;
+      }else if(!ok.length){
+        const esc=list.find(isThoat);
+        const escOk=esc&&!(viol(esc).length);
+        if(escOk){this.push('Mọi cửa đều trái chính sách → thoát','dbg');return esc}
+        // không thoát được: chọn cửa ít vi phạm nhất, ưu tiên không trọng thương
+        this.push('Mọi cửa đều trái chính sách và không có lối thoát → chọn cửa ít vi phạm nhất','dbg');
+        const min=Math.min(...pool.map(c=>c._viol.length+(c._hz.injury>=2?2:0)));
+        narrow(pool.filter(c=>c._viol.length+(c._hz.injury>=2?2:0)===min),'ít vi phạm chính sách nhất');
+      }
     }
 
     // Né quái trong danh sách (vd. Bạch Hạc Linh: đánh bị trừ Khí Vận) — kể cả "Lùng con đầu đàn" của menu đó
@@ -3644,7 +4038,7 @@ const AutoFarm={
           const esc=list.find(isThoat)||list.find(c=>c.thoat);
           if(esc){this._avoidReroll=true;this.push('Có quái cần né → Thôi, rời ô','dbg');return esc}
           const keep=pool.filter(c=>!hit(c));
-          if(keep.length)pool=keep;
+          narrow(keep,'quái cần né');
         }
       }
     }
@@ -3652,7 +4046,7 @@ const AutoFarm={
       let score=0;
       const l=lv(c);
       const ch=chanceOf(c);
-      if(this.choiceSpendsResource(c).spends)score-=200;
+      if(spendBad(c))score-=200;
       // Risk — nguồn zgt game
       if(l==='an_toan')score+=100;
       else if(l==='ngang_suc')score+=(this.injuryLevel()===0?70:30);
@@ -3671,8 +4065,10 @@ const AutoFarm={
       if(/lấy (tiền|thưởng|lời)|nhận thưởng|thu hoạch|rút lui/i.test(strip(c.text)))score+=45;
       // Lui đi/bỏ đi tay không: kém hơn làm việc
       if(/^(lặng lẽ lui|lui đi|bỏ đi|làm ngơ|mặc kệ|lờ đi)/i.test(strip(c.text)))score-=40;
-      // Có vat / phần thưởng gợi ý trên nút
-      if(A(c.vat).length)score+=8;
+      // Giá trị kỳ vọng từ effects thật của game (tu vi, linh thạch, đồ, chỉ số, khí vận, lịch luyện…), giới hạn ±70 để không đè luật an toàn
+      const ev=this.choiceEV(c,ch,l);
+      score+=Math.max(-70,Math.min(70,ev.pts*.5));c._ev=ev;
+      if(A(c.vat).length)score+=4;
       if(c.phucHet)score-=60;
       // Mua/cược
       if(/^(mua|trả|đặt cược|thuê|cược)\b/i.test(strip(c.text)))score-=40;
@@ -3687,10 +4083,11 @@ const AutoFarm={
       return{c,score};
     }).sort((a,b)=>b.score-a.score||a.c.index-b.c.index);
 
+    D.scores=scored.map(x=>({i:x.c.index,s:Math.round(x.score),ev:x.c._ev?+x.c._ev.pts.toFixed(1):null}));
     const best=scored[0]?.c||null;
     if(best){
       const ch=chanceOf(best);
-      this.push('pick → ['+(best.index+1)+'] '+strip(best.text).slice(0,42)+' risk='+(lv(best)||'none')+(ch!=null?(' ch='+ch):'')+' score='+scored[0].score.toFixed(1),'dbg',{scores:scored.slice(0,6).map(x=>({i:x.c.index,t:strip(x.c.text).slice(0,40),s:Math.round(x.score)})),poolSize:pool.length,listSize:list.length,enc:activeId,kind:encKind});
+      this.push('pick → ['+(best.index+1)+'] '+strip(best.text).slice(0,42)+' risk='+(lv(best)||'none')+(ch!=null?(' ch='+ch):'')+' ev='+(best._ev?best._ev.pts.toFixed(1):'-')+' score='+scored[0].score.toFixed(1),'dbg',{scores:scored.slice(0,6).map(x=>({i:x.c.index,t:strip(x.c.text).slice(0,40),s:Math.round(x.score)})),poolSize:pool.length,listSize:list.length,enc:activeId,kind:encKind});
     }
     return best;
   },
@@ -4085,14 +4482,16 @@ const AutoFarm={
   },
   tryEncounter(){
     if(run().thongBao||run().thongBaoDai){this.dismissNotices();return 'notice'}
-    const a=run().active;if(!a)return 'idle';
+    const a=run().active;if(!a){try{this.jrnSync()}catch{}return 'idle'}
+    try{this.jrnSync();if(!this.jr.cur){let v0=null;try{v0=g.encounterView?.()}catch{}this.jrnLoad();this.jrnBegin(a,v0)}}catch{}
     const w=a.waiting;
     // Đấu giá / không farm: chọn thoát ngay nếu có choice
     if(!w&&this.isNonFarmEnc(a.id)){
       let view=null;try{view=g.encounterView?.()}catch{}
       const ch=this.pickChoice(view?.choices||[]);
       if(ch){
-        try{g.choose(ch.index);this.push('Thoát non-farm: '+a.id,'ok');return 'choose'}catch(e){this.push('choose non-farm: '+(e.message||e),'err')}
+        const _st0=this.jrnStep(view,view?.choices||[],ch,'không farm');
+        try{g.choose(ch.index);this.jrnAfter(_st0);this.push('Thoát non-farm: '+a.id,'ok');return 'choose'}catch(e){this.push('choose non-farm: '+(e.message||e),'err')}
       }
       // Không chọn được → đóng / resume
       try{if(a.done)g.closeEncounter?.();else g.resume?.(null)}catch{}
@@ -4116,6 +4515,12 @@ const AutoFarm={
       try{
         const opts=typeof g.cachXuTri==='function'?g.cachXuTri():null;
         const ids=A(opts).map(x=>x.id||x);
+        if(id==='auto'){
+          // Kết liễu để lấy đồ rơi khi game không cảnh báo hậu quả (thù oán, thế lực…); nếu có cảnh báo thì tha
+          const kl=A(opts).find(x=>x&&x.id==='ket_lieu');
+          id=(kl&&!kl.canhBao)?'ket_lieu':'tha';
+          this.push('Tù binh (tự động): '+id+(kl&&kl.canhBao?' — game cảnh báo: '+this.stripText(typeof kl.canhBao==='string'?kl.canhBao:(kl.canhBao.text||kl.canhBao.moTa||'hậu quả')).slice(0,60):''),'dbg');
+        }
         if(ids.length&&!ids.includes(id))id=ids.includes('tha')?'tha':ids[0];
       }catch{}
       try{
@@ -4164,11 +4569,12 @@ const AutoFarm={
     }
     if(!this.opts.autoChoose){this.push('Có lựa chọn — tắt auto chọn, dừng tay');return 'stuck'}
     const pick=this.pickChoice(choices);
+    const _st=this.jrnStep(view,choices,pick,pick?'':'không chọn được');
     if(!pick){
       const strip=t=>this.stripText(t);
       const cancel=choices.find(c=>c&&(c.thoat||/^(thôi|hủy)/i.test(strip(c.text).trim())));
       try{
-        if(cancel&&typeof g.choose==='function'){g.choose(cancel.index);this.push('Chọn Thôi để rời menu','ok')}
+        if(cancel&&typeof g.choose==='function'){g.choose(cancel.index);if(_st){_st.pick=cancel.index;_st.tag='rời menu'}this.jrnAfter(_st);this.push('Chọn Thôi để rời menu','ok')}
         else if(typeof g.closeEncounter==='function')g.closeEncounter();
         else g.resume?.(null);
       }catch(e){this.push('Rời menu: '+(e.message||e),'err')}
@@ -4185,6 +4591,7 @@ const AutoFarm={
       const txt=this.stripText(pick.text).trim();
       const isCancel=pick.thoat===true||/^(thôi|hủy|đóng|bỏ qua|đi|rời đi|rời|đi tiếp|cáo từ)\s*$/i.test(txt)||/^(xem rồi đi|lảng đi|không muốn|rời (đi|khỏi|chỗ))/i.test(txt);
       g.choose(pick.index);
+      this.jrnAfter(_st);
       this.push(`Chọn [${pick.index+1}] ${label}${ch}${rkShow}`,'ok');
       if(this._avoidReroll){
         this._avoidReroll=false;
@@ -4218,6 +4625,7 @@ const AutoFarm={
     if(!this.running)return;
     this.stepN++;
     try{this.trackGains();this.syncGainsBar()}catch{}
+    try{this.jrnSync()}catch{}
     if(this.paused){this.schedule();return}
     try{
       if(run().ketThuc){this.stop('kiếp đã kết thúc');return}
@@ -4235,6 +4643,11 @@ const AutoFarm={
         }else{this._wdSig=sig;this._wdN=0}
       }
 
+      // Lịch luyện đầy: săn thêm chỉ còn đồ rơi — tùy chọn dừng để đi bế quan
+      if(this.opts.llFull==='dung'&&!this.busy()){
+        const L=this.llInfo();
+        if(L.full){this.stop('lịch luyện đầy ('+L.cur.toFixed(0)+'/'+L.cap+')');toast('Lịch luyện đã đầy — nên bế quan để đổi thành tu vi','ok',5000);return}
+      }
       // Ưu tiên chữa thương khi rảnh
       if(!this.busy()&&this.injuryLevel()>=Math.max(1,Number(this.opts.healMinLevel||1))){
         const hs=this.ensureHealthy(false);
@@ -4459,12 +4872,15 @@ const AutoFarm={
     this.gainsBase=this.charSnapshot();
     this.gainsPrev=this.gainsBase;
     this.gainsAcc={
-      linhThach:{plus:0,minus:0},tuVi:{plus:0,minus:0},canhGioi:{plus:0,minus:0},
+      linhThach:{plus:0,minus:0},tuVi:{plus:0,minus:0},lichLuyen:{plus:0,minus:0},canhGioi:{plus:0,minus:0},
       chiSo:Object.fromEntries(this.STAT_KEYS.map(k=>[k,{plus:0,minus:0}]))
     };
     this.gainsLog=[];
     try{
       const x=store.get('xuTri',null);if(x)this.opts.xuTri=x;
+      const fo=store.get('afFocus',null);if(fo&&this.FOCUS_W[fo])this.opts.focus=fo;
+      const lf=store.get('afLlFull',null);if(lf==='tiep'||lf==='dung')this.opts.llFull=lf;
+      this.loadCfg();this.jrnLoad();
       const p=store.get('afPursuit',null);if(p)this.opts.pursuit=p;
       const ap=store.get('afApex',null);if(ap)this.opts.apex=ap;
       const av=store.get('afAvoid',null);if(typeof av==='string')this.opts.avoidBeasts=av;
@@ -4491,6 +4907,7 @@ const AutoFarm={
   stop(reason){
     if(!this.running&&!this.timer)return;
     this.running=false;this.paused=false;clearTimeout(this.timer);this.timer=null;
+    try{this.jrnEnd('auto dừng'+(reason?': '+reason:''))}catch{}
     this.push('Đã dừng'+(reason?': '+reason:''),'err');
     this.dumpState('stop');
     toast('Đã dừng Auto Farm'+(reason?': '+reason:''),'',3000);
@@ -4595,6 +5012,7 @@ const AutoFarm={
     body.innerHTML=`
       ${line('Tu vi',d.tuVi)}
       ${line('Linh thạch',d.linhThach)}
+      ${line('Lịch luyện',d.lichLuyen)}
       ${N(d.canhGioi?.net)&&d.canhGioi.net?line('Cảnh giới',d.canhGioi):''}
       ${stats.map(([l,x])=>line(l,x)).join('')||'<div class="af-sub">Chỉ số: chưa đổi</div>'}
       ${bag.length?'<div class="af-sec">Vật phẩm trong túi</div>'+bag.join(''):''}
@@ -4637,6 +5055,90 @@ const AutoFarm={
   }
 };
 
+/* ───────── Auto: nhóm sự kiện / chính sách lựa chọn / nhật ký ───────── */
+const AF_UI={open:new Set()};
+function afGrpHtml(){
+  const A_=AutoFarm;A_.subOn('x');
+  const off=A_.opts.grpOff;
+  let totalOn=0,total=0;
+  const body_=AF_GROUPS.map(([gk,gl])=>{
+    const subs=AF_SUBS.filter(r=>r[0]===gk);
+    if(!subs.length)return'';
+    const n=subs.reduce((t,r)=>t+r[3],0),on=subs.filter(r=>!off.has(r[1])).reduce((t,r)=>t+r[3],0);
+    totalOn+=on;total+=n;
+    const open=AF_UI.open.has(gk);
+    return `<div class="gg" data-g="${gk}"><div class="gh"><input type="checkbox" data-gcb="${gk}" aria-label="${E(gl)}"><button type="button" class="gt" data-gtog="${gk}"><span class="car">${open?'▾':'▸'}</span> <b>${E(gl)}</b> <small data-gcount="${gk}">${on}/${n}</small></button></div>
+      <div class="gb" ${open?'':'hidden'}>${subs.map(r=>`<label class="sub"><input type="checkbox" data-sub="${E(r[1])}" ${off.has(r[1])?'':'checked'}><span>${E(r[2])} <small>${r[3]?r[3]+' sự kiện':''}${r[4]?` · <span class="r">⚠ ${r[4]} có cửa nguy</span>`:''}</small></span></label>`).join('')}</div></div>`;
+  }).join('');
+  return `<div class="panel grp" id="af-grp"><b style="color:var(--gold)">Nhóm sự kiện Auto sẽ làm</b> <small id="af-grp-total">${totalOn}/${total}</small>
+    <div class="sub">Tích để cho phép, bỏ tích để Auto bỏ qua cả nhóm (gặp thì rời đi). Bấm tên nhóm để mở từng mục. Mặc định tắt: tuyển đồ · đại bỉ · công phá sơn môn.</div>
+    <div class="bar"><button class="btn" data-gall="1">Chọn hết</button><button class="btn" data-gall="0">Bỏ hết</button><button class="btn" data-gdef="1">Mặc định</button></div>
+    ${body_}</div>`;
+}
+function afPolHtml(){
+  const P=AutoFarm.P();
+  return `<div class="panel pol" id="af-pol"><b style="color:var(--gold)">Chính sách lựa chọn</b>
+    <div class="sub">Trong một sự kiện, Auto sẽ <b>không</b> chọn lựa chọn có hệ quả bị bỏ tích ở dưới (dựa trên effects thật của game, kể cả khi thất bại). Nếu mọi cửa đều trái chính sách thì bấm Thoát.</div>
+    <div class="bar"><label class="sub grow">Mẫu nhanh
+      <select id="af-polpre"><option value="">— chọn mẫu —</option><option value="chinh">Chính đạo · an toàn</option><option value="ma">Ma tu / tà đạo</option><option value="lieu">Liều lĩnh (trừ trọng thương)</option></select></label></div>
+    ${AutoFarm.POL_INFO.map(([k,l,d])=>`<label class="sub"><input type="checkbox" data-pol="${k}" ${P[k]?'checked':''}><span><b>Cho phép: ${E(l)}</b><br><small>${E(d)}</small></span></label>`).join('')}</div>`;
+}
+function afJrnHtml(){
+  AutoFarm.jrnLoad();
+  return `<div class="panel"><b style="color:var(--gold)">Nhật ký sự kiện</b> <small id="af-jrn-n">${AutoFarm.jr.list.length} bản ghi</small>
+    <div class="sub">Mỗi sự kiện gặp được ghi: nhóm, nội dung, mọi lựa chọn (rủi ro, cơ hội, giá trị, lý do bị loại), lựa chọn đã bấm, kết quả và thay đổi chỉ số. Xuất ra để gửi lại cho mình sửa lỗi.</div>
+    <div class="bar"><button class="btn pri" id="af-jrn-json">Tải JSON</button><button class="btn" id="af-jrn-copy">Copy bản đọc</button><button class="btn" id="af-jrn-clear">Xóa</button></div>
+    <div id="af-jrn" style="max-height:34vh;overflow:auto;font-size:12px">${AutoFarm.jrnListHtml()}</div></div>`;
+}
+function afGrpRefresh(root){
+  const off=AutoFarm.opts.grpOff;let tOn=0,tAll=0;
+  AF_GROUPS.forEach(([gk])=>{
+    const subs=AF_SUBS.filter(r=>r[0]===gk);if(!subs.length)return;
+    const n=subs.reduce((t,r)=>t+r[3],0),on=subs.filter(r=>!off.has(r[1])).reduce((t,r)=>t+r[3],0);
+    tOn+=on;tAll+=n;
+    const cb=$(root,`[data-gcb="${gk}"]`),ct=$(root,`[data-gcount="${gk}"]`);
+    const nOn=subs.filter(r=>!off.has(r[1])).length;
+    if(cb){cb.checked=nOn===subs.length;cb.indeterminate=nOn>0&&nOn<subs.length}
+    if(ct)ct.textContent=on+'/'+n;
+    subs.forEach(r=>{const x=$(root,`[data-sub="${r[1]}"]`);if(x)x.checked=!off.has(r[1])});
+  });
+  const t=$(root,'#af-grp-total');if(t)t.textContent=tOn+'/'+tAll;
+}
+function afWire(){
+  const gp=$(body,'#af-grp');
+  if(gp){
+    afGrpRefresh(gp);
+    gp.addEventListener('change',e=>{
+      const t=e.target,off=AutoFarm.opts.grpOff;
+      if(t.dataset.sub!==undefined){t.checked?off.delete(t.dataset.sub):off.add(t.dataset.sub)}
+      else if(t.dataset.gcb){AF_SUBS.filter(r=>r[0]===t.dataset.gcb).forEach(r=>{t.checked?off.delete(r[1]):off.add(r[1])})}
+      else return;
+      AutoFarm.saveCfg();afGrpRefresh(gp);
+    });
+    gp.addEventListener('click',e=>{
+      const tg=e.target.closest('[data-gtog]');
+      if(tg){const k=tg.dataset.gtog,gb=tg.closest('.gg').querySelector('.gb');const open=gb.hasAttribute('hidden');open?(gb.removeAttribute('hidden'),AF_UI.open.add(k)):(gb.setAttribute('hidden',''),AF_UI.open.delete(k));tg.querySelector('.car').textContent=open?'▾':'▸';return}
+      const all=e.target.closest('[data-gall]');
+      if(all){const off=AutoFarm.opts.grpOff;AF_SUBS.forEach(r=>{all.dataset.gall==='1'?off.delete(r[1]):off.add(r[1])});AutoFarm.saveCfg();afGrpRefresh(gp);return}
+      if(e.target.closest('[data-gdef]')){AutoFarm.opts.grpOff=new Set(AutoFarm.GRP_DEF_OFF);AutoFarm.saveCfg();afGrpRefresh(gp)}
+    });
+  }
+  const pp=$(body,'#af-pol');
+  if(pp){
+    pp.addEventListener('change',e=>{
+      const t=e.target;
+      if(t.dataset.pol){AutoFarm.opts.pol[t.dataset.pol]=t.checked;AutoFarm.saveCfg();const sel=$(pp,'#af-polpre');if(sel)sel.value=''}
+      else if(t.id==='af-polpre'&&t.value){
+        AutoFarm.opts.pol={...AutoFarm.POL_DEF,...AutoFarm.POL_PRESET[t.value]};AutoFarm.saveCfg();
+        pp.querySelectorAll('[data-pol]').forEach(x=>{x.checked=!!AutoFarm.opts.pol[x.dataset.pol]});
+        toast('Đã áp mẫu: '+t.selectedOptions[0].textContent,'ok',2000);
+      }
+    });
+  }
+  const jj=$(body,'#af-jrn-json');if(jj)jj.onclick=()=>AutoFarm.exportJournal();
+  const jc=$(body,'#af-jrn-copy');if(jc)jc.onclick=()=>AutoFarm.copyJournalText();
+  const jx=$(body,'#af-jrn-clear');if(jx)jx.onclick=()=>{if(confirm('Xóa toàn bộ nhật ký sự kiện?'))AutoFarm.clearJournal()};
+}
 VIEWS.auto=()=>{
   try{const h=store.get('afHaiThuoc');if(typeof h==='boolean')AutoFarm.opts.includeHaiThuoc=h}catch{}
   const list=AutoFarm.targets().slice(0,40);
@@ -4649,6 +5151,9 @@ VIEWS.auto=()=>{
   body.innerHTML=`<div class="panel"><b style="color:var(--gold)">Auto Farm</b>
     <div class="sub">Tự đi quanh vùng: săn yêu, làm việc trên bản đồ, ghé nơi gần có việc. Bấm Bắt đầu sẽ thu panel; tạm dừng/dừng ở nút cạnh icon tiên.</div></div>
   ${injLine}
+  ${(()=>{const L=AutoFarm.llInfo();return `<div class="panel"><b style="color:var(--gold)">Lịch luyện: ${L.cur.toFixed(1)} / ${L.cap}</b>${L.full?' <span class="tag o">Đầy</span>':''}
+    <div class="bar2"><i style="width:${Math.round(L.pct*100)}%"></i></div>
+    <div class="sub">Thắng trận cộng lịch luyện: thường +${L.gain.thuong.toFixed(1)}, tinh anh (đầu đàn) +${L.gain.tinh_anh.toFixed(1)}, boss +${L.gain.boss.toFixed(1)}. Bế quan tiêu lịch luyện để ra tu vi; cạn thì tu vi chỉ còn ~50%. Đầy thì săn thêm chỉ còn đồ rơi — nên bế quan rồi quay lại săn.</div></div>`})()}
   <div class="bar">
     <button class="btn pri" id="af-toggle">▶ Bắt đầu (thu panel)</button>
     <button class="btn" id="af-refresh">Quét lại</button>
@@ -4679,9 +5184,24 @@ VIEWS.auto=()=>{
     <label class="sub grow">Sau thắng (tù binh)
       <select id="af-xutri">
         <option value="tha" ${o.xuTri==='tha'?'selected':''}>Tha mạng</option>
+        <option value="auto" ${o.xuTri==='auto'?'selected':''}>Tự động: kết liễu lấy đồ nếu game không cảnh báo</option>
         <option value="ket_lieu" ${o.xuTri==='ket_lieu'?'selected':''}>Kết liễu</option>
         <option value="phe" ${o.xuTri==='phe'?'selected':''}>Phế tu vi</option>
         <option value="suu_hon" ${o.xuTri==='suu_hon'?'selected':''}>Sưu hồn (nếu có)</option>
+      </select>
+    </label>
+    <label class="sub grow">Ưu tiên khi chọn lựa chọn sự kiện
+      <select id="af-focus">
+        <option value="balanced" ${(o.focus||'balanced')==='balanced'?'selected':''}>Cân bằng</option>
+        <option value="tuvi" ${o.focus==='tuvi'?'selected':''}>Tu vi / lịch luyện</option>
+        <option value="taiNguyen" ${o.focus==='taiNguyen'?'selected':''}>Tài nguyên (linh thạch, đồ)</option>
+        <option value="chiSo" ${o.focus==='chiSo'?'selected':''}>Chỉ số (thần thức, khí vận, đạo tâm…)</option>
+      </select>
+    </label>
+    <label class="sub grow">Khi lịch luyện đầy
+      <select id="af-llfull">
+        <option value="tiep" ${(o.llFull||'tiep')==='tiep'?'selected':''}>Cứ tiếp tục (vẫn lấy đồ rơi)</option>
+        <option value="dung" ${o.llFull==='dung'?'selected':''}>Dừng để đi bế quan</option>
       </select>
     </label>
     <label class="sub grow">Lùng con đầu đàn (săn yêu)
@@ -4705,6 +5225,9 @@ VIEWS.auto=()=>{
       </select>
     </label>
   </div>
+  ${afPolHtml()}
+  ${afGrpHtml()}
+  ${afJrnHtml()}
   <div class="sum" id="af-stats">OK ${AutoFarm.stats.ok} · bỏ ${AutoFarm.stats.skip} · lỗi ${AutoFarm.stats.err} · chữa ${AutoFarm.stats.heal||0}${AutoFarm.running?(AutoFarm.paused?' · TẠM DỪNG':' · ĐANG CHẠY'):''}</div>
   <div class="panel" style="max-height:32vh;overflow:auto;font-size:12px" id="af-log">${AutoFarm.log.slice().reverse().map(x=>`<div class="sub${x.kind==='err'?' r':x.kind==='ok'?' g':''}">[${E(x.tShow||x.t||'')}] ${E(x.msg)}</div>`).join('')||'<div class="sub">Chưa có nhật ký. Bấm Bắt đầu rồi gửi file log nếu lỗi.</div>'}</div>
   <div class="sum">${list.length} mục tiêu gần → xa</div>
@@ -4715,6 +5238,7 @@ VIEWS.auto=()=>{
     <div class="tags"><span class="tag">${E(t.danger.label)}</span>${t.left!=null?`<span class="tag g">Còn ${t.left}/3 lần săn</span>`:''}${t.priority>=40?`<span class="tag o">Việc gấp</span>`:''}</div>
     <div class="acts"><button class="btn" data-act="view">Xem</button><button class="btn pri" data-act="go">Đường</button></div>
   </article>`).join('')||'<div class="empty">Không có mục tiêu phù hợp trên map hiện tại.<br>Hãy đi khám phá thêm rồi quét lại. Tắt «Chỉ ev.san_yeu» để cày rộng hơn.</div>'}`;
+  afWire();
   $(body,'#af-toggle').onclick=()=>AutoFarm.start();
   $(body,'#af-refresh').onclick=()=>VIEWS.auto();
   $(body,'#af-export').onclick=()=>AutoFarm.exportLog();
@@ -4735,6 +5259,8 @@ VIEWS.auto=()=>{
   $(body,'#af-xutri').onchange=e=>{o.xuTri=e.target.value;store.set('xuTri',o.xuTri);toast('Đã nhớ: xử tù binh = '+o.xuTri,'ok',2200)};
   $(body,'#af-avoid').onchange=e=>{o.avoidBeasts=String(e.target.value||'');store.set('afAvoid',o.avoidBeasts);toast('Né: '+(o.avoidBeasts||'(trống)'),'ok',2000)};
   $(body,'#af-minlife').onchange=e=>{o.minLifeYears=Math.max(0,+e.target.value||0);store.set('afMinLife',o.minLifeYears);toast('Dừng khi thọ ≤ '+o.minLifeYears+' năm','ok',2000)};
+  $(body,'#af-focus').onchange=e=>{o.focus=e.target.value;store.set('afFocus',o.focus);toast('Ưu tiên lựa chọn: '+e.target.selectedOptions[0].textContent,'ok',2000)};
+  $(body,'#af-llfull').onchange=e=>{o.llFull=e.target.value;store.set('afLlFull',o.llFull);VIEWS.auto()};
   $(body,'#af-apex').onchange=e=>{o.apex=e.target.value;store.set('afApex',o.apex);toast('Lùng đầu đàn = '+o.apex,'ok',2000)};
   $(body,'#af-pursuit').onchange=e=>{o.pursuit=e.target.value;store.set('afPursuit',o.pursuit);toast('Đuổi/tha = '+o.pursuit,'ok',2000)};
 };
