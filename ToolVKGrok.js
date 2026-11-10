@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261110-autofarm-v78',ID='vkt2',g=window.game;
+const BUILD='20261110-autofarm-v79',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -242,6 +242,9 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
   const C = () => G().env.content;
   const clone = (x) => structuredClone(x);
   const sleep0 = () => new Promise((r) => setTimeout(r, 0));
+  // Nhường luồng theo thời gian (≥40ms mới nhường) và chỉ cập nhật tiến độ ≥250ms/lần: tránh vẽ lại giao diện hàng trăm lần
+  let _yAt = 0, _pAt = 0;
+  const yieldIf = async (onP, frac, label) => { const n = performance.now(); if (n - _yAt < 40) return; if (onP && n - _pAt > 250) { _pAt = n; onP(frac, label); } await sleep0(); _yAt = performance.now(); };
   const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const HE = { kim: 'Kim', moc: 'Mộc', thuy: 'Thủy', hoa: 'Hỏa', tho: 'Thổ', bang: 'Băng', loi: 'Lôi', phong: 'Phong', am: 'Ám', vo_sac: 'Vô sắc' };
   const heTen = (h) => HE[h] ?? h;
@@ -301,7 +304,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
   }
   const benchEnemies=allGameEnemies;
   function fight(P, E) {
-    try { return S.core.eJ(clone(P), clone(E), {}); } catch { return { thang: false, nHiep: 30, khiHuyetThapNhat: 0, stTa: 0 }; }
+    try { return S.core.eJ(P, E, {}); } catch { return { thang: false, nHiep: 30, khiHuyetThapNhat: 0, stTa: 0 }; }
   }
 
   // ───────────────────────── 4. Tối ưu kinh mạch ─────────────────────────
@@ -324,7 +327,12 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     return false;
   };
   function itemElements(it){const hs=A(it?.he);return hs.length?hs:['vo_sac']}
-  function itemAlignment(it){const raw=[...A(it?.tag),...TP(it?.tran_phai)].map(String);return raw.some(x=>['ma','nghich','quy','thi','ta','ta_dao'].includes(x))?'ta':'chinh'}
+  // Luật tà của game (evilSchoolOf): tag ma/thi/quy/doc/hop_hoan/nghich, hoặc ngự linh loại thi/hồn
+  function evilSchoolG(it){const t=A(it?.tag),n=['ma','thi','quy','doc','hop_hoan'].find(x=>t.includes(x))||(t.includes('nghich')?'nghich':null);if(n)return n;const l=it?.ngu_linh?.loai;return l==='thi'?'thi':l==='hon'?'quy':null}
+  function itemAlignment(it){return evilSchoolG(it)?'ta':'chinh'}
+  // Hệ số phản phệ của thể chất (dac_tinh.phan_phe, mặc định 1): đột phá −min(15%, 3% × điểm nghịch × hệ số)
+  function phanPheMul(nv){try{return Number(C().theChat?.get?.(nv?.theChat)?.dac_tinh?.phan_phe??1)||1}catch{return 1}}
+  function breakPenalty(nghich,nv){return Math.min(0.15,0.03*(nghich||0)*phanPheMul(nv))}
   function chosenElements(){const p=S.pref||{},subs=A(p.subs).filter(x=>x&&x!=='none'&&x!==p.mainElement);return{main:p.mainElement||'auto',subs}}
   function preferenceScore(manh,mode){const p=S.pref||{},tags=BUILD_TAGS[p.school]||[],chosen=chosenElements(),Cc=C();let z=0;for(const q of manh){const it=Cc.items.get(q?.m?.item||q?.item);if(!it)continue;const raw=[...A(it.tag),...TP(it.tran_phai)],hs=itemElements(it);if(schoolMatch(p.school,tags,raw,it))z+=mode==='danh'?55:mode==='tu'?70:60;if(chosen.main!=='auto'&&hs.includes(chosen.main))z+=mode==='danh'?10:12;for(const [i,h]of chosen.subs.entries())if(hs.includes(h))z+=Math.max(2,8-i);const align=itemAlignment(it);if(p.alignment&&p.alignment!=='auto')z+=align===p.alignment?14:-18}return z}
   function schoolStats(manh){const school=S.pref?.school||'tu_do';if(school==='tu_do')return{main:school,total:manh.length,matched:manh.length,need:0,deficit:0};let total=0,matched=0;for(const q of manh){const it=C().items.get(q?.m?.item||q?.item);if(!it)continue;total++;const tags=BUILD_TAGS[school]||[],raw=[...A(it.tag),...TP(it.tran_phai)];if(schoolMatch(school,tags,raw,it))matched++}const pw=Number((S.pref&&(S.pref.pathW??S.pref.w))||0);const need=total?(pw>=2?Math.ceil(total*0.5):Math.floor(total/2)+1):0;return{main:school,total,matched,need,deficit:Math.max(0,need-matched)}}
@@ -348,7 +356,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
       cells+=n;
       const raw=[...A(it.tag),...TP(it.tran_phai)];
       if(school!=='tu_do'&&schoolMatch(school,tags,raw,it))matchCells+=n;
-      const evil=itemAlignment(it)==='ta'||raw.some(t=>['ma','nghich','quy','thi','doc','hop_hoan','ta'].includes(String(t)));
+      const evil=itemAlignment(it)==='ta';
       if(evil)evilCells+=n;
       pieces.push({id,n,match:school==='tu_do'||schoolMatch(school,tags,raw,it),evil});
     }
@@ -410,7 +418,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
   function makeEval(nv0,enemies,mode){const K=S.core,c=C(),cache=new Map();return manh=>{const key=mode+'|'+manh.map(p=>p.key).sort().join('|');if(cache.has(key))return cache.get(key);const nv=clone(nv0);nv.kinhMach.manh=manh.map(p=>({...p.m}));applyMastery(nv);const R=K.Rt(nv,c),P=K.Vr(nv,c),mq=meridianQuality(R,P,mode),dead=mq.dead;let fightScore=0,wins=0;if(!dead)for(const{E}of enemies){const r=fight(P,E),hp=Math.max(0,Math.min(1,(r.khiHuyetThapNhat||0)/Math.max(1,P.khiHuyetToiDa))),dealt=Math.min(1,(r.stTa||0)*Math.max(1,r.nHiep||1)/Math.max(1,E.khiHuyetToiDa));if(r.thang){wins++;fightScore+=100+30*hp+50/Math.max(1,r.nHiep||1)}else if(r.ketQua&&r.ketQua.enemyFled){wins++;fightScore+=70+15*hp}else fightScore+=45*dealt}const toc=R.biDong?.toc_do||0,dp=R.biDong?.dot_pha||0,ktm=R.biDong?.khang_tam_ma||0,nghich=mq.nghich||0;
       // Code game: phản phệ đột phá = min(0.15, 0.03*diemNghich*phanPhe); trần công pháp dot_pha = 0.12 (md)
       // Điểm nghịch: mảnh tương khắc kề nhau / nằm quá nửa trên ô khắc (tooltip game)
-      const phaPhe=Math.min(0.15,0.03*nghich),dpEff=Math.min(0.12,Math.max(0,dp));
+      const phaPhe=breakPenalty(nghich,nv),dpEff=Math.min(0.12,Math.max(0,dp));
       // Độ lấp: số ô bị mảnh chiếm (khuyến khích xếp đầy hơn khi giả định)
       const filled=manh.reduce((a,p)=>a+(p.cells?p.cells.length:0),0);
       const nPieces=manh.length;
@@ -630,7 +638,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
         break;
       }
       cur.push(best.cnd); curS = best.v;
-      if (round % 3 === 0) await sleep0();
+      await yieldIf();
     }
     return cur.map((p) => ({ ...p.m }));
   }
@@ -685,7 +693,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     let T0 = init && init.length ? 10 : 40; const dSamples = [];
     for (let it = 0; it < iters; it++) {
       if (S.abort) break;
-      if (it % 4 === 0) { onProg && onProg(it / iters, label); await sleep0(); }
+      if (it % 4 === 0) await yieldIf(onProg, it / iters, label);
       if (it === 40 && dSamples.length >= 5) { const mean = dSamples.reduce((a, b) => a + b, 0) / dSamples.length; T0 = Math.max(T0, mean * (init && init.length ? 0.25 : 0.6)); }
       const T = Math.max(T0 * 0.01, T0 * (1 - it / iters));
       const next = cur.slice(); const r = rnd();
@@ -1860,7 +1868,7 @@ function buildResultHtml(){
   if(!pieces.length&&b.manh){
     pieces=A(b.manh).map((m,i)=>{
       const it=C.items.get(m.item),rm=A(R.manh)[i];
-      return{id:m.item,item:m.item,name:it?.ten||m.item,elements:A(it?.he),alignment:A(it?.tag).some(t=>['ma','nghich','quy','thi','doc','hop_hoan'].includes(t))?'ta':'chinh',connected:rm?!!rm.thong:true,heSo:rm?.heSo};
+      return{id:m.item,item:m.item,name:it?.ten||m.item,elements:A(it?.he),alignment:isTaItem(it)?'ta':'chinh',connected:rm?!!rm.thong:true,heSo:rm?.heSo};
     });
   }
   if(pieces.length&&R.manh){
@@ -1871,10 +1879,10 @@ function buildResultHtml(){
     });
   }
   const nEn=b.n||b.enemyCount||0,nghich=R.diemNghich||0,dp=R.biDong?.dot_pha||0;
-  const phaPhe=Math.min(0.15,0.03*nghich),dpShow=Math.min(0.12,dp),netBreak=dpShow-phaPhe;
+  const ppMul=Number(C.theChat?.get?.(me().theChat)?.dac_tinh?.phan_phe??1)||1,phaPhe=Math.min(0.15,0.03*nghich*ppMul),dpShow=Math.min(0.12,dp),netBreak=dpShow-phaPhe;
   let grid='';try{grid=BuildEngine.drawGrid(BuildEngine.nvNow(),b.manh).replace('class="vk-img"','class="grid-img"')}catch{}
   const modeNote=bld.mode==='danh'?'Bộ Chiến đấu tối ưu số trận thắng trên trận mẫu (tinh anh/boss).'
-    :bld.mode==='tu'?'Bộ Tu luyện tối ưu tốc độ + đột phá thực (đột phá công pháp kẹp ≤12%, mỗi điểm nghịch −3% đột phá, trần −15%). Số thắng chỉ mang tính tham khảo.'
+    :bld.mode==='tu'?'Bộ Tu luyện tối ưu tốc độ + đột phá thực (đột phá công pháp kẹp ≤12%, mỗi điểm nghịch −3% đột phá × hệ số phản phệ của thể chất, trần −15%). Số thắng chỉ mang tính tham khảo.'
     :'Bộ Cân bằng trộn thắng trận và tu luyện.';
   // Chỉ mảnh thông. Format: Tên · Hệ/Cảnh/xHệSố  (vd Thủy/Hóa Thần/x1.25) — không kèm phẩm
   pieces=pieces.filter(x=>x.connected!==false);
