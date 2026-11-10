@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261110-autofarm-v75',ID='vkt2',g=window.game;
+const BUILD='20261110-autofarm-v78',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -57,10 +57,40 @@ function cgRangeTen(a,b){
   if(b==null||a===b||Number(a)===Number(b))return cgTen(a);
   return cgTen(a)+' – '+cgTen(b);
 }
-function danger(slot){const i=info(slot);if(!i)return{rank:1,label:'Chưa rõ'};const self=Number(me().canhGioi??0),base=Number(i.capNen??i.canhGioi??self),d=base-self;if(d>=2)return{rank:3,label:'Tử địa'};if(d>=1)return{rank:2,label:'Nguy hiểm'};if(d<=-1)return{rank:0,label:'An toàn'};return{rank:1,label:'Ngang sức'}}
+function playerTier(){const nv=me();const st=Number(nv.tieuCanhGioi);return Number(nv.canhGioi??0)+(Number.isFinite(st)?st:0)/4}
+function danger(slot){
+  const i=info(slot);if(!i)return{rank:1,label:'Chưa rõ'};
+  let abyss=false;try{abyss=W.seaPoint?.(slot)?.loai==='vo_nhai_uyen'}catch{}
+  const base=Number(i.capNen??i.canhGioi);if(!Number.isFinite(base)&&!abyss)return{rank:1,label:'Chưa rõ'};
+  const d=abyss?Infinity:base-playerTier();
+  if(d<=-.5)return{rank:0,label:'An toàn',d};
+  if(d<=.5)return{rank:1,label:'Ngang sức',d};
+  if(d<=1.5)return{rank:2,label:'Nguy hiểm',d};
+  return{rank:3,label:'Tử địa',d};
+}
+/* Nơi có đi tới được không (đối chiếu chặn đường của game): sương mù chưa mở, bên kia biển */
+function slotRevealed(slot){
+  try{const v=run().vungDaMo;if(!Array.isArray(v))return true;const t=W.slot?.(slot);if(!t)return true;return v.some(([x,y,r])=>(x-t.x)**2+(y-t.y)**2<=r*r)}catch{return true}
+}
+function travelBlock(slot){
+  try{
+    const r=run();if(!slot||slot===r.viTri)return'';
+    if(!slotRevealed(slot))return'Nơi đó còn phủ mây, chưa đi tới được';
+    let sea=null;try{sea=W.seaPoint?.(slot)||W.seaPoint?.(r.viTri)}catch{}
+    if(sea)return'';
+    let a,b;try{a=W.tho?.(r.viTri);b=W.tho?.(slot)}catch{}
+    if(a==null||b==null||a===b)return'';
+    const cg=Math.floor(Number(me().canhGioi??0));
+    if(cg>=3)return'';
+    const eq=me().trangBi||{},bag=me().tuiDo||{};
+    const boat=Object.values(eq).some(id=>(bag[id]??0)>0&&C.items?.get?.(id)?.vuot_bien);
+    if(cg>=2&&boat)return'';
+    return cg>=2?'Bên kia biển — cần thuyền hoặc pháp khí vượt biển':'Bên kia biển — tới Trúc Cơ mới lên được thuyền';
+  }catch{return''}
+}
 
 /* ───────── Dị bảo: danh mục đã đối chiếu với game ───────── */
-const GUIDE=new Map([{"id":"ev.di_bao_u_hon_dien","ten":"Cửa U Hồn Điện","relic":"item.yeu_hoang_huyet_kinh","gate":[5,5],"hoiChieu":120,"diaDanh":"azgaar:marker:103","dia":{"ten":"U Hồn Điện","han":"幽魂殿","x":1110.1,"y":625.9,"cn":2.8},"chance":0.07,"baoVe":{"ten":"Hạt Hoàng Thủ Lăng","cg":5},"noi":"di_tich"},{"id":"ev.di_bao_kiem_trach","ten":"Kiếm lành giữa đầm","relic":"item.bat_chiet_kiem","gate":[5,5],"hoiChieu":120,"diaDanh":"hoang:394","dia":{"ten":"Kiếm Trạch","han":"劍澤","x":1435.6,"y":529.1,"cn":2.3},"chance":0.07,"baoVe":{"ten":"Vạn Kiếm Oán Hồn","cg":5},"check":"than_thuc +65","noi":"son_thuy"},{"id":"ev.di_bao_tien_van_dien","ten":"Đá ba mặt","relic":"item.tam_sinh_thach","gate":[4,5],"hoiChieu":120,"diaDanh":"azgaar:marker:102","dia":{"ten":"Tiên Vân Điện","han":"仙雲殿","x":1186.8,"y":645.4,"cn":2.7},"chance":0.03,"check":"dao_tam +75","noi":"di_tich"},{"id":"ev.di_bao_yeu_phong_mo","ten":"Lửa đen Yêu Phong Mộ","relic":"item.cuu_u_hoang_hoa","gate":[5,5],"hoiChieu":120,"diaDanh":"azgaar:marker:34","dia":{"ten":"Yêu Phong Mộ","han":"妖風墓","x":561,"y":257.2,"cn":4.1},"chance":0.07,"baoVe":{"ten":"Hổ Hoàng Tàn Hồn","cg":5},"noi":"di_tich"},{"id":"ev.di_bao_han_giao_linh","ten":"Vảy rồng Giao tộc","relic":"item.thai_co_long_lan","gate":[5,5],"hoiChieu":120,"chance":0.07,"baoVe":{"ten":"Giao Hoàng","cg":5},"tocYeu":"giao","noi":"hoang_da"},{"id":"ev.di_bao_kiem_dai","ten":"Chiến kỳ trên Kiếm Đài","relic":"item.doan_thien_chien_ky","gate":[5,5],"hoiChieu":120,"diaDanh":"azgaar:marker:35","dia":{"ten":"Kiếm Đài","han":"劍台","x":480.7,"y":343.5,"cn":0.1},"chance":0.07,"baoVe":{"ten":"Đoạn Thiên Chiến Hồn","cg":5},"noi":"di_tich"},{"id":"ev.bien_trieu_khu","ten":"Đêm Triều Khư","relic":"item.phong_thien_an","hoiChieu":120,"chance":0.07,"baoVe":{"ten":"Ngũ Tổ Tàn Trận","cg":5}},{"id":"ev.bien_thuyen_rong","ten":"Thuyền đầu rồng","relic":"item.thai_hu_chu","hoiChieu":120,"chance":0.03,"check":"than_thuc +100"},{"id":"ev.di_bao_hon_thap","ten":"Kinh không tiếng","relic":"item.luan_hoi_chan_kinh","gate":[4,5],"hoiChieu":120,"diaDanh":"azgaar:marker:39","dia":{"ten":"Hồn Tháp","han":"魂塔","x":1317.2,"y":691.7,"cn":2.4},"chance":0.03,"check":"ngo_tinh +70","noi":"di_tich"},{"id":"ev.di_bao_u_dien","ten":"Đèn trong U Điện","relic":"item.van_kiep_hon_dang","gate":[4,5],"hoiChieu":120,"diaDanh":"azgaar:marker:40","dia":{"ten":"U Điện","han":"幽殿","x":1530.2,"y":494.4,"cn":2.4},"chance":0.07,"baoVe":{"ten":"U Minh Quỷ Mẫu","cg":4},"noi":"di_tich"},{"id":"ev.di_bao_lan_dai","ten":"Nhẫn trên ngón xương","relic":"item.can_khon_gioi","gate":[4,5],"hoiChieu":120,"diaDanh":"azgaar:marker:141","dia":{"ten":"Lan Đài","han":"蘭台","x":344.3,"y":917.5,"cn":4.3},"chance":0.07,"baoVe":{"ten":"Cổ Chiến Khôi Lỗi","cg":5},"noi":"di_tich"},{"id":"ev.di_bao_tan_phong","ten":"Kiếm gãy trên Tàn Phong","relic":"item.toai_thien_kiem","gate":[4,5],"hoiChieu":120,"diaDanh":"hoang:291","dia":{"ten":"Tàn Phong","han":"殘峰","x":1636.8,"y":607.8,"cn":0.4},"chance":0.07,"baoVe":{"ten":"Thái Cổ Lôi Linh","cg":5},"noi":"son_thuy"},{"id":"ev.di_bao_van_dan_trung","ten":"Mộ không đọng tuyết","relic":"item.nghich_menh_dan","gate":[4,5],"hoiChieu":120,"diaDanh":"azgaar:marker:101","dia":{"ten":"Vạn Đan Trủng","han":"萬丹塚","x":1499,"y":339.3,"cn":0.3},"chance":0.07,"baoVe":{"ten":"Hạn Bạt","cg":4},"noi":"di_tich"},{"id":"ev.di_bao_tuyen_phong","ten":"Bình trên Tuyền Phong","relic":"item.cam_lo_tinh_binh","gate":[4,5],"hoiChieu":120,"diaDanh":"hoang:286","dia":{"ten":"Tuyền Phong","han":"泉峰","x":1117.3,"y":657.2,"cn":2.9},"chance":0.03,"check":"dao_tam +68","noi":"son_thuy"},{"id":"ev.di_bao_dan_coc","ten":"Mộ y gia Đan Cốc","relic":"item.than_nong_bach_thao_kinh","gate":[4,5],"hoiChieu":120,"diaDanh":"hoang:204","dia":{"ten":"Đan Cốc","han":"丹谷","x":1422.7,"y":631.7,"cn":1.9},"chance":0.03,"check":"ngo_tinh +45","noi":"son_thuy"},{"id":"ev.di_bao_xich_trung","ten":"Lò lửa Xích Trủng","relic":"item.hon_nguyen_dan_dinh","gate":[4,5],"hoiChieu":120,"diaDanh":"azgaar:marker:94","dia":{"ten":"Xích Trủng","han":"赤塚","x":665.1,"y":202.8,"cn":4.9},"chance":0.07,"baoVe":{"ten":"Âm Hỏa Hồn Vương","cg":5},"noi":"di_tich"},{"id":"ev.di_bao_van_son","ten":"Gấu ngủ Vân Sơn","relic":"item.tu_linh_chau","gate":[4,5],"hoiChieu":120,"diaDanh":"hoang:262","dia":{"ten":"Vân Sơn","han":"雲山","x":205.2,"y":614.5,"cn":2.3},"chance":0.07,"baoVe":{"ten":"Thái Nhạc Hùng","cg":5},"noi":"son_thuy"},{"id":"ev.di_bao_kim_dao_dien","ten":"Nghìn chậu đồng","relic":"item.tu_bao_bon","gate":[4,5],"hoiChieu":120,"diaDanh":"azgaar:marker:36","dia":{"ten":"Kim Đao Điện","han":"金刀殿","x":1573.7,"y":609.3,"cn":1.9},"chance":0.03,"check":"than_thuc +100","noi":"di_tich"},{"id":"ev.di_bao_bang_hon_trung","ten":"Chuông trong mộ băng","relic":"item.do_hon_linh","gate":[4,5],"hoiChieu":120,"diaDanh":"azgaar:marker:90","dia":{"ten":"Băng Hồn Trủng","han":"冰魂塚","x":308,"y":473.2,"cn":2.3},"chance":0.07,"baoVe":{"ten":"Vạn Oán Quỷ","cg":5},"noi":"di_tich"},{"id":"ev.di_bao_ho_set","ten":"Nhẫn trong hố sét","gate":[4,5],"hoiChieu":30,"check":"ngo_tinh +4","noi":"hoang_da"},{"id":"ev.di_bao_hop_ba_khoa","ten":"Hộp ba khóa","gate":[4,5],"hoiChieu":30,"check":"khi_van +8","noi":"hoang_da"},{"id":"ev.di_bao_keo_dinh","ten":"Kéo đỉnh giữa hồ","gate":[4,5],"hoiChieu":30,"check":"can_cot +4","noi":"hoang_da"}].map(x=>[x.id,x]));
+const GUIDE=new Map([{"id":"ev.di_bao_u_hon_dien","ten":"Cửa U Hồn Điện","relic":"item.yeu_hoang_huyet_kinh","gate":[5,5],"hoiChieu":120,"diaDanh":"azgaar:marker:103","dia":{"ten":"U Hồn Điện","han":"幽魂殿","x":1110.1,"y":625.9,"cn":2.8},"chance":0.07,"baoVe":{"ten":"Hạt Hoàng Thủ Lăng","cg":5},"noi":"di_tich"},{"id":"ev.di_bao_kiem_trach","ten":"Kiếm lành giữa đầm","relic":"item.bat_chiet_kiem","gate":[5,5],"hoiChieu":120,"diaDanh":"hoang:394","dia":{"ten":"Kiếm Trạch","han":"劍澤","x":1435.6,"y":529.1,"cn":2.3},"chance":0.07,"baoVe":{"ten":"Vạn Kiếm Oán Hồn","cg":5},"check":"than_thuc +65","noi":"son_thuy"},{"id":"ev.di_bao_tien_van_dien","ten":"Đá ba mặt","relic":"item.tam_sinh_thach","gate":[4,5],"hoiChieu":120,"diaDanh":"azgaar:marker:102","dia":{"ten":"Tiên Vân Điện","han":"仙雲殿","x":1186.8,"y":645.4,"cn":2.7},"chance":0.03,"check":"dao_tam +75","noi":"di_tich"},{"id":"ev.di_bao_yeu_phong_mo","ten":"Lửa đen Yêu Phong Mộ","relic":"item.cuu_u_hoang_hoa","gate":[5,5],"hoiChieu":120,"diaDanh":"azgaar:marker:34","dia":{"ten":"Yêu Phong Mộ","han":"妖風墓","x":561,"y":257.2,"cn":4.1},"chance":0.07,"baoVe":{"ten":"Hổ Hoàng Tàn Hồn","cg":5},"noi":"di_tich"},{"id":"ev.di_bao_han_giao_linh","ten":"Vảy rồng Giao tộc","relic":"item.thai_co_long_lan","gate":[5,5],"hoiChieu":120,"chance":0.07,"baoVe":{"ten":"Giao Hoàng","cg":5},"tocYeu":"giao","noi":"hoang_da"},{"id":"ev.di_bao_kiem_dai","ten":"Chiến kỳ trên Kiếm Đài","relic":"item.doan_thien_chien_ky","gate":[5,5],"hoiChieu":120,"diaDanh":"azgaar:marker:35","dia":{"ten":"Kiếm Đài","han":"劍台","x":480.7,"y":343.5,"cn":0.1},"chance":0.07,"baoVe":{"ten":"Đoạn Thiên Chiến Hồn","cg":5},"noi":"di_tich"},{"id":"ev.bien_trieu_khu","ten":"Đêm Triều Khư","relic":"item.phong_thien_an","hoiChieu":120,"chance":0.07,"baoVe":{"ten":"Ngũ Tổ Tàn Trận","cg":5}},{"id":"ev.bien_thuyen_rong","ten":"Thuyền đầu rồng","relic":"item.thai_hu_chu","chance":0.03,"check":"than_thuc +100"},{"id":"ev.di_bao_hon_thap","ten":"Kinh không tiếng","relic":"item.luan_hoi_chan_kinh","gate":[4,5],"hoiChieu":120,"diaDanh":"azgaar:marker:39","dia":{"ten":"Hồn Tháp","han":"魂塔","x":1317.2,"y":691.7,"cn":2.4},"chance":0.03,"check":"ngo_tinh +70","noi":"di_tich"},{"id":"ev.di_bao_u_dien","ten":"Đèn trong U Điện","relic":"item.van_kiep_hon_dang","gate":[4,5],"hoiChieu":120,"diaDanh":"azgaar:marker:40","dia":{"ten":"U Điện","han":"幽殿","x":1530.2,"y":494.4,"cn":2.4},"chance":0.07,"baoVe":{"ten":"U Minh Quỷ Mẫu","cg":4},"noi":"di_tich"},{"id":"ev.di_bao_lan_dai","ten":"Nhẫn trên ngón xương","relic":"item.can_khon_gioi","gate":[4,5],"hoiChieu":120,"diaDanh":"azgaar:marker:141","dia":{"ten":"Lan Đài","han":"蘭台","x":344.3,"y":917.5,"cn":4.3},"chance":0.07,"baoVe":{"ten":"Cổ Chiến Khôi Lỗi","cg":5},"noi":"di_tich"},{"id":"ev.di_bao_tan_phong","ten":"Kiếm gãy trên Tàn Phong","relic":"item.toai_thien_kiem","gate":[4,5],"hoiChieu":120,"diaDanh":"hoang:291","dia":{"ten":"Tàn Phong","han":"殘峰","x":1636.8,"y":607.8,"cn":0.4},"chance":0.07,"baoVe":{"ten":"Thái Cổ Lôi Linh","cg":5},"noi":"son_thuy"},{"id":"ev.di_bao_van_dan_trung","ten":"Mộ không đọng tuyết","relic":"item.nghich_menh_dan","gate":[4,5],"hoiChieu":120,"diaDanh":"azgaar:marker:101","dia":{"ten":"Vạn Đan Trủng","han":"萬丹塚","x":1499,"y":339.3,"cn":0.3},"chance":0.07,"baoVe":{"ten":"Hạn Bạt","cg":4},"noi":"di_tich"},{"id":"ev.di_bao_tuyen_phong","ten":"Bình trên Tuyền Phong","relic":"item.cam_lo_tinh_binh","gate":[4,5],"hoiChieu":120,"diaDanh":"hoang:286","dia":{"ten":"Tuyền Phong","han":"泉峰","x":1117.3,"y":657.2,"cn":2.9},"chance":0.03,"check":"dao_tam +68","noi":"son_thuy"},{"id":"ev.di_bao_dan_coc","ten":"Mộ y gia Đan Cốc","relic":"item.than_nong_bach_thao_kinh","gate":[4,5],"hoiChieu":120,"diaDanh":"hoang:204","dia":{"ten":"Đan Cốc","han":"丹谷","x":1422.7,"y":631.7,"cn":1.9},"chance":0.03,"check":"ngo_tinh +45","noi":"son_thuy"},{"id":"ev.di_bao_xich_trung","ten":"Lò lửa Xích Trủng","relic":"item.hon_nguyen_dan_dinh","gate":[4,5],"hoiChieu":120,"diaDanh":"azgaar:marker:94","dia":{"ten":"Xích Trủng","han":"赤塚","x":665.1,"y":202.8,"cn":4.9},"chance":0.07,"baoVe":{"ten":"Âm Hỏa Hồn Vương","cg":5},"noi":"di_tich"},{"id":"ev.di_bao_van_son","ten":"Gấu ngủ Vân Sơn","relic":"item.tu_linh_chau","gate":[4,5],"hoiChieu":120,"diaDanh":"hoang:262","dia":{"ten":"Vân Sơn","han":"雲山","x":205.2,"y":614.5,"cn":2.3},"chance":0.07,"baoVe":{"ten":"Thái Nhạc Hùng","cg":5},"noi":"son_thuy"},{"id":"ev.di_bao_kim_dao_dien","ten":"Nghìn chậu đồng","relic":"item.tu_bao_bon","gate":[4,5],"hoiChieu":120,"diaDanh":"azgaar:marker:36","dia":{"ten":"Kim Đao Điện","han":"金刀殿","x":1573.7,"y":609.3,"cn":1.9},"chance":0.03,"check":"than_thuc +100","noi":"di_tich"},{"id":"ev.di_bao_bang_hon_trung","ten":"Chuông trong mộ băng","relic":"item.do_hon_linh","gate":[4,5],"hoiChieu":120,"diaDanh":"azgaar:marker:90","dia":{"ten":"Băng Hồn Trủng","han":"冰魂塚","x":308,"y":473.2,"cn":2.3},"chance":0.07,"baoVe":{"ten":"Vạn Oán Quỷ","cg":5},"noi":"di_tich"},{"id":"ev.hd_db_linh_quang_khe","ten":"Linh quang dưới khe","gate":[0,2],"noi":"hoang_da"},{"id":"ev.hd_db_bao_quang_day_ho","ten":"Bảo quang đáy hồ","gate":[1,3],"noi":"hoang_da"},{"id":"ev.hd_db_thap_dong_duoi_cat","ten":"Tháp đồng dưới cát","gate":[2,4],"noi":"hoang_da"},{"id":"ev.hd_db_qua_chin_vong_vay","ten":"Linh quả giữa vòng vây","gate":[0,3],"noi":"hoang_da"},{"id":"ev.di_bao_ho_set","ten":"Nhẫn trong hố sét","gate":[4,5],"hoiChieu":30,"check":"ngo_tinh +4","noi":"hoang_da"},{"id":"ev.di_bao_hop_ba_khoa","ten":"Hộp ba khóa","gate":[4,5],"hoiChieu":30,"check":"khi_van +8","noi":"hoang_da"},{"id":"ev.di_bao_keo_dinh","ten":"Kéo đỉnh giữa hồ","gate":[4,5],"hoiChieu":30,"check":"can_cot +4","noi":"hoang_da"}].map(x=>[x.id,x]));
 function encounterLimits(enc,r=run()){const id=enc?.id,lim=enc?.limits||{},h=r?.history?.[id],lan=Number(h?.lan)||0,act=Object.values(r?.nodes||{}).filter(n=>n?.encounter===id).length,out={exhausted:false,cooldownLeft:0};if(N(lim.moi_run)&&lan+act>=+lim.moi_run)out.exhausted=true;if(N(lim.hoi_chieu_nam)&&h&&N(h.namCuoi)){const left=+h.namCuoi+ +lim.hoi_chieu_nam-(+r.nam||0);if(left>0)out.cooldownLeft=left}return out}
 
 const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
@@ -1002,8 +1032,9 @@ function makeRow({key,slot,title,kind,icon,enc,tags=[],extraLeft=null,noGate=fal
   const expLeft=hetHan!==null?hetHan-(nowYear()+(N(travel)?travel:0)):null;
   const left=[extraLeft,expLeft,open.left].filter(N).reduce((a,b)=>Math.min(a,b),Infinity);
   const slack=Number.isFinite(left)?left:null;
+  const block=rc.block||'';
   const ok=open.ok&&N(travel)&&(expLeft===null||expLeft>=0);
-  return{key,slot,title,kind,icon,place:slotLabel(slot),country:countryOf(i),travel,miles,est,slack,ok,why:open.ok?(expLeft!==null&&expLeft<0?'Tới nơi thì đã hết hạn':''):open.reason,danger:danger(slot),tags,terrain:A(i?.diaHinh)}
+  return{key,slot,title,kind,icon,place:slotLabel(slot),country:countryOf(i),travel,miles,est,slack,ok,block,why:(open.ok?(expLeft!==null&&expLeft<0?'Tới nơi thì đã hết hạn':''):open.reason),danger:danger(slot),tags,terrain:A(i?.diaHinh)}
 }
 
 function eventRows(){
@@ -1020,7 +1051,8 @@ function eventRows(){
     if(enc?.an)tags.push('Mật bí');
     for(const t of A(enc?.tags?.tinh_chat).slice(0,2))tags.push({co_duyen:'Cơ duyên',ky_van:'Kỳ vận',nguy_hiem:'Nguy hiểm',nhan_qua:'Nhân quả'}[t]||null);
     if(node.coDinh)tags.push('Cố định');
-    const title=T(enc?.ten||slotLabel(slot));
+    const npcRec=node.npc?run().npc?.[node.npc]:null,npcName=npcRec?.ten?String(npcRec.ten).replace(/[\uE000-\uE0FF]/g,''):'';
+    const title=T(npcName&&enc?.ten?`${npcName} — ${enc.ten}`:(enc?.ten||slotLabel(slot)));
     // Bí cảnh đã có tab «Bí cảnh & Dị bảo» — không liệt kê lại trên Bản đồ
     if(kindKey==='bi_canh'||kindName==='Bí cảnh'||pk==='Bí cảnh')continue;
     out.push(makeRow({key:`ev|${slot}|${enc?.id||''}`,slot,title,kind:kindName,icon:KIND_ICON[kindKey]||'事',enc:enc?{__han:node.hetHanNam}:null,tags:tags.filter(Boolean),noGate:Boolean(enc)}));
@@ -1034,7 +1066,7 @@ function eventRows(){
     const ten=T(def?.ten||'');
     // Phòng id đổi tên: lọc thêm theo tên hiển thị
     if(/đại hội đấu giá|tông môn tuyển đồ|tông môn đại bỉ/i.test(ten))continue;
-    out.push(makeRow({key:`tg|${e.id}|${e.slot}`,slot:e.slot,title:ten||'Thế sự',kind:'Thế sự',icon:'訊',enc:{__han:e.denNam},tags:['Tin đã biết'],noGate:true}));
+    out.push(makeRow({key:`tg|${e.id}|${e.slot}`,slot:e.slot,title:ten||'Thế sự',kind:'Thế sự',icon:'訊',enc:{__han:e.denNam},tags:['Tin đã biết',{co_duyen:'Cơ duyên',hiem_hoa:'Hiểm họa',le_hoi:'Lễ hội',tong_mon:'Tông môn'}[def?.nhom]||null].filter(Boolean),noGate:true}));
   }
   return out;
 }
@@ -1081,7 +1113,7 @@ function realmRows(){
     row.openYear=nowYear()+closed;
     const arrive=N(travel)?openOnArrival(s.id,travel):{ok:false};
     const bce=biCanhEnc(s.id),gate=bce?.tags?.canh_gioi||null,lock=gateLock(gate);row.bcType=bce?T(bce.ten):null;row.gate=gate;row.locked=lock;
-    row.ok=Boolean(arrive.ok)&&!lock;row.why=lock?lock:arrive.ok?'':(row.openNow&&N(travel)?`Tới nơi thì cửa đã đóng, mở lại sau ${fmtTime(closedYears(s.id,{...run(),nam:nowYear()+travel}))}`:arrive.reason||'');
+    row.block=rc.block||'';row.ok=Boolean(arrive.ok)&&!lock;row.why=lock?lock:arrive.ok?'':(row.openNow&&N(travel)?`Tới nơi thì cửa đã đóng, mở lại sau ${fmtTime(closedYears(s.id,{...run(),nam:nowYear()+travel}))}`:arrive.reason||'');
     row.wait=!row.openNow&&N(travel)?Math.max(0,closed-travel):0;if(lock)row.wait=0;
     out.push(row);
   }
@@ -1099,9 +1131,11 @@ function estRatios(){
   return estCache;
 }
 function reach(slot){
-  if(explored(slot)){const t=travelTo(slot),m=milesTo(slot);if(N(t))return{travel:t,miles:m,est:false}}
+  const block=travelBlock(slot);
+  const t=travelTo(slot),m=milesTo(slot);
+  if(N(t)&&(t>0||slot===run().viTri))return{travel:t,miles:m,est:false,block};
   let d=NaN;try{d=W.distance(run().viTri,slot)}catch{}
-  const r=estRatios();return N(d)&&r.tr?{travel:d*r.tr,miles:d*r.mi,est:true}:{travel:NaN,miles:NaN,est:true};
+  const r=estRatios();return N(d)&&r.tr?{travel:d*r.tr,miles:d*r.mi,est:true,block}:{travel:NaN,miles:NaN,est:true,block};
 }
 const slotNear=(x,y)=>{let best=null,bd=1e9;for(const s of A(W.slots)){if(s.an)continue;const d=Math.hypot(s.x-x,s.y-y);if(d<bd){bd=d;best=s.id}}return bd<6?best:null};
 const REALM_STAGE=(c,t)=>`${REALMS[c]||'Cảnh giới '+c}${N(t)&&c>0?' '+(STAGES[t]||''):''}`;
@@ -1139,7 +1173,7 @@ function treasureRows(){
   for(const [k,node] of Object.entries(r.nodes||{}))if(node?.encounter&&GUIDE.has(node.encounter)&&!node.viec)act.set(node.encounter,{node,slot:node.slot||k});
   for(const [id,gd] of GUIDE){
     const enc=C.encounters.get(id),relic=gd.relic?C.items.get(gd.relic):null,a=act.get(id);
-    const base={id,title:T(gd.ten||enc?.ten||id),relic:relic?T(relic.ten):null,boss:gd.baoVe?`${gd.baoVe.ten} (${cgTen(gd.baoVe.cg)})`:null,gate:gd.gate,check:gd.check||null,cooldown:gd.hoiChieu||null,chance:gd.chance,terrain:gd.noi,placeName:gd.dia?.ten||null};
+    const base={id,title:T(gd.ten||enc?.ten||id),relic:relic?T(relic.ten):null,boss:gd.baoVe?`${gd.baoVe.ten} (${cgTen(gd.baoVe.cg)})`:null,gate:gd.gate,check:gd.check||null,cooldown:enc?.limits?.hoi_chieu_nam??gd.hoiChieu??null,chance:gd.chance,terrain:gd.noi,placeName:gd.dia?.ten||null};
     if(a&&hasSlot(a.slot)){
       const row=makeRow({key:`db|${a.slot}|${id}`,slot:a.slot,title:base.title,kind:'Dị bảo',icon:KIND_ICON.di_bao,enc:{__han:a.node.hetHanNam},noGate:true});
       Object.assign(row,base,{group:'active'});row.locked=gateLock(gd.gate);active.push(row);continue;
@@ -1158,11 +1192,12 @@ function treasureRows(){
 }
 
 /* Sắp xếp: tới kịp trước; việc gấp (còn ít thời gian dư) trước; sau đó gần trước */
+const tv=r=>N(r.travel)?+r.travel:1e9;
 const SORTS={
-  urgent:{name:'Khẩn cấp trước',fn:(a,b)=>(a.ok===b.ok?0:a.ok?-1:1)||((a.slack!==null?a.slack-(a.travel||0):1e9)-(b.slack!==null?b.slack-(b.travel||0):1e9))||(a.travel-b.travel)},
-  near:{name:'Gần nhất',fn:(a,b)=>(a.ok===b.ok?0:a.ok?-1:1)||(a.travel-b.travel)},
-  kind:{name:'Theo loại',fn:(a,b)=>a.kind.localeCompare(b.kind,'vi')||(a.travel-b.travel)},
-  safe:{name:'An toàn trước',fn:(a,b)=>(a.ok===b.ok?0:a.ok?-1:1)||(a.danger.rank-b.danger.rank)||(a.travel-b.travel)}
+  urgent:{name:'Khẩn cấp trước',fn:(a,b)=>(a.ok===b.ok?0:a.ok?-1:1)||((a.slack!==null?a.slack:1e9)-(b.slack!==null?b.slack:1e9))||(tv(a)-tv(b))},
+  near:{name:'Gần nhất',fn:(a,b)=>(a.ok===b.ok?0:a.ok?-1:1)||(tv(a)-tv(b))},
+  kind:{name:'Theo loại',fn:(a,b)=>a.kind.localeCompare(b.kind,'vi')||(tv(a)-tv(b))},
+  safe:{name:'An toàn trước',fn:(a,b)=>(a.ok===b.ok?0:a.ok?-1:1)||(a.danger.rank-b.danger.rank)||(tv(a)-tv(b))}
 };
 
 /* ───────── Đường đi an toàn & vẽ lên bản đồ ───────── */
@@ -1204,8 +1239,10 @@ function safePath(target){
 
 const mapRoot=()=>{const m=window.map,cam=m?.cam;return m?.app?.stage?.children?.find?.(x=>x?.scale&&x?.position&&Math.abs((x.scale.x||0)-(cam?.scale||0))<1e-6)||null};
 function focusMap(slot){
-  const m=window.map,cam=m?.cam,root=mapRoot();if(!cam||!root||!hasSlot(slot))return false;
+  const m=window.map,cam=m?.cam,root=mapRoot();if(!cam||!hasSlot(slot))return false;
+  if(!root&&typeof cam.centerOn!=='function')return false;
   const t=W.slot(slot),sc=Math.max(cam.minScale||.1,Math.min(cam.maxScale||10,cam.scale||1)),vw=cam.width||innerWidth,vh=cam.height||innerHeight;
+  if(typeof cam.centerOn==='function'){try{cam.centerOn(t.x,t.y,sc);return true}catch{}}
   const maxX=Math.max(0,(cam.worldWidth||1920)-vw/sc),maxY=Math.max(0,(cam.worldHeight||1080)-vh/sc);
   const x=Math.max(0,Math.min(maxX,t.x-vw/(2*sc))),y=Math.max(0,Math.min(maxY,t.y-vh/(2*sc)));
   cam.x=x;cam.y=y;cam.scale=sc;root.scale.set?.(sc);root.position.set?.(-x*sc,-y*sc);
@@ -1310,9 +1347,10 @@ const Route={
 };
 /* mode 'view' = nhìn tới đích; 'go' = nhìn nhân vật */
 function showOnMap(slot,label,mode){
+  const blk=travelBlock(slot);
   const ok=Route.set(slot,label);
   if(!focusMap(mode==='go'?run().viTri:slot)&&!window.map)return{ok:false,msg:'Chưa mở được bản đồ.'};
-  return{ok:true,msg:ok?'':'Không có đường đi an toàn tới nơi này — đã xem vị trí trên bản đồ.'};
+  return{ok:true,msg:ok?(blk?'Đã vẽ đường. Lưu ý: '+blk+'.':''):'Không có đường đi an toàn tới nơi này — đã xem vị trí trên bản đồ.'};
 }
 
 /* ───────── Giao diện cổ phong ───────── */
@@ -1556,11 +1594,20 @@ const hdrSub=()=>{const r=run(),i=info(r.viTri);const cg=C.canhGioi?.get?.(me().
 function render(){
   if(!ui.isOpen)return;
   const keep=body.scrollTop;$(panel,'#'+ID+'-sub').textContent=hdrSub();
-  const fn=VIEWS[ui.tab]||VIEWS.map;fn();syncNav();body.scrollTop=keep;
+  ui._sig=null;const fn=VIEWS[ui.tab]||VIEWS.map;fn();syncNav();body.scrollTop=keep;
 }
-function softRender(){if(!ui.isOpen)return;const a=document.activeElement;if(a&&panel.contains(a)&&/INPUT|SELECT/.test(a.tagName))return;if(ui.tab==='build'||ui.tab==='check'||ui.tab==='breakthrough')return;if(ui.tab==='auto'&&AutoFarm?.running){AutoFarm.refreshLogOnly?.();return}render()}
+function softRender(){if(!ui.isOpen)return;const a=document.activeElement;if(a&&panel.contains(a)&&/INPUT|SELECT/.test(a.tagName))return;if(ui.tab==='build'||ui.tab==='check'||ui.tab==='breakthrough')return;if(ui.tab==='auto'&&AutoFarm?.running){AutoFarm.refreshLogOnly?.();return}
+  if(ui.tab==='map'||ui.tab==='realm'){let sg='';try{sg=tabSig(ui.tab)}catch{}if(sg&&sg===ui._sig){const sub=$(panel,'#'+ID+'-sub');if(sub)sub.textContent=hdrSub();return}render();ui._sig=sg;return}
+  render()}
+function tabSig(tab){
+  const q=x=>N(x)?(+x).toFixed(2):'';
+  const yr=Math.floor(nowYear()*20)+'|'+run().viTri+'|'+Math.floor(Number(me().canhGioi??0))+'.'+Number(me().tieuCanhGioi??0);
+  if(tab==='map')return yr+'|'+eventRows().map(r=>r.key+':'+(r.ok?1:0)+':'+q(r.travel)+':'+q(r.slack)).join(';');
+  const bc=realmRows(),tr=treasureRows();
+  return yr+'|'+bc.map(r=>r.slot+(r.ok?1:0)+(r.openNow?1:0)+q(r.travel)+q(r.opensIn)+q(r.closesIn)).join(';')+'|'+tr.active.map(r=>r.key+q(r.travel)+(r.ok?1:0)).join(';')+'|'+tr.waiting.map(r=>r.id+q(r.cd)).join(';');
+}
 
-const cardHtml=(r,opts={})=>`<article class="card ${r.ok?'':'late'} d${r.danger?.rank>=2?r.danger.rank:0}" data-slot="${E(r.slot)}" data-title="${E(r.title)}"><div class="ico">${E(r.icon||'事')}</div><div><b>${E(r.title)}</b><small>${E(r.kind)} · ${E(r.place)}${r.country?' · '+E(r.country):''}</small></div><div class="side">${fmtTime(r.travel)}<small>${fmtMiles(r.miles)}</small></div><div class="tags">${r.ok?'<span class="tag g">Tới kịp</span>':`<span class="tag r">${E(r.why||'Không tới kịp')}</span>`}${r.slack!==null&&r.ok?`<span class="tag o">Còn ${fmtTime(Math.max(0,r.slack))} khi tới nơi</span>`:''}${r.danger?.rank>=1?`<span class="tag ${r.danger.rank>=2?'r':''}">${r.danger.label}</span>`:''}${A(r.tags).map(t=>`<span class="tag">${E(t)}</span>`).join('')}${opts.extra||''}</div>${opts.after||''}<div class="acts"><button class="btn" data-act="view">Xem bản đồ</button><button class="btn pri" data-act="go">Đường đi an toàn</button></div></article>`;
+const cardHtml=(r,opts={})=>`<article class="card ${r.ok?'':'late'} d${r.danger?.rank>=2?r.danger.rank:0}" data-slot="${E(r.slot)}" data-title="${E(r.title)}"><div class="ico">${E(r.icon||'事')}</div><div><b>${E(r.title)}</b><small>${E(r.kind)} · ${E(r.place)}${r.country?' · '+E(r.country):''}</small></div><div class="side">${fmtTime(r.travel)}<small>${fmtMiles(r.miles)}</small></div><div class="tags">${r.ok?'<span class="tag g">Tới kịp</span>':`<span class="tag r">${E(r.why||'Không tới kịp')}</span>`}${r.slack!==null&&r.ok?`<span class="tag o">Còn ${fmtTime(Math.max(0,r.slack))} khi tới nơi</span>`:''}${r.danger?.rank>=1?`<span class="tag ${r.danger.rank>=2?'r':''}">${r.danger.label}</span>`:''}${r.block?`<span class="tag o">⚠ ${E(r.block)}</span>`:''}${A(r.tags).map(t=>`<span class="tag">${E(t)}</span>`).join('')}${opts.extra||''}</div>${opts.after||''}<div class="acts"><button class="btn" data-act="view">Xem bản đồ</button><button class="btn pri" data-act="go">Đường đi an toàn</button></div></article>`;
 
 body.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');if(!b)return;const card=b.closest('[data-slot]');
@@ -2327,15 +2374,15 @@ VIEWS.breakthrough=()=>{
     if(top||done)out.push(`<h3>Tu vi</h3><div class="panel"><div class="sub">${top?`${REALMS[cg]} Đại viên mãn là mức cao nhất mà game hiện có — không còn cảnh giới kế để đột phá. Việc còn lại là giữ thọ nguyên và tìm cơ duyên.`:'Tu vi đã đủ Đại viên mãn, chỉ còn chờ đột phá lên cảnh giới kế.'}</div></div>`);
     else out.push(`<h3>Kế hoạch tới Đại viên mãn</h3><div class="panel"><div class="stats"><div>Tu vi còn thiếu<b>${N(need)?F(need):'?'}</b></div><div>Tới tiểu cảnh kế<b>${N(nextNeed)?F(nextNeed):'?'}</b></div><div>Tu vi mỗi năm<b>${N(retreat?.tuViNam)?F(retreat.tuViNam):'—'}</b></div></div>${years!==null?`<div class="sub">Bế quan tại đây cần khoảng <b>${fmtTime(years)}</b>.</div>`:''}${ok===null?'':`<div class="tags" style="margin-top:6px"><span class="tag ${ok?'g':'r'}">${ok?'Kịp: còn dư thọ an toàn':'Không kịp: thọ hiện có không đủ nếu bế quan ở đây'}</span></div>`}${retreat?.chan?`<div class="tags" style="margin-top:6px"><span class="tag r">Chỗ này không bế quan được: ${E(retreat.chan)}</span></div>`:''}${stagn?'<div class="tags" style="margin-top:6px"><span class="tag o">Lịch luyện có thể cạn giữa chừng, nên xen kẽ đi đánh hoặc đi xa.</span></div>':''}<div class="sub" style="margin-top:6px">Mỗi nơi bế quan cho tu vi mỗi năm khác nhau (linh mạch, động phủ, tông môn). Nếu không kịp, hãy đổi chỗ bế quan hoặc kéo dài thọ nguyên.</div></div>`);
     /* 2. bình cảnh */
-    if(!top&&!done){const barrier=effectItems('pha_binh_canh').filter(it=>{const e=effectOf(it,'pha_binh_canh');return e?.canh_gioi===undefined||e.canh_gioi===cg}).sort((a,b)=>inBag(b.id)-inBag(a.id));
-    out.push(`<h3>Bình cảnh trong tiểu cảnh</h3><div class="panel"><div class="sub">Tu vi đầy một tiểu cảnh thì phần dư dồn vào bình cảnh; chưa tích đủ thì chưa lên được. Đan phá chướng giúp vượt nhanh phần còn thiếu${nv.binhCanh>0?` — bạn đang tích ${F(nv.binhCanh)}.`:'.'}</div>${barrier.map(it=>pillRow(it,`phá ${F((effectOf(it,'pha_binh_canh')?.phan||0)*100)}% bình cảnh`)).join('')||'<div class="sub">Cảnh giới này không có đan phá chướng riêng.</div>'}</div>`)}
+    if(!top&&!done){const barrier=effectItems('pha_binh_canh').filter(it=>{const e=effectOf(it,'pha_binh_canh');return e?.canh_gioi===cg}).sort((a,b)=>inBag(b.id)-inBag(a.id));
+    out.push(`<h3>Bình cảnh trong tiểu cảnh</h3><div class="panel"><div class="sub">Tu vi đầy một tiểu cảnh thì phần dư dồn vào bình cảnh; chưa tích đủ thì chưa lên được. Đan phá chướng chỉ dùng được khi đã chạm bình cảnh, và cộng thêm một phần tỉ lệ vào bình cảnh (game cũng tự dùng đan đã chuẩn bị khi chạm bình cảnh)${nv.binhCanh>0?` — bạn đang tích ${F(nv.binhCanh)}.`:'.'}</div>${barrier.map(it=>pillRow(it,`phá ${F((effectOf(it,'pha_binh_canh')?.phan||0)*100)}% bình cảnh`)).join('')||'<div class="sub">Cảnh giới này không có đan phá chướng riêng.</div>'}</div>`)}
     /* 3. đột phá */
     const next=cg+1,pills=[...C.items.values()].filter(it=>it.dot_pha&&typeof it.dot_pha==='object'&&(it.dot_pha.canh_gioi===undefined||it.dot_pha.canh_gioi===next)).sort((a,b)=>(b.dot_pha?.ti_le||0)-(a.dot_pha?.ti_le||0)).slice(0,10);
     const best=options[0];
     if(!top)out.push(`<h3>Đột phá lên ${E(REALMS[next]||'cảnh giới kế')}</h3><div class="panel">${base!==null?`<div class="sub">Không dùng gì: <b>${F(base*100)}%</b></div>`:'<div class="sub">Chưa tính được tỉ lệ ở trạng thái hiện tại (cần đạt Đại viên mãn).</div>'}${best?`<div class="tags" style="margin:6px 0"><span class="tag g">Tốt nhất với đồ đang có: ${best.dan.length?best.dan.map(nm).join(' + '):'không dùng đan'}${best.thieuDot?` · đốt ${best.thieuDot} nấc thọ${N(best.burn)?' (−'+F(best.burn)+' năm)':''}`:''} → ${F(best.rate*100)}%</span></div>`:''}${options.length>1?`<details><summary>Các phương án khác</summary>${options.slice(0,10).map(x=>`<div class="row"><span>${x.dan.length?x.dan.map(nm).join(' + '):'Không dùng đan'}${x.thieuDot?` · đốt ${x.thieuDot} nấc`:''}</span><b>${F(x.rate*100)}%</b></div>`).join('')}</details>`:''}<div class="sub" style="margin:8px 0 4px">Đan hỗ trợ đột phá</div>${pills.map(it=>pillRow(it,`+${F((it.dot_pha.ti_le||0)*100)}%`)).join('')||'<div class="sub">Không có đan phù hợp.</div>'}<div class="sub" style="margin-top:6px">Công pháp, pháp khí có nội tại "đột phá" trên kinh mạch cũng cộng thêm tỉ lệ — dùng tab Kinh mạch, chọn hướng Tu luyện.</div></div>`);
     /* 4. chấn tổn */
     const scar=Number(run().flags?.[`dot_pha_that_bai.${next}`]||0);
-    if(scar>0){const heal=effectItems('heal_breakthrough_scar');out.push(`<h3>Chấn tổn đột phá</h3><div class="panel"><div class="sub">Đạo cơ đang có <b>${scar}</b> vết rạn do đột phá thất bại, làm giảm tỉ lệ lần sau. Đan chữa chấn tổn:</div>${heal.map(it=>pillRow(it,`chữa ${effectOf(it,'heal_breakthrough_scar')} vết`)).join('')||'<div class="sub">Không có đan chữa phù hợp.</div>'}</div>`)}
+    if(scar>0){const heal=effectItems('heal_breakthrough_scar').filter(it=>Number(effectOf(it,'heal_breakthrough_scar'))===next);out.push(`<h3>Chấn tổn đột phá</h3><div class="panel"><div class="sub">Đạo cơ đang có <b>${scar}</b> vết rạn do đột phá thất bại, làm giảm tỉ lệ lần sau. Đan chữa chấn tổn:</div>${heal.map(it=>pillRow(it,'chữa 1 vết')).join('')||'<div class="sub">Không có đan chữa phù hợp.</div>'}</div>`)}
     /* 5. thọ nguyên */
     const lifeItems=effectItems('tho_nguyen').sort((a,b)=>(effectOf(b,'tho_nguyen')||0)-(effectOf(a,'tho_nguyen')||0));
     out.push(`<h3>Thọ nguyên</h3><div class="panel"><div class="sub">Thọ gốc theo cảnh giới: ${BASE_LIFE.map((v,i)=>`${REALMS[i]} ${v}`).join(' · ')}. Bạn được cộng thêm ${F(nv.thoNguyenThem||0)} năm${nv.lifespanLost?`, đã hao mất ${F(nv.lifespanLost)} năm`:''}.</div>${lifeItems.map(it=>pillRow(it,`+${F(effectOf(it,'tho_nguyen'))} năm`)).join('')||'<div class="sub">Không có vật phẩm kéo dài thọ nguyên.</div>'}<div class="sub" style="margin-top:6px">Dùng nhiều lần cùng loại đan thì càng về sau càng nhạt. Lên cảnh giới mới sẽ nâng thọ gốc.</div></div>`);
@@ -3521,7 +3568,7 @@ const AutoFarm={
   urgentJobTargets(maxY){
     const r=run(),out=[];
     const pushJob=(slot,enc,title,hetHan,mode,basePri)=>{
-      if(!slot||!hasSlot(slot)||this.isSlotBanned(slot))return;
+      if(!slot||!hasSlot(slot)||this.isSlotBanned(slot)||travelBlock(slot))return;
       const left=N(hetHan)?+hetHan-nowYear():null;
       if(left!==null&&left<0)return; // đã hết hạn
       if(left!==null&&left>8)return; // còn lâu — không ưu tiên gấp
@@ -5294,13 +5341,32 @@ VIEWS.bounty=()=>{
 const SEX={nam:'Nam',nu:'Nữ'};
 const REL_NAME={quen_biet:'Quen biết',doi_thu:'Đối thủ',bang_huu:'Bằng hữu',hiem_khich:'Hiềm khích',ke_thu:'Kẻ thù',tu_thu:'Tử thù',tri_ky:'Tri kỷ',ket_nghia:'Huynh đệ kết nghĩa',dao_lu:'Đạo lữ',su_phu:'Sư phụ',phan_boi:'Kẻ phản bội'};
 const relName=k=>REL_NAME[k]||String(k||'quen_biet').replaceAll('_',' ').replace(/^./,c=>c.toUpperCase());
-function personLocation(id,npc){
+const TRIP_NAME={lich_luyen:'Lịch luyện',viec:'Lo việc',ve_que:'Về quê',tham:'Tới thăm'};
+let facSlotIdx=null;
+const facSlot=dd=>{if(!facSlotIdx){facSlotIdx=new Map();for(const s of A(W.slots))if(s?.dia_danh)facSlotIdx.set(s.dia_danh,s.id)}return facSlotIdx.get(dd)||null};
+/* Nơi ở gốc của NPC — theo hàm game: người giữ ghế/sư phụ ở thế lực của họ; đạo lữ theo động phủ/tông môn của người chơi */
+function npcBase(npc){
   const r=run();
-  for(const [key,node] of Object.entries(r.nodes||{})){if(!node||node.viec)continue;if(node.npc===id||Object.values(node.vars||{}).some(v=>String(v)===id)){const s=node.slot||key;if(hasSlot(s))return{slot:s,note:'Đang xuất hiện trên bản đồ',src:'now'}}}
-  if(r.dongHanh?.npc===id)return{slot:r.viTri,note:'Đang đồng hành cùng bạn',src:'with'};
-  if(npc.trip&&N(npc.trip.until)&&+npc.trip.until>nowYear()&&hasSlot(npc.trip.to))return{slot:npc.trip.to,note:'Đang đi tới '+slotLabel(npc.trip.to),src:'trip'};
+  if(npc.theLuc&&(npc.seat||npc.danhPhan==='su_phu')){const s=facSlot(npc.theLuc);if(s&&hasSlot(s))return{slot:s,note:'Ở thế lực của họ · '+slotLabel(s),src:'home'}}
+  const mine=Object.keys(r.noiChon||{}).find(k=>r.noiChon[k]?.chuNhan==='nguoi_choi');
+  if(npc.danhPhan==='dao_lu'){
+    if(npc.home&&r.noiChon?.[npc.home]?.chuNhan==='nguoi_choi')return{slot:npc.home,note:'Ở động phủ của bạn',src:'home'};
+    const y=mine||(typeof r.flags?.mon_phai==='string'?r.flags.mon_phai:null);if(y&&hasSlot(y))return{slot:y,note:'Ở chỗ bạn · '+slotLabel(y),src:'home'};
+  }
   if(hasSlot(npc.home))return{slot:npc.home,note:r.noiChon?.[npc.home]?.chuNhan==='nguoi_choi'?'Ở động phủ của bạn':'Ở nhà · '+slotLabel(npc.home),src:'home'};
   if(hasSlot(npc.que))return{slot:npc.que,note:'Quê nhà · '+slotLabel(npc.que),src:'home'};
+  return null;
+}
+function personLocation(id,npc){
+  const r=run(),now=nowYear();
+  for(const [key,node] of Object.entries(r.nodes||{})){if(!node||node.viec)continue;if(node.npc===id||Object.values(node.vars||{}).some(v=>String(v)===id)){const s=node.slot||key;if(hasSlot(s))return{slot:s,note:'Đang xuất hiện trên bản đồ',src:'now'}}}
+  if(r.dongHanh?.npc===id)return{slot:r.viTri,note:'Đang đồng hành cùng bạn',src:'with'};
+  const base=npcBase(npc),tr=npc.trip&&N(npc.trip.until)&&+npc.trip.until>now?npc.trip:null;
+  if(tr){
+    if(N(tr.arrive)&&+tr.arrive>now&&hasSlot(tr.to)){const from=hasSlot(tr.from)?tr.from:base?.slot||null;return{slot:from,note:`Đang trên đường tới ${slotLabel(tr.to)} · tới sau ~${fmtTime(+tr.arrive-now)}`,src:'trip'}}
+    if(hasSlot(tr.to))return{slot:tr.to,note:`${TRIP_NAME[tr.kind]||'Đang đi'} · ${slotLabel(tr.to)} · về sau ~${fmtTime(Math.max(.1,+tr.until-now))}`,src:'trip'};
+  }
+  if(base)return base;
   if(hasSlot(npc.noiGap))return{slot:npc.noiGap,note:'Nơi gặp gần nhất · '+slotLabel(npc.noiGap),src:'seen'};
   return{slot:null,note:'Chưa rõ tung tích',src:'none'};
 }
@@ -5311,7 +5377,7 @@ function peopleRows(){
     const def=C.npc?.get?.(id.replace(/\.\d+$/,''))||C.npc?.get?.(npc.goc),alive=npc.song!==false,loc=alive?personLocation(id,npc):{slot:null,note:'Đã khuất',src:'none'},here=loc.slot&&loc.slot===r.viTri;
     const acts=[];
     if(alive){if(here){acts.push('Đang ở cùng nơi — có thể gặp');if(npc.lastGiftYear!==yr)acts.push('Có thể tặng quà');if(npc.lastAskYear!==yr)acts.push('Có thể hỏi chuyện');if(npc.danhPhan==='dao_lu')acts.push('Việc đạo lữ')}else if(loc.slot)acts.push('Có thể tìm đến')}
-    out.push({id,name:strip(npc.ten||id),title:strip(def?.goi||''),sex:SEX[String(npc.gioiTinh||'').toLowerCase()]||'Chưa rõ',alive,realm:REALMS[npc.canhGioi]?`${REALMS[npc.canhGioi]}${N(npc.tieuCanhGioi)?' · '+STAGES[npc.tieuCanhGioi]:''}`:'',age:N(npc.namSinh)?Math.floor(nowYear()-npc.namSinh):null,rel:relName(npc.danhPhan),relKey:npc.danhPhan||'quen_biet',fav:N(npc.haoCam)?+npc.haoCam:0,debt:N(npc.no?.so)?+npc.no.so:0,romance:Boolean(npc.tinhY),loc,here,acts,travel:loc.slot?travelTo(loc.slot):NaN,miles:loc.slot?milesTo(loc.slot):NaN,kind:def?.loai||''});
+    out.push({id,name:strip(npc.ten||id),title:strip(def?.goi||''),sex:SEX[String(npc.gioiTinh||'').toLowerCase()]||'Chưa rõ',alive,realm:REALMS[npc.canhGioi]?`${REALMS[npc.canhGioi]}${N(npc.tieuCanhGioi)?' · '+STAGES[npc.tieuCanhGioi]:''}`:'',age:N(npc.namSinh)?Math.floor(nowYear()-npc.namSinh):null,rel:relName(npc.danhPhan),relKey:npc.danhPhan||'quen_biet',fav:N(npc.haoCam)?+npc.haoCam:0,debt:N(npc.no?.so)?+npc.no.so:0,romance:Boolean(npc.tinhY),hurt:alive&&N(npc.injuredUntil)&&+npc.injuredUntil>nowYear()?+npc.injuredUntil-nowYear():0,loc,here,acts,travel:loc.slot?travelTo(loc.slot):NaN,miles:loc.slot?milesTo(loc.slot):NaN,kind:def?.loai||''});
   }
   return out;
 }
@@ -5322,7 +5388,7 @@ VIEWS.people=()=>{
   const rows=all.filter(x=>(!q||norm([x.name,x.title,x.rel,x.loc.note,x.realm].join(' ')).includes(q))&&(pUi.life==='all'||(pUi.life==='alive')===x.alive)&&(pUi.sex==='all'||x.sex===pUi.sex)&&(pUi.rel==='all'||x.rel===pUi.rel)&&(pUi.where==='all'||(pUi.where==='here'&&x.here)||(pUi.where==='known'&&x.loc.slot)||(pUi.where==='now'&&(x.loc.src==='now'||x.loc.src==='with'))||(pUi.where==='unknown'&&!x.loc.slot))).sort(PSORT[pUi.sort].fn),shown=rows.slice(0,pUi.limit);
   const sel=(id,arr,v)=>`<select id="${id}" class="grow">${arr.map(([k,n])=>`<option value="${E(k)}" ${k===v?'selected':''}>${E(n)}</option>`).join('')}</select>`;
   body.innerHTML=`<div class="bar"><input type="search" id="p-q" class="grow" placeholder="Tìm tên, quan hệ, nơi ở…" value="${E(pUi.q)}"></div><div class="bar">${sel('p-sort',Object.entries(PSORT).map(([k,v])=>[k,v.name]),pUi.sort)}${sel('p-life',[['all','Còn sống & đã khuất'],['alive','Còn sống'],['dead','Đã khuất']],pUi.life)}</div><div class="bar">${sel('p-sex',[['all','Mọi giới'],['Nam','Nam'],['Nữ','Nữ']],pUi.sex)}${sel('p-rel',[['all','Mọi quan hệ'],...rels.map(x=>[x,x])],pUi.rel)}${sel('p-where',[['all','Mọi vị trí'],['here','Ở cùng nơi'],['now','Đang xuất hiện'],['known','Biết nơi ở'],['unknown','Chưa rõ tung tích']],pUi.where)}</div><div class="sum">${rows.length}/${all.length} nhân mạch</div>
-  ${shown.map(x=>`<article class="card ${x.alive?'':'late'}" ${x.loc.slot?`data-slot="${E(x.loc.slot)}" data-title="${E(x.name)}"`:''} style="grid-template-columns:34px 1fr auto"><div class="ico">${x.alive?(x.sex==='Nữ'?'女':'男'):'亡'}</div><div><b>${E(x.name)}</b><small>${E([x.title,x.realm,x.age!==null?x.age+' tuổi':''].filter(Boolean).join(' · '))}</small></div><div class="side">${N(x.travel)?fmtTime(x.travel):''}<small>${N(x.miles)?fmtMiles(x.miles):''}</small></div><div class="tags"><span class="tag">${E(x.rel)}</span><span class="tag ${x.fav>0?'g':x.fav<0?'r':''}">Hảo cảm ${x.fav>0?'+':''}${F(x.fav)}</span>${x.romance?'<span class="tag o">Có tình ý</span>':''}${x.debt?`<span class="tag r">Nợ ${F(x.debt)}</span>`:''}${x.alive?'':'<span class="tag r">Đã khuất</span>'}<span class="tag">${E(x.loc.note)}</span>${x.acts.map(a=>`<span class="tag g">${E(a)}</span>`).join('')}</div>${x.loc.slot&&x.alive?'<div class="acts"><button class="btn" data-act="view">Xem bản đồ</button><button class="btn pri" data-act="go">Đường đi an toàn</button></div>':''}</article>`).join('')||'<div class="empty">Chưa có nhân mạch phù hợp.</div>'}${rows.length>shown.length?'<button class="btn" id="p-more" style="width:100%">Xem thêm</button>':''}`;
+  ${shown.map(x=>`<article class="card ${x.alive?'':'late'}" ${x.loc.slot?`data-slot="${E(x.loc.slot)}" data-title="${E(x.name)}"`:''} style="grid-template-columns:34px 1fr auto"><div class="ico">${x.alive?(x.sex==='Nữ'?'女':'男'):'亡'}</div><div><b>${E(x.name)}</b><small>${E([x.title,x.realm,x.age!==null?x.age+' tuổi':''].filter(Boolean).join(' · '))}</small></div><div class="side">${N(x.travel)?fmtTime(x.travel):''}<small>${N(x.miles)?fmtMiles(x.miles):''}</small></div><div class="tags"><span class="tag">${E(x.rel)}</span><span class="tag ${x.fav>0?'g':x.fav<0?'r':''}">Hảo cảm ${x.fav>0?'+':''}${F(x.fav)}</span>${x.romance?'<span class="tag o">Có tình ý</span>':''}${x.hurt?`<span class="tag r">Đang trọng thương · ~${fmtTime(x.hurt)}</span>`:''}${x.debt?`<span class="tag r">Nợ ${F(x.debt)}</span>`:''}${x.alive?'':'<span class="tag r">Đã khuất</span>'}<span class="tag">${E(x.loc.note)}</span>${x.acts.map(a=>`<span class="tag g">${E(a)}</span>`).join('')}</div>${x.loc.slot&&x.alive?'<div class="acts"><button class="btn" data-act="view">Xem bản đồ</button><button class="btn pri" data-act="go">Đường đi an toàn</button></div>':''}</article>`).join('')||'<div class="empty">Chưa có nhân mạch phù hợp.</div>'}${rows.length>shown.length?'<button class="btn" id="p-more" style="width:100%">Xem thêm</button>':''}`;
   $(body,'#p-more')?.addEventListener('click',()=>{pUi.limit+=40;render()});
   let t;$(body,'#p-q').oninput=e=>{pUi.q=e.target.value;pUi.limit=40;clearTimeout(t);t=setTimeout(()=>{VIEWS.people();const i=$(body,'#p-q');i.focus();i.setSelectionRange(i.value.length,i.value.length)},220)};
   for(const [id,k] of [['p-sort','sort'],['p-life','life'],['p-sex','sex'],['p-rel','rel'],['p-where','where']])$(body,'#'+id).onchange=e=>{pUi[k]=e.target.value;pUi.limit=40;render()};
@@ -5347,8 +5413,8 @@ function sectRows(){
     const i=info(s.id),d=i?.diaDanh;if(!d||d.loai!=='tong_mon')continue;
     const destroyed=dead.has(s.id);
     if(d.an&&!explored(s.id)&&mine!==s.id&&!destroyed)continue;
-    const travel=travelTo(s.id),rec=ev.find(e=>e.slot===s.id);
-    out.push({slot:s.id,title:T(d.ten),han:d.ten_han||'',tang:d.tang,phai:d.phai,he:A(d.he),cm:d.chinh_ma,rel:d.quan_he,country:countryOf(i),mine:mine===s.id,explored:explored(s.id),hidden:Boolean(d.an),recruit:rec?+rec.denNam-nowYear():null,travel,miles:milesTo(s.id),danger:danger(s.id),ok:N(travel),
+    const travel=travelTo(s.id),rec=ev.find(e=>e.slot===s.id&&+e.denNam>nowYear());
+    out.push({slot:s.id,title:T(d.ten),han:d.ten_han||'',tang:d.tang||'mon_phai',phai:d.phai,he:A(d.he),cm:d.chinh_ma,rel:d.quan_he,country:countryOf(i),mine:mine===s.id,explored:explored(s.id),hidden:Boolean(d.an),recruit:rec?+rec.denNam-nowYear():null,thi:Boolean(rec&&N(rec.tuNam)&&r.sectAdmissionAttempts?.[s.id]===rec.tuNam),travel,miles:milesTo(s.id),danger:danger(s.id),ok:N(travel),
       destroyed,destroyedYear:destroyed?dead.get(s.id):null,leader:destroyed?null:seatPerson(s.id,'leader.0'),ancestor:destroyed?null:seatPerson(s.id,'ancestor.0'),vice:destroyed?null:seatPerson(s.id,'vice_leader.0')});
   }
   return out;
@@ -5365,7 +5431,7 @@ VIEWS.sect=()=>{
   body.innerHTML=`${rk?`<div class="panel"><b style="color:var(--gold)">Bạn đang ở ${E(slotLabel(rk.slot))}</b><div class="sub">Cấp bậc: ${E(RANKS[rk.capBac??0]||'—')}${N(me().congHien)?` · công hiến ${F(me().congHien)}`:''}</div></div>`:''}<div class="bar"><input type="search" id="s-q" class="grow" placeholder="Tìm tông môn, chưởng môn, hệ…" value="${E(sUi.q)}"></div>
   <div class="chips"><button class="chip ${sUi.tang==='all'?'on':''}" data-tang="all">Mọi quy mô</button>${Object.entries(SECT_TANG).map(([k,n])=>`<button class="chip ${sUi.tang===k?'on':''}" data-tang="${k}">${E(n)}</button>`).join('')}${ndead?`<button class="chip ${sUi.hideDead?'on':''}" id="s-dead">Ẩn đã bị diệt (${ndead})</button>`:''}</div>
   <div class="bar">${sel('s-phai',[['all','Mọi lối tu'],...phais.map(p=>[p,SECT_PHAI[p]||p])],sUi.phai)}${sel('s-sort',Object.entries(SSORT).map(([k,v])=>[k,v.name]),sUi.sort)}${sel('s-cm',[['all','Chính / Ma'],...Object.entries(SECT_CM)],sUi.cm)}${sel('s-he',[['all','Mọi hệ'],...ELEMS],sUi.he)}</div><div class="sum">${rows.length}/${all.length} tông môn</div>
-  ${rows.map(x=>`<article class="card ${x.destroyed?'late':x.mine?'':'d'+(x.danger.rank>=2?x.danger.rank:0)}" data-slot="${E(x.slot)}" data-title="${E(x.title)}"><div class="ico">${x.destroyed?'滅':'宗'}</div><div><b>${E(x.title)}${x.han?` <small>${E(x.han)}</small>`:''}</b><small>${E(SECT_TANG[x.tang]||'')} · ${E(SECT_PHAI[x.phai]||x.phai||'')} · ${E(x.he.map(h=>ELEMENT_NAMES[h]||h).join('/'))}</small></div><div class="side">${fmtTime(x.travel)}<small>${fmtMiles(x.miles)}</small></div>${personLine('Chưởng môn',x.leader)}${personLine('Phó chưởng môn',x.vice)}${personLine('Tổ sư',x.ancestor)}<div class="tags">${x.destroyed?`<span class="tag r">Đã bị diệt năm ${Math.floor(x.destroyedYear)}</span>`:''}${x.mine?'<span class="tag g">Tông môn của bạn</span>':''}${x.recruit!==null&&!x.destroyed?`<span class="tag o">Đang tuyển đồ · còn ${fmtTime(Math.max(0,x.recruit))}</span>`:''}<span class="tag ${x.cm==='chinh'?'g':x.cm==='trung_lap'?'':'r'}">${E(SECT_CM[x.cm]||'')}</span>${x.country?`<span class="tag">${E(x.country)} · ${E(SECT_REL[x.rel]||'')}</span>`:''}${x.hidden?'<span class="tag">Ẩn thế</span>':''}${x.explored?'':'<span class="tag">Chưa khám phá</span>'}${x.danger.rank>=1&&!x.destroyed?`<span class="tag ${x.danger.rank>=2?'r':''}">${x.danger.label}</span>`:''}</div><div class="acts"><button class="btn" data-act="view">Xem bản đồ</button>${x.destroyed?'':'<button class="btn pri" data-act="go">Đường đi an toàn</button>'}</div></article>`).join('')||'<div class="empty">Không có tông môn phù hợp.</div>'}`;
+  ${rows.map(x=>`<article class="card ${x.destroyed?'late':x.mine?'':'d'+(x.danger.rank>=2?x.danger.rank:0)}" data-slot="${E(x.slot)}" data-title="${E(x.title)}"><div class="ico">${x.destroyed?'滅':'宗'}</div><div><b>${E(x.title)}${x.han?` <small>${E(x.han)}</small>`:''}</b><small>${E(SECT_TANG[x.tang]||'')} · ${E(SECT_PHAI[x.phai]||x.phai||'')} · ${E(x.he.map(h=>ELEMENT_NAMES[h]||h).join('/'))}</small></div><div class="side">${fmtTime(x.travel)}<small>${fmtMiles(x.miles)}</small></div>${personLine('Chưởng môn',x.leader)}${personLine('Phó chưởng môn',x.vice)}${personLine('Tổ sư',x.ancestor)}<div class="tags">${x.destroyed?`<span class="tag r">Đã bị diệt năm ${Math.floor(x.destroyedYear)}</span>`:''}${x.mine?'<span class="tag g">Tông môn của bạn</span>':''}${x.recruit!==null&&!x.destroyed?`<span class="tag o">Đang tuyển đồ · còn ${fmtTime(Math.max(0,x.recruit))}</span>`:''}${x.recruit!==null&&x.thi&&!x.destroyed?'<span class="tag">Bạn đã thi kỳ này</span>':''}<span class="tag ${x.cm==='chinh'?'g':x.cm==='trung_lap'?'':'r'}">${E(SECT_CM[x.cm]||'')}</span>${x.country?`<span class="tag">${E(x.country)} · ${E(SECT_REL[x.rel]||'')}</span>`:''}${x.hidden?'<span class="tag">Ẩn thế</span>':''}${x.explored?'':'<span class="tag">Chưa khám phá</span>'}${x.danger.rank>=1&&!x.destroyed?`<span class="tag ${x.danger.rank>=2?'r':''}">${x.danger.label}</span>`:''}</div><div class="acts"><button class="btn" data-act="view">Xem bản đồ</button>${x.destroyed?'':'<button class="btn pri" data-act="go">Đường đi an toàn</button>'}</div></article>`).join('')||'<div class="empty">Không có tông môn phù hợp.</div>'}`;
   let t;$(body,'#s-q').oninput=e=>{sUi.q=e.target.value;clearTimeout(t);t=setTimeout(()=>{VIEWS.sect();const i=$(body,'#s-q');i.focus();i.setSelectionRange(i.value.length,i.value.length)},220)};
   $$(body,'[data-tang]').forEach(b=>b.onclick=()=>{sUi.tang=b.dataset.tang;render()});
   $(body,'#s-dead')?.addEventListener('click',()=>{sUi.hideDead=!sUi.hideDead;render()});
