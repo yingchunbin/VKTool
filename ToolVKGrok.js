@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261110-autofarm-v79',ID='vkt2',g=window.game;
+const BUILD='20261111-autofarm-v81',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -160,8 +160,27 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     return m ? m[1] : null;
   }
 
+  // ── Ưu tiên bộ hàm công khai của game (window.tuTien.core): ổn định qua các bản cập nhật, không cần tải lại cả code game.
+  // Khóa nội bộ (giữ tên cũ để phần còn lại của tool không đổi) → tên hàm công khai.
+  const PUB_MAP = { xo: 'khuonCua', eJ: 'tinhTocChien', Vr: 'taoBenTa', Ga: 'taoBenDich', Rt: 'tinhKinhMach', Tp: 'docKhuon', al: 'oCuaManh', Jh: 'kiemTraDat', kR: 'chuanBiDotPha', Hon: 'hangTong', wr: 'thieuDeThangCap', Kn: 'tongMonCua', ke: 'thoNguyenToiDa', Rsn: 'trialOpponent', ko: 'timDich', Qn: 'tenCanhGioi', mf: 'travelYears', Nin: 'facilitiesAt', H1: 'shelfStock', rn: 'canhGioi', fn: 'Rng', E1: 'giaMua', gP: 'slotDaMo', ni: 'nhanVaoTui', to: 'chuanBiBeQuan', qw: 'retreatTargetGain', Nb: 'retreatGain', Di: 'tocDoTuLuyen', jan: 'phanBoKhaoHach', bb: 'thieuDeKhaoHach', Lu: 'chuanBiLuyen', Pw: 'nguonDiemGoc', Rrn: 'bangTreoThuong', KI: 'bongLoc', KS: 'tienCuDuoc', kC: 'taoKinhMach', IP: 'giaBan' };
+  function publicCore() {
+    const core = window.tuTien && window.tuTien.core;
+    if (!core || typeof core !== 'object') return null;
+    const idx = core.index || {};
+    const find = (n) => { if (typeof idx[n] === 'function') return idx[n]; for (const m of Object.values(core)) { if (m && typeof m[n] === 'function') return m[n]; } return null; };
+    const K = {}, missing = [], optMissing = [], LABELS = { xo: 'lưới kinh mạch' };
+    for (const o of [ANCHORS, REGEX_NAMES, ANCHORS_OPT, REGEX_OPT]) for (const [k, v] of Object.entries(o)) LABELS[k] = v[1];
+    for (const [k, n] of Object.entries(PUB_MAP)) { const f = find(n); if (f) K[k] = f; else if (ANCHORS[k] || REGEX_NAMES[k] || k === 'xo') missing.push(LABELS[k] || k); else optMissing.push(LABELS[k] || k); }
+    if (missing.length) return null;
+    K.bundle = 'tuTien.core ' + (window.tuTien.gameVersion || '');
+    K.optMissing = optMissing; K.PO = 30; K.lost = missing; K.labels = LABELS; K.viaPublic = true;
+    K.has = (...ks) => ks.every((k) => K[k]);
+    K.need = (feature, ...ks) => { const bad = ks.filter((k) => !K[k]); if (bad.length) throw new Error(`Tính năng "${feature}" cần hàm game [${bad.map((k) => LABELS[k] || k).join(', ')}] mà tool chưa nhận ra sau lần cập nhật game này. Các tính năng khác vẫn dùng bình thường. Mở tab Chẩn đoán để lấy báo cáo gửi Claude.`); };
+    return K;
+  }
   async function loadCore(progress) {
     const g = window.game;
+    { const pc = publicCore(); if (pc) return pc; }
     if (!g || !g.env || !g.env.content) throw new Error('Chưa thấy game. Hãy mở trang game, đợi tải xong rồi bấm lại dấu trang.');
     const tag = document.querySelector('script[type=module][src*="/assets/index-"]') || document.querySelector('script[type=module][src]') || { src: ((performance.getEntriesByType('resource').find((r) => /\/assets\/index-[^/]*\.js(\?|$)/.test(r.name)) || {}).name) };
     if (!tag.src) throw new Error('Không tìm thấy file code chính của game.');
@@ -509,7 +528,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
           if (!it0 || (it0.loai !== 'cong_phap' && it0.loai !== 'phap_khi') || !it0.hinh) continue;
           const i0 = it0.canh_gioi ?? 0; if (i0 > cg || i0 < cgMinPath) continue;
           const t0 = [...(it0.tag || []), ...(typeof it0.tran_phai === 'string' ? [it0.tran_phai] : [])].map(String);
-          if (t0.includes('nghich_thien') || it0.tran_phai) continue;
+          if (t0.includes('nghich_thien') || t0.includes('di_bao') || (it0.pham_cap ?? 0) >= 8 || it0.tran_phai) continue;
           if (schoolMatch(school, BUILD_TAGS[school] || [], t0, it0)) nMatch++;
         }
         if (nMatch < 10) { S.pref._relaxed = nMatch; pw = 1; } else S.pref._relaxed = 0;
@@ -519,7 +538,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
         const icg = it.canh_gioi ?? 0;
         if (icg > cg) continue;
         const tags = [...(it.tag || []), ...(typeof it.tran_phai === 'string' ? [it.tran_phai] : [])].map(String);
-        if (tags.includes('nghich_thien') || it.tran_phai) continue;
+        if (tags.includes('nghich_thien') || tags.includes('di_bao') || (it.pham_cap ?? 0) >= 8 || it.tran_phai) continue;
         const match = school === 'tu_do' || schoolMatch(school, BUILD_TAGS[school] || [], tags, it)
           || (typeof school === 'string' && school.startsWith('he_') && (it.he || []).includes(school.slice(3)))
           || ((school === 'am' || school === 'he_am') && (it.he || []).includes('am'));
@@ -845,8 +864,8 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     }
     g.store && g.store.setState && g.state.error && g.store.setState({ error: undefined });
     const final = km().manh; const okAll = want.every((w) => final.some((m) => same(m, w)));
-    const extra = stuck.length ? ` Túi đầy nên chưa tháo được ${stuck.join(', ')} (đã dời ra chỗ không vướng); vứt hoặc bán bớt 1 món trong túi rồi tháo nó, hoặc bấm lại.` : '';
-    return { ok: okAll, msg: okAll ? `Đã xếp xong ${want.length} món vào kinh mạch${loadout !== undefined ? ' (Bộ ' + (loadout + 1) + ')' : ''}.${extra}` : 'Xếp chưa trọn: ' + (errs.slice(0, 4).join('; ') || 'có món không đặt được') + '.' + extra + ' Phần còn lại xếp tay theo ảnh.' };
+    const extra = stuck.length ? ` Túi đầy nên chưa tháo được ${stuck.join(', ')} (đã dời ra chỗ không vướng). Đạo hữu hãy tự bán hoặc vứt bớt vật phẩm không cần thiết trong túi rồi bấm xếp lại.` : '';
+    return { ok: okAll, bagFull: stuck.length > 0, stuckNames: stuck.slice(), msg: okAll ? `Đã xếp xong ${want.length} món vào kinh mạch${loadout !== undefined ? ' (Bộ ' + (loadout + 1) + ')' : ''}.${extra}` : 'Xếp chưa trọn: ' + (errs.slice(0, 4).join('; ') || 'có món không đặt được') + '.' + extra + ' Phần còn lại xếp tay theo ảnh.' };
   }
 
   async function ensureCore(progress){if(!S.core)S.core=await loadCore(progress||(()=>{}));return S.core}
@@ -988,34 +1007,19 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     }
     S.results=out;return out;
   }
-  async function ensureItemsForManh(manh){
+  function missingForManh(manh){
     const bag=G().state.run.nhanVat.tuiDo||{};
-    const missing=[...new Set(A(manh).map(m=>m.item).filter(id=>(bag[id]||0)<1))];
-    if(!missing.length)return{ok:true,added:[],missing:[]};
-    const K=await ensureCore();
-    const added=[];
-    if(K.ni){
-      const ctx={...G().env,run:G().state.run,meta:G().state.meta,enc:undefined,noticeLines:[]};
-      for(const id of missing){try{K.ni(ctx,id,1);added.push(id)}catch(e){}}
-    }
-    const bag2=G().state.run.nhanVat.tuiDo||{};
-    const still=missing.filter(id=>(bag2[id]||0)<1);
-    return{ok:!still.length,added,missing:still};
+    return [...new Set(A(manh).map(m=>m.item).filter(id=>(bag[id]||0)<1))];
   }
   async function apply(mode,slot,opts={}){
     const r=S.results?.[mode]?.best;if(!r)return{ok:false,msg:'Chưa có kết quả.'};
-    let note='';
-    if(r.hypo||opts.hypo){
-      const en=await ensureItemsForManh(r.manh);
-      if(en.added.length)note+='Đã thêm tạm '+en.added.length+' món vào túi. ';
-      if(en.missing.length){
-        const names=en.missing.slice(0,8).map(id=>C().items.get(id)?.ten||id);
-        return{ok:false,msg:note+'Thiếu '+en.missing.length+' món không thêm được: '+names.join(', ')+(en.missing.length>8?'…':'')+'.'};
-      }
+    // Giả định không còn tự thêm đồ vào túi: thiếu món nào thì phải đặt hàng (tab Vật phẩm) rồi mới xếp được.
+    const miss=missingForManh(r.manh);
+    if(miss.length){
+      const names=miss.slice(0,8).map(id=>C().items.get(id)?.ten||id);
+      return{ok:false,missing:miss,msg:'Còn thiếu '+miss.length+' món trong túi: '+names.join(', ')+(miss.length>8?'…':'')+'. Hãy đặt hàng các món này (nút "Đặt hàng" ở danh sách món còn thiếu), nhận hàng rồi xếp.'};
     }
-    const out=applyLayout(r.manh,slot);
-    out.msg=(note||'')+(out.msg||'');
-    return out;
+    return applyLayout(r.manh,slot);
   }
   async function applyAll(opts={}){
     const n=(G().state.run.nhanVat.kinhMach.loadouts||[]).length||1;
@@ -1026,7 +1030,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     }
     return rs;
   }
-  return{ensureCore,optimizeThree,apply,applyAll,stop:()=>S.abort=true,reset:()=>{S.core=null},drawGrid,nvNow,pathShareInfo,get core(){return S.core},get results(){return S.results}};
+  return{ensureCore,optimizeThree,apply,applyAll,missingForManh,stop:()=>S.abort=true,reset:()=>{S.core=null},drawGrid,nvNow,pathShareInfo,get core(){return S.core},get results(){return S.results}};
 })();
 
 /* ───────── Dữ liệu: Nhiệm vụ bản đồ / Bí cảnh / Dị bảo ───────── */
@@ -1363,7 +1367,7 @@ function showOnMap(slot,label,mode){
 
 /* ───────── Giao diện cổ phong ───────── */
 const CSS=`
-#${ID},#${ID}-fab,#${ID}-chip,#${ID}-toasts{--ink:#f0e9d6;--ink2:#f4eedd;--ink3:#faf6ea;--gold:#7a1f1a;--gold2:rgba(43,43,43,.55);--paper:#2b2b2b;--mute:#6b6558;--red:#7a1f1a;--jade:#2f7a5c;--cyan:#2f6477;--amber:#b4602a;--vang:#9a7322;--vien:rgba(43,43,43,.55);--vien2:rgba(43,43,43,.18);font-family:"Noto Serif","Songti SC","Source Han Serif SC",Georgia,"Times New Roman",serif;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+#${ID},#${ID}-fab,#${ID}-chip,#${ID}-toasts,#${ID}-modal{--ink:#f0e9d6;--ink2:#f4eedd;--ink3:#faf6ea;--gold:#7a1f1a;--gold2:rgba(43,43,43,.55);--paper:#2b2b2b;--mute:#6b6558;--red:#7a1f1a;--jade:#2f7a5c;--cyan:#2f6477;--amber:#b4602a;--vang:#9a7322;--vien:rgba(43,43,43,.55);--vien2:rgba(43,43,43,.18);font-family:"Noto Serif","Songti SC","Source Han Serif SC",Georgia,"Times New Roman",serif;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 #${ID} *,#${ID}-fab *{box-sizing:border-box;font-family:inherit}
 #${ID}-fab{position:fixed;left:10px;bottom:88px;z-index:2147483000;width:52px;height:52px;border-radius:50%;background:radial-gradient(circle at 30% 25%,#2b3550,#0e1118 70%);border:1.5px solid var(--gold);color:var(--gold);font-size:25px;line-height:49px;text-align:center;cursor:pointer;box-shadow:0 0 0 3px rgba(43,43,43,.15),0 6px 18px rgba(0,0,0,.6);user-select:none;touch-action:none}
 #${ID}-fab.pulse{animation:vkt2p 1.4s ease-in-out infinite}
@@ -1394,6 +1398,16 @@ const CSS=`
 #${ID}-afbar[data-paused="1"] button[data-a="pause"]{border-color:#4fc7a0;color:#4fc7a0}
 #${ID}-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #${ID}-chip button{border:0;background:rgba(255,255,255,.1);color:var(--paper);width:24px;height:24px;border-radius:50%;cursor:pointer}
+#${ID}-modal{position:fixed;inset:0;z-index:2147483300;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);padding:16px;font-family:inherit}
+#${ID}-modal .mbox{background:var(--ink3);color:var(--paper);border:1px solid var(--gold);border-radius:6px;max-width:420px;width:100%;max-height:88vh;overflow:auto;padding:14px 16px;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+#${ID}-modal h3{margin:0 0 8px;font-size:16px;color:var(--gold)}
+#${ID}-modal .mb{font-size:13.5px;line-height:1.5}
+#${ID}-modal .mb small{color:var(--mute)}
+#${ID}-modal .mmsg{margin-top:8px;font-size:13px;color:#a3342b}
+#${ID}-modal .macts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+#${ID}-modal button.btn{flex:1 1 auto;min-height:38px;border:1px solid var(--gold2);background:rgba(43,43,43,.08);color:var(--gold);border-radius:3px;padding:6px 10px;font-size:13px;cursor:pointer}
+#${ID}-modal button.btn.pri{background:linear-gradient(180deg,#b9362b,#8a241c);border-color:#e5483a;color:#fff}
+#${ID}-modal button.btn:disabled{opacity:.45}
 #${ID}-toasts{position:fixed;left:10px;right:10px;top:10px;z-index:2147483200;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;max-height:40vh;overflow:hidden}
 #${ID}-toasts div{pointer-events:auto;max-width:min(420px,calc(100vw - 28px));width:auto;background:linear-gradient(90deg,#2a1513,#171b25);border:1px solid var(--red);border-left:4px solid var(--red);color:var(--paper);padding:9px 12px;border-radius:8px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.6);animation:vkt2in .3s;cursor:pointer}
 #${ID}-toasts div.ok{border-color:var(--jade);border-left-color:var(--jade);background:linear-gradient(90deg,#10261f,#171b25)}
@@ -1566,7 +1580,8 @@ panel.innerHTML=`<header><div class="seal">仙</div><div><h1>Vạn Kiếp Trợ 
 const fab=document.createElement('div');fab.id=ID+'-fab';fab.innerHTML='仙<b></b>';fab.title='Vạn Kiếp Trợ Thủ';
 const chip=document.createElement('div');chip.id=ID+'-chip';chip.innerHTML='<span></span><button aria-label="Xóa đường">✕</button>';
 const toasts=document.createElement('div');toasts.id=ID+'-toasts';
-document.body.append(panel,fab,chip,toasts);
+const modal=document.createElement('div');modal.id=ID+'-modal';
+document.body.append(panel,fab,chip,toasts,modal);
 const body=$(panel,'.body'),navEl=$(panel,'nav');
 const ui={tab:store.get('tab','map'),isOpen:false,tabState:{}};
 
@@ -1639,6 +1654,7 @@ const Alerts={
     return m;
   },
   check(){
+    try{ORD.check()}catch{}
     let cur;try{cur=this.collect()}catch{return}
     this.cur=cur;
     if(!(this.notified instanceof Set))this.notified=new Set();
@@ -1899,7 +1915,7 @@ function buildResultHtml(){
       +'<i style="display:inline-block;width:9px;height:9px;border-radius:2px;background:'+col+';flex:none"></i>'
       +'<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">'+E(x.name)+' · '+mid+'</span></div>';
   }).join('');
-  return '<div class="panel"><div class="sub" style="margin-bottom:6px">'+modeNote+((b.hypo||bld.hypo)?' <b>[Giả định]</b>':'')+'</div>'+(A(b.missing).length?('<div class="sub" style="margin:4px 0">Cần có / sẽ thêm khi xếp: <b>'+A(b.missing).slice(0,16).map(id=>E((C.items.get(id)||{}).ten||id)).join(', ')+(b.missing.length>16?'…':'')+'</b> ('+b.missing.length+' món).</div>'):'')
+  return '<div class="panel"><div class="sub" style="margin-bottom:6px">'+modeNote+((b.hypo||bld.hypo)?' <b>[Giả định]</b>':'')+'</div>'+(A(b.missing).length?missingOrderHtml(b.missing):'')
     +'<div class="tags" style="margin-bottom:6px"><span class="tag '+(delta>0?'g':'')+'">'+(b.same?'Cách xếp hiện tại đã tốt':'Tăng '+F(delta)+' điểm heuristic')+'</span>'
     +'<span class="tag">Thắng '+(b.wins??0)+'/'+nEn+' trận mẫu</span>'
     +'<span class="tag '+((rules&&rules.dead)||(b.mq&&b.mq.dead)?'r':'g')+'">'+((rules&&rules.dead)||(b.mq&&b.mq.dead)||0)+' mảnh đứt mạch</span></div>'
@@ -1991,7 +2007,7 @@ VIEWS.build=()=>{
     +'<button class="btn pri" id="b-go" style="padding:4px 8px;font-size:12px" '+(bld.busy?'disabled':'')+'>'+(bld.busy?'…':'Phân tích thực tế')+'</button>'
     +'<button class="btn" id="b-go-hypo" style="padding:4px 8px;font-size:12px" '+(bld.busy?'disabled':'')+' title="Cùng thuật toán; pool = toàn đồ game phù hợp cảnh giới">Phân tích giả định</button>'
     +'<button class="btn" id="b-stop" style="padding:4px 8px;font-size:12px" '+(bld.busy?'':'disabled')+'>Dừng</button></div>'
-    +'<div class="sub" style="margin-top:4px">Hai chế độ cùng thuật toán xếp. <b>Thực tế</b> = đồ trong túi · <b>Giả định</b> = cả đồ chưa có (đúng cảnh). Khi xếp giả định sẽ cố thêm món thiếu vào túi.</div>'
+    +'<div class="sub" style="margin-top:4px">Hai chế độ cùng thuật toán xếp. <b>Thực tế</b> = đồ trong túi · <b>Giả định</b> = cả đồ chưa có (đúng cảnh). Món còn thiếu sẽ hiện kèm nút <b>Đặt hàng</b> (cọc 30%, hàng về sau vài năm); có đủ đồ trong túi mới xếp được.</div>'
     +'<div class="bar2"><i id="b-bar"></i></div><div class="sub" id="b-msg">'+E(bld.msg)+(bld.results&&bld.hypo?' <span class="tag o">Chế độ giả định</span>':'')+'</div></div>'
     +(bld.results?('<div class="seg">'+MODES.map(([k,n])=>'<button type="button" data-mode="'+k+'" class="'+(bld.mode===k?'on':'')+'">'+n+'</button>').join('')+'</div>'
       +applyBar+buildResultHtml()):'');
@@ -2026,25 +2042,204 @@ VIEWS.build=()=>{
     try{
       await BuildEngine.ensureCore(x=>{if(msg())msg().textContent=x});
       bld.results=await BuildEngine.optimizeThree(p,bld.iters,(f,m,l)=>{if(bar())bar().style.width=Math.round(f*100)+'%';if(msg())msg().textContent=(MODES.find(x=>x[0]===m)?.[1]||'')+' · '+l+' · '+Math.round(f*100)+'%'});
-      bld.msg=(hypo?'Xong giả định. Có thể xếp vào bộ (sẽ thêm món thiếu vào túi nếu được).':'Xong. Chọn hướng, bấm xếp vào bộ 1/2/3 hoặc xếp cả 3 bộ.')+(p._relaxed?(' Lối này chỉ có '+p._relaxed+' món phù hợp — đã nới từ "chỉ đồ lối" về "ưu tiên" để không bỏ trống lưới.'):'');
+      bld.msg=(hypo?'Xong giả định. Món còn thiếu hiện ở bên dưới kèm nút Đặt hàng; có đủ đồ trong túi thì xếp vào bộ được.':'Xong. Chọn hướng, bấm xếp vào bộ 1/2/3 hoặc xếp cả 3 bộ.')+(p._relaxed?(' Lối này chỉ có '+p._relaxed+' món phù hợp — đã nới từ "chỉ đồ lối" về "ưu tiên" để không bỏ trống lưới.'):'');
     }catch(e){console.error(e);bld.msg='Chưa tính được: '+(e?.message||e)}
     finally{bld.busy=false;if(ui.tab==='build'&&ui.isOpen)VIEWS.build()}
   };
   $(body,'#b-go')&&($(body,'#b-go').onclick=()=>runOptimize(false));
   $(body,'#b-go-hypo')&&($(body,'#b-go-hypo').onclick=()=>runOptimize(true));
+  $$(body,'[data-order-item]').forEach(b=>b.onclick=()=>orderConfirm(b.dataset.orderItem,1,()=>render()));
+  $$(body,'[data-order-go]').forEach(b=>b.onclick=()=>{itemSub.v='orders';ui.tab='items';store.set('tab','items');render()});
   $$(body,'[data-apply-slot]').forEach(btn=>btn.onclick=async()=>{
     const slot=+btn.dataset.applySlot;
     const r=await BuildEngine.apply(bld.mode,slot,{hypo:!!bld.hypo});
     toast((r.ok?'Đã xếp «'+(MODES.find(x=>x[0]===bld.mode)?.[1]||bld.mode)+'» vào Bộ '+(slot+1)+'. ':'')+(r.msg||''),r.ok?'ok':'',8000);
+    if(r.bagFull)bagFullModal(r.stuckNames);
     render();
   });
   $(body,'#b-apply-all')&&($(body,'#b-apply-all').onclick=async()=>{
     const rs=await BuildEngine.applyAll({hypo:!!bld.hypo});
     toast(rs.map((y,i)=>'Bộ '+(i+1)+' ('+MODES[i][1]+'): '+y.msg).join('\n'),'ok',10000);
+    { const bf=rs.find(y=>y.bagFull);if(bf)bagFullModal(bf.stuckNames) }
     render();
   });
 };
 
+
+/* ───────── Đặt hàng vật phẩm (thay cho thêm thẳng vào túi) ─────────
+   Cọc 30% khi đặt; hàng về sau vài năm tùy phẩm; hàng về thì trả nốt phần còn lại để nhận vào túi.
+   Chưa đủ tiền thì giữ thêm 5 năm; quá hạn giữ thì mất hàng và cả tiền cọc. Dị bảo / thần phẩm không đặt được. */
+const ORDER_CFG={
+  deposit:0.3,            // tiền cọc = 30% giá
+  holdYears:5,            // hàng về được giữ bao lâu; bấm "Giữ thêm" cộng thêm chừng này
+  extendFee:0.1,          // phí giữ thêm = 10% giá đơn hàng
+  maxExtend:1,            // chỉ được giữ thêm 1 lần
+  mult:{1:1,2:2,3:3,4:4,5:5,6:7,7:10},   // hệ số giá theo phẩm (Phàm ×1 … Thiên ×5, Tiên ×7, Thần ×10); Nghịch Thiên không đặt được
+  wait:{1:0.5,2:1,3:2,4:3,5:4,6:5,7:5},  // số năm chờ hàng theo phẩm (tối đa 5)
+  maxQty:{1:15,2:10,3:5,4:3,5:1,6:1,7:1}
+};
+function orderBlock(id){
+  const r=C.items.get(id);
+  if(!r)return'Không có vật phẩm này.';
+  if(A(r.tag).includes('di_bao')||(r.pham_cap??0)>=8)return'Dị bảo / Nghịch Thiên không đặt mua được (vẫn tra cứu được).';
+  if(!(r.gia>0))return'Vật này không có giá nên không đặt được.';
+  if(r.theo_kiep)return'Vật gắn với kiếp này, không đặt được.';
+  if(r.loai==='lenh_bai'||r.tran_phai||A(r.tag).includes('chi_khai_bao'))return'Vật đặc biệt, không có người nhận đặt.';
+  if(!ORDER_CFG.mult[r.pham_cap])return(GRADE_NAMES[r.pham_cap]||'Phẩm này')+' không cho đặt hàng.';
+  return'';
+}
+const orderMult=id=>ORDER_CFG.mult[C.items.get(id)?.pham_cap]||0;
+const orderUnit=id=>Math.round((C.items.get(id)?.gia||0)*orderMult(id));
+const orderWait=id=>ORDER_CFG.wait[C.items.get(id)?.pham_cap]||0;
+const orderMaxQty=id=>ORDER_CFG.maxQty[C.items.get(id)?.pham_cap]||1;
+const orderDeposit=total=>Math.ceil(total*ORDER_CFG.deposit);
+const money=()=>Number(me().linhThach)||0;
+const itemName=id=>T(C.items.get(id)?.ten||id);
+const yrs=n=>(Math.round(n*10)/10).toLocaleString('vi-VN')+' năm';
+
+const Modal={
+  q:[],cur:null,
+  push(m){this.q.push(m);if(!this.cur)this.next()},
+  next(){
+    const m=this.q.shift();this.cur=m||null;
+    if(!m){modal.style.display='none';modal.innerHTML='';return}
+    modal.innerHTML=`<div class="mbox" role="alertdialog"><h3>${E(m.title)}</h3><div class="mb">${m.html}</div><div class="mmsg"></div><div class="macts">${(m.btns||[{t:'Đóng'}]).map((b,i)=>`<button class="btn ${b.pri?'pri':''}" data-i="${i}">${E(b.t)}</button>`).join('')}</div></div>`;
+    modal.style.display='flex';
+    $$(modal,'[data-i]').forEach(bt=>bt.onclick=async()=>{
+      const b=(m.btns||[{t:'Đóng'}])[+bt.dataset.i];let keep=null;
+      try{keep=b.fn?await b.fn():null}catch(e){keep=String(e?.message||e)}
+      if(typeof keep==='string'&&keep){$(modal,'.mmsg').textContent=keep;return}
+      this.next();
+    });
+  }
+};
+function bagFullModal(names){
+  Modal.push({title:'Túi đồ đã đầy',html:`<p>Túi đầy nên chưa làm tiếp được${names&&names.length?` (<b>${E(names.join(', '))}</b>)`:''}.</p><p>Đạo hữu hãy tự <b>bán hoặc vứt bớt vật phẩm không cần thiết</b> trong túi, rồi bấm lại.</p>`,btns:[{t:'Đã rõ',pri:true}]});
+}
+
+const ORD={
+  key:null,list:[],
+  load(){const k='orders.'+(run().seed??'x');if(this.key!==k){this.key=k;const v=store.get(k,[]);this.list=Array.isArray(v)?v:[]}return this.list},
+  save(){if(this.key)store.set(this.key,this.list)},
+  status(o){const y=nowYear();return y<o.readyYear?'wait':(y<=o.holdUntil?'ready':'lost')},
+  readyCount(){return this.load().filter(o=>this.status(o)==='ready').length},
+  byItem(id){return this.load().find(o=>o.item===id)},
+  place(id,qty){
+    const blk=orderBlock(id);if(blk)return{ok:false,msg:blk};
+    qty=Math.floor(Number(qty));if(!Number.isFinite(qty)||qty<1)return{ok:false,msg:'Số lượng phải từ 1 trở lên.'};
+    if(qty>orderMaxQty(id))return{ok:false,msg:`Mỗi đơn tối đa ${orderMaxQty(id)} món loại này.`};
+    const total=orderUnit(id)*qty,dep=orderDeposit(total);
+    if(money()<dep)return{ok:false,msg:`Chưa đủ linh thạch đặt cọc: cần ${F(dep)}, đang có ${F(money())}.`};
+    const nv=me();nv.linhThach=money()-dep;
+    const y=nowYear(),ready=y+orderWait(id);
+    this.load().push({id:'o'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),item:id,qty,total,deposit:dep,orderedYear:y,readyYear:ready,holdUntil:ready+ORDER_CFG.holdYears,told:false,ext:0});
+    this.save();syncGame();
+    return{ok:true,msg:`Đã đặt «${itemName(id)}»${qty>1?' ×'+qty:''}: cọc ${F(dep)} linh thạch, hàng về sau ${yrs(orderWait(id))}.`};
+  },
+  find(oid){return this.load().find(o=>o.id===oid)},
+  remaining(o){return Math.max(0,o.total-o.deposit)},
+  extendFee(o){return Math.ceil(o.total*ORDER_CFG.extendFee)},
+  canExtend(o){return (o.ext||0)<ORDER_CFG.maxExtend},
+  pay(oid){
+    const o=this.find(oid);if(!o)return{ok:false,msg:'Không còn đơn này.'};
+    if(this.status(o)==='wait')return{ok:false,msg:'Hàng chưa về.'};
+    if(this.status(o)==='lost')return{ok:false,msg:'Đơn đã quá hạn giữ.'};
+    const rest=this.remaining(o),nv=me();
+    if(run().tran)return{ok:false,msg:'Đang trong trận, chờ xong trận rồi nhận hàng.'};
+    const T1=window.tuTien?.core?.['character/tui_do'];
+    if(!T1||typeof T1.nhanVaoTui!=='function')return{ok:false,msg:'Chưa nhận ra hàm nhận đồ của game sau lần cập nhật này.'};
+    let room=true;try{if(typeof T1.conCho==='function')room=T1.conCho(nv,g.env.content,o.item)}catch{}
+    if(!room)return{ok:false,bag:true,msg:'Túi đầy! Đạo hữu hãy tự bán hoặc vứt bớt vật phẩm không cần thiết, rồi thanh toán lại.'};
+    if(money()<rest)return{ok:false,short:true,msg:`Chưa đủ linh thạch: cần ${F(rest)}, đang có ${F(money())}. ${this.canExtend(o)?`Có thể bấm "Giữ thêm ${ORDER_CFG.holdYears} năm" (phí ${F(this.extendFee(o))}).`:'Đơn này đã giữ thêm một lần, không giữ thêm được nữa.'}`};
+    const before=Number(nv.tuiDo?.[o.item]||0);
+    nv.linhThach=money()-rest;
+    try{T1.nhanVaoTui({...g.env,run:run(),meta:g.state.meta,enc:undefined,noticeLines:[]},o.item,o.qty)}catch(e){nv.linhThach=money()+rest;return{ok:false,msg:'Không nhận được hàng: '+(e?.message||e)}}
+    if(Number(me().tuiDo?.[o.item]||0)<=before){nv.linhThach=money()+rest;return{ok:false,bag:true,msg:'Túi đầy! Đạo hữu hãy tự bán hoặc vứt bớt vật phẩm không cần thiết, rồi thanh toán lại.'}}
+    this.list=this.load().filter(x=>x.id!==oid);this.save();syncGame();
+    return{ok:true,msg:`Vật phẩm «${itemName(o.item)}»${o.qty>1?' ×'+o.qty:''} đã được giao đến túi đồ của đạo hữu (đã trả nốt ${F(rest)} linh thạch).`};
+  },
+  extend(oid){
+    const o=this.find(oid);if(!o)return{ok:false,msg:'Không còn đơn này.'};
+    if(this.status(o)==='lost')return{ok:false,msg:'Đơn đã quá hạn giữ.'};
+    if((o.ext||0)>=ORDER_CFG.maxExtend)return{ok:false,msg:'Đơn này đã giữ thêm một lần rồi, không giữ thêm được nữa.'};
+    const fee=this.extendFee(o);
+    if(money()<fee)return{ok:false,msg:`Chưa đủ linh thạch trả phí giữ thêm: cần ${F(fee)}, đang có ${F(money())}.`};
+    me().linhThach=money()-fee;syncGame();
+    o.holdUntil+=ORDER_CFG.holdYears;o.ext=(o.ext||0)+1;o.warned=false;this.save();
+    return{ok:true,msg:`Đã giữ thêm ${ORDER_CFG.holdYears} năm cho «${itemName(o.item)}», phí ${F(fee)} linh thạch (hạn mới còn ${yrs(o.holdUntil-nowYear())}).`};
+  },
+  check(){
+    if(!run().nhanVat)return;
+    const list=this.load();if(!list.length)return;
+    let dirty=false;
+    for(const o of [...list]){
+      const st=this.status(o);
+      if(st==='lost'){
+        this.list=this.list.filter(x=>x!==o);dirty=true;
+        Modal.push({title:'Quá hạn giữ hàng',html:`<p>Đạo hữu không thanh toán kịp nên <b>${E(itemName(o.item))}${o.qty>1?' ×'+o.qty:''}</b> đã bị người khác lấy mất, tiền cọc <b>${F(o.deposit)}</b> linh thạch cũng không được hoàn lại.</p>`,btns:[{t:'Đã rõ'}]});
+      }else if(st==='ready'&&!o.told){
+        o.told=true;dirty=true;this.arrivalModal(o);
+      }else if(st==='ready'&&!o.warned&&o.holdUntil-nowYear()<=1){
+        o.warned=true;dirty=true;toast(`Sắp hết hạn giữ «${itemName(o.item)}» (còn ${yrs(o.holdUntil-nowYear())}). Hãy thanh toán hoặc giữ thêm.`,'',9000);
+      }
+    }
+    if(dirty)this.save();
+  },
+  arrivalModal(o){
+    const rest=this.remaining(o);
+    Modal.push({title:'Hàng đã về',html:`<p>Vật phẩm <b>${E(itemName(o.item))}${o.qty>1?' ×'+o.qty:''}</b> đã được giao tới.</p><p>Thanh toán nốt <b>${F(rest)}</b> linh thạch để nhận vào túi đồ (đạo hữu đang có ${F(money())}).</p><small>Hạn giữ hàng còn ${yrs(o.holdUntil-nowYear())}. Quá hạn sẽ mất hàng và cả tiền cọc ${F(o.deposit)}.${this.canExtend(o)?` Được giữ thêm 1 lần ${ORDER_CFG.holdYears} năm, phí ${F(this.extendFee(o))} (10%).`:''}</small>`,
+      btns:[
+        {t:'Thanh toán',pri:true,fn:()=>{const r=this.pay(o.id);if(!r.ok)return r.msg;toast(r.msg,'ok',6000);if(ui.tab==='items'&&ui.isOpen)VIEWS.items()}},
+        ...(this.canExtend(o)?[{t:`Giữ thêm ${ORDER_CFG.holdYears} năm (phí ${F(this.extendFee(o))})`,fn:()=>{const r=this.extend(o.id);if(!r.ok)return r.msg;toast(r.msg,'ok',6000)}}]:[]),
+        {t:'Để sau'}
+      ]});
+  }
+};
+function syncGame(){try{g.store.setState({run:{...run()}})}catch{}}
+
+function orderConfirm(id,qty,after){
+  const blk=orderBlock(id);if(blk){toast(blk,'',5000);return}
+  const total=orderUnit(id)*qty,dep=orderDeposit(total),rec=C.items.get(id),mult=orderMult(id);
+  Modal.push({title:'Đặt hàng',html:`<p><b style="color:${phamColor(rec.pham_cap)}">${E(itemName(id))}</b>${qty>1?' ×'+qty:''} <small>(${E(GRADE_NAMES[rec.pham_cap]||'')})</small></p>
+    <p>Giá: <b>${F(total)}</b> linh thạch <small>(giá gốc ${F(rec.gia)} × ${mult}${qty>1?' × '+qty:''})</small><br>Cọc ngay 30%: <b>${F(dep)}</b> · trả nốt khi nhận: <b>${F(total-dep)}</b><br>Hàng về sau <b>${yrs(orderWait(id))}</b>, giữ hàng ${ORDER_CFG.holdYears} năm kể từ lúc về (giữ thêm được 1 lần, phí 10%).</p>
+    <small>Đạo hữu đang có ${F(money())} linh thạch. Quá hạn giữ mà chưa thanh toán sẽ mất hàng và tiền cọc.</small>`,
+    btns:[{t:`Đặt hàng (cọc ${F(dep)})`,pri:true,fn:()=>{const r=ORD.place(id,qty);if(!r.ok)return r.msg;toast(r.msg,'ok',6000);after&&after()}},{t:'Thôi'}]});
+}
+/* Một dòng thao tác đặt hàng cho thẻ vật phẩm */
+function orderRowHtml(id,r){
+  const blk=orderBlock(id);
+  if(blk)return`<small style="grid-column:1/3;color:var(--mute)">${E(blk)}</small>`;
+  const o=ORD.byItem(id),mq=orderMaxQty(id);
+  return`<div class="acts" style="grid-column:1/3"><input class="qty" type="number" inputmode="numeric" min="1" max="${mq}" value="1" aria-label="Số lượng"><button class="btn pri" data-order="${E(id)}">Đặt hàng</button></div><small style="grid-column:1/3">Giá ${F(orderUnit(id))}/món (×${orderMult(id)}) · cọc ${F(orderDeposit(orderUnit(id)))} · về sau ${yrs(orderWait(id))}${o?` · <b>đang có đơn</b>`:''}</small>`;
+}
+/* Danh sách món còn thiếu của bộ giả định, kèm nút đặt hàng */
+function missingOrderHtml(ids){
+  const rows=A(ids).map(id=>{
+    const blk=orderBlock(id),o=ORD.byItem(id),rec=C.items.get(id)||{};
+    let act;
+    if(o){const st=ORD.status(o);act=st==='wait'?`<span class="tag o">Đã đặt · về sau ${yrs(o.readyYear-nowYear())}</span>`:`<span class="tag g">Hàng đã về</span> <button class="btn" data-order-go="1" style="flex:none;padding:2px 8px;font-size:12px">Thanh toán</button>`}
+    else if(blk)act=`<span class="tag r" title="${E(blk)}">Không đặt được</span>`;
+ else if(money()<orderDeposit(orderUnit(id)))act=`<span class="tag o" title="Cần ${F(orderDeposit(orderUnit(id)))} linh thạch đặt cọc">Chưa đủ tiền cọc ${F(orderDeposit(orderUnit(id)))}</span>`;
+    else act=`<button class="btn pri" data-order-item="${E(id)}" style="flex:none;padding:2px 8px;font-size:12px">Đặt hàng · cọc ${F(orderDeposit(orderUnit(id)))}</button>`;
+    return`<div class="card" style="grid-template-columns:1fr auto;padding:6px 8px"><div><b style="color:${phamColor(rec.pham_cap)}">${E(itemName(id))}</b><small> ${E(GRADE_NAMES[rec.pham_cap]||'')}${blk?' · '+E(blk):` · giá ${F(orderUnit(id))}`}</small></div><div class="side">${act}</div></div>`;
+  }).join('');
+  return`<div class="sub" style="margin:6px 0 2px"><b>Còn thiếu ${A(ids).length} món</b> — cần đủ trong túi mới xếp được:</div>${rows}`;
+}
+/* Tab con: Đã đặt hàng */
+function viewOrders(){
+  const list=ORD.load().slice().sort((a,b)=>a.readyYear-b.readyYear);
+  const locked=list.reduce((t,o)=>t+o.deposit,0);
+  const cards=list.map(o=>{
+    const st=ORD.status(o),rec=C.items.get(o.item)||{},rest=ORD.remaining(o);
+    const status=st==='wait'?`<span class="tag o">Chờ hàng · còn ${yrs(o.readyYear-nowYear())}</span>`:`<span class="tag g">Hàng đã về</span> <small>hạn giữ còn ${yrs(o.holdUntil-nowYear())}</small>`;
+    const acts=st==='ready'?`<div class="acts" style="grid-column:1/3"><button class="btn pri" data-pay="${o.id}">Thanh toán ${F(rest)}</button>${ORD.canExtend(o)?`<button class="btn" data-ext="${o.id}">Giữ thêm ${ORDER_CFG.holdYears} năm · phí ${F(ORD.extendFee(o))}</button>`:''}</div>`:'';
+    return`<article class="card" style="grid-template-columns:1fr auto"><div><b style="color:${phamColor(rec.pham_cap)}">${E(itemName(o.item))}${o.qty>1?' ×'+o.qty:''}</b><small>${E(GRADE_NAMES[rec.pham_cap]||'')} · giá ${F(o.total)} · đã cọc ${F(o.deposit)} · còn nợ ${F(rest)}</small></div><div class="side">${status}</div>${acts}<small class="addmsg" style="grid-column:1/3"></small></article>`;
+  }).join('');
+  body.insertAdjacentHTML('beforeend',`<div class="sub" style="margin:8px 0">Linh thạch đang có: <b>${F(money())}</b> · tiền cọc đang giữ: <b>${F(locked)}</b> · ${list.length} đơn</div>${cards||'<div class="empty">Chưa có đơn đặt hàng nào. Vào "Danh sách", chọn món rồi bấm Đặt hàng.</div>'}<div class="sub" style="margin-top:10px">Luật: cọc 30% khi đặt · hàng về sau 0,5–5 năm tùy phẩm · về rồi trả nốt để nhận vào túi · hàng về được giữ ${ORDER_CFG.holdYears} năm · giữ thêm được 1 lần ${ORDER_CFG.holdYears} năm, phí 10% giá đơn · quá hạn mất hàng và tiền cọc · hệ số giá: Phàm→Thiên ×1…×5, Tiên ×7, Thần ×10 · Nghịch Thiên (dị bảo) không đặt được.</div>`);
+  const redo=()=>{VIEWS.items()};
+  $$(body,'[data-pay]').forEach(b=>b.onclick=()=>{const card=b.closest('.card'),r=ORD.pay(b.dataset.pay);if(r.ok){toast(r.msg,'ok',6000);redo()}else{$(card,'.addmsg').textContent=r.msg;$(card,'.addmsg').style.color='#a3342b';if(r.bag)bagFullModal()}});
+  $$(body,'[data-ext]').forEach(b=>b.onclick=()=>{const r=ORD.extend(b.dataset.ext);toast(r.msg,r.ok?'ok':'',5000);redo()});
+}
 
 /* ───────── Tab: Vật phẩm ───────── */
 const TYPE_NAMES={cong_phap:'Công pháp',phap_khi:'Pháp khí',dan_duoc:'Đan dược',nguyen_lieu:'Nguyên liệu',linh_duoc:'Linh dược',yeu_tai:'Yêu tài',phu_luc:'Phù lục',tran_ban:'Trận bàn',don_phuong:'Đơn phương',dung_cu:'Dụng cụ',di_hoa:'Dị hỏa',dac_san:'Đặc sản',phuong_tien:'Phương tiện',tru_vat:'Trữ vật',trung_thu:'Trứng thú',lenh_bai:'Lệnh bài',tran_van:'Trận văn',khac:'Khác'};
@@ -2053,24 +2248,6 @@ let itemIdx=null;
 const itemIndex=()=>itemIdx||(itemIdx=[...C.items].map(([id,r])=>({id,r,name:T(r.ten||id),key:norm(`${r.ten||''} ${TYPE_NAMES[r.loai]||r.loai||''} ${A(r.tag).join(' ')} ${A(r.he).join(' ')}`)})).sort((a,b)=>a.name.localeCompare(b.name,'vi')));
 const itemUi={q:'',type:'all',grade:'all',he:'all',bag:false,limit:30};
 const inBag=id=>Number(me().tuiDo?.[id]||0),waiting=id=>Number(me().choCat?.[id]||0);
-const BAG_MAX=999999;
-async function addItemToBag(id,qty){
-  const nv=me(),rec=C.items.get(id),n=Math.floor(Number(qty));
-  if(!nv||!rec)return{ok:false,msg:'Chưa có kiếp đang chơi hoặc vật phẩm không tồn tại.'};
-  if(!Number.isFinite(n)||n<1)return{ok:false,msg:'Số lượng phải từ 1 trở lên.'};
-  if(n>BAG_MAX)return{ok:false,msg:`Tối đa ${F(BAG_MAX)} mỗi lần.`};
-  if(run().tran)return{ok:false,msg:'Đang trong trận, chờ xong trận rồi thêm.'};
-  const before=inBag(id),waitBefore=waiting(id);let manual=false;
-  try{const K=await BuildEngine.ensureCore();if(K.ni){K.ni({...g.env,run:run(),meta:g.state.meta,enc:undefined,noticeLines:[]},id,n)}else manual=true}catch{manual=true}
-  if(manual&&inBag(id)===before&&waiting(id)===waitBefore){
-    nv.tuiDo??={};const used=Object.keys(nv.tuiDo).filter(k=>nv.tuiDo[k]>0).length,cap=30+Number(nv.oTuiThem||0);
-    if(before>0||used<cap)nv.tuiDo[id]=before+n;else{nv.choCat??={};nv.choCat[id]=waitBefore+n}
-  }
-  const got=inBag(id)-before,wait=waiting(id)-waitBefore;
-  try{g.store.setState({run:{...run()}})}catch{}
-  if(got<=0&&wait<=0)return{ok:false,msg:'Không thêm được vật phẩm này.'};
-  return{ok:true,msg:`Đã thêm ${F(got)} ${T(rec.ten||id)} vào túi${wait>0?` · ${F(wait)} đang chờ cất vì túi đầy`:''}.`};
-}
 /* ───────── Tab con: Tìm theo hình (công pháp / pháp khí) ───────── */
 const PHAM_COLOR_DEF={1:'#2b2b2b',2:'#4f8a3c',3:'#4a68a6',4:'#7a4ba3',5:'#c9661a',6:'#c64a96',7:'#b52a24',8:'#8a4fc0'};
 let gameColors=null;
@@ -2271,11 +2448,12 @@ function viewShapeSearch(){
 
 const itemSub={v:'list'};
 VIEWS.items=()=>{
-  if(itemSub.v==='shape')body.innerHTML='';else VIEWS.itemsList();
-  const bar=`<div class="bar" id="i-sub" style="gap:6px"><button class="chip ${itemSub.v==='list'?'on':''}" data-sub="list">Danh sách</button><button class="chip ${itemSub.v==='shape'?'on':''}" data-sub="shape">Tìm theo hình</button></div>`;
+  if(itemSub.v==='shape')body.innerHTML='';else if(itemSub.v==='orders')body.innerHTML='';else VIEWS.itemsList();
+  const bar=`<div class="bar" id="i-sub" style="gap:6px"><button class="chip ${itemSub.v==='list'?'on':''}" data-sub="list">Danh sách</button><button class="chip ${itemSub.v==='shape'?'on':''}" data-sub="shape">Tìm theo hình</button><button class="chip ${itemSub.v==='orders'?'on':''}" data-sub="orders">Đã đặt hàng${ORD.load().length?` (${ORD.load().length}${ORD.readyCount()?' · '+ORD.readyCount()+' đã về':''})`:''}</button></div>`;
   body.insertAdjacentHTML('afterbegin',bar);
   $$(body,'#i-sub [data-sub]').forEach(b=>b.onclick=()=>{itemSub.v=b.dataset.sub;VIEWS.items()});
   if(itemSub.v==='shape')viewShapeSearch();
+  if(itemSub.v==='orders')viewOrders();
 };
 VIEWS.itemsList=()=>{
   // Đủ mọi entry trong content.items (Map game); bộ lọc loai/phẩm khớp enum game
@@ -2315,7 +2493,7 @@ VIEWS.itemsList=()=>{
     <button class="chip ${itemUi.bag?'on':''}" id="i-bag">Đang có</button>
   </div>
   <div class="sum">${F(all.length)} / ${F(allIdx.length)} vật phẩm${all.length>shown.length?` · hiện ${shown.length}`:''}</div>
-  ${shown.map(({id,r})=>`<article class="card" data-item="${E(id)}" style="grid-template-columns:1fr auto"><div><b style="color:${phamColor(r.pham_cap)}">${E(T(r.ten||id))}</b><small>${E(TYPE_NAMES[r.loai]||r.loai||'')} · ${gradeHtml(r.pham_cap)}${N(r.canh_gioi)?` · ${E(cgTen(r.canh_gioi)||('cảnh '+r.canh_gioi))}`:''}${A(r.he).length?' · '+heHtml(r.he):''}</small></div><div class="side">${inBag(id)?`Túi: ${F(inBag(id))}`:''}${waiting(id)?`<small>Chờ cất: ${F(waiting(id))}</small>`:''}</div>${r.mo_ta?`<small style="grid-column:1/3">${E(T(r.mo_ta).slice(0,140))}</small>`:''}<div class="acts" style="grid-column:1/3"><input class="qty" type="number" inputmode="numeric" min="1" max="${BAG_MAX}" value="1" aria-label="Số lượng"><button class="btn pri" data-add="${E(id)}">Thêm vào túi</button></div><small class="addmsg" style="grid-column:1/3"></small></article>`).join('')||'<div class="empty">Không tìm thấy vật phẩm.</div>'}
+  ${shown.map(({id,r})=>`<article class="card" data-item="${E(id)}" style="grid-template-columns:1fr auto"><div><b style="color:${phamColor(r.pham_cap)}">${E(T(r.ten||id))}</b><small>${E(TYPE_NAMES[r.loai]||r.loai||'')} · ${gradeHtml(r.pham_cap)}${N(r.canh_gioi)?` · ${E(cgTen(r.canh_gioi)||('cảnh '+r.canh_gioi))}`:''}${A(r.he).length?' · '+heHtml(r.he):''}</small></div><div class="side">${inBag(id)?`Túi: ${F(inBag(id))}`:''}${waiting(id)?`<small>Chờ cất: ${F(waiting(id))}</small>`:''}</div>${r.mo_ta?`<small style="grid-column:1/3">${E(T(r.mo_ta).slice(0,140))}</small>`:''}${orderRowHtml(id,r)}</article>`).join('')||'<div class="empty">Không tìm thấy vật phẩm.</div>'}
   ${all.length>shown.length?'<button class="btn" id="i-more" style="width:100%">Xem thêm</button>':''}`;
   let t;$(body,'#i-q').oninput=e=>{itemUi.q=e.target.value;itemUi.limit=30;clearTimeout(t);t=setTimeout(()=>{VIEWS.items();const i=$(body,'#i-q');i.focus();i.setSelectionRange(i.value.length,i.value.length)},250)};
   $(body,'#i-type').onchange=e=>{itemUi.type=e.target.value;if(itemUi.type!=='cong_phap'&&itemUi.type!=='phap_khi')itemUi.he='all';itemUi.limit=30;render()};
@@ -2323,8 +2501,8 @@ VIEWS.itemsList=()=>{
   $(body,'#i-he')&&($(body,'#i-he').onchange=e=>{itemUi.he=e.target.value;itemUi.limit=30;render()});
   $(body,'#i-bag').onclick=()=>{itemUi.bag=!itemUi.bag;itemUi.limit=30;render()};
   $(body,'#i-more')?.addEventListener('click',()=>{itemUi.limit+=30;render()});
-  $$(body,'[data-add]').forEach(b=>b.onclick=async()=>{const card=b.closest('[data-item]'),qty=$(card,'.qty').value,out=$(card,'.addmsg');b.disabled=true;const res=await addItemToBag(b.dataset.add,qty);b.disabled=false;out.textContent=res.msg;out.style.color=res.ok?'var(--jade)':'#a3342b';if(res.ok){const s=$(card,'.side');s.firstChild?.remove?.();s.insertAdjacentHTML('afterbegin',`Túi: ${F(inBag(b.dataset.add))}`)}});
-  $$(body,'.qty').forEach(i=>i.onkeydown=e=>{if(e.key==='Enter')i.closest('[data-item]').querySelector('[data-add]').click()});
+  $$(body,'[data-order]').forEach(b=>b.onclick=()=>{const card=b.closest('[data-item]'),q=Math.max(1,Math.floor(Number($(card,'.qty').value)||1));orderConfirm(b.dataset.order,q,()=>VIEWS.items())});
+  $$(body,'.qty').forEach(i=>i.onkeydown=e=>{if(e.key==='Enter')i.closest('[data-item]').querySelector('[data-order]')?.click()});
 };
 
 
@@ -5614,6 +5792,6 @@ iv=setInterval(tick,5000);
 /* Không tự vẽ đường khi mở tool */
 try{Route.clear()}catch{try{stopDrawing()}catch{}}
 Alerts.check();ui.syncRouteChip();
-window.__VKT2__={destroy(){try{AutoFarm.stopRecord()}catch{}try{AutoFarm.stop()}catch{}try{document.getElementById(ID+'-afbar')?.remove();document.getElementById(ID+'-afstats')?.remove()}catch{}clearInterval(iv);clearTimeout(timer);try{dkMo.disconnect();document.getElementById(ID+'-afsum')?.remove()}catch{}try{vkMo.disconnect();vkClose()}catch{}try{qsMo.disconnect();qsStop();qsCss.remove();for(const ev of ['pointerdown','mousedown','click','dblclick','contextmenu'])document.removeEventListener(ev,qsPick,true);document.removeEventListener('keydown',qsKey,true);document.querySelectorAll('.vkt-qs-btn').forEach(x=>x.remove())}catch{}try{unsub?.()}catch{}stopDrawing();panel.remove();fab.remove();chip.remove();toasts.remove();styleEl.remove()},ui,Route,build:BUILD,VIEWS,BuildEngine,hooks:{realmRows,eventRows,treasureRows,jobRows,peopleRows,sectRows,checks,safePath,placeWindow,closedYears,openOnArrival,focusMap,startDrawing,stopDrawing,mapRoot,addItemToBag,coreContext,Alerts,AutoFarm}};
+window.__VKT2__={destroy(){try{AutoFarm.stopRecord()}catch{}try{AutoFarm.stop()}catch{}try{document.getElementById(ID+'-afbar')?.remove();document.getElementById(ID+'-afstats')?.remove()}catch{}clearInterval(iv);clearTimeout(timer);try{dkMo.disconnect();document.getElementById(ID+'-afsum')?.remove()}catch{}try{vkMo.disconnect();vkClose()}catch{}try{qsMo.disconnect();qsStop();qsCss.remove();for(const ev of ['pointerdown','mousedown','click','dblclick','contextmenu'])document.removeEventListener(ev,qsPick,true);document.removeEventListener('keydown',qsKey,true);document.querySelectorAll('.vkt-qs-btn').forEach(x=>x.remove())}catch{}try{unsub?.()}catch{}stopDrawing();panel.remove();fab.remove();chip.remove();toasts.remove();styleEl.remove()},ui,Route,build:BUILD,VIEWS,BuildEngine,hooks:{realmRows,eventRows,treasureRows,jobRows,peopleRows,sectRows,checks,safePath,placeWindow,closedYears,openOnArrival,focusMap,startDrawing,stopDrawing,mapRoot,ORD,ORDER_CFG,coreContext,Alerts,AutoFarm}};
 
 })();
