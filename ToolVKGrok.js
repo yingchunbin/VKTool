@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261109-autofarm-v73',ID='vkt2',g=window.game;
+const BUILD='20261110-autofarm-v75',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -1402,6 +1402,12 @@ const CSS=`
 #${ID} .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0}
 #${ID} .stats div{background:rgba(0,0,0,.25);border-radius:7px;padding:6px;text-align:center;font-size:11.5px;color:var(--mute)}
 #${ID} .stats b{display:block;color:var(--gold);font-size:15px}
+#${ID} details.sec{border:1px solid var(--vien2,rgba(43,43,43,.25));border-radius:6px;margin:8px 0;background:rgba(0,0,0,.05)}
+#${ID} details.sec>summary{cursor:pointer;padding:8px 10px;font-weight:700;color:var(--gold);list-style:none;display:flex;gap:6px;align-items:baseline}
+#${ID} details.sec>summary::-webkit-details-marker{display:none}
+#${ID} details.sec>summary::before{content:'▸';font-size:11px;opacity:.7}
+#${ID} details.sec[open]>summary::before{content:'▾'}
+#${ID} details.sec>.secb{padding:0 10px 10px}
 #${ID} .grp .gh{display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--vien2,rgba(43,43,43,.15))}
 #${ID} .grp .gt{flex:1;text-align:left;background:none;border:0;color:inherit;font:inherit;cursor:pointer;padding:2px 0}
 #${ID} .grp .gb{padding:2px 0 6px 22px;display:grid;grid-template-columns:1fr;gap:2px}
@@ -1544,7 +1550,7 @@ ui.close=()=>{ui.isOpen=false;panel.classList.remove('open');fab.style.display='
 panel.addEventListener('click',e=>{if(Date.now()-(ui._t||0)<400){e.preventDefault();e.stopPropagation()}},true);
 $(panel,'#'+ID+'-x').onclick=ui.close;
 navEl.onclick=e=>{const b=e.target.closest('[data-t]');if(!b)return;ui.tab=b.dataset.t;store.set('tab',ui.tab);render()};
-function syncNav(){$$(navEl,'button').forEach(b=>{const on=b.dataset.t===ui.tab;b.classList.toggle('on',on);if(on&&b.scrollIntoView)try{b.scrollIntoView({block:'nearest',inline:'center'})}catch{}});const n=Alerts.count;$$(navEl,'em').forEach(x=>x.remove());if(n.realm){$(navEl,'[data-t=realm]').insertAdjacentHTML('beforeend',`<em>${n.realm}</em>`)}}
+function syncNav(){$$(navEl,'button').forEach(b=>{const on=b.dataset.t===ui.tab;b.classList.toggle('on',on);if(on&&ui._navTab!==ui.tab){ui._navTab=ui.tab;try{navEl.scrollTo({left:Math.max(0,b.offsetLeft-(navEl.clientWidth-b.offsetWidth)/2),behavior:'auto'})}catch{}}});const n=Alerts.count;$$(navEl,'em').forEach(x=>x.remove());if(n.realm){$(navEl,'[data-t=realm]').insertAdjacentHTML('beforeend',`<em>${n.realm}</em>`)}}
 
 const hdrSub=()=>{const r=run(),i=info(r.viTri);const cg=C.canhGioi?.get?.(me().canhGioi)?.ten;return`Năm ${F(Math.floor(r.nam))} · ${T(i?.ten||'')}`};
 function render(){
@@ -3315,6 +3321,7 @@ const AutoFarm={
     const el=$(body,'#af-jrn');if(!el)return;
     const now=Date.now();if(this._jrnT&&now-this._jrnT<600)return;this._jrnT=now;
     el.innerHTML=this.jrnListHtml();
+    const nEl=$(body,'#af-jrn-n');if(nEl)nEl.textContent=this.jr.list.length+' bản ghi';
   },
   jrnListHtml(){
     this.jrnLoad();
@@ -4611,6 +4618,13 @@ const AutoFarm={
         this._pendingNode=null;
         // Chỉ đóng sự kiện này (vd. lọt vào chợ mua bán); các sự kiện khác ở nơi vẫn làm tiếp, hết việc tick sau tự rời nơi
         try{g.closeEncounter?.()}catch{}
+        if(actId==='ev.san_yeu'||actId==='ev.san_yeu_thu'){
+          // Thôi không đổi con quái của ô → vào lại chỉ lặp lại y hệt: bỏ ô, rời nơi, tới nơi khác
+          this.banSlot(slot,6);
+          try{g.leavePlace?.()}catch{}
+          this.push('Hết cửa săn an toàn ở '+slot+' → bỏ ô 6 năm, đi nơi khác','ok');
+          return 'idle';
+        }
         this.push('Đã Rời đi khỏi '+(actId||'sự kiện')+' — làm việc tiếp theo ở nơi','dbg');
         return 'idle';
       }
@@ -4879,7 +4893,7 @@ const AutoFarm={
     try{
       const x=store.get('xuTri',null);if(x)this.opts.xuTri=x;
       const fo=store.get('afFocus',null);if(fo&&this.FOCUS_W[fo])this.opts.focus=fo;
-      const lf=store.get('afLlFull',null);if(lf==='tiep'||lf==='dung')this.opts.llFull=lf;
+      this.opts.llFull='tiep';
       this.loadCfg();this.jrnLoad();
       const p=store.get('afPursuit',null);if(p)this.opts.pursuit=p;
       const ap=store.get('afApex',null);if(ap)this.opts.apex=ap;
@@ -5056,7 +5070,7 @@ const AutoFarm={
 };
 
 /* ───────── Auto: nhóm sự kiện / chính sách lựa chọn / nhật ký ───────── */
-const AF_UI={open:new Set()};
+const AF_UI={open:new Set(),sec:new Map()};
 function afGrpHtml(){
   const A_=AutoFarm;A_.subOn('x');
   const off=A_.opts.grpOff;
@@ -5070,14 +5084,18 @@ function afGrpHtml(){
     return `<div class="gg" data-g="${gk}"><div class="gh"><input type="checkbox" data-gcb="${gk}" aria-label="${E(gl)}"><button type="button" class="gt" data-gtog="${gk}"><span class="car">${open?'▾':'▸'}</span> <b>${E(gl)}</b> <small data-gcount="${gk}">${on}/${n}</small></button></div>
       <div class="gb" ${open?'':'hidden'}>${subs.map(r=>`<label class="sub"><input type="checkbox" data-sub="${E(r[1])}" ${off.has(r[1])?'':'checked'}><span>${E(r[2])} <small>${r[3]?r[3]+' sự kiện':''}${r[4]?` · <span class="r">⚠ ${r[4]} có cửa nguy</span>`:''}</small></span></label>`).join('')}</div></div>`;
   }).join('');
-  return `<div class="panel grp" id="af-grp"><b style="color:var(--gold)">Nhóm sự kiện Auto sẽ làm</b> <small id="af-grp-total">${totalOn}/${total}</small>
+  return `<div class="grp" id="af-grp" data-total="${totalOn}/${total}">
     <div class="sub">Tích để cho phép, bỏ tích để Auto bỏ qua cả nhóm (gặp thì rời đi). Bấm tên nhóm để mở từng mục. Mặc định tắt: tuyển đồ · đại bỉ · công phá sơn môn.</div>
     <div class="bar"><button class="btn" data-gall="1">Chọn hết</button><button class="btn" data-gall="0">Bỏ hết</button><button class="btn" data-gdef="1">Mặc định</button></div>
     ${body_}</div>`;
 }
+function afSec(key,title,inner,open){
+  const on=AF_UI.sec.has(key)?AF_UI.sec.get(key):open;
+  return `<details class="sec" data-sec="${key}" ${on?'open':''}><summary>${title}</summary><div class="secb">${inner}</div></details>`;
+}
 function afPolHtml(){
   const P=AutoFarm.P();
-  return `<div class="panel pol" id="af-pol"><b style="color:var(--gold)">Chính sách lựa chọn</b>
+  return `<div class="pol" id="af-pol">
     <div class="sub">Trong một sự kiện, Auto sẽ <b>không</b> chọn lựa chọn có hệ quả bị bỏ tích ở dưới (dựa trên effects thật của game, kể cả khi thất bại). Nếu mọi cửa đều trái chính sách thì bấm Thoát.</div>
     <div class="bar"><label class="sub grow">Mẫu nhanh
       <select id="af-polpre"><option value="">— chọn mẫu —</option><option value="chinh">Chính đạo · an toàn</option><option value="ma">Ma tu / tà đạo</option><option value="lieu">Liều lĩnh (trừ trọng thương)</option></select></label></div>
@@ -5085,7 +5103,7 @@ function afPolHtml(){
 }
 function afJrnHtml(){
   AutoFarm.jrnLoad();
-  return `<div class="panel"><b style="color:var(--gold)">Nhật ký sự kiện</b> <small id="af-jrn-n">${AutoFarm.jr.list.length} bản ghi</small>
+  return `<div class="jr">
     <div class="sub">Mỗi sự kiện gặp được ghi: nhóm, nội dung, mọi lựa chọn (rủi ro, cơ hội, giá trị, lý do bị loại), lựa chọn đã bấm, kết quả và thay đổi chỉ số. Xuất ra để gửi lại cho mình sửa lỗi.</div>
     <div class="bar"><button class="btn pri" id="af-jrn-json">Tải JSON</button><button class="btn" id="af-jrn-copy">Copy bản đọc</button><button class="btn" id="af-jrn-clear">Xóa</button></div>
     <div id="af-jrn" style="max-height:34vh;overflow:auto;font-size:12px">${AutoFarm.jrnListHtml()}</div></div>`;
@@ -5102,9 +5120,10 @@ function afGrpRefresh(root){
     if(ct)ct.textContent=on+'/'+n;
     subs.forEach(r=>{const x=$(root,`[data-sub="${r[1]}"]`);if(x)x.checked=!off.has(r[1])});
   });
-  const t=$(root,'#af-grp-total');if(t)t.textContent=tOn+'/'+tAll;
+  const t=$(body,'#af-grp-total');if(t)t.textContent=tOn+'/'+tAll;
 }
 function afWire(){
+  body.querySelectorAll('details.sec').forEach(d=>d.addEventListener('toggle',()=>AF_UI.sec.set(d.dataset.sec,d.open)));
   const gp=$(body,'#af-grp');
   if(gp){
     afGrpRefresh(gp);
@@ -5151,23 +5170,13 @@ VIEWS.auto=()=>{
   body.innerHTML=`<div class="panel"><b style="color:var(--gold)">Auto Farm</b>
     <div class="sub">Tự đi quanh vùng: săn yêu, làm việc trên bản đồ, ghé nơi gần có việc. Bấm Bắt đầu sẽ thu panel; tạm dừng/dừng ở nút cạnh icon tiên.</div></div>
   ${injLine}
-  ${(()=>{const L=AutoFarm.llInfo();return `<div class="panel"><b style="color:var(--gold)">Lịch luyện: ${L.cur.toFixed(1)} / ${L.cap}</b>${L.full?' <span class="tag o">Đầy</span>':''}
-    <div class="bar2"><i style="width:${Math.round(L.pct*100)}%"></i></div>
-    <div class="sub">Thắng trận cộng lịch luyện: thường +${L.gain.thuong.toFixed(1)}, tinh anh (đầu đàn) +${L.gain.tinh_anh.toFixed(1)}, boss +${L.gain.boss.toFixed(1)}. Bế quan tiêu lịch luyện để ra tu vi; cạn thì tu vi chỉ còn ~50%. Đầy thì săn thêm chỉ còn đồ rơi — nên bế quan rồi quay lại săn.</div></div>`})()}
   <div class="bar">
     <button class="btn pri" id="af-toggle">▶ Bắt đầu (thu panel)</button>
     <button class="btn" id="af-refresh">Quét lại</button>
     <button class="btn" id="af-export">Xuất log</button>
   </div>
-  <div class="panel"><b style="color:var(--gold)">Ghi hành động tay</b>
-    <div class="sub">Bật ghi → thao tác trên game như thường (đi, vào nơi, chọn activity, săn, combat, thuốc…) → Dừng ghi → <b>Xuất ghi</b>. File gồm mọi API + state (noiActs, choices, combat, bag thuốc, node gần) + summary để đối chiếu source.</div>
-    <div class="bar">
-      <button class="btn ${AutoFarm.rec.on?'':'pri'}" id="af-rec-toggle">${AutoFarm.rec.on?'■ Dừng ghi':'● Bắt đầu ghi'}</button>
-      <button class="btn" id="af-rec-export" ${AutoFarm.rec.events.length?'':'disabled'}>Xuất ghi (${AutoFarm.rec.events.length})</button>
-    </div>
-    <div class="panel" style="max-height:18vh;overflow:auto;font-size:12px" id="af-rec-log">${AutoFarm.rec.events.length?AutoFarm.rec.events.slice().reverse().slice(0,20).map(x=>`<div class="sub">[${E(x.tShow||'')}] <b>${E(x.kind)}</b> ${E(typeof x.detail==='string'?x.detail:JSON.stringify(x.detail||{}).slice(0,100))}</div>`).join(''):'<div class="sub">Chưa ghi gì.</div>'}</div>
-  </div>
-  <div class="bar" style="flex-wrap:wrap;gap:8px">
+  <div class="sum" id="af-stats">OK ${AutoFarm.stats.ok} · bỏ ${AutoFarm.stats.skip} · lỗi ${AutoFarm.stats.err} · chữa ${AutoFarm.stats.heal||0}${AutoFarm.running?(AutoFarm.paused?' · TẠM DỪNG':' · ĐANG CHẠY'):''}</div>
+  ${afSec('opt','Tùy chọn chạy',`<div class="bar" style="flex-wrap:wrap;gap:8px">
     <label class="sub"><input type="checkbox" id="af-san" ${o.onlySanYeu?'checked':''}> Chỉ săn yêu</label>
     <label class="sub"><input type="checkbox" id="af-near" ${o.preferNear!==false?'checked':''}> Ưu tiên nơi gần</label>
     <label class="sub"><input type="checkbox" id="af-places" ${o.includeNearPlaces!==false?'checked':''}> Ghé thành thị / trấn gần</label>
@@ -5179,6 +5188,7 @@ VIEWS.auto=()=>{
     <label class="sub"><input type="checkbox" id="af-choose" ${o.autoChoose?'checked':''}> Tự chọn lựa chọn</label>
     <label class="sub"><input type="checkbox" id="af-heal" ${o.autoHeal?'checked':''}> Tự dùng thuốc chữa thương</label>
     <label class="sub"><input type="checkbox" id="af-pauseheal" ${o.pauseIfNoHeal?'checked':''}> Dừng nếu hết thuốc (nặng+)</label>
+    <label class="sub"><input type="checkbox" id="af-mapfollow" ${store.get('mapFollow',true)!==false?'checked':''}> Bản đồ tự dõi theo nhân vật</label>
   </div>
   <div class="bar">
     <label class="sub grow">Sau thắng (tù binh)
@@ -5196,12 +5206,6 @@ VIEWS.auto=()=>{
         <option value="tuvi" ${o.focus==='tuvi'?'selected':''}>Tu vi / lịch luyện</option>
         <option value="taiNguyen" ${o.focus==='taiNguyen'?'selected':''}>Tài nguyên (linh thạch, đồ)</option>
         <option value="chiSo" ${o.focus==='chiSo'?'selected':''}>Chỉ số (thần thức, khí vận, đạo tâm…)</option>
-      </select>
-    </label>
-    <label class="sub grow">Khi lịch luyện đầy
-      <select id="af-llfull">
-        <option value="tiep" ${(o.llFull||'tiep')==='tiep'?'selected':''}>Cứ tiếp tục (vẫn lấy đồ rơi)</option>
-        <option value="dung" ${o.llFull==='dung'?'selected':''}>Dừng để đi bế quan</option>
       </select>
     </label>
     <label class="sub grow">Lùng con đầu đàn (săn yêu)
@@ -5225,25 +5229,22 @@ VIEWS.auto=()=>{
       </select>
     </label>
   </div>
-  ${afPolHtml()}
-  ${afGrpHtml()}
-  ${afJrnHtml()}
-  <div class="sum" id="af-stats">OK ${AutoFarm.stats.ok} · bỏ ${AutoFarm.stats.skip} · lỗi ${AutoFarm.stats.err} · chữa ${AutoFarm.stats.heal||0}${AutoFarm.running?(AutoFarm.paused?' · TẠM DỪNG':' · ĐANG CHẠY'):''}</div>
-  <div class="panel" style="max-height:32vh;overflow:auto;font-size:12px" id="af-log">${AutoFarm.log.slice().reverse().map(x=>`<div class="sub${x.kind==='err'?' r':x.kind==='ok'?' g':''}">[${E(x.tShow||x.t||'')}] ${E(x.msg)}</div>`).join('')||'<div class="sub">Chưa có nhật ký. Bấm Bắt đầu rồi gửi file log nếu lỗi.</div>'}</div>
-  <div class="sum">${list.length} mục tiêu gần → xa</div>
-  ${list.map(t=>`<article class="card ${t.danger.rank>=2?'d'+t.danger.rank:''}" data-slot="${E(t.slot)}" data-title="${E(t.title)}">
+  </div>`,true)}
+  ${afSec('pol','Chính sách lựa chọn',afPolHtml(),false)}
+  ${afSec('grp','Nhóm sự kiện Auto sẽ làm <small id="af-grp-total"></small>',afGrpHtml(),false)}
+  ${afSec('jrn','Nhật ký sự kiện <small id="af-jrn-n">'+AutoFarm.jr.list.length+' bản ghi</small>',afJrnHtml(),false)}
+  ${afSec('log','Nhật ký chạy (hệ thống)',`<div class="panel" style="max-height:32vh;overflow:auto;font-size:12px" id="af-log">${AutoFarm.log.slice().reverse().map(x=>`<div class="sub${x.kind==='err'?' r':x.kind==='ok'?' g':''}">[${E(x.tShow||x.t||'')}] ${E(x.msg)}</div>`).join('')||'<div class="sub">Chưa có nhật ký. Bấm Bắt đầu rồi gửi file log nếu lỗi.</div>'}</div>`,false)}
+  ${afSec('tgt','Mục tiêu gần → xa ('+list.length+')',`${list.map(t=>`<article class="card ${t.danger.rank>=2?'d'+t.danger.rank:''}" data-slot="${E(t.slot)}" data-title="${E(t.title)}">
     <div class="ico">戰</div>
     <div><b>${E(t.title)}</b><small>${E(t.enc)} · ${E(t.slot)} · ${E(t.mode||'')}</small></div>
     <div class="side">${N(t.travel)?fmtTime(t.travel):'—'}<small>${N(t.miles)?fmtMiles(t.miles):''}</small></div>
     <div class="tags"><span class="tag">${E(t.danger.label)}</span>${t.left!=null?`<span class="tag g">Còn ${t.left}/3 lần săn</span>`:''}${t.priority>=40?`<span class="tag o">Việc gấp</span>`:''}</div>
     <div class="acts"><button class="btn" data-act="view">Xem</button><button class="btn pri" data-act="go">Đường</button></div>
-  </article>`).join('')||'<div class="empty">Không có mục tiêu phù hợp trên map hiện tại.<br>Hãy đi khám phá thêm rồi quét lại. Tắt «Chỉ ev.san_yeu» để cày rộng hơn.</div>'}`;
+  </article>`).join('')||'<div class="empty">Không có mục tiêu phù hợp trên map hiện tại.<br>Hãy đi khám phá thêm rồi quét lại. Tắt «Chỉ ev.san_yeu» để cày rộng hơn.</div>'}`,false)}`;
   afWire();
   $(body,'#af-toggle').onclick=()=>AutoFarm.start();
   $(body,'#af-refresh').onclick=()=>VIEWS.auto();
   $(body,'#af-export').onclick=()=>AutoFarm.exportLog();
-  $(body,'#af-rec-toggle').onclick=()=>{AutoFarm.rec.on?AutoFarm.stopRecord():AutoFarm.startRecord()};
-  $(body,'#af-rec-export').onclick=()=>AutoFarm.exportRecord();
   $(body,'#af-san').onchange=e=>{o.onlySanYeu=e.target.checked;VIEWS.auto()};
   $(body,'#af-near').onchange=e=>{o.preferNear=e.target.checked;VIEWS.auto()};
   $(body,'#af-places').onchange=e=>{o.includeNearPlaces=e.target.checked;VIEWS.auto()};
@@ -5256,11 +5257,11 @@ VIEWS.auto=()=>{
   $(body,'#af-choose').onchange=e=>{o.autoChoose=e.target.checked};
   $(body,'#af-heal').onchange=e=>{o.autoHeal=e.target.checked;store.set('afAutoHeal',o.autoHeal)};
   $(body,'#af-pauseheal').onchange=e=>{o.pauseIfNoHeal=e.target.checked};
+  $(body,'#af-mapfollow').onchange=e=>{try{store.set('mapFollow',e.target.checked)}catch{}};
   $(body,'#af-xutri').onchange=e=>{o.xuTri=e.target.value;store.set('xuTri',o.xuTri);toast('Đã nhớ: xử tù binh = '+o.xuTri,'ok',2200)};
   $(body,'#af-avoid').onchange=e=>{o.avoidBeasts=String(e.target.value||'');store.set('afAvoid',o.avoidBeasts);toast('Né: '+(o.avoidBeasts||'(trống)'),'ok',2000)};
   $(body,'#af-minlife').onchange=e=>{o.minLifeYears=Math.max(0,+e.target.value||0);store.set('afMinLife',o.minLifeYears);toast('Dừng khi thọ ≤ '+o.minLifeYears+' năm','ok',2000)};
   $(body,'#af-focus').onchange=e=>{o.focus=e.target.value;store.set('afFocus',o.focus);toast('Ưu tiên lựa chọn: '+e.target.selectedOptions[0].textContent,'ok',2000)};
-  $(body,'#af-llfull').onchange=e=>{o.llFull=e.target.value;store.set('afLlFull',o.llFull);VIEWS.auto()};
   $(body,'#af-apex').onchange=e=>{o.apex=e.target.value;store.set('afApex',o.apex);toast('Lùng đầu đàn = '+o.apex,'ok',2000)};
   $(body,'#af-pursuit').onchange=e=>{o.pursuit=e.target.value;store.set('afPursuit',o.pursuit);toast('Đuổi/tha = '+o.pursuit,'ok',2000)};
 };
@@ -5533,7 +5534,7 @@ let dkRaf=0;const dkMo=new MutationObserver(()=>{if(!dkRaf)dkRaf=requestAnimatio
 try{dkMo.observe(document.body,{childList:true,subtree:true});vkDock()}catch{}
 /* ───────── Khởi động ───────── */
 let lastPos=run().viTri,timer=null,unsub=null,iv=null;
-function tick(){clearTimeout(timer);timer=setTimeout(()=>{if(run().viTri!==lastPos){lastPos=run().viTri;if(Route.target)Route.redraw()}Alerts.check();softRender()},450)}
+function tick(){clearTimeout(timer);timer=setTimeout(()=>{if(run().viTri!==lastPos){lastPos=run().viTri;if(Route.target)Route.redraw();try{if(store.get('mapFollow',true)!==false&&window.map?.focusPlayer)window.map.focusPlayer(false,true)}catch{}}Alerts.check();softRender()},450)}
 try{unsub=g.store.subscribe?.(tick)}catch{}
 iv=setInterval(tick,5000);
 /* Không tự vẽ đường khi mở tool */
