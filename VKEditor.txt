@@ -1,4 +1,4 @@
-javascript:(() => {
+(() => {
   'use strict';
 
   const TOOL_VERSION = 'VK-EDITOR-2.2.0';
