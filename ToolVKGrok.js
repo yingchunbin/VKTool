@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261111-autofarm-v81',ID='vkt2',g=window.game;
+const BUILD='20261111-autofarm-v82',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -354,13 +354,13 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
   function breakPenalty(nghich,nv){return Math.min(0.15,0.03*(nghich||0)*phanPheMul(nv))}
   function chosenElements(){const p=S.pref||{},subs=A(p.subs).filter(x=>x&&x!=='none'&&x!==p.mainElement);return{main:p.mainElement||'auto',subs}}
   function preferenceScore(manh,mode){const p=S.pref||{},tags=BUILD_TAGS[p.school]||[],chosen=chosenElements(),Cc=C();let z=0;for(const q of manh){const it=Cc.items.get(q?.m?.item||q?.item);if(!it)continue;const raw=[...A(it.tag),...TP(it.tran_phai)],hs=itemElements(it);if(schoolMatch(p.school,tags,raw,it))z+=mode==='danh'?55:mode==='tu'?70:60;if(chosen.main!=='auto'&&hs.includes(chosen.main))z+=mode==='danh'?10:12;for(const [i,h]of chosen.subs.entries())if(hs.includes(h))z+=Math.max(2,8-i);const align=itemAlignment(it);if(p.alignment&&p.alignment!=='auto')z+=align===p.alignment?14:-18}return z}
-  function schoolStats(manh){const school=S.pref?.school||'tu_do';if(school==='tu_do')return{main:school,total:manh.length,matched:manh.length,need:0,deficit:0};let total=0,matched=0;for(const q of manh){const it=C().items.get(q?.m?.item||q?.item);if(!it)continue;total++;const tags=BUILD_TAGS[school]||[],raw=[...A(it.tag),...TP(it.tran_phai)];if(schoolMatch(school,tags,raw,it))matched++}const pw=Number((S.pref&&(S.pref.pathW??S.pref.w))||0);const need=total?(pw>=2?Math.ceil(total*0.5):Math.floor(total/2)+1):0;return{main:school,total,matched,need,deficit:Math.max(0,need-matched)}}
-  function schoolDominanceScore(manh){
-    const x=schoolStats(manh);
+  function schoolStats(manh,mode){const school=S.pref?.school||'tu_do';if(school==='tu_do')return{main:school,total:manh.length,matched:manh.length,need:0,deficit:0};let total=0,matched=0;for(const q of manh){const it=C().items.get(q?.m?.item||q?.item);if(!it)continue;total++;const tags=BUILD_TAGS[school]||[],raw=[...A(it.tag),...TP(it.tran_phai)];if(schoolMatch(school,tags,raw,it))matched++}const pw=Number((S.pref&&(S.pref.pathW??S.pref.w))||0);const need=total?(mode==='tu'?Math.ceil(total/3):pw>=2?Math.ceil(total*0.5):Math.floor(total/2)+1):0;return{main:school,total,matched,need,deficit:Math.max(0,need-matched)}}
+  function schoolDominanceScore(manh,mode){
+    const k=mode==='tu'?0:mode==='can'?.4:.25,x=schoolStats(manh,mode);
     if(x.main==='tu_do'||x.total<2)return 0;
     // Cần đa số mảnh theo lối (game: phủ lối / ô tà mC=1/3)
-    if(x.deficit)return -8000*x.deficit + 100*x.matched;
-    return 2000*x.matched;
+    if(x.deficit)return -8000*x.deficit + 100*x.matched*k;
+    return 2000*x.matched*k;
   }
   // Game: mC=1/3 — ô tà trên các ô đang thông ≥ 1/3 → path = tà; ngược lại chính
   // Đồng thời độ phủ lối (số ô mảnh khớp lối / tổng ô mảnh thông) nên > 1/3 khi đã chọn lối
@@ -386,21 +386,21 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     const path=shareEvil>=mC-1e-9?'ta':'chinh';
     return {cells,matchCells,evilCells,shareMatch,shareEvil,path,wantTa,mC,okPath:school==='tu_do'?true:(shareMatch>=mC-1e-9),okAlign:wantTa?(path==='ta'):(path==='chinh')};
   }
-  function pathShareScore(manh){
-    const p=pathShareInfo(manh);
+  function pathShareScore(manh,mode){
+    const k=mode==='tu'?0:mode==='can'?.4:.25,p=pathShareInfo(manh);
     const pw=Number((S.pref&& (S.pref.pathW??S.pref.w))||0);
     let s=0;
     // Phủ lối: khi đã chọn lối, muốn càng cao càng tốt; <1/3 phạt nặng; pw>=2 muốn >=50%
-    const need=pw>=2?0.5:pw>=1?1/3:0;
+    const need=mode==='tu'?(pw>=1?1/3:0):pw>=2?0.5:pw>=1?1/3:0;
     if(need>0&&p.shareMatch<need-1e-9)s-=50000*(need-p.shareMatch);
-    else s+=8000*p.shareMatch;
+    else s+=8000*p.shareMatch*k;
     // Đếm món khớp lối
-    const st=schoolStats(manh);
+    const st=schoolStats(manh,mode);
     if(st.main!=='tu_do'){
-      s+=st.matched*1200;
+      s+=st.matched*1200*k;
       s-=st.deficit*15000;
       // pw>=1: mỗi món ngoài lối bị phạt
-      if(pw>=1)s-=Math.max(0,st.total-st.matched)*(pw>=2?800:350);
+      if(pw>=1)s-=Math.max(0,st.total-st.matched)*(pw>=2?800:350)*k;
     }
     if(!p.okAlign)s-=25000;
     else s+=3000;
@@ -434,7 +434,10 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     }catch{}
     return nv;
   }
-  function makeEval(nv0,enemies,mode){const K=S.core,c=C(),cache=new Map();return manh=>{const key=mode+'|'+manh.map(p=>p.key).sort().join('|');if(cache.has(key))return cache.get(key);const nv=clone(nv0);nv.kinhMach.manh=manh.map(p=>({...p.m}));applyMastery(nv);const R=K.Rt(nv,c),P=K.Vr(nv,c),mq=meridianQuality(R,P,mode),dead=mq.dead;let fightScore=0,wins=0;if(!dead)for(const{E}of enemies){const r=fight(P,E),hp=Math.max(0,Math.min(1,(r.khiHuyetThapNhat||0)/Math.max(1,P.khiHuyetToiDa))),dealt=Math.min(1,(r.stTa||0)*Math.max(1,r.nHiep||1)/Math.max(1,E.khiHuyetToiDa));if(r.thang){wins++;fightScore+=100+30*hp+50/Math.max(1,r.nHiep||1)}else if(r.ketQua&&r.ketQua.enemyFled){wins++;fightScore+=70+15*hp}else fightScore+=45*dealt}const toc=R.biDong?.toc_do||0,dp=R.biDong?.dot_pha||0,ktm=R.biDong?.khang_tam_ma||0,nghich=mq.nghich||0;
+  // Đọc thẳng hàm của game: tỉ lệ đột phá (chuanBiDotPha) + tu vi mỗi năm bế quan (chuanBiBeQuan) cho bộ kinh mạch đang xét
+  function gameCultCtx(nv){const K=S.core,r={...g.state.run,nhanVat:nv};r.rngKeys??={};const meta=g.state.meta||{},rng=new K.fn(r.rng||[1]),cache=new Map();return{...g.env,run:r,meta,rng,enc:r.active,noticeLines:[],rngFor(key){let x=cache.get(key);if(!x){const seed=Object.hasOwn(r.rngKeys,key)?r.rngKeys[key]:undefined;x=seed===undefined?K.fn.fromSeed(`${r.seed}|rng|${key}`):new K.fn(seed);cache.set(key,x)}return x}}}
+  function gameCult(nv){const K=S.core;if(!K||!K.kR||!K.to)return null;try{const c=gameCultCtx(nv),h=K.kR(c,{dan:[],thieuDot:0}),b=K.to(c);const tv=b&&!b.chan&&isFinite(b.tuViNam)?b.tuViNam:null;return{tiLe:isFinite(h.tiLe)&&h.tiLe>0?h.tiLe:0,tuVi:tv}}catch{return null}}
+  function makeEval(nv0,enemies,mode){const K=S.core,c=C(),cache=new Map();let refTu;return manh=>{const key=mode+'|'+manh.map(p=>p.key).sort().join('|');if(cache.has(key))return cache.get(key);const nv=clone(nv0);nv.kinhMach.manh=manh.map(p=>({...p.m}));applyMastery(nv);const R=K.Rt(nv,c),P=K.Vr(nv,c),mq=meridianQuality(R,P,mode),dead=mq.dead;let gc=null;if(!dead&&mode!=='danh'){if(refTu===undefined){const n0=clone(nv0);n0.kinhMach.manh=[];refTu=gameCult(n0)?.tuVi||0}gc=gameCult(nv)}let fightScore=0,wins=0;if(!dead)for(const{E}of enemies){const r=fight(P,E),hp=Math.max(0,Math.min(1,(r.khiHuyetThapNhat||0)/Math.max(1,P.khiHuyetToiDa))),dealt=Math.min(1,(r.stTa||0)*Math.max(1,r.nHiep||1)/Math.max(1,E.khiHuyetToiDa));if(r.thang){wins++;fightScore+=100+30*hp+50/Math.max(1,r.nHiep||1)}else if(r.ketQua&&r.ketQua.enemyFled){wins++;fightScore+=70+15*hp}else fightScore+=45*dealt}const toc=R.biDong?.toc_do||0,dp=R.biDong?.dot_pha||0,ktm=R.biDong?.khang_tam_ma||0,nghich=mq.nghich||0;
       // Code game: phản phệ đột phá = min(0.15, 0.03*diemNghich*phanPhe); trần công pháp dot_pha = 0.12 (md)
       // Điểm nghịch: mảnh tương khắc kề nhau / nằm quá nửa trên ô khắc (tooltip game)
       const phaPhe=breakPenalty(nghich,nv),dpEff=Math.min(0.12,Math.max(0,dp));
@@ -449,26 +452,33 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
         const sumC=costs.reduce((a,b)=>a+b,0);
         const ll=P.linhLucMoiLuot||0;
         const nChieu=costs.length;
-        if(minC&&ll<minC)score-=50000; // không ra nổi chiêu → gần như loại
-        else if(sumC&&ll<sumC)score-=5000;
-        if(nChieu<1)score-=20000; // không có chiêu đánh
+        if(minC&&ll<minC)score-=12000; // không ra nổi chiêu → gần như loại
+        else if(sumC&&ll<sumC)score-=1500;
+        if(nChieu<1)score-=6000; // không có chiêu đánh
         // Thắng trận vẫn là chính; lấp ô phụ nhưng đủ mạnh để không để lưới trống (đồ đã đúng cảnh)
-        score+=wins*2500+fightScore*2.2+mq.score*0.3+toc*15+dp*8-nghich*30+filled*22+nPieces*40+ll*10+nChieu*80;
+        score+=wins*8000+fightScore*2.2+mq.score*0.3+toc*15+dp*8-nghich*30+filled*22+nPieces*40+ll*10+nChieu*80;
       }else if(mode==='tu'){
         // Tu luyện: toc + đột phá thực; ưu tiên 0 nghịch nhưng vẫn thưởng lấp đầy khi nghịch không tăng
-        const netBreak=dpEff-phaPhe;
-        score+=toc*2500+netBreak*8000+ktm*420+mq.connected*50+fightScore*.05;
+        // Đột phá công pháp là bắt buộc (đến trần 0.12); vượt trần thì phần dư vô giá trị → dồn sang tốc độ tu luyện + kháng tâm ma
+        const over=Math.max(0,dp-0.12);
+        if(gc&&gc.tuVi!==null){
+          // Số liệu thẳng từ game: tỉ lệ đột phá thực (đã gồm trần, phản phệ, tâm ma) + tu vi/năm khi bế quan
+          const tuGain=gc.tuVi!==null&&refTu>0?gc.tuVi/refTu-1:toc;
+          score+=dpEff*60000-phaPhe*8000+(dp<=0?-30000:0)+gc.tiLe*20000+tuGain*2800+ktm*300-over*300+mq.connected*50+fightScore*.05;
+        }else{
+        score+=dpEff*60000+(dp<=0?-30000:0)-phaPhe*8000;
+        score+=toc*2800+ktm*900-over*300+mq.connected*50+fightScore*.05;}
         score+=filled*30+nPieces*55;
-        // 1 điểm nghịch ≈ mất rất nhiều — không đổi lấy toc nhỏ
-        score-=nghich*25000;
+        // Tuyệt đối không điểm nghịch (mỗi điểm −3% đột phá × phản phệ thể chất, trần −15%)
+        score-=nghich*40000;
         if(nghich>0)score-=8000;
       }else{
         // Cân bằng: vẫn cần thắng tối thiểu + tu, nhưng phải lấp mạch (trước đây để trống nhiều)
-        const combat=Math.max(0,fightScore),cult=Math.max(0,toc*2200+(dpEff-phaPhe)*5000+ktm*240);
-        const floorPenalty=(wins<Math.max(1,Math.floor(enemies.length*.35))?-2e5:0)+(toc<=0?-15000:0);
-        score+=wins*120+combat*.5+cult*.45+mq.score+floorPenalty-nghich*150+filled*32+nPieces*60;
+        const combat=Math.max(0,fightScore),cult=gc&&gc.tuVi!==null?Math.max(0,dpEff*30000-phaPhe*20000+gc.tiLe*8000+((gc.tuVi!==null&&refTu>0?gc.tuVi/refTu-1:toc))*1000+ktm*150):Math.max(0,toc*2200+dpEff*8000-phaPhe*8000+ktm*400);
+        const floorPenalty=(toc<=0?-15000:0)+(dpEff<=0?-20000:0);
+        score+=wins*500+combat*1+cult*.45+mq.score+floorPenalty-nghich*3000+filled*32+nPieces*60;
       }
-      score+=preferenceScore(manh,mode)+schoolDominanceScore(manh)+pathShareScore(manh);
+      score+=preferenceScore(manh,mode)+schoolDominanceScore(manh,mode)+pathShareScore(manh,mode);
       const rules=ruleAudit(nv,R),audit=meridianAudit(nv,R,P),school=schoolStats(manh);
       const out={s:score,wins,n:enemies.length,P,R,mq,enemyCount:enemies.length,rules,audit,school};
       if(cache.size>3000)cache.clear();cache.set(key,out);return out}}
@@ -611,8 +621,8 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
       const nv = clone(nv0); nv.kinhMach.manh = manh.map((p) => ({ ...p.m })); applyMastery(nv);
       const R = K.Rt(nv, c);
       const uy = (R.chieu || []).reduce((a, x) => a + (x.uyLuc || x.uy || 0) / 10, 0);
-      const toc = R.biDong.toc_do || 0, dp = R.biDong.dot_pha || 0;
-      const w=mode==='tu'?[.35,190,120,.15]:mode==='can'?[1.05,90,55,.8]:[2.5,2,1,2.2]; // danh: linh lực + uy chiêu
+      const toc = R.biDong.toc_do || 0, dp = Math.min(0.12, R.biDong.dot_pha || 0);
+      const w=mode==='tu'?[.35,2800,20000,.15]:mode==='can'?[1.05,1500,6000,.8]:[2.5,2,1,2.2]; // danh: linh lực + uy chiêu
       const thongAll = R.manh.every((m) => !m || m.thong);
       const P=K.Vr(nv,c),mq=meridianQuality(R,P,mode);
       const filled=manh.reduce((a,p)=>a+(p.cells?p.cells.length:0),0);
@@ -620,13 +630,13 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
       const ngh=mq.nghich||0;
       if(mode==='tu'){
         const pack2=filled*30+manh.length*40;
-        return (thongAll?0:-1e9)+w[0]*R.linhLuc+w[1]*toc+w[2]*dp+w[3]*uy+mq.score-ngh*25000+pack2+preferenceScore(manh,mode)+schoolDominanceScore(manh);
+        return (thongAll?0:-1e9)+w[0]*R.linhLuc+w[1]*toc+w[2]*dp+w[3]*uy+mq.score-ngh*25000+pack2+preferenceScore(manh,mode)+schoolDominanceScore(manh,mode);
       }
       if(mode==='can'){
         const pack2=filled*35+manh.length*50;
-        return !thongAll?-1e15:w[0]*R.linhLuc+w[1]*toc+w[2]*dp+w[3]*uy+mq.score-ngh*120+pack2+preferenceScore(manh,mode)+schoolDominanceScore(manh);
+        return !thongAll?-1e15:w[0]*R.linhLuc+w[1]*toc+w[2]*dp+w[3]*uy+mq.score-ngh*1500+pack2+preferenceScore(manh,mode)+schoolDominanceScore(manh,mode);
       }
-      return w[0]*R.linhLuc+w[1]*toc+w[2]*dp+w[3]*uy+mq.score+(thongAll?0:-1e9)-ngh*30+pack*4+preferenceScore(manh,mode)+schoolDominanceScore(manh)+pathShareScore(manh);
+      return w[0]*R.linhLuc+w[1]*toc+w[2]*dp+w[3]*uy+mq.score+(thongAll?0:-1e9)-ngh*30+pack*4+preferenceScore(manh,mode)+schoolDominanceScore(manh,mode)+pathShareScore(manh,mode);
     };
     let cur = [], curS = quick(cur);
     const school=S.pref?.school||'tu_do';
@@ -956,12 +966,38 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     await tryAdd(false,true);
     return cur.map(p=>({...p.m}));
   }
-  async function optimizeOne(nv,mode,iters,onProg){
+  // Tu luyện/Cân bằng: đột phá công pháp là bắt buộc → chủ động thử cài các tâm pháp có dot_pha trước khi tìm kiếm ngẫu nhiên
+  async function dpSeed(nv0,mode,seed){
+    const c=C(),enemies=benchEnemies(nv0.canhGioi,nv0.tieuCanhGioi||0),ev=makeEval(nv0,enemies,mode),{cand}=buildCandidates(nv0,!!(S.pref&&S.pref.hypo));
+    const pack=list=>list.map(m=>({m,key:m.item+':'+m.x+','+m.y+','+m.xoay,cells:(cand[m.item]||[]).find(q=>q.m.x===m.x&&q.m.y===m.y&&q.m.xoay===m.xoay)?.cells||[]}));
+    const dpIds=Object.keys(cand).filter(id=>cand[id].length&&(c.items.get(id)?.bi_dong?.dot_pha||0)>0).sort((a,b)=>{const f=id=>{const bd=c.items.get(id).bi_dong;return Math.min(.12,bd.dot_pha||0)*60000+(bd.toc_do||0)*2800};return f(b)-f(a)}).slice(0,6);
+    let cur=A(seed).slice(),curS=ev(pack(cur)).s,rr=7;
+    const rnd=()=>{rr=(rr*16807)%2147483647;return rr/2147483647};
+    for(let round=0;round<2;round++){
+      let bestM=null,bestS=curS;
+      for(const id of dpIds){
+        if(S.abort)return cur;
+        if(cur.some(m=>m.item===id))continue;
+        const arr=cand[id],tries=Math.min(arr.length,24);
+        for(let t=0;t<tries;t++){
+          const cd=arr[Math.floor(rnd()*arr.length)];
+          const keep=cur.filter(m=>{const q=(cand[m.item]||[]).find(z=>z.m.x===m.x&&z.m.y===m.y&&z.m.xoay===m.xoay);return !(q&&q.cells.some(x=>cd.cells.includes(x)))});
+          const trial=[...keep,{...cd.m}],e=ev(pack(trial));
+          if(e.s>bestS){bestS=e.s;bestM=trial}
+        }
+        await yieldIf(null,0);
+      }
+      if(!bestM)break;cur=bestM;curS=bestS;
+    }
+    return cur;
+  }
+  async function optimizeOne(nv,mode,iters,onProg,seeds){
     await ensureCore();S.abort=false;if(S.pref)S.pref._mode=mode;
     const current=evalCurrent(nv,mode),nv0=clone(nv);nv0.kinhMach.manh=[];
     onProg?.(.01,'Xếp nền');
     let seed=await greedy(nv0,mode);
     onProg?.(.03,'Lấp mạch');
+    if(mode!=='danh')seed=await dpSeed(nv0,mode,seed);
     seed=await packFill(nv0,mode,seed);
     const a=await anneal({nv0,mode,iters:Math.round(iters*.5),init:seed,onProg:f=>onProg?.(.05+f*.4,'Tối ưu')});
     onProg?.(.48,'Lấp lại');
@@ -979,7 +1015,8 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
       {manh:a.manh,e:ev(pack(a.manh))},
       {manh:mid,e:ev(pack(mid))},
       {manh:b.manh,e:ev(pack(b.manh))},
-      {manh:finalManh,e:ev(pack(finalManh))}
+      {manh:finalManh,e:ev(pack(finalManh))},
+      ...A(seeds).filter(x=>A(x).length).map(x=>({manh:x,e:ev(pack(x))}))
     ].sort((x,y)=>y.e.s-x.e.s);
     let best={manh:scored[0].manh,score:scored[0].e.s,s:scored[0].e.s,wins:scored[0].e.wins,n:enemies.length,P:scored[0].e.P,R:scored[0].e.R,mq:scored[0].e.mq,rules:scored[0].e.rules,audit:scored[0].e.audit,hypo:!!(S.pref&&S.pref.hypo)};
     best=stripDead(nv,best,mode);
@@ -996,7 +1033,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     if(S.pref.body&&S.pref.body!=='current'&&C().theChat?.has?.(S.pref.body))nv.theChat=S.pref.body;
     const out={},hypo=!!S.pref.hypo;
     for(const[i,mode]of['danh','tu','can'].entries()){
-      out[mode]=await optimizeOne(nv,mode,iters,(f,l)=>onProg?.((i+f)/3,mode,l));
+      out[mode]=await optimizeOne(nv,mode,iters,(f,l)=>onProg?.((i+f)/3,mode,l),Object.values(out).map(o=>o?.best?.manh).filter(Boolean));
       if(out[mode]?.best){
         out[mode].best.hypo=hypo;
         const bag=nv.tuiDo||{};
@@ -1004,6 +1041,16 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
         out[mode].best.missing=[...new Set(need)];
       }
       if(S.abort)break;
+    }
+    // Chiến đấu chạy trước nên chưa thấy cách xếp của hai bộ sau: thử chúng bằng chính phép chấm Chiến đấu, hơn thì lấy (bảo đảm bộ Chiến đấu thắng nhiều nhất)
+    if(!S.abort&&out.danh?.best&&out.tu?.best&&out.can?.best){
+      for(const m of['tu','can']){
+        const mh=A(out[m]?.best?.manh);if(!mh.length)continue;
+        const nv3=clone(nv);nv3.kinhMach.manh=mh.map(x=>({...x}));
+        try{const e=evalCurrent(nv3,'danh');
+          if(e.score>out.danh.best.score&&!(e.R.manh||[]).some(x=>x&&!x.thong)){const bag=nv.tuiDo||{};out.danh.best={...e,hypo,missing:[...new Set(mh.map(x=>x.item).filter(id=>(bag[id]||0)<1))]}}
+        }catch{}
+      }
     }
     S.results=out;return out;
   }
@@ -1898,8 +1945,8 @@ function buildResultHtml(){
   const ppMul=Number(C.theChat?.get?.(me().theChat)?.dac_tinh?.phan_phe??1)||1,phaPhe=Math.min(0.15,0.03*nghich*ppMul),dpShow=Math.min(0.12,dp),netBreak=dpShow-phaPhe;
   let grid='';try{grid=BuildEngine.drawGrid(BuildEngine.nvNow(),b.manh).replace('class="vk-img"','class="grid-img"')}catch{}
   const modeNote=bld.mode==='danh'?'Bộ Chiến đấu tối ưu số trận thắng trên trận mẫu (tinh anh/boss).'
-    :bld.mode==='tu'?'Bộ Tu luyện tối ưu tốc độ + đột phá thực (đột phá công pháp kẹp ≤12%, mỗi điểm nghịch −3% đột phá × hệ số phản phệ của thể chất, trần −15%). Số thắng chỉ mang tính tham khảo.'
-    :'Bộ Cân bằng trộn thắng trận và tu luyện.';
+    :bld.mode==='tu'?'Bộ Tu luyện chuyên bế quan/đột phá: bắt buộc có đột phá công pháp đến trần 12%; vượt trần thì dồn sang tốc độ tu luyện + kháng tâm ma; không để điểm nghịch (mỗi điểm −3% đột phá × phản phệ thể chất, tối đa −15%). Số thắng chỉ để tham khảo.'
+    :'Bộ Cân bằng: giữ số thắng trận mẫu ở mức khá và vẫn có đột phá + tốc độ tu luyện, hạn chế điểm nghịch.';
   // Chỉ mảnh thông. Format: Tên · Hệ/Cảnh/xHệSố  (vd Thủy/Hóa Thần/x1.25) — không kèm phẩm
   pieces=pieces.filter(x=>x.connected!==false);
   const pieceRows=pieces.map((x,idx)=>{
