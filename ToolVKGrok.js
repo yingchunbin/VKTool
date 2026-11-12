@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261112-autofarm-v84',ID='vkt2',g=window.game;
+const BUILD='20261112-autofarm-v87',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -328,7 +328,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
 
   // ───────────────────────── 4. Tối ưu kinh mạch ─────────────────────────
 
-  const BUILD_TAGS={tu_do:[],kiem:['kiem'],the:['the'],phat:['phat'],ma:['ma','nghich'],doc:['doc'],hop_hoan:['hop_hoan'],thi:['thi'],quy:['quy'],ngu_thu:['ngu_thu'],khoi_loi:['khoi_loi'],phu:['phu'],tran:['tran'],dan:['dan'],khi:['khi'],am:['am']};
+  const BUILD_TAGS={tu_do:[],kiem:['kiem'],the:['the'],phat:['phat'],ma:['ma','nghich'],doc:['doc'],hop_hoan:['hop_hoan'],thi:['thi'],quy:['quy'],ngu_thu:['ngu_thu'],khoi_loi:['khoi_loi'],phu:['phu'],tran:['tran'],dan:['dan'],khi:['khi']};
   const NL_BUILD={ngu_thu:'thu',khoi_loi:'khoi_loi',doc:'trung',thi:'thi',quy:'hon'};
   // Khớp lối: tag trường phái; ngự linh theo loại; lối theo hệ (he_*) và Ám tu theo hệ "am" (content he_am).
   const schoolMatch=(school,tags,raw,it)=>{
@@ -999,6 +999,33 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     }
     return cur;
   }
+  // Đánh bóng cuối: leo đồi thêm món mới / dời mảnh sang vị trí khác cho tới khi không còn cải thiện (kiểm tra thấy tìm ngẫu nhiên đôi khi bỏ sót một món còn đặt thêm được)
+  async function polish(nv0,mode,manh,iters,onProg){
+    const enemies=benchEnemies(nv0.canhGioi,nv0.tieuCanhGioi||0),ev=makeEval(nv0,enemies,mode),{cand}=buildCandidates(nv0,!!(S.pref&&S.pref.hypo));
+    const pk=l=>l.map(m=>({m,key:m.item+':'+m.x+','+m.y+','+m.xoay}));
+    const cellsOf=m=>(cand[m.item]||[]).find(q=>q.m.x===m.x&&q.m.y===m.y&&q.m.xoay===m.xoay)?.cells||[];
+    const trialOf=(keep,cd)=>[...keep.filter(m=>!cellsOf(m).some(x=>cd.cells.includes(x))),{...cd.m}];
+    const samples=iters>=1500?40:30,moveCap=1e9,t0=Date.now(),budget=iters>=1500?45000:iters>=800?30000:20000,late=()=>Date.now()-t0>budget;let rr=13;
+    const rnd=()=>{rr=(rr*16807)%2147483647;return rr/2147483647};
+    let cur=A(manh).slice(),curS=ev(pk(cur)).s;
+    for(let round=0;round<3&&!S.abort;round++){
+      let bestT=null,bestS=curS+1e-6;
+      const ids=Object.keys(cand).filter(id=>cand[id].length&&!cur.some(m=>m.item===id));
+      let k=0;
+      for(const id of ids){
+        const arr=cand[id];
+        for(let t=0;t<Math.min(samples,arr.length);t++){const cd=t<samples/2?arr[Math.floor(t*arr.length/(samples/2))]:arr[Math.floor(rnd()*arr.length)],tr=trialOf(cur,cd),e=ev(pk(tr)).s;if(e>bestS){bestS=e;bestT=tr}}
+        if(++k%12===0){await yieldIf(null,0);if(S.abort||late())break}
+      }
+      for(let i=0;i<cur.length&&!S.abort;i++){
+        const keep=cur.filter((_,j)=>j!==i),arr=cand[cur[i].item]||[];
+        for(let t=0;t<arr.length;t++){const cd=arr[t],tr=trialOf(keep,cd),e=ev(pk(tr)).s;if(e>bestS){bestS=e;bestT=tr}}
+        await yieldIf(null,0);if(late())break;
+      }
+      if(!bestT)break;cur=bestT;curS=bestS;
+    }
+    return cur;
+  }
   async function optimizeOne(nv,mode,iters,onProg,seeds){
     await ensureCore();S.abort=false;if(S.pref)S.pref._mode=mode;
     const current=evalCurrent(nv,mode),nv0=clone(nv);nv0.kinhMach.manh=[];
@@ -1015,6 +1042,9 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     let finalManh=await packFill(nv0,mode,b.manh);
     finalManh=await packFill(nv0,mode,finalManh);
     finalManh=await packFill(nv0,mode,finalManh);
+    finalManh=await packFill(nv0,mode,finalManh);
+    onProg?.(.95,'Đánh bóng');
+    finalManh=await polish(nv0,mode,finalManh,iters,onProg);
     finalManh=await packFill(nv0,mode,finalManh);
     const enemies=benchEnemies(nv.canhGioi,nv.tieuCanhGioi||0);
     const ev=makeEval(nv0,enemies,mode);
@@ -1799,61 +1829,32 @@ const tierCg=it=>(it.tran_phai?4:TIER_CG[Math.max(1,Math.min(8,it.pham_cap||2))-
 const freshAt=(it,R)=>R<=tierCg(it)+1;
 const TA_TAGS_B=['ma','nghich','thi','quy','doc','hop_hoan'];
 const TA_BUILDS_B=['ma','doc','hop_hoan','thi','quy'];
-const SCHOOLS_B=['kiem','the','phat','ma','doc','hop_hoan','thi','quy','ngu_thu','khoi_loi','phu','tran','dan','khi','am'];
+const SCHOOLS_B=['kiem','the','phat','ma','doc','hop_hoan','thi','quy','ngu_thu','khoi_loi','phu','tran','dan','khi'];
 const NL2S={thu:'ngu_thu',khoi_loi:'khoi_loi',trung:'doc',thi:'thi',hon:'quy'};
 const schoolsOf=it=>{const t=A(it?.tag).filter(x=>SCHOOLS_B.includes(x));const nl=it?.ngu_linh&&NL2S[it.ngu_linh.loai];if(nl&&!t.includes(nl))t.push(nl);if(A(it?.tag).includes('nghich')&&!t.includes('ma'))t.push('ma');return t};
 const isTaItem=it=>A(it?.tag).some(t=>TA_TAGS_B.includes(t))||(it?.ngu_linh&&['thi','hon'].includes(it.ngu_linh.loai));
 const BUILDS=[
-  {k:'kiem',ten:'Kiếm tu',nhom:'Chính đạo',he:['kim'],core:[
-    'Đồ có nhãn kiếm: chiêu × (1 + kiếm uy lực). Thể chất Kiếm cốt +25% uy kiếm, kinh lộ dài hơn.',
-    'Đặt kiếm lên huyệt; nối chuỗi tâm pháp cùng hệ từ đan điền tới kiếm (cùng họ hệ +10%/món).',
-    'Dị hỏa trang bị cùng hệ chiêu: +6% (Huyền) → +20% (Nghịch Thiên) theo bảng XOt trong code game.']},
-  {k:'the',ten:'Thể tu',nhom:'Chính đạo',he:['tho','kim'],core:[
-    'Bắt buộc: một tâm pháp luyện thể (nhãn thể) đang thông — chưa có thì đồ thể tu chỉ như món thường.',
-    'Có tâm pháp thể: chiêu thể đánh bằng sức thân (hệ số căn cốt × khí huyết thân, công thức trong code game).',
-    'Thể chất hợp: Thiết cốt / Huyền Vũ / Hoang Cổ.']},
-  {k:'phat',ten:'Phật tu',nhom:'Chính đạo',he:['kim','hoa','tho'],core:[
-    'Đồ Phật: kháng tâm ma, chiêu thủ / khống chế; đột phá ít bị trừ vì tâm ma.',
-    'Tông Phật giảm tốc độ tăng tâm ma; giết tu sĩ người bị trừ cống hiến.']},
-  {k:'ma',ten:'Ma tu (huyết)',nhom:'Tà đạo',he:['hoa','vo_sac'],core:[
-    'Mảnh tà ≥ 1/3 ô đang thông (mC=1/3 trong code) thì lưới ngả tà; giữ đủ năm theo fy=[5,5,10,20,40,60] mới đổi đạo cơ.',
-    'Ma niệm tăng uy chiêu tà và hút máu; vượt trần dễ mất kiểm soát / tẩu hỏa.',
-    'Huyền Vũ / Hoang Cổ giảm phản phệ tà; Liệt Dương tăng phản phệ.']},
-  {k:'doc',ten:'Độc cổ',nhom:'Tà đạo',he:['moc','thuy'],core:[
-    'Cần công pháp triệu trùng (ngự linh loại trung) để mở ô cổ trùng; luyện cổ bằng độc nang.',
-    'Mảnh tà ≥ 1/3 ô thông nếu đi đường tà.']},
-  {k:'hop_hoan',ten:'Hợp hoan',nhom:'Tà đạo',he:['hoa','thuy'],core:[
-    'Đồ hợp hoan / song tu; lưới tà khi đủ tỉ lệ mảnh tà trên ô thông.']},
-  {k:'thi',ten:'Luyện thi',nhom:'Tà đạo',he:['tho','am'],core:[
-    'Công pháp thi mở ô thi khôi; luyện thi từ thi du, bạch cốt…',
-    'Mảnh tà ≥ 1/3 ô thông để lưới ngả tà.']},
-  {k:'quy',ten:'Quỷ tu',nhom:'Tà đạo',he:['am','thuy'],core:[
-    'Công pháp hồn mở ô quỷ hồn; luyện hồn từ oán hồn ty, âm phù…',
-    'Mảnh tà ≥ 1/3 ô thông.']},
-  {k:'he_am',ten:'Ám tu',nhom:'Theo hệ',he:['am'],elem:'am',core:[
-    'Hệ Ám là biến dị linh căn (cùng nhóm Lôi/Băng/Phong trong content linh_can).',
-    'Dồn công pháp / pháp khí he:["am"] (Tàng Ảnh Pháp, U Minh Quyết, U Hồn Chỉ, Tịch Hồn Kinh… trong he_am).',
-    'Đặt đúng màu Ám trên lưới để hưởng hệ số màu; dị hỏa hệ Ám (nếu có) cộng uy chiêu cùng hệ theo XOt.',
-    'Ám không mặc định là tà — chỉ khi gắn tag ma/nghịch/thi/quỷ/độc/hợp hoan mới tính mảnh tà.']},
-  {k:'ngu_thu',ten:'Ngự thú',nhom:'Song tu',he:['moc','tho'],core:[
-    'Công pháp ngự thú mở ô thú (tối đa theo rule ngự linh); ấp trứng, nuôi tiến hóa.']},
-  {k:'khoi_loi',ten:'Khôi lỗi',nhom:'Song tu',he:['kim','tho'],core:[
-    'Công pháp khôi lỗi mở ô khôi; luyện từ hàn thiết + yêu đan / đồ phổ.']},
-  {k:'phu',ten:'Phù tu',nhom:'Nghề',he:['hoa','loi'],core:[
-    'Nghề chế phù (phù bút); phù công / hộ / độn dùng giữa trận.']},
-  {k:'tran',ten:'Trận tu',nhom:'Nghề',he:['tho','loi'],core:[
-    'Nghề trận pháp (trận bút); trận bàn sức theo phẩm so cảnh giới; tối đa 2 trận cùng lúc.']},
-  {k:'dan',ten:'Đan tu',nhom:'Nghề',he:['moc','hoa'],core:[
-    'Nghề luyện đan (đan lô + dị hỏa); công pháp thiên về hồi phục / tu luyện.']},
-  {k:'khi',ten:'Khí tu (luyện bảo)',nhom:'Nghề',he:['hoa','kim'],core:[
-    'Nghề luyện bảo (khí lô); tăng thần thức, tự đúc pháp khí.']},
+  {k:'kiem',ten:'Kiếm tu',nhom:'Chính đạo',core:['Đồ kiếm tu đặt trên kinh mạch như đồ khác; thể chất có kiếm cốt thì chiêu kiếm mạnh thêm. (lời game)','Thể chất Kiếm cốt: uy lực kiếm +25%, kinh lộ tối đa 7 công pháp. (dữ liệu game)','Chính đạo: mỗi điểm tâm ma trừ 1% đột phá; hóa giải bằng đan tĩnh tâm, tĩnh tâm ở chùa, sư phụ áp chế. (lời game)']},
+  {k:'the',ten:'Thể tu',nhom:'Chính đạo',core:['Trước hết phải có tâm pháp luyện thể thông mạch; có rồi thì quyền cước và chiêu công của đồ thể tu đánh bằng khí huyết thân thể thay cho pháp lực, chưa có thì đồ thể tu chỉ như món thường. Khí huyết càng dày đòn càng nặng nhưng càng về sau càng tăng chậm: nên kèm căn cốt và đồ tăng khí huyết. (lời game)','Thể chất: Thiết cốt (khí huyết +30%, hộ thể +5%, thể uy lực +15%), Huyền Vũ (khí huyết +40%, tu chậm), Hoang Cổ thánh thể (khí huyết +50%, tu chậm). (dữ liệu game)','Chính đạo: mỗi điểm tâm ma trừ 1% đột phá; hóa giải bằng đan tĩnh tâm, tĩnh tâm ở chùa, sư phụ áp chế. (lời game)']},
+  {k:'phat',ten:'Phật tu',nhom:'Chính đạo',core:['Chính đạo: mỗi điểm tâm ma trừ 1% đột phá; hóa giải bằng đan tĩnh tâm, tĩnh tâm ở chùa, sư phụ áp chế. (lời game)','Game không có mô tả cơ chế riêng nào khác cho lối Phật ngoài nhãn đồ "phat" và sơn môn phái Phật, nên tool không ghi thêm.']},
+  {k:'ma',ten:'Ma tu',nhom:'Tà đạo',core:['Mảnh tà (ma công, tà công, luyện thi, quỷ tu, độc cổ, hợp hoan) chiếm từ 1/3 số ô đang thông trên kinh mạch thì lưới ngả tà; giữ lưới đủ 5/5/10/20/40/60 năm (Phàm Nhân → Hóa Thần) thì đạo cơ đổi theo, đổi lưới về giữa chừng thì mất số năm đã dồn. (lời game)','Ma niệm làm chiêu tà mạnh thêm và tu nhanh hơn, đột phá không bị trừ. Trần khống ma = 30 + 10 × cảnh giới + bản tâm; vượt trần thì trong trận dễ mất kiểm soát, đột phá dễ tẩu hỏa. (lời game)','Mang mảnh tà là có ma khí: vào đất chính đạo có thể bị nhận ra; thành lớn, sơn môn, chùa soi kỹ nhất. (lời game)']},
+  {k:'doc',ten:'Độc cổ',nhom:'Tà đạo',core:['Mảnh tà (ma công, tà công, luyện thi, quỷ tu, độc cổ, hợp hoan) chiếm từ 1/3 số ô đang thông trên kinh mạch thì lưới ngả tà; giữ lưới đủ 5/5/10/20/40/60 năm (Phàm Nhân → Hóa Thần) thì đạo cơ đổi theo, đổi lưới về giữa chừng thì mất số năm đã dồn. (lời game)','Ma niệm làm chiêu tà mạnh thêm và tu nhanh hơn, đột phá không bị trừ. Trần khống ma = 30 + 10 × cảnh giới + bản tâm; vượt trần thì trong trận dễ mất kiểm soát, đột phá dễ tẩu hỏa. (lời game)','Mang mảnh tà là có ma khí: vào đất chính đạo có thể bị nhận ra; thành lớn, sơn môn, chùa soi kỹ nhất. (lời game)','Trùng (ngự linh loại "trung") cần tâm pháp đúng loại thông trên kinh mạch. Thể chất Vạn Độc: độc uy lực +30%. (lời + dữ liệu game)']},
+  {k:'hop_hoan',ten:'Hợp hoan',nhom:'Tà đạo',core:['Mảnh tà (ma công, tà công, luyện thi, quỷ tu, độc cổ, hợp hoan) chiếm từ 1/3 số ô đang thông trên kinh mạch thì lưới ngả tà; giữ lưới đủ 5/5/10/20/40/60 năm (Phàm Nhân → Hóa Thần) thì đạo cơ đổi theo, đổi lưới về giữa chừng thì mất số năm đã dồn. (lời game)','Ma niệm làm chiêu tà mạnh thêm và tu nhanh hơn, đột phá không bị trừ. Trần khống ma = 30 + 10 × cảnh giới + bản tâm; vượt trần thì trong trận dễ mất kiểm soát, đột phá dễ tẩu hỏa. (lời game)','Mang mảnh tà là có ma khí: vào đất chính đạo có thể bị nhận ra; thành lớn, sơn môn, chùa soi kỹ nhất. (lời game)']},
+  {k:'thi',ten:'Luyện thi',nhom:'Tà đạo',core:['Mảnh tà (ma công, tà công, luyện thi, quỷ tu, độc cổ, hợp hoan) chiếm từ 1/3 số ô đang thông trên kinh mạch thì lưới ngả tà; giữ lưới đủ 5/5/10/20/40/60 năm (Phàm Nhân → Hóa Thần) thì đạo cơ đổi theo, đổi lưới về giữa chừng thì mất số năm đã dồn. (lời game)','Ma niệm làm chiêu tà mạnh thêm và tu nhanh hơn, đột phá không bị trừ. Trần khống ma = 30 + 10 × cảnh giới + bản tâm; vượt trần thì trong trận dễ mất kiểm soát, đột phá dễ tẩu hỏa. (lời game)','Mang mảnh tà là có ma khí: vào đất chính đạo có thể bị nhận ra; thành lớn, sơn môn, chùa soi kỹ nhất. (lời game)','Thi khôi (ngự linh loại "thi") cần tâm pháp đúng loại thông trên kinh mạch. Thể chất Âm Hồn: người luyện thi, dưỡng hồn nuôi thi khôi, quỷ hồn tốn ít ngự lực hơn. (lời + dữ liệu game)']},
+  {k:'quy',ten:'Quỷ tu',nhom:'Tà đạo',core:['Mảnh tà (ma công, tà công, luyện thi, quỷ tu, độc cổ, hợp hoan) chiếm từ 1/3 số ô đang thông trên kinh mạch thì lưới ngả tà; giữ lưới đủ 5/5/10/20/40/60 năm (Phàm Nhân → Hóa Thần) thì đạo cơ đổi theo, đổi lưới về giữa chừng thì mất số năm đã dồn. (lời game)','Ma niệm làm chiêu tà mạnh thêm và tu nhanh hơn, đột phá không bị trừ. Trần khống ma = 30 + 10 × cảnh giới + bản tâm; vượt trần thì trong trận dễ mất kiểm soát, đột phá dễ tẩu hỏa. (lời game)','Mang mảnh tà là có ma khí: vào đất chính đạo có thể bị nhận ra; thành lớn, sơn môn, chùa soi kỹ nhất. (lời game)','Quỷ hồn (ngự linh loại "hon") cần tâm pháp đúng loại thông trên kinh mạch. Thể chất Âm Hồn: dưỡng hồn, quỷ hồn tốn ít ngự lực hơn. (lời + dữ liệu game)']},
+  {k:'ngu_thu',ten:'Ngự thú',nhom:'Ngự linh',core:['Ngự thú, trùng, khôi lỗi, thi, hồn cần một tâm pháp đúng loại thông trên kinh mạch; tháo tâm pháp thì con loại đó về túi. Mỗi con tốn thần thức theo tư chất và cảnh giới. (lời game)','Linh thú ai cũng nuôi được; ngự thú, trùng tự lớn theo năm và lớn thêm khi cho ăn; tới bình cảnh phải tiến hóa mới lên tiếp. (lời game)']},
+  {k:'khoi_loi',ten:'Khôi lỗi',nhom:'Ngự linh',core:['Ngự thú, trùng, khôi lỗi, thi, hồn cần một tâm pháp đúng loại thông trên kinh mạch; tháo tâm pháp thì con loại đó về túi. Mỗi con tốn thần thức theo tư chất và cảnh giới. (lời game)','Khôi lỗi, thi, hồn tự tế luyện chậm hơn, chủ luyện thêm thì lớn nhanh; không vượt cảnh giới chủ. (lời game)']},
+  {k:'phu',ten:'Phù tu',nhom:'Nghề',core:['Chế phù: điểm nghề = tính(thần thức) + tính(chỉ số phụ) / 2 (chỉ số chính của luyện đan, chế phù, luyện bảo). Phù dùng giữa trận: công, khống chế, hộ thân; phẩm phù thấp hơn cảnh giới mình thì nhạt đi. (lời game)']},
+  {k:'tran',ten:'Trận tu',nhom:'Nghề',core:['Trận nào cũng bày được; sức theo phẩm trận bàn so với đối tượng (thấp ba phẩm trở xuống không tác dụng, cao hơn thì mạnh hơn). Bày giữa trận là hết lượt, mỗi phe tối đa 2 trận, mỗi trận khóa một phần linh lực tối đa tới khi tan; trận nhãn vỡ thì tan. (lời game)']},
+  {k:'dan',ten:'Đan tu',nhom:'Nghề',core:['Luyện đan dùng chung điểm nghề với chế phù, luyện bảo (thần thức + chỉ số phụ). (lời game)','Thể chất Bách Thảo: dược kháng chậm, đan hồi trong trận mạnh thêm 50%. (dữ liệu game)']},
+  {k:'khi',ten:'Khí tu (luyện bảo)',nhom:'Nghề',core:['Luyện bảo: tinh huyết rút từ thọ nguyên, luyện thành là mất thật; nghề càng cao càng hao ít và càng ít hỏng. (lời game)']},
 ];
-for(const [h,ten] of [['loi','Lôi tu'],['hoa','Hỏa tu'],['bang','Băng tu'],['phong','Phong tu'],['kim','Kim tu'],['moc','Mộc tu'],['thuy','Thủy tu'],['tho','Thổ tu']]){
-  BUILDS.push({k:'he_'+h,ten,nhom:'Theo hệ',he:[h],elem:h,core:[
-    `Dồn công pháp / pháp khí hệ ${ELEMENT_NAMES[h]||h}; đặt đúng màu lưới tối đa ×1,3.`,
-    `Dị hỏa hệ ${ELEMENT_NAMES[h]||h}: chiêu cùng hệ +${DIHOA_PCT[2]}%…+${DIHOA_PCT[7]}% theo phẩm (XOt).`,
-    'Sinh khắc hàng xóm: sinh +15%, khắc −15% (rule kinh mạch trong code game).']});
+for(const [h,ten] of [['am','Ám tu'],['loi','Lôi tu'],['hoa','Hỏa tu'],['bang','Băng tu'],['phong','Phong tu'],['kim','Kim tu'],['moc','Mộc tu'],['thuy','Thủy tu'],['tho','Thổ tu']]){
+  BUILDS.push({k:'he_'+h,ten,nhom:'Theo hệ',elem:h,core:['Mỗi mảnh kề nhau tương sinh +15%, tương khắc −15%; mảnh sinh kém phẩm góp ít hơn (kém một phẩm +10%, kém hai +5%, kém từ ba không góp). Hệ biến dị (Lôi, Phong, Băng, Ám) tính như hệ gốc, Ám như Thủy. (lời game)','Dị hỏa trang bị: chiêu có hệ trùng hệ dị hỏa (trừ vô sắc) được nhân thêm 6% (Huyền), 8% (Địa), 10% (Thiên), 12% (Tiên), 15% (Thần), 20% (Nghịch Thiên). (code game)'].concat(({am:'Thể chất Cửu U: uy lực hệ Ám +25%. Ám không mặc định là tà: mảnh tà chỉ gồm ma công, tà công, luyện thi, quỷ tu, độc cổ, hợp hoan. (dữ liệu + lời game)',bang:'Thể chất Cửu Âm tuyệt mạch: uy lực hệ Băng +25%, tu luyện nhanh hơn. (dữ liệu game)',hoa:'Thể chất Liệt Dương: uy lực hệ Hỏa +25%, nhưng phản phệ tà công ×1,5. (dữ liệu game)'})[h]?[({am:'Thể chất Cửu U: uy lực hệ Ám +25%. Ám không mặc định là tà: mảnh tà chỉ gồm ma công, tà công, luyện thi, quỷ tu, độc cổ, hợp hoan. (dữ liệu + lời game)',bang:'Thể chất Cửu Âm tuyệt mạch: uy lực hệ Băng +25%, tu luyện nhanh hơn. (dữ liệu game)',hoa:'Thể chất Liệt Dương: uy lực hệ Hỏa +25%, nhưng phản phệ tà công ×1,5. (dữ liệu game)'})[h]]:[])});
 }
+// Hệ số chung của kinh mạch — đọc từ hàm computeMeridians/gearOutput của game (mọi lối đều dùng)
+const KM_COMMON=['Mảnh chỉ "thông" khi nối liền đan điền qua các công pháp kề nhau (pháp khí chỉ cần chạm đan điền hoặc chạm công pháp đã thông); mảnh gắn nhãn nghịch chỉ thông khi kề một mảnh khắc nó. (code game)','Sức mảnh = màu × huyệt × sinh khắc × nội tại × kinh lộ. Màu: 0,85 + 0,45 × độ hợp trung bình của các ô mảnh phủ, tức ×0,85 đến ×1,30; ô cùng hệ = 1, ô xám hoặc cùng họ gốc (Lôi/Phong→Mộc, Băng/Ám→Thủy) = 0,5, khác hệ = 0; mảnh vô sắc đặt lên ô xám = 1, lên ô màu = 0,5. (code game)','Huyệt đạo: mảnh phủ 1 huyệt ×2, mỗi huyệt thêm +0,25. Nội tại tương sinh (mảnh nhiều hệ tự sinh nhau) ×1,1. Kinh lộ (chỉ pháp khí): +10% cho mỗi mảnh cùng họ hệ trên chuỗi, tối đa 5 mảnh (Kiếm cốt 7). (code game)','Tốc độ tu, đột phá, kháng tâm ma, an tức của công pháp chỉ phụ thuộc độ thuần thục và phẩm, KHÔNG nhân theo vị trí/màu/huyệt: ở chế độ Tu luyện chỉ cần mảnh thông và tránh cặp nghịch. Chỉ số, khí huyết, hộ thể, linh lực, uy lực chiêu thì nhân theo sức mảnh. (code game)','Hiệu lực mảnh còn nhân theo phẩm và thuần thục: Phàm phẩm ×0,6; đồ Nghịch Thiên theo cảnh giới (×0,6 tới Trúc Cơ, ×0,85 ở Kim Đan, ×1,15 từ Nguyên Anh); thuần thục ×(0,5 + 0,5 × độ thuần thục), Viên mãn ×1,1; linh lực mảnh vô sắc ×0,85; cùng một món mặc hai lần chỉ tính một. (code game)'];
+BUILDS.forEach(b=>{b.core=KM_COMMON.concat(b.core)});
 function buildMatch(b,it){
   if(!b||!it)return false;
   if(b.elem)return A(it.he).includes(b.elem);
@@ -1902,6 +1903,14 @@ function buildPicks(b,R){
   for(const g of Object.keys(out))out[g]=out[g].sort((a,b)=>b.sc-a.sc).slice(0,g==='dungcu'?2:4).map(x=>x.it);
   return out;
 }
+// Hệ hợp của lối = 2 hệ xuất hiện nhiều nhất trong các món mang nhãn lối đó (đếm từ content game), không ghi tay
+const _buildHeMemo={};
+function buildHe(b){
+  if(b.elem)return[b.elem];
+  if(_buildHeMemo[b.k])return _buildHeMemo[b.k];
+  const cnt={};for(const it of C.items.values()){if(!(it.loai==='cong_phap'||it.loai==='phap_khi')||!buildMatch(b,it))continue;for(const h of A(it.he))if(h!=='vo_sac')cnt[h]=(cnt[h]||0)+1}
+  return _buildHeMemo[b.k]=Object.entries(cnt).sort((x,y)=>y[1]-x[1]).slice(0,2).map(x=>x[0]);
+}
 function buildFit(b,nv){
   let s=0;const why=[];const Cc=C;
   let onKm=0,inBag=0;
@@ -1910,10 +1919,11 @@ function buildFit(b,nv){
   if(onKm){s+=3*onKm;why.push(onKm+' món trên kinh mạch')}
   if(inBag){s+=inBag;why.push(inBag+' món trong túi')}
   const lc=A(nv.linhCan?.he);
-  const hm=A(b.he).filter(h=>lc.includes(h));
+  const hm=buildHe(b).filter(h=>lc.includes(h));
   if(hm.length){s+=4*hm.length;why.push('hợp linh căn '+hm.map(h=>ELEMENT_NAMES[h]||h).join('/'))}
   const tc=String(nv.theChat||'');
-  const TC={kiem:'kiem_cot',the:['thiet_cot','hoang_co','huyen_vu'],thi:'am_hon',quy:'am_hon',dan:'bach_thao',ma:['huyen_vu','hoang_co'],doc:['huyen_vu','hoang_co']};
+  // Thể chất hợp: theo mô tả/đặc tính trong content (Kiếm cốt: kiem_uy_luc; Thiết cốt: hợp thể tu; Âm Hồn: luyện thi/dưỡng hồn; Vạn Độc: độc uy lực; Bách Thảo: đan; Huyền Vũ/Hoang Cổ: phản phệ ×0,5; Cửu U/Cửu Âm/Liệt Dương: uy lực hệ +25%)
+  const TC={kiem:'kiem_cot',the:['thiet_cot','hoang_co','huyen_vu'],thi:'am_hon',quy:'am_hon',dan:'bach_thao',doc:'van_doc',ma:['huyen_vu','hoang_co'],hop_hoan:['huyen_vu','hoang_co'],he_am:'cuu_u',he_bang:'cuu_am',he_hoa:'liet_duong'};
   if(TC[b.k]&&[TC[b.k]].flat().some(x=>tc.includes(x))){s+=8;why.push('thể chất hợp')}
   if(tc.includes('liet_duong')&&TA_BUILDS_B.includes(b.k)){s-=6;why.push('Liệt Dương phản phệ tà ×1,5')}
   return{s,why};
