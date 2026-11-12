@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261111-autofarm-v82',ID='vkt2',g=window.game;
+const BUILD='20261112-autofarm-v84',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -335,10 +335,6 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     if(tags.some(t=>raw.includes(t)))return true;
     if(school==='doc'&&(raw.includes('doc')||raw.some(t=>String(t).includes('doc'))))return true;
     if(NL_BUILD[school]!==undefined&&it?.ngu_linh?.loai===NL_BUILD[school])return true;
-    if(school==='am'||school==='he_am'){
-      const hs=A(it?.he);
-      if(hs.includes('am')||raw.includes('am'))return true;
-    }
     if(typeof school==='string'&&school.startsWith('he_')){
       const elem=school.slice(3);
       if(A(it?.he).includes(elem))return true;
@@ -355,6 +351,18 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
   function chosenElements(){const p=S.pref||{},subs=A(p.subs).filter(x=>x&&x!=='none'&&x!==p.mainElement);return{main:p.mainElement||'auto',subs}}
   function preferenceScore(manh,mode){const p=S.pref||{},tags=BUILD_TAGS[p.school]||[],chosen=chosenElements(),Cc=C();let z=0;for(const q of manh){const it=Cc.items.get(q?.m?.item||q?.item);if(!it)continue;const raw=[...A(it.tag),...TP(it.tran_phai)],hs=itemElements(it);if(schoolMatch(p.school,tags,raw,it))z+=mode==='danh'?55:mode==='tu'?70:60;if(chosen.main!=='auto'&&hs.includes(chosen.main))z+=mode==='danh'?10:12;for(const [i,h]of chosen.subs.entries())if(hs.includes(h))z+=Math.max(2,8-i);const align=itemAlignment(it);if(p.alignment&&p.alignment!=='auto')z+=align===p.alignment?14:-18}return z}
   function schoolStats(manh,mode){const school=S.pref?.school||'tu_do';if(school==='tu_do')return{main:school,total:manh.length,matched:manh.length,need:0,deficit:0};let total=0,matched=0;for(const q of manh){const it=C().items.get(q?.m?.item||q?.item);if(!it)continue;total++;const tags=BUILD_TAGS[school]||[],raw=[...A(it.tag),...TP(it.tran_phai)];if(schoolMatch(school,tags,raw,it))matched++}const pw=Number((S.pref&&(S.pref.pathW??S.pref.w))||0);const need=total?(mode==='tu'?Math.ceil(total/3):pw>=2?Math.ceil(total*0.5):Math.floor(total/2)+1):0;return{main:school,total,matched,need,deficit:Math.max(0,need-matched)}}
+  // Điều kiện bắt buộc của từng lối (đọc từ code game): Thể tu cần tâm pháp nhãn "the" đang thông (D4 → chiêu thể đánh bằng khí huyết);
+  // lối ngự linh cần công pháp mở đúng loại ô; Kiếm tu cần kiếm ra chiêu đang thông. Thiếu thì bị trừ, đủ thì cộng — chỉ khi đã chọn theo lối.
+  function schoolReqScore(nv,R){
+    const school=S.pref?.school||'tu_do',pw=Number((S.pref&&(S.pref.pathW??S.pref.w))||0);
+    if(school==='tu_do'||String(school).startsWith('he_')||pw<1)return 0;
+    const Cc=C(),th=[];A(nv.kinhMach?.manh).forEach((m,i)=>{const it=Cc.items.get(m.item);if(it&&R.manh?.[i]?.thong)th.push(it)});
+    let s=0;const ok=b=>{s+=b?2500:-2500};
+    if(school==='the')ok(th.some(it=>it.loai==='cong_phap'&&!it.chieu&&A(it.tag).includes('the')));
+    if(NL_BUILD[school]!==undefined)ok(th.some(it=>it.loai==='cong_phap'&&it.ngu_linh&&it.ngu_linh.loai===NL_BUILD[school]));
+    if(school==='kiem')ok(th.some(it=>it.chieu&&A(it.tag).includes('kiem')));
+    return s;
+  }
   function schoolDominanceScore(manh,mode){
     const k=mode==='tu'?0:mode==='can'?.4:.25,x=schoolStats(manh,mode);
     if(x.main==='tu_do'||x.total<2)return 0;
@@ -478,7 +486,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
         const floorPenalty=(toc<=0?-15000:0)+(dpEff<=0?-20000:0);
         score+=wins*500+combat*1+cult*.45+mq.score+floorPenalty-nghich*3000+filled*32+nPieces*60;
       }
-      score+=preferenceScore(manh,mode)+schoolDominanceScore(manh,mode)+pathShareScore(manh,mode);
+      score+=preferenceScore(manh,mode)+schoolDominanceScore(manh,mode)+pathShareScore(manh,mode);score+=schoolReqScore(nv,R);
       const rules=ruleAudit(nv,R),audit=meridianAudit(nv,R,P),school=schoolStats(manh);
       const out={s:score,wins,n:enemies.length,P,R,mq,enemyCount:enemies.length,rules,audit,school};
       if(cache.size>3000)cache.clear();cache.set(key,out);return out}}
@@ -551,7 +559,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
         if (tags.includes('nghich_thien') || tags.includes('di_bao') || (it.pham_cap ?? 0) >= 8 || it.tran_phai) continue;
         const match = school === 'tu_do' || schoolMatch(school, BUILD_TAGS[school] || [], tags, it)
           || (typeof school === 'string' && school.startsWith('he_') && (it.he || []).includes(school.slice(3)))
-          || ((school === 'am' || school === 'he_am') && (it.he || []).includes('am'));
+          ;
         const isTam = it.loai === 'cong_phap' && !it.chieu;
         // pathW>=2: chỉ đồ lối (+ tâm pháp vô chiêu để đủ linh lực)
         // pathW>=3: chỉ đồ lối
@@ -1777,7 +1785,7 @@ VIEWS.realm=()=>{
 
 /* ───────── Tab: Kinh mạch (Build) ───────── */
 
-const BUILD_PATHS=[['tu_do','Tự do'],['kiem','Kiếm tu'],['the','Thể tu'],['phat','Phật tu'],['ma','Ma tu'],['doc','Độc cổ'],['hop_hoan','Hợp Hoan'],['thi','Luyện Thi'],['quy','Quỷ tu'],['am','Ám tu'],['ngu_thu','Ngự Thú'],['khoi_loi','Khôi Lỗi'],['phu','Phù tu'],['tran','Trận tu'],['dan','Đan tu'],['khi','Luyện Bảo'],['he_loi','Lôi tu'],['he_hoa','Hỏa tu'],['he_bang','Băng tu'],['he_phong','Phong tu'],['he_kim','Kim tu'],['he_moc','Mộc tu'],['he_thuy','Thủy tu'],['he_tho','Thổ tu']];
+const BUILD_PATHS=[['tu_do','Tự do'],['kiem','Kiếm tu'],['the','Thể tu'],['phat','Phật tu'],['ma','Ma tu'],['doc','Độc cổ'],['hop_hoan','Hợp Hoan'],['thi','Luyện Thi'],['quy','Quỷ tu'],['ngu_thu','Ngự Thú'],['khoi_loi','Khôi Lỗi'],['phu','Phù tu'],['tran','Trận tu'],['dan','Đan tu'],['khi','Luyện Bảo'],['he_am','Ám tu'],['he_loi','Lôi tu'],['he_hoa','Hỏa tu'],['he_bang','Băng tu'],['he_phong','Phong tu'],['he_kim','Kim tu'],['he_moc','Mộc tu'],['he_thuy','Thủy tu'],['he_tho','Thổ tu']];
 const ELEMS=[['kim','Kim'],['moc','Mộc'],['thuy','Thủy'],['hoa','Hỏa'],['tho','Thổ'],['bang','Băng'],['loi','Lôi'],['phong','Phong'],['am','Ám'],['vo_sac','Vô sắc']];
 const ELEMENT_NAMES=Object.fromEntries(ELEMS);
 const HE_COLOR={kim:'#c3cad3',moc:'#8fb27a',thuy:'#7fa3c4',hoa:'#d58a6c',tho:'#d2b36e',loi:'#a68cc8',bang:'#b5dbe6',phong:'#9cc7b4',am:'#5b4a78',vo_sac:'#a39b8c'};
@@ -1822,7 +1830,7 @@ const BUILDS=[
   {k:'quy',ten:'Quỷ tu',nhom:'Tà đạo',he:['am','thuy'],core:[
     'Công pháp hồn mở ô quỷ hồn; luyện hồn từ oán hồn ty, âm phù…',
     'Mảnh tà ≥ 1/3 ô thông.']},
-  {k:'am',ten:'Ám tu',nhom:'Theo hệ',he:['am'],elem:'am',core:[
+  {k:'he_am',ten:'Ám tu',nhom:'Theo hệ',he:['am'],elem:'am',core:[
     'Hệ Ám là biến dị linh căn (cùng nhóm Lôi/Băng/Phong trong content linh_can).',
     'Dồn công pháp / pháp khí he:["am"] (Tàng Ảnh Pháp, U Minh Quyết, U Hồn Chỉ, Tịch Hồn Kinh… trong he_am).',
     'Đặt đúng màu Ám trên lưới để hưởng hệ số màu; dị hỏa hệ Ám (nếu có) cộng uy chiêu cùng hệ theo XOt.',
@@ -1849,7 +1857,7 @@ for(const [h,ten] of [['loi','Lôi tu'],['hoa','Hỏa tu'],['bang','Băng tu'],[
 function buildMatch(b,it){
   if(!b||!it)return false;
   if(b.elem)return A(it.he).includes(b.elem);
-  return schoolsOf(it).includes(b.k)||(b.k==='am'&&A(it.he).includes('am'));
+  return schoolsOf(it).includes(b.k);
 }
 function itemGroup(it){
   if(it.loai==='cong_phap'||it.loai==='phap_khi'){
@@ -2597,7 +2605,7 @@ VIEWS.breakthrough=()=>{
         try{retreat=K.to?.(c);if(retreat&&!retreat.chan&&N(retreat.tuViNam)&&retreat.tuViNam>0&&N(need)){years=need/retreat.tuViNam;try{stagn=K.Nb?.(c,retreat,{dan:[],danSo:{}},years)<need*.97}catch{}}}catch{}
         try{const h=K.kR(c,{dan:[],thieuDot:0});base=h.tiLe;const usable=[...new Set(h.danDung||[])],burn=[0,...A(h.thieuDot).map((x,i)=>x.duoc?i+1:null).filter(Boolean)],sets=[[],...usable.map(x=>[x])];
           for(let i=0;i<usable.length;i++)for(let j=i+1;j<usable.length;j++)sets.push([usable[i],usable[j]]);
-          for(const dan of sets)for(const thieuDot of burn){try{const z=K.kR(coreContext(),{dan,thieuDot});options.push({dan,thieuDot,rate:z.tiLe,burn:thieuDot?A(h.thieuDot)[thieuDot-1]?.nam:null})}catch{}}
+          for(const dan of sets)for(const thieuDot of burn){try{const z=K.kR(coreContext(),{dan,thieuDot});options.push({dan,thieuDot,rate:z.tiLe,burn:thieuDot?A(h.thieuDot)[thieuDot-1]?.nam:null,nguon:A(z.nguon)})}catch{}}
           options.sort((a,b)=>b.rate-a.rate)}catch{}
       }catch{}
     }
@@ -2612,7 +2620,8 @@ VIEWS.breakthrough=()=>{
     /* 3. đột phá */
     const next=cg+1,pills=[...C.items.values()].filter(it=>it.dot_pha&&typeof it.dot_pha==='object'&&(it.dot_pha.canh_gioi===undefined||it.dot_pha.canh_gioi===next)).sort((a,b)=>(b.dot_pha?.ti_le||0)-(a.dot_pha?.ti_le||0)).slice(0,10);
     const best=options[0];
-    if(!top)out.push(`<h3>Đột phá lên ${E(REALMS[next]||'cảnh giới kế')}</h3><div class="panel">${base!==null?`<div class="sub">Không dùng gì: <b>${F(base*100)}%</b></div>`:'<div class="sub">Chưa tính được tỉ lệ ở trạng thái hiện tại (cần đạt Đại viên mãn).</div>'}${best?`<div class="tags" style="margin:6px 0"><span class="tag g">Tốt nhất với đồ đang có: ${best.dan.length?best.dan.map(nm).join(' + '):'không dùng đan'}${best.thieuDot?` · đốt ${best.thieuDot} nấc thọ${N(best.burn)?' (−'+F(best.burn)+' năm)':''}`:''} → ${F(best.rate*100)}%</span></div>`:''}${options.length>1?`<details><summary>Các phương án khác</summary>${options.slice(0,10).map(x=>`<div class="row"><span>${x.dan.length?x.dan.map(nm).join(' + '):'Không dùng đan'}${x.thieuDot?` · đốt ${x.thieuDot} nấc`:''}</span><b>${F(x.rate*100)}%</b></div>`).join('')}</details>`:''}<div class="sub" style="margin:8px 0 4px">Đan hỗ trợ đột phá</div>${pills.map(it=>pillRow(it,`+${F((it.dot_pha.ti_le||0)*100)}%`)).join('')||'<div class="sub">Không có đan phù hợp.</div>'}<div class="sub" style="margin-top:6px">Công pháp, pháp khí có nội tại "đột phá" trên kinh mạch cũng cộng thêm tỉ lệ — dùng tab Kinh mạch, chọn hướng Tu luyện.</div></div>`);
+    const srcRows=best&&best.nguon.length?`<div class="sub" style="margin:8px 0 4px">Từng khoản trong phương án tốt nhất (game tính)</div>${best.nguon.map(n=>`<div class="row"><span>${E(T(n.ten))}</span><b style="color:${n.gt<0?'#a3342b':'inherit'}">${n.gt>=0?'+':''}${F(Math.round(n.gt*1000)/10)}%</b></div>`).join('')}`:'';
+    if(!top)out.push(`<h3>Đột phá lên ${E(REALMS[next]||'cảnh giới kế')}</h3><div class="panel">${base!==null?`<div class="sub">Không dùng gì: <b>${F(base*100)}%</b></div>`:'<div class="sub">Chưa tính được tỉ lệ ở trạng thái hiện tại (cần đạt Đại viên mãn).</div>'}${best?`<div class="tags" style="margin:6px 0"><span class="tag g">Tốt nhất với đồ đang có: ${best.dan.length?best.dan.map(nm).join(' + '):'không dùng đan'}${best.thieuDot?` · đốt ${best.thieuDot} nấc thọ${N(best.burn)?' (−'+F(best.burn)+' năm)':''}`:''} → ${F(best.rate*100)}%</span></div>`:''}${srcRows}${options.length>1?`<details><summary>Các phương án khác</summary>${options.slice(0,10).map(x=>`<div class="row"><span>${x.dan.length?x.dan.map(nm).join(' + '):'Không dùng đan'}${x.thieuDot?` · đốt ${x.thieuDot} nấc`:''}</span><b>${F(x.rate*100)}%</b></div>`).join('')}</details>`:''}<div class="sub" style="margin:8px 0 4px">Đan hỗ trợ đột phá</div>${pills.map(it=>pillRow(it,`+${F((it.dot_pha.ti_le||0)*100)}%`)).join('')||'<div class="sub">Không có đan phù hợp.</div>'}<div class="sub" style="margin-top:6px">Công pháp, pháp khí có nội tại "đột phá" trên kinh mạch cũng cộng thêm tỉ lệ — dùng tab Kinh mạch, chọn hướng Tu luyện.</div></div>`);
     /* 4. chấn tổn */
     const scar=Number(run().flags?.[`dot_pha_that_bai.${next}`]||0);
     if(scar>0){const heal=effectItems('heal_breakthrough_scar').filter(it=>Number(effectOf(it,'heal_breakthrough_scar'))===next);out.push(`<h3>Chấn tổn đột phá</h3><div class="panel"><div class="sub">Đạo cơ đang có <b>${scar}</b> vết rạn do đột phá thất bại, làm giảm tỉ lệ lần sau. Đan chữa chấn tổn:</div>${heal.map(it=>pillRow(it,'chữa 1 vết')).join('')||'<div class="sub">Không có đan chữa phù hợp.</div>'}</div>`)}
@@ -5655,16 +5664,22 @@ function sectRows(){
 const deadLast=fn=>(a,b)=>(+a.destroyed-+b.destroyed)||(a.destroyed?b.destroyedYear-a.destroyedYear:fn(a,b));
 const SSORT={near:{name:'Gần nhất',fn:deadLast((a,b)=>(+b.mine-+a.mine)||(a.travel-b.travel))},tier:{name:'Quy mô lớn trước',fn:deadLast((a,b)=>(TANG_RANK[a.tang]-TANG_RANK[b.tang])||(a.travel-b.travel))},recruit:{name:'Đang tuyển đồ trước',fn:deadLast((a,b)=>((b.recruit!==null)-(a.recruit!==null))||(a.travel-b.travel))},name:{name:'Theo tên',fn:deadLast((a,b)=>a.title.localeCompare(b.title,'vi'))}};
 const sUi={q:'',sort:'near',phai:'all',cm:'all',tang:'all',he:'all',hideDead:false};
+// Lối tu của sơn môn = trường phái `phai` (đọc từ dữ liệu game) → dùng đúng danh sách/nhãn của tab Kinh mạch (BUILDS); lối theo hệ lọc theo `he` của sơn môn
+const sectBuild=k=>BUILDS.find(b=>b.k===k);
+const sectLabel=ph=>(sectBuild(ph)&&!sectBuild(ph).elem?sectBuild(ph).ten:SECT_PHAI[ph])||ph||'';
+const sectMatchBuild=(x,k)=>{const b=sectBuild(k);if(b&&b.elem)return x.he.includes(b.elem);return x.phai===k};
+const sectPathK=()=>{const w=bld.path?.w||0,k=bld.path?.k||'';return k&&w>0&&sectBuild(k)?k:''};
 const personLine=(label,p)=>p?`<div class="sub" style="grid-column:2/4">${label}: ${p.known?`<b style="color:${p.alive?'var(--paper)':'#a3342b'}">${E(p.name)}</b>${p.realm?` · ${E(p.realm)}`:''}${p.alive?'':' · đã mất'}`:'<span>chưa rõ danh tính</span>'}</div>`:'';
 VIEWS.sect=()=>{
-  const all=sectRows(),q=norm(sUi.q),phais=[...new Set(all.map(x=>x.phai))].sort((a,b)=>(SECT_PHAI[a]||a).localeCompare(SECT_PHAI[b]||b,'vi'));
-  const rows=all.filter(x=>(sUi.phai==='all'||x.phai===sUi.phai)&&(sUi.cm==='all'||x.cm===sUi.cm)&&(sUi.tang==='all'||x.tang===sUi.tang)&&(sUi.he==='all'||x.he.includes(sUi.he))&&!(sUi.hideDead&&x.destroyed)&&(!q||norm([x.title,x.han,SECT_PHAI[x.phai],SECT_TANG[x.tang],SECT_CM[x.cm],x.country,x.leader?.name,x.he.map(h=>ELEMENT_NAMES[h]).join(' ')].join(' ')).includes(q))).sort(SSORT[sUi.sort].fn);
+  const all=sectRows(),q=norm(sUi.q),phais=[...new Set(all.map(x=>x.phai).filter(Boolean))].sort((a,b)=>{const ia=BUILDS.findIndex(x=>x.k===a),ib=BUILDS.findIndex(x=>x.k===b);return (ia<0?99:ia)-(ib<0?99:ib)||sectLabel(a).localeCompare(sectLabel(b),'vi')});
+  const pK=sectPathK(),fk=sUi.phai==='path'?(pK||'all'):sUi.phai;
+  const rows=all.filter(x=>(fk==='all'||sectMatchBuild(x,fk))&&(sUi.cm==='all'||x.cm===sUi.cm)&&(sUi.tang==='all'||x.tang===sUi.tang)&&(sUi.he==='all'||x.he.includes(sUi.he))&&!(sUi.hideDead&&x.destroyed)&&(!q||norm([x.title,x.han,SECT_TANG[x.tang],SECT_CM[x.cm],sectLabel(x.phai),x.country,x.leader?.name,x.he.map(h=>ELEMENT_NAMES[h]).join(' ')].join(' ')).includes(q))).sort(SSORT[sUi.sort].fn);
   const sel=(id,arr,v)=>`<select id="${id}" class="grow">${arr.map(([k,n])=>`<option value="${E(k)}" ${k===v?'selected':''}>${E(n)}</option>`).join('')}</select>`;
   const rk=run().tongMon,ndead=all.filter(x=>x.destroyed).length;
   body.innerHTML=`${rk?`<div class="panel"><b style="color:var(--gold)">Bạn đang ở ${E(slotLabel(rk.slot))}</b><div class="sub">Cấp bậc: ${E(RANKS[rk.capBac??0]||'—')}${N(me().congHien)?` · công hiến ${F(me().congHien)}`:''}</div></div>`:''}<div class="bar"><input type="search" id="s-q" class="grow" placeholder="Tìm tông môn, chưởng môn, hệ…" value="${E(sUi.q)}"></div>
   <div class="chips"><button class="chip ${sUi.tang==='all'?'on':''}" data-tang="all">Mọi quy mô</button>${Object.entries(SECT_TANG).map(([k,n])=>`<button class="chip ${sUi.tang===k?'on':''}" data-tang="${k}">${E(n)}</button>`).join('')}${ndead?`<button class="chip ${sUi.hideDead?'on':''}" id="s-dead">Ẩn đã bị diệt (${ndead})</button>`:''}</div>
-  <div class="bar">${sel('s-phai',[['all','Mọi lối tu'],...phais.map(p=>[p,SECT_PHAI[p]||p])],sUi.phai)}${sel('s-sort',Object.entries(SSORT).map(([k,v])=>[k,v.name]),sUi.sort)}${sel('s-cm',[['all','Chính / Ma'],...Object.entries(SECT_CM)],sUi.cm)}${sel('s-he',[['all','Mọi hệ'],...ELEMS],sUi.he)}</div><div class="sum">${rows.length}/${all.length} tông môn</div>
-  ${rows.map(x=>`<article class="card ${x.destroyed?'late':x.mine?'':'d'+(x.danger.rank>=2?x.danger.rank:0)}" data-slot="${E(x.slot)}" data-title="${E(x.title)}"><div class="ico">${x.destroyed?'滅':'宗'}</div><div><b>${E(x.title)}${x.han?` <small>${E(x.han)}</small>`:''}</b><small>${E(SECT_TANG[x.tang]||'')} · ${E(SECT_PHAI[x.phai]||x.phai||'')} · ${E(x.he.map(h=>ELEMENT_NAMES[h]||h).join('/'))}</small></div><div class="side">${fmtTime(x.travel)}<small>${fmtMiles(x.miles)}</small></div>${personLine('Chưởng môn',x.leader)}${personLine('Phó chưởng môn',x.vice)}${personLine('Tổ sư',x.ancestor)}<div class="tags">${x.destroyed?`<span class="tag r">Đã bị diệt năm ${Math.floor(x.destroyedYear)}</span>`:''}${x.mine?'<span class="tag g">Tông môn của bạn</span>':''}${x.recruit!==null&&!x.destroyed?`<span class="tag o">Đang tuyển đồ · còn ${fmtTime(Math.max(0,x.recruit))}</span>`:''}${x.recruit!==null&&x.thi&&!x.destroyed?'<span class="tag">Bạn đã thi kỳ này</span>':''}<span class="tag ${x.cm==='chinh'?'g':x.cm==='trung_lap'?'':'r'}">${E(SECT_CM[x.cm]||'')}</span>${x.country?`<span class="tag">${E(x.country)} · ${E(SECT_REL[x.rel]||'')}</span>`:''}${x.hidden?'<span class="tag">Ẩn thế</span>':''}${x.explored?'':'<span class="tag">Chưa khám phá</span>'}${x.danger.rank>=1&&!x.destroyed?`<span class="tag ${x.danger.rank>=2?'r':''}">${x.danger.label}</span>`:''}</div><div class="acts"><button class="btn" data-act="view">Xem bản đồ</button>${x.destroyed?'':'<button class="btn pri" data-act="go">Đường đi an toàn</button>'}</div></article>`).join('')||'<div class="empty">Không có tông môn phù hợp.</div>'}`;
+  <div class="bar">${sel('s-phai',[['all','Mọi lối tu'],...(pK?[['path','Lối đang theo ở Kinh mạch: '+sectBuild(pK).ten]]:[]),...phais.map(p=>[p,(sectBuild(p)&&!sectBuild(p).elem?'['+sectBuild(p).nhom+'] ':'')+sectLabel(p)])],sUi.phai==='path'&&!pK?'all':sUi.phai)}${sel('s-sort',Object.entries(SSORT).map(([k,v])=>[k,v.name]),sUi.sort)}${sel('s-cm',[['all','Chính / Ma'],...Object.entries(SECT_CM)],sUi.cm)}${sel('s-he',[['all','Mọi hệ'],...ELEMS],sUi.he)}</div><div class="sum">${rows.length}/${all.length} tông môn</div>
+  ${rows.map(x=>`<article class="card ${x.destroyed?'late':x.mine?'':'d'+(x.danger.rank>=2?x.danger.rank:0)}" data-slot="${E(x.slot)}" data-title="${E(x.title)}"><div class="ico">${x.destroyed?'滅':'宗'}</div><div><b>${E(x.title)}${x.han?` <small>${E(x.han)}</small>`:''}</b><small>${E(SECT_TANG[x.tang]||'')} · ${E(sectLabel(x.phai))}${pK&&sectMatchBuild(x,pK)?' ✓ đúng lối đang theo':''} · ${E(x.he.map(h=>ELEMENT_NAMES[h]||h).join('/'))}</small></div><div class="side">${fmtTime(x.travel)}<small>${fmtMiles(x.miles)}</small></div>${personLine('Chưởng môn',x.leader)}${personLine('Phó chưởng môn',x.vice)}${personLine('Tổ sư',x.ancestor)}<div class="tags">${x.destroyed?`<span class="tag r">Đã bị diệt năm ${Math.floor(x.destroyedYear)}</span>`:''}${x.mine?'<span class="tag g">Tông môn của bạn</span>':''}${x.recruit!==null&&!x.destroyed?`<span class="tag o">Đang tuyển đồ · còn ${fmtTime(Math.max(0,x.recruit))}</span>`:''}${x.recruit!==null&&x.thi&&!x.destroyed?'<span class="tag">Bạn đã thi kỳ này</span>':''}<span class="tag ${x.cm==='chinh'?'g':x.cm==='trung_lap'?'':'r'}">${E(SECT_CM[x.cm]||'')}</span>${x.country?`<span class="tag">${E(x.country)} · ${E(SECT_REL[x.rel]||'')}</span>`:''}${x.hidden?'<span class="tag">Ẩn thế</span>':''}${x.explored?'':'<span class="tag">Chưa khám phá</span>'}${x.danger.rank>=1&&!x.destroyed?`<span class="tag ${x.danger.rank>=2?'r':''}">${x.danger.label}</span>`:''}</div><div class="acts"><button class="btn" data-act="view">Xem bản đồ</button>${x.destroyed?'':'<button class="btn pri" data-act="go">Đường đi an toàn</button>'}</div></article>`).join('')||'<div class="empty">Không có tông môn phù hợp.</div>'}`;
   let t;$(body,'#s-q').oninput=e=>{sUi.q=e.target.value;clearTimeout(t);t=setTimeout(()=>{VIEWS.sect();const i=$(body,'#s-q');i.focus();i.setSelectionRange(i.value.length,i.value.length)},220)};
   $$(body,'[data-tang]').forEach(b=>b.onclick=()=>{sUi.tang=b.dataset.tang;render()});
   $(body,'#s-dead')?.addEventListener('click',()=>{sUi.hideDead=!sUi.hideDead;render()});
@@ -5804,29 +5819,28 @@ function vkEnhance(){
 let vkRaf=0;const vkMo=new MutationObserver(()=>{if(!vkRaf)vkRaf=requestAnimationFrame(()=>{vkRaf=0;vkEnhance()})});
 try{vkMo.observe(panel,{childList:true,subtree:true});vkEnhance()}catch{}
 
-/* Gắn icon + nút Auto vào thẻ nhân vật của game (nếu có); không có thẻ thì trôi tự do như cũ */
+/* Icon tool + nút Tạm dừng/Dừng/Tiếp tục là nút nổi trên màn hình (dễ bấm). Chỉ khung thống kê Auto gắn vào thẻ nhân vật của game. */
 function vkDock(){
   const card=document.querySelector('.hud-trang-thai');
   const bar=document.getElementById(ID+'-afbar'),sum=document.getElementById(ID+'-afsum');
+  let undocked=false;
+  if(fab.classList.contains('docked')||fab.parentElement!==document.body){document.body.appendChild(fab);fab.classList.remove('docked');fab.style.display=ui.isOpen?'none':'';undocked=true}
+  if(bar&&(bar.classList.contains('incard')||bar.parentElement!==document.body)){document.body.appendChild(bar);bar.classList.remove('incard');bar.style.cssText='';undocked=true}
   if(card){
-    if(fab.parentElement!==card){card.appendChild(fab);fab.classList.add('docked');fab.style.display=''}
-    for(const el of [bar,sum])if(el&&el.parentElement!==card){card.appendChild(el);el.classList.add('incard');el.style.cssText=''}
+    if(sum&&sum.parentElement!==card){card.appendChild(sum);sum.classList.add('incard');sum.style.cssText=''}
     if(sum){
       try{
         const nm=card.querySelector('.hud-danh .ten'),cr=card.getBoundingClientRect();
         if(nm&&cr.width){
-          const rg=document.createRange();rg.selectNodeContents(nm);const nr=rg.getBoundingClientRect(),sw=sum.offsetWidth,left=nr.right-cr.left+12,limit=cr.width-108;
+          const rg=document.createRange();rg.selectNodeContents(nm);const nr=rg.getBoundingClientRect(),left=nr.right-cr.left+12,limit=cr.width-108;
           sum.classList.add('one');const w1=sum.offsetWidth;
           if(left+w1<=limit){sum.style.left=left+'px';sum.style.top=(nr.top-cr.top+2)+'px';sum.style.right='auto'}
           else{sum.classList.remove('one');sum.style.left='auto';sum.style.right='6px';sum.style.top='30px'}
         }
       }catch{}
     }
-  }else{
-    if(fab.classList.contains('docked')){document.body.appendChild(fab);fab.classList.remove('docked')}
-    for(const el of [bar,sum])if(el&&el.classList.contains('incard')){document.body.appendChild(el);el.classList.remove('incard')}
-    if(bar&&!bar.classList.contains('incard')){try{AutoFarm.running&&AutoFarm.syncFab()}catch{}}
-  }
+  }else if(sum&&sum.classList.contains('incard')){document.body.appendChild(sum);sum.classList.remove('incard')}
+  if(undocked){try{AutoFarm.running&&AutoFarm.syncFab()}catch{}}
   try{placeToasts()}catch{}
 }
 let dkRaf=0;const dkMo=new MutationObserver(()=>{if(!dkRaf)dkRaf=requestAnimationFrame(()=>{dkRaf=0;try{vkDock()}catch{}})});
