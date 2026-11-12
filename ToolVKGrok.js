@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261112-autofarm-v87',ID='vkt2',g=window.game;
+const BUILD='20261112-autofarm-v90',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -72,10 +72,10 @@ function danger(slot){
 function slotRevealed(slot){
   try{const v=run().vungDaMo;if(!Array.isArray(v))return true;const t=W.slot?.(slot);if(!t)return true;return v.some(([x,y,r])=>(x-t.x)**2+(y-t.y)**2<=r*r)}catch{return true}
 }
-function travelBlock(slot){
+function travelBlock(slot,withFog=false){
   try{
     const r=run();if(!slot||slot===r.viTri)return'';
-    if(!slotRevealed(slot))return'Nơi đó còn phủ mây, chưa đi tới được';
+    if(withFog&&!slotRevealed(slot))return'Nơi đó còn phủ mây, chưa đi tới được';
     let sea=null;try{sea=W.seaPoint?.(slot)||W.seaPoint?.(r.viTri)}catch{}
     if(sea)return'';
     let a,b;try{a=W.tho?.(r.viTri);b=W.tho?.(slot)}catch{}
@@ -350,7 +350,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
   function breakPenalty(nghich,nv){return Math.min(0.15,0.03*(nghich||0)*phanPheMul(nv))}
   function chosenElements(){const p=S.pref||{},subs=A(p.subs).filter(x=>x&&x!=='none'&&x!==p.mainElement);return{main:p.mainElement||'auto',subs}}
   function preferenceScore(manh,mode){const p=S.pref||{},tags=BUILD_TAGS[p.school]||[],chosen=chosenElements(),Cc=C();let z=0;for(const q of manh){const it=Cc.items.get(q?.m?.item||q?.item);if(!it)continue;const raw=[...A(it.tag),...TP(it.tran_phai)],hs=itemElements(it);if(schoolMatch(p.school,tags,raw,it))z+=mode==='danh'?55:mode==='tu'?70:60;if(chosen.main!=='auto'&&hs.includes(chosen.main))z+=mode==='danh'?10:12;for(const [i,h]of chosen.subs.entries())if(hs.includes(h))z+=Math.max(2,8-i);const align=itemAlignment(it);if(p.alignment&&p.alignment!=='auto')z+=align===p.alignment?14:-18}return z}
-  function schoolStats(manh,mode){const school=S.pref?.school||'tu_do';if(school==='tu_do')return{main:school,total:manh.length,matched:manh.length,need:0,deficit:0};let total=0,matched=0;for(const q of manh){const it=C().items.get(q?.m?.item||q?.item);if(!it)continue;total++;const tags=BUILD_TAGS[school]||[],raw=[...A(it.tag),...TP(it.tran_phai)];if(schoolMatch(school,tags,raw,it))matched++}const pw=Number((S.pref&&(S.pref.pathW??S.pref.w))||0);const need=total?(mode==='tu'?Math.ceil(total/3):pw>=2?Math.ceil(total*0.5):Math.floor(total/2)+1):0;return{main:school,total,matched,need,deficit:Math.max(0,need-matched)}}
+  function schoolStats(manh,mode){const school=S.pref?.school||'tu_do';if(school==='tu_do')return{main:school,total:manh.length,matched:manh.length,need:0,deficit:0};let total=0,matched=0;for(const q of manh){const it=C().items.get(q?.m?.item||q?.item);if(!it)continue;total++;const tags=BUILD_TAGS[school]||[],raw=[...A(it.tag),...TP(it.tran_phai)];if(schoolMatch(school,tags,raw,it))matched++}const pw=Number((S.pref&&(S.pref.pathW??S.pref.w))||0);const need=(total&&!(S.pref&&S.pref._rx))?(mode==='tu'?Math.ceil(total/3):pw>=2?Math.ceil(total*0.5):Math.floor(total/2)+1):0;return{main:school,total,matched,need,deficit:Math.max(0,need-matched)}}
   // Điều kiện bắt buộc của từng lối (đọc từ code game): Thể tu cần tâm pháp nhãn "the" đang thông (D4 → chiêu thể đánh bằng khí huyết);
   // lối ngự linh cần công pháp mở đúng loại ô; Kiếm tu cần kiếm ra chiêu đang thông. Thiếu thì bị trừ, đủ thì cộng — chỉ khi đã chọn theo lối.
   function schoolReqScore(nv,R){
@@ -399,7 +399,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     const pw=Number((S.pref&& (S.pref.pathW??S.pref.w))||0);
     let s=0;
     // Phủ lối: khi đã chọn lối, muốn càng cao càng tốt; <1/3 phạt nặng; pw>=2 muốn >=50%
-    const need=mode==='tu'?(pw>=1?1/3:0):pw>=2?0.5:pw>=1?1/3:0;
+    const need=(S.pref&&S.pref._rx)?0:mode==='tu'?(pw>=1?1/3:0):pw>=2?0.5:pw>=1?1/3:0;
     if(need>0&&p.shareMatch<need-1e-9)s-=50000*(need-p.shareMatch);
     else s+=8000*p.shareMatch*k;
     // Đếm món khớp lối
@@ -494,6 +494,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     const K = S.core, c = C();
     const cg = nv0.canhGioi || 0;
     const p = S.pref || {};
+    if (S.pref) S.pref._rx = false;
     const school = p.school || 'tu_do';
     const strict = !!(school && school !== 'tu_do' && Number(p.pathW||p.w||0) >= 2);
     let pool;
@@ -507,7 +508,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
           if (!it0 || (it0.loai !== 'cong_phap' && it0.loai !== 'phap_khi') || !it0.hinh || (it0.canh_gioi ?? 0) > cg) return false;
           return schoolMatch(school, tags0, [...A(it0.tag), ...TP(it0.tran_phai)].map(String), it0);
         }).length;
-        if (nBag < 6) { S.pref._relaxed = nBag; pw = 1; } else S.pref._relaxed = 0;
+        if (nBag < 6) { S.pref._relaxed = nBag; S.pref._rx = true; pw = 1; } else { S.pref._relaxed = 0; S.pref._rx = false; }
       }
       pool = Object.keys(nv0.tuiDo || {}).filter((id) => {
         const it = c.items.get(id);
@@ -549,7 +550,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
           if (t0.includes('nghich_thien') || t0.includes('di_bao') || (it0.pham_cap ?? 0) >= 8 || it0.tran_phai) continue;
           if (schoolMatch(school, BUILD_TAGS[school] || [], t0, it0)) nMatch++;
         }
-        if (nMatch < 10) { S.pref._relaxed = nMatch; pw = 1; } else S.pref._relaxed = 0;
+        if (nMatch < 10) { S.pref._relaxed = nMatch; S.pref._rx = true; pw = 1; } else { S.pref._relaxed = 0; S.pref._rx = false; }
       }
       for (const [id, it] of c.items) {
         if (!it || (it.loai !== 'cong_phap' && it.loai !== 'phap_khi') || !it.hinh) continue;
@@ -1659,7 +1660,7 @@ const CSS=`
 `;
 const styleEl=document.createElement('style');styleEl.id=ID+'-style';styleEl.textContent=CSS;document.head.appendChild(styleEl);
 
-const TABS=[['map','地','Bản đồ'],['realm','秘','Bí cảnh&Dị bảo'],['auto','自','Auto Farm'],['bounty','賞','Treo thưởng'],['people','人','Nhân mạch'],['sect','宗','Tông môn'],['breakthrough','破','Đột phá'],['build','脈','Kinh mạch'],['items','寶','Vật phẩm'],['check','察','Kiểm tra']];
+const TABS=[['quest','事','Nhiệm vụ'],['map','地','Bản đồ'],['realm','秘','Bí cảnh&Dị bảo'],['auto','自','Auto Farm'],['bounty','賞','Treo thưởng'],['people','人','Nhân mạch'],['sect','宗','Tông môn'],['breakthrough','破','Đột phá'],['build','脈','Kinh mạch'],['items','寶','Vật phẩm'],['check','察','Kiểm tra']];
 const panel=document.createElement('div');panel.id=ID;panel.setAttribute('role','dialog');
 panel.innerHTML=`<header><div class="seal">仙</div><div><h1>Vạn Kiếp Trợ Thủ</h1><small id="${ID}-sub"></small></div><button id="${ID}-x" aria-label="Thu gọn">✕</button></header><div class="body" id="${ID}-body"></div><nav>${TABS.map(([k,i,n])=>`<button data-t="${k}"><i>${i}</i>${n}</button>`).join('')}</nav>`;
 const fab=document.createElement('div');fab.id=ID+'-fab';fab.innerHTML='仙<b></b>';fab.title='Vạn Kiếp Trợ Thủ';
@@ -1668,7 +1669,7 @@ const toasts=document.createElement('div');toasts.id=ID+'-toasts';
 const modal=document.createElement('div');modal.id=ID+'-modal';
 document.body.append(panel,fab,chip,toasts,modal);
 const body=$(panel,'.body'),navEl=$(panel,'nav');
-const ui={tab:store.get('tab','map'),isOpen:false,tabState:{}};
+const ui={tab:store.get('tab','quest'),isOpen:false,tabState:{}};
 
 function placeToasts(){try{const r=fab.getBoundingClientRect(),top=r.top+r.height/2<innerHeight/2;toasts.style.top=top?'auto':'10px';toasts.style.bottom=top?'10px':'auto'}catch{}}
 function toast(msg,kind='',ms=4200){
@@ -1702,15 +1703,16 @@ const hdrSub=()=>{const r=run(),i=info(r.viTri);const cg=C.canhGioi?.get?.(me().
 function render(){
   if(!ui.isOpen)return;
   const keep=body.scrollTop;$(panel,'#'+ID+'-sub').textContent=hdrSub();
-  ui._sig=null;const fn=VIEWS[ui.tab]||VIEWS.map;fn();syncNav();body.scrollTop=keep;
+  ui._sig=null;const fn=VIEWS[ui.tab]||VIEWS.quest;fn();syncNav();body.scrollTop=keep;
 }
 function softRender(){if(!ui.isOpen)return;const a=document.activeElement;if(a&&panel.contains(a)&&/INPUT|SELECT/.test(a.tagName))return;if(ui.tab==='build'||ui.tab==='check'||ui.tab==='breakthrough')return;if(ui.tab==='auto'&&AutoFarm?.running){AutoFarm.refreshLogOnly?.();return}
-  if(ui.tab==='map'||ui.tab==='realm'){let sg='';try{sg=tabSig(ui.tab)}catch{}if(sg&&sg===ui._sig){const sub=$(panel,'#'+ID+'-sub');if(sub)sub.textContent=hdrSub();return}render();ui._sig=sg;return}
+  if(ui.tab==='quest'||ui.tab==='realm'||ui.tab==='map'){let sg='';try{sg=tabSig(ui.tab)}catch{}if(sg&&sg===ui._sig){const sub=$(panel,'#'+ID+'-sub');if(sub)sub.textContent=hdrSub();return}render();ui._sig=sg;return}
   render()}
 function tabSig(tab){
   const q=x=>N(x)?(+x).toFixed(2):'';
   const yr=Math.floor(nowYear()*20)+'|'+run().viTri+'|'+Math.floor(Number(me().canhGioi??0))+'.'+Number(me().tieuCanhGioi??0);
-  if(tab==='map')return yr+'|'+eventRows().map(r=>r.key+':'+(r.ok?1:0)+':'+q(r.travel)+':'+q(r.slack)).join(';');
+  if(tab==='map')return yr+'|'+(ui._mapSig||'');
+  if(tab==='quest')return yr+'|'+eventRows().map(r=>r.key+':'+(r.ok?1:0)+':'+q(r.travel)+':'+q(r.slack)).join(';');
   const bc=realmRows(),tr=treasureRows();
   return yr+'|'+bc.map(r=>r.slot+(r.ok?1:0)+(r.openNow?1:0)+q(r.travel)+q(r.opensIn)+q(r.closesIn)).join(';')+'|'+tr.active.map(r=>r.key+q(r.travel)+(r.ok?1:0)).join(';')+'|'+tr.waiting.map(r=>r.id+q(r.cd)).join(';');
 }
@@ -1762,9 +1764,9 @@ const Alerts={
   markSeen(){for(const k of this.cur.keys())this.seen.add(k);this.seen=new Set([...this.seen].filter(k=>this.cur.has(k)||this.seen.size<200));store.set('seen.'+run().seed,[...this.seen]);this.count={realm:0};fab.classList.remove('has','pulse');$(fab,'b').textContent=''}
 };
 
-/* ───────── Tab: Bản đồ ───────── */
+/* ───────── Tab: Nhiệm vụ (trước đây là «Bản đồ») ───────── */
 const mapUi={q:'',sort:'urgent',kind:'all',onlyOk:true};
-VIEWS.map=()=>{
+VIEWS.quest=()=>{
   const all=eventRows(),kinds=[...new Set(all.map(r=>r.kind))].sort((a,b)=>a.localeCompare(b,'vi'));
   const q=norm(mapUi.q);
   let rows=all.filter(r=>(mapUi.kind==='all'||r.kind===mapUi.kind)&&(!mapUi.onlyOk||r.ok)&&(!q||norm([r.title,r.place,r.kind,r.country,A(r.tags).join(' ')].join(' ')).includes(q)));
@@ -1773,10 +1775,141 @@ VIEWS.map=()=>{
   <div class="chips">${['all',...kinds].map(k=>`<button class="chip ${mapUi.kind===k?'on':''}" data-kind="${E(k)}">${k==='all'?'Tất cả':E(k)}</button>`).join('')}<button class="chip ${mapUi.onlyOk?'on':''}" id="m-ok">Chỉ nơi tới kịp</button></div>
   <div class="sum">Trên bản đồ: ${rows.length}/${all.length} mục · ${E(SORTS[mapUi.sort].name.toLowerCase())}</div>
   ${rows.map(r=>cardHtml(r)).join('')||'<div class="empty">Không có mục phù hợp.<br>Thử bỏ bớt bộ lọc.</div>'}`;
-  $(body,'#m-q').oninput=e=>{mapUi.q=e.target.value;clearTimeout(mapUi.t);mapUi.t=setTimeout(()=>{VIEWS.map();$(body,'#m-q').focus();const i=$(body,'#m-q');i.setSelectionRange(i.value.length,i.value.length)},220)};
+  $(body,'#m-q').oninput=e=>{mapUi.q=e.target.value;clearTimeout(mapUi.t);mapUi.t=setTimeout(()=>{VIEWS.quest();$(body,'#m-q').focus();const i=$(body,'#m-q');i.setSelectionRange(i.value.length,i.value.length)},220)};
   $(body,'#m-sort').onchange=e=>{mapUi.sort=e.target.value;render()};
   $$(body,'[data-kind]').forEach(b=>b.onclick=()=>{mapUi.kind=b.dataset.kind;render()});
   $(body,'#m-ok').onclick=()=>{mapUi.onlyOk=!mapUi.onlyOk;render()};
+};
+
+/* ───────── Tab: Bản đồ (tra cứu mọi nơi trên bản đồ) ───────── */
+/* Dữ liệu lấy thẳng từ world của game: slot → info(slot) (loại địa danh, quốc gia, cấp nền, địa hình, tộc yêu);
+   điểm săn yêu dùng hàm game huntTargets/huntCount (world/hunt) chạy trên bản sao ngữ cảnh đặt vị trí ở ô cần xem. */
+const MAP_LOAI={kinh_do:'Kinh đô',thanh:'Thành',tran:'Trấn',thon:'Thôn',tong_mon:'Tông môn',nui:'Núi',rung:'Rừng',coc:'Cốc',dong:'Đồng hoang',dam:'Đầm',thac:'Thác',hoang_mac:'Hoang mạc',dinh:'Đỉnh',di_tich:'Di tích',bi_canh:'Bí cảnh',sao_huyet:'Sào huyệt yêu thú',linh_mach:'Linh mạch',khoang_mach:'Khoáng mạch',phuong_thi:'Phường thị',an_si:'Ẩn sĩ',quan_ai:'Quan ải'};
+const MAP_ICON={kinh_do:'都',thanh:'城',tran:'鎮',thon:'村',tong_mon:'宗',nui:'山',rung:'林',coc:'谷',dong:'原',dam:'澤',thac:'瀑',hoang_mac:'漠',dinh:'峰',di_tich:'跡',bi_canh:'秘',sao_huyet:'巢',linh_mach:'脈',khoang_mach:'礦',phuong_thi:'市',an_si:'隱',quan_ai:'關'};
+const MAP_WILD=['rung','nui','coc','dong','dam','hoang_mac','dinh'];
+const MAP_SUBS=[
+  ['thanh_thi','Thành thị',['kinh_do','thanh'],'Kinh đô và thành lớn: cửa hàng, đấu giá, nhiệm vụ, quán trọ.'],
+  ['thon_tran','Thôn trấn',['tran','thon'],'Trấn và thôn: chợ nhỏ, nhận việc, phàm nhân.'],
+  ['di_tich','Bí cảnh · Di tích',['bi_canh','di_tich'],'Nơi thăm dò; thời gian mở cửa xem tab Bí cảnh & Dị bảo.'],
+  ['mach','Linh mạch · Khoáng mạch',['linh_mach','khoang_mach'],'Linh khí dày để tu luyện; khoáng mạch để đào.'],
+  ['khac','Phường thị · Ẩn sĩ · Quan ải',['phuong_thi','an_si','quan_ai'],'Các nơi đặc biệt khác.'],
+  ['sao_huyet','Sào huyệt yêu thú',['sao_huyet'],'Hang ổ yêu thú, thường rất nguy hiểm.'],
+  ['farm','Điểm farm săn yêu',MAP_WILD,'Hoang dã săn được yêu: gõ tên nguyên liệu hoặc thảo dược để tìm vùng có nó; danh sách và tỉ lệ do game tính tại từng ô.']
+];
+const mapSt={sub:store.get('mapSub','thanh_thi'),q:'',qg:'all',sort:'near',lv:'all',loai:'all',safe:false,left:false,clan:false,n:40,t:0};
+const MapDB={key:'',list:[],byId:new Map(),hunt:new Map(),huntKey:''};
+const coreFn=n=>{try{const c=window.tuTien?.core;if(!c)return null;if(typeof c.index?.[n]==='function')return c.index[n];for(const m of Object.values(c))if(m&&typeof m[n]==='function')return m[n]}catch{}return null};
+function mapBase(){
+  const r=run(),key=r.seed+'|'+A(W.slots).length;
+  if(MapDB.key===key)return MapDB;
+  const list=[];
+  for(const sl of A(W.slots)){
+    if(!sl||sl.an)continue;
+    const i=info(sl.id);if(!i)continue;
+    const loai=String(i.diaDanh?.loai||'');if(!MAP_LOAI[loai])continue;
+    list.push({id:sl.id,x:sl.x,y:sl.y,loai,ten:T(i.ten||i.diaDanh?.ten||sl.id),cap:Number(i.capNen),qg:i.quocGia||'',qgTen:countryOf(i),dh:A(i.diaHinh),toc:i.tocYeu||''});
+  }
+  MapDB.key=key;MapDB.list=list;MapDB.byId=new Map(list.map(x=>[x.id,x]));MapDB.hunt=new Map();MapDB.huntKey='';
+  return MapDB;
+}
+/* Yêu thú ở từng ô hoang dã — gọi đúng hàm huntTargets của game với vị trí giả lập tại ô đó */
+function mapHunt(id){
+  const D=mapBase(),nv=me(),key=run().seed+'|'+nv.canhGioi+'|'+nv.tieuCanhGioi;
+  if(D.huntKey!==key){D.hunt=new Map();D.huntKey=key}
+  if(D.hunt.has(id))return D.hunt.get(id);
+  let out=null;
+  try{
+    const HT=coreFn('huntTargets'),HC=coreFn('huntCount'),e=g.readCtx?.();
+    if(HT&&e){
+      const e2={...e,run:{...e.run,viTri:id}};
+      const HD=coreFn('huntDrops'),HB=coreFn('herbsAt');
+      const tg=A(HT(e2)).map(x=>{const en=C.enemies.get(x.id);let dl=[];try{dl=HD?A(HD(e2,x.id)).map(d=>({id:d.id,ten:T(d.ten),p:Number(d.chance)||0})):A(x.drops).map(t=>({id:'',ten:T(t),p:0}))}catch{}return{id:x.id,ten:T(x.ten),chance:x.chance,months:x.months,local:!!x.local,cg:Number(en?.canh_gioi??0),tcg:Number(en?.tieu_canh_gioi??0),muc:en?.muc||'',drops:dl}});
+      let herbs=[];try{herbs=HB?A(HB(e2,id)).map(h=>({id:h.id,ten:T(h.ten),cg:Number(h.canh_gioi)||0})):[]}catch{}
+      let used=0;try{used=HC?Number(HC(e2,id))||0:0}catch{}
+      out={tg,herbs,left:Math.max(0,Math.floor(3-used+1e-9))};
+    }
+  }catch{}
+  D.hunt.set(id,out);return out;
+}
+const capIdx=c=>Math.max(0,Math.min(5,Math.floor((Number(c)||0)+1e-9)));
+const capLabel=c=>{const k=capIdx(c);return cgTen(k)+(Number.isFinite(c)?` (${F(Math.round(c*10)/10)})`:'')};
+function placeCard(it,extra=''){
+  const rc=reach(it.id),dg=danger(it.id),here=run().viTri===it.id;
+  const tags=[];
+  if(here)tags.push('<span class="tag g">Đang ở đây</span>');
+  else if(explored(it.id))tags.push('<span class="tag">Đã khám phá</span>');
+  if(dg.rank>=1)tags.push(`<span class="tag ${dg.rank>=2?'r':''}">${E(dg.label)}</span>`);else tags.push('<span class="tag g">An toàn</span>');
+  if(rc.block)tags.push(`<span class="tag o">⚠ ${E(rc.block)}</span>`);
+  const tz=it.toc?T(C.tocYeu?.get?.('toc.'+it.toc)?.ten||''):'';
+  if(tz&&it.loai==='sao_huyet')tags.push(`<span class="tag">Tộc ${E(tz)}</span>`);
+  return`<article class="card d${dg.rank>=2?dg.rank:0}" data-slot="${E(it.id)}" data-title="${E(it.ten)}"><div class="ico">${E(MAP_ICON[it.loai]||'地')}</div><div><b>${E(it.ten)}</b><small style="display:block">${E(MAP_LOAI[it.loai])}${it.qgTen?' · '+E(it.qgTen):''} · cấp nền ${E(capLabel(it.cap))}</small></div><div class="side">${here?'—':fmtTime(rc.travel)}<small>${here?'':fmtMiles(rc.miles)}</small></div><div class="tags">${tags.join('')}</div>${extra}<div class="acts"><button class="btn" data-act="view">Xem bản đồ</button><button class="btn pri" data-act="go">Đường đi an toàn</button></div></article>`;
+}
+function farmExtra(it,qn){
+  const h=mapHunt(it.id);if(!h)return'';
+  const tg=[...h.tg].sort((a,b)=>b.chance-a.chance||a.cg-b.cg);
+  const lo=tg.length?Math.min(...tg.map(x=>x.cg)):0,hi=tg.length?Math.max(...tg.map(x=>x.cg)):0;
+  const pc=p=>p>=0.995?'chắc chắn':Math.max(1,Math.round(p*100))+'%';
+  let hit='';
+  if(qn){
+    const m=matInfo(h,qn);
+    hit=m.lines.slice(0,4).map(l=>`<div class="tag g" style="display:block;margin:3px 0;white-space:normal;line-height:1.4">🎯 ${E(l)}</div>`).join('');
+  }
+  const rows=tg.map(x=>`<div style="margin:3px 0"><b>${E(x.ten)}</b> <span class="sub">— ${E(cgTen(x.cg))}${x.muc==='boss'?' · thủ lĩnh':''} · gặp ${Math.round(x.chance*100)}%${x.local?' · tộc bản địa':''}</span>${x.drops.length?`<div class="sub" style="padding-left:10px">Rơi: ${E(x.drops.slice(0,6).map(d=>d.ten+(d.p?' '+pc(d.p):'')).join(', '))}</div>`:''}</div>`).join('');
+  const hb=h.herbs.length?`<div style="margin:4px 0"><b>Thảo dược có thể hái</b> <span class="sub">— ${E(h.herbs.map(x=>x.ten).join(', '))}</span></div>`:'';
+  return`<div class="sub" style="grid-column:1/-1;margin:4px 0 2px;line-height:1.5">Lượt săn còn: <b>${h.left}/3</b> · ${tg.length} loài yêu (${E(cgTen(lo))}${hi!==lo?' – '+E(cgTen(hi)):''}) · linh khí ${E(F(Math.round(spiritAt(it.id)*10)/10))}${hit}<details style="margin-top:4px"${qn&&hit?' open':''}><summary style="cursor:pointer;color:var(--cyan)">Xem yêu thú, vật rơi, thảo dược</summary>${rows}${hb}</details></div>`;
+}
+/* Khớp nguyên liệu: tìm trong vật rơi của yêu thú (tỉ lệ gặp × tỉ lệ rơi) và thảo dược hái được */
+function matInfo(h,qn){
+  const lines=[];let best=0;
+  for(const t of h.tg)for(const d of t.drops)if(norm(d.ten).includes(qn)){const p=t.chance*(d.p||0.05);best=Math.max(best,p);lines.push({p,txt:`${d.ten}: rơi từ ${t.ten} (gặp ${Math.round(t.chance*100)}%${d.p?`, rơi ${d.p>=0.995?'chắc chắn':Math.round(d.p*100)+'%'}`:''})`})}
+  for(const hb of h.herbs)if(norm(hb.ten).includes(qn)){best=Math.max(best,0.05);lines.push({p:0.05,txt:`${hb.ten}: thảo dược hái được tại vùng này`})}
+  lines.sort((a,b)=>b.p-a.p);
+  return{best,lines:lines.map(x=>x.txt)};
+}
+function spiritAt(id){try{const f=coreFn('spiritQi'),e=g.readCtx?.();return f&&e?Number(f({...e,run:{...e.run,viTri:id}},id))||0:0}catch{return 0}}
+VIEWS.map=()=>{
+  const D=mapBase(),sub=MAP_SUBS.find(x=>x[0]===mapSt.sub)||MAP_SUBS[0],loais=sub[2],isFarm=sub[0]==='farm';
+  const cur=D.byId.get(run().viTri)||(()=>{const s=hasSlot(run().viTri)?W.slot(run().viTri):null;return s?{x:s.x,y:s.y}:{x:0,y:0}})();
+  const q=norm(mapSt.q);
+  let base=D.list.filter(x=>loais.includes(x.loai));
+  const qgs=[...new Map(base.filter(x=>x.qg).map(x=>[x.qg,x.qgTen||x.qg])).entries()].sort((a,b)=>a[1].localeCompare(b[1],'vi'));
+  let rows=base.filter(x=>(mapSt.qg==='all'||x.qg===mapSt.qg)&&(mapSt.loai==='all'||x.loai===mapSt.loai)&&(mapSt.lv==='all'||capIdx(x.cap)===+mapSt.lv));
+  if(mapSt.safe)rows=rows.filter(x=>danger(x.id).rank<=1);
+  const hq=isFarm&&(q||mapSt.left||mapSt.clan);
+  if(isFarm&&(mapSt.left||mapSt.clan))rows=rows.filter(x=>{const h=mapHunt(x.id);return h&&(!mapSt.left||h.left>0)&&(!mapSt.clan||h.tg.some(t=>t.local))});
+  if(q)rows=rows.filter(x=>{let hay=[x.ten,x.qgTen,MAP_LOAI[x.loai]].join(' ');if(isFarm){const h=mapHunt(x.id);if(h)hay+=' '+h.tg.map(t=>t.ten+' '+t.drops.map(d=>d.ten).join(' ')).join(' ')+' '+h.herbs.map(z=>z.ten).join(' ')}return norm(hay).includes(q)});
+  const dist=x=>Math.hypot(x.x-cur.x,x.y-cur.y);
+  const SORT={near:['Gần nhất',(a,b)=>dist(a)-dist(b)],capup:['Cấp nền thấp → cao',(a,b)=>(a.cap-b.cap)||dist(a)-dist(b)],capdn:['Cấp nền cao → thấp',(a,b)=>(b.cap-a.cap)||dist(a)-dist(b)],name:['Tên A → Z',(a,b)=>a.ten.localeCompare(b.ten,'vi')]};
+  if(isFarm&&q)SORT.khop=['Khớp nguyên liệu nhất',(a,b)=>(matInfo(mapHunt(b.id)||{tg:[],herbs:[]},q).best-matInfo(mapHunt(a.id)||{tg:[],herbs:[]},q).best)||dist(a)-dist(b)];
+  if(isFarm)SORT.many=['Nhiều loài yêu nhất',(a,b)=>((mapHunt(b.id)?.tg.length||0)-(mapHunt(a.id)?.tg.length||0))||dist(a)-dist(b)];
+  if(mapSt.sort==='khop'&&!SORT.khop)mapSt.sort='near';
+  if(isFarm&&q&&mapSt.sortAuto!==q){mapSt.sortAuto=q;if(rows.some(x=>matInfo(mapHunt(x.id)||{tg:[],herbs:[]},q).lines.length))mapSt.sort='khop'}
+  if(!q)mapSt.sortAuto='';
+  if(!SORT[mapSt.sort])mapSt.sort='near';
+  rows.sort(SORT[mapSt.sort][1]);
+  const shown=rows.slice(0,mapSt.n);
+  const nAct=[mapSt.qg!=='all',mapSt.loai!=='all',mapSt.lv!=='all',mapSt.safe,mapSt.left,mapSt.clan].filter(Boolean).length;
+  const lvChips=[['all','Mọi cấp'],...[0,1,2,3,4,5].map(k=>[String(k),cgTen(k)])];
+  const loaiOpts=loais.length>1?`<select id="mp-loai"><option value="all">Mọi loại</option>${loais.map(l=>`<option value="${l}" ${mapSt.loai===l?'selected':''}>${E(MAP_LOAI[l])}</option>`).join('')}</select>`:'';
+  ui._mapSig=[mapSt.sub,mapSt.q,mapSt.qg,mapSt.sort,mapSt.lv,mapSt.loai,mapSt.safe,mapSt.left,mapSt.clan,mapSt.n,rows.length,shown.map(x=>x.id).join(',')].join('|');
+  body.innerHTML=`<div class="chips" id="mp-subs" style="flex-wrap:wrap;overflow:visible">${MAP_SUBS.map(x=>`<button class="chip ${x[0]===mapSt.sub?'on':''}" data-msub="${x[0]}">${E(x[1])}<span class="sub"> ${D.list.filter(y=>x[2].includes(y.loai)).length}</span></button>`).join('')}</div>
+  <div class="sub" style="margin:4px 2px">${E(sub[3])}</div>
+  <div class="bar"><input type="search" id="mp-q" placeholder="${isFarm?'Tìm địa danh, yêu thú, nguyên liệu, thảo dược…':'Tìm địa danh…'}" value="${E(mapSt.q)}" class="grow"></div>
+  <details id="mp-filt" style="margin:4px 0" ${mapSt.filtOpen??(innerWidth>520)?'open':''}><summary style="cursor:pointer;padding:4px 2px;color:var(--cyan)">Bộ lọc &amp; sắp xếp${nAct?` · đang lọc ${nAct}`:''}</summary>
+  <div class="bar"><select id="mp-sort">${Object.entries(SORT).map(([k,v])=>`<option value="${k}" ${k===mapSt.sort?'selected':''}>${E(v[0])}</option>`).join('')}</select><select id="mp-qg"><option value="all">Mọi quốc gia</option>${qgs.map(([k,n])=>`<option value="${E(k)}" ${mapSt.qg===k?'selected':''}>${E(n)}</option>`).join('')}</select>${loaiOpts}</div>
+  <div class="chips" style="flex-wrap:wrap;overflow:visible">${lvChips.map(([k,n])=>`<button class="chip ${String(mapSt.lv)===k?'on':''}" data-mlv="${k}">${E(n)}</button>`).join('')}<button class="chip ${mapSt.safe?'on':''}" id="mp-safe">Chỉ nơi vừa sức</button>${isFarm?`<button class="chip ${mapSt.left?'on':''}" id="mp-left">Còn lượt săn</button><button class="chip ${mapSt.clan?'on':''}" id="mp-clan">Có tộc yêu bản địa</button>`:''}</div><div class="sub" style="margin:2px 2px 4px">Cấp nền = cảnh giới của vùng (Phàm nhân → Hóa thần); “vừa sức” = không cao hơn bạn quá nửa cảnh giới.</div></details>
+  <div class="sum">${rows.length}/${base.length} nơi · ${E(SORT[mapSt.sort][0].toLowerCase())}${isFarm?'':''}</div>
+  ${shown.map(it=>placeCard(it,isFarm?farmExtra(it,q):'')).join('')||'<div class="empty">Không có nơi phù hợp.<br>Thử bỏ bớt bộ lọc.</div>'}
+  ${rows.length>shown.length?`<div class="acts" style="justify-content:center;margin:8px 0"><button class="btn" id="mp-more">Xem thêm ${Math.min(40,rows.length-shown.length)} nơi (còn ${rows.length-shown.length})</button></div>`:''}`;
+  $$(body,'[data-msub]').forEach(b=>b.onclick=()=>{mapSt.sub=b.dataset.msub;store.set('mapSub',mapSt.sub);Object.assign(mapSt,{qg:'all',lv:'all',loai:'all',sort:'near',n:40});render()});
+  $$(body,'[data-mlv]').forEach(b=>b.onclick=()=>{mapSt.lv=b.dataset.mlv;mapSt.n=40;render()});
+  const on=(id,fn)=>{const el=$(body,'#'+id);if(el)el.onclick=fn};
+  on('mp-safe',()=>{mapSt.safe=!mapSt.safe;mapSt.n=40;render()});on('mp-left',()=>{mapSt.left=!mapSt.left;mapSt.n=40;render()});on('mp-clan',()=>{mapSt.clan=!mapSt.clan;mapSt.n=40;render()});
+  on('mp-more',()=>{mapSt.n+=40;render()});
+  const sel=(id,key)=>{const el=$(body,'#'+id);if(el)el.onchange=e=>{mapSt[key]=e.target.value;mapSt.n=40;render()}};
+  sel('mp-sort','sort');sel('mp-qg','qg');sel('mp-loai','loai');
+  const fd=$(body,'#mp-filt');if(fd)fd.ontoggle=()=>{mapSt.filtOpen=fd.open};
+  const qi=$(body,'#mp-q');qi.oninput=e=>{mapSt.q=e.target.value;mapSt.n=40;clearTimeout(mapSt.t);mapSt.t=setTimeout(()=>{VIEWS.map();const i=$(body,'#mp-q');i.focus();i.setSelectionRange(i.value.length,i.value.length)},260)};
 };
 
 /* ───────── Tab: Bí cảnh & Dị bảo ───────── */
@@ -3820,7 +3953,7 @@ const AutoFarm={
   urgentJobTargets(maxY){
     const r=run(),out=[];
     const pushJob=(slot,enc,title,hetHan,mode,basePri)=>{
-      if(!slot||!hasSlot(slot)||this.isSlotBanned(slot)||travelBlock(slot))return;
+      if(!slot||!hasSlot(slot)||this.isSlotBanned(slot)||travelBlock(slot,true))return;
       const left=N(hetHan)?+hetHan-nowYear():null;
       if(left!==null&&left<0)return; // đã hết hạn
       if(left!==null&&left>8)return; // còn lâu — không ưu tiên gấp
