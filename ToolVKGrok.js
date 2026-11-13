@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261112-autofarm-v91',ID='vkt2',g=window.game;
+const BUILD='20261113-autofarm-v92',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -1532,7 +1532,7 @@ const CSS=`
 #${ID} .tags{grid-column:2/4;display:flex;flex-wrap:wrap;gap:4px}
 #${ID} .tag{font-size:11.5px;border:1px solid rgba(43,43,43,.28);color:var(--paper);border-radius:4px;padding:1px 6px}
 #${ID} .tag.g{border-color:var(--jade);color:var(--jade)}#${ID} .tag.r{border-color:var(--red);color:#a3342b}#${ID} .tag.o{border-color:var(--amber);color:var(--amber)}
-#${ID} .npc-panel{display:grid;gap:6px;margin-top:4px}#${ID} .npc-sec{background:rgba(127,127,127,.12);border-radius:8px;padding:6px 8px;font-size:12px;line-height:1.45}#${ID} .npc-sec select{max-width:100%;flex:1}#${ID} .acts{grid-column:1/4;flex-wrap:wrap;display:flex;gap:6px;margin-top:3px}
+#${ID} .card.enc{border:1px solid rgba(120,160,255,.55);margin-bottom:8px}#${ID} .enc-log{display:grid;gap:4px;margin-top:6px;font-size:12.5px;line-height:1.5}#${ID} .enc-ch{opacity:.65;font-style:italic}#${ID} .enc-sys{color:#6c6}#${ID} .enc-say b{color:#8ab4ff}#${ID} .enc-choices .btn{text-align:left;flex:1 1 100%}#${ID} .enc-gift{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;padding:3px 0}#${ID} .npc-panel{display:grid;gap:6px;margin-top:4px}#${ID} .npc-sec{background:rgba(127,127,127,.12);border-radius:8px;padding:6px 8px;font-size:12px;line-height:1.45}#${ID} .npc-sec select{max-width:100%;flex:1}#${ID} .acts{grid-column:1/4;flex-wrap:wrap;display:flex;gap:6px;margin-top:3px}
 #${ID} button.btn{flex:1;border:1px solid var(--gold2);background:rgba(43,43,43,.08);color:var(--gold);border-radius:7px;padding:8px 6px;font-size:13px;cursor:pointer;min-height:36px}
 #${ID} button.btn:active{background:rgba(43,43,43,.25)}
 #${ID} button.btn.pri{background:linear-gradient(180deg,#b9362b,#8a241c);border-color:#e5483a;color:#fff}
@@ -1763,6 +1763,18 @@ const cardHtml=(r,opts={})=>`<article class="card ${r.ok?'':'late'} d${r.danger?
 body.addEventListener('click',e=>{
   const tg=e.target.closest('[data-npctoggle]');
   if(tg){const id=tg.dataset.npctoggle;pUi.open[id]=!pUi.open[id];render();return}
+  const ngo=e.target.closest('[data-npcgo]');
+  if(ngo){try{const err=npcLaunch(ngo.dataset.npcgo,ngo.dataset.id,ngo.dataset.arg||'');if(err)toast(err);}catch(x){toast(String(x?.message||x))}render();try{body.scrollTop=0}catch{}return}
+  const ech=e.target.closest('[data-encch]');
+  if(ech){try{let v=null;try{v=g.encounterView?.()}catch{}const i=+ech.dataset.encch,c=v?.choices?.find(x=>x.index===i);if(c?.xacNhan&&!confirm(strip((c.xacNhan.tieu_de||'')+'\n'+(c.xacNhan.noi_dung||''))))return;g.choose(i)}catch(x){toast(String(x?.message||x))}render();return}
+  if(e.target.closest('[data-encclose]')){try{g.closeEncounter()}catch(x){toast(String(x?.message||x))}render();return}
+  const egf=e.target.closest('[data-encgift]');
+  if(egf){try{const q=egf.parentElement.querySelector('.enc-q');g.resume({itemId:egf.dataset.encgift,qty:q?Math.max(1,+q.value||1):1})}catch(x){toast(String(x?.message||x))}render();return}
+  if(e.target.closest('[data-encskip]')){try{g.resume(null)}catch(x){toast(String(x?.message||x))}render();return}
+  if(e.target.closest('[data-encmin]')){ui.close();return}
+  const npn=e.target.closest('[data-npcpin]');
+  if(npn){try{g.toggleNpcPin(npn.dataset.npcpin)}catch(x){toast(String(x?.message||x))}render();return}
+  if(e.target.closest('[data-npcend]')){try{g.endCompanion()}catch(x){toast(String(x?.message||x))}render();return}
   const na=e.target.closest('[data-npcact]');
   if(na){
     const k=na.dataset.npcact;
@@ -2439,10 +2451,33 @@ function bagFullModal(names){
   Modal.push({title:'Túi đồ đã đầy',html:`<p>Túi đầy nên chưa làm tiếp được${names&&names.length?` (<b>${E(names.join(', '))}</b>)`:''}.</p><p>Đạo hữu hãy tự <b>bán hoặc vứt bớt vật phẩm không cần thiết</b> trong túi, rồi bấm lại.</p>`,btns:[{t:'Đã rõ',pri:true}]});
 }
 
+/* Đơn đặt hàng của tool nằm TRONG trạng thái của game (run.vktDon) và mọi thay đổi (tiền, đồ, đơn) đi qua g.dev — một giao dịch duy nhất:
+   lỗi giữa chừng thì game trả lại nguyên trạng, game tự lưu và cập nhật giao diện; tải lại save cũ thì đơn cũng quay về đúng lúc đó. */
+function gameTx(fn){
+  let out={ok:false,msg:'Game chưa nhận thao tác này (đang có việc dang dở?).'};
+  const err0=g.state.error;
+  try{g.dev(ctx=>{out=fn(ctx)||{ok:true}})}catch(e){out={ok:false,msg:String(e?.message||e)}}
+  const er=g.state.error;
+  if(er&&er!==err0){
+    try{g.store.setState({error:undefined})}catch{}
+    out=/VKT_ABORT/.test(String(er))?{ok:false,bag:true,msg:'Túi không đủ chỗ cho cả đơn hàng — chưa mất linh thạch nào. Hãy tự bán hoặc vứt bớt vật phẩm rồi thanh toán lại.'}:{ok:false,msg:'Game từ chối: '+String(er).replace(/^Error:\s*/,'')};
+  }
+  return out;
+}
+const TUI=()=>window.tuTien?.core?.['character/tui_do'];
 const ORD={
-  key:null,list:[],
-  load(){const k='orders.'+(run().seed??'x');if(this.key!==k){this.key=k;const v=store.get(k,[]);this.list=Array.isArray(v)?v:[]}return this.list},
-  save(){if(this.key)store.set(this.key,this.list)},
+  mig:null,
+  list_(){const l=run().vktDon;return Array.isArray(l)?l:[]},
+  /* chuyển đơn cũ (lưu ngoài game ở bản trước) vào trạng thái game, một lần cho mỗi kiếp */
+  migrate(){
+    const seed=run().seed??'x';if(this.mig===seed)return;this.mig=seed;
+    const k='orders.'+seed;let old=[];try{old=store.get(k,[])}catch{}
+    if(!Array.isArray(old)||!old.length)return;
+    const r=gameTx(ctx=>{if(!Array.isArray(ctx.run.vktDon))ctx.run.vktDon=old.map(o=>({...o}));return{ok:true}});
+    if(r.ok)try{store.set(k,[])}catch{}
+  },
+  load(){this.migrate();return this.list_()},
+  flags(){const k='orderflags.'+(run().seed??'x');let f={};try{f=store.get(k,{})||{}}catch{}return{f,save:()=>{try{store.set(k,f)}catch{}}}},
   status(o){const y=nowYear();return y<o.readyYear?'wait':(y<=o.holdUntil?'ready':'lost')},
   readyCount(){return this.load().filter(o=>this.status(o)==='ready').length},
   byItem(id){return this.load().find(o=>o.item===id)},
@@ -2450,12 +2485,17 @@ const ORD={
     const blk=orderBlock(id);if(blk)return{ok:false,msg:blk};
     qty=Math.floor(Number(qty));if(!Number.isFinite(qty)||qty<1)return{ok:false,msg:'Số lượng phải từ 1 trở lên.'};
     if(qty>orderMaxQty(id))return{ok:false,msg:`Mỗi đơn tối đa ${orderMaxQty(id)} món loại này.`};
+    this.migrate();
     const total=orderUnit(id)*qty,dep=orderDeposit(total);
-    if(money()<dep)return{ok:false,msg:`Chưa đủ linh thạch đặt cọc: cần ${F(dep)}, đang có ${F(money())}.`};
-    const nv=me();nv.linhThach=money()-dep;
-    const y=nowYear(),ready=y+orderWait(id);
-    this.load().push({id:'o'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),item:id,qty,total,deposit:dep,orderedYear:y,readyYear:ready,holdUntil:ready+ORDER_CFG.holdYears,told:false,ext:0});
-    this.save();syncGame();
+    const r=gameTx(ctx=>{
+      const nv=ctx.run.nhanVat,have=Number(nv.linhThach)||0;
+      if(have<dep)return{ok:false,msg:`Chưa đủ linh thạch đặt cọc: cần ${F(dep)}, đang có ${F(have)}.`};
+      const y=Number(ctx.run.nam)||0,ready=y+orderWait(id);
+      nv.linhThach=have-dep;
+      (Array.isArray(ctx.run.vktDon)?ctx.run.vktDon:(ctx.run.vktDon=[])).push({id:'o'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),item:id,qty,total,deposit:dep,orderedYear:y,readyYear:ready,holdUntil:ready+ORDER_CFG.holdYears,ext:0});
+      return{ok:true};
+    });
+    if(!r.ok)return r;
     return{ok:true,msg:`Đã đặt «${itemName(id)}»${qty>1?' ×'+qty:''}: cọc ${F(dep)} linh thạch, hàng về sau ${yrs(orderWait(id))}.`};
   },
   find(oid){return this.load().find(o=>o.id===oid)},
@@ -2463,61 +2503,80 @@ const ORD={
   extendFee(o){return Math.ceil(o.total*ORDER_CFG.extendFee)},
   canExtend(o){return (o.ext||0)<ORDER_CFG.maxExtend},
   pay(oid){
-    const o=this.find(oid);if(!o)return{ok:false,msg:'Không còn đơn này.'};
-    if(this.status(o)==='wait')return{ok:false,msg:'Hàng chưa về.'};
-    if(this.status(o)==='lost')return{ok:false,msg:'Đơn đã quá hạn giữ.'};
-    const rest=this.remaining(o),nv=me();
+    const o0=this.find(oid);if(!o0)return{ok:false,msg:'Không còn đơn này.'};
+    if(this.status(o0)==='wait')return{ok:false,msg:'Hàng chưa về.'};
+    if(this.status(o0)==='lost')return{ok:false,msg:'Đơn đã quá hạn giữ.'};
     if(run().tran)return{ok:false,msg:'Đang trong trận, chờ xong trận rồi nhận hàng.'};
-    const T1=window.tuTien?.core?.['character/tui_do'];
-    if(!T1||typeof T1.nhanVaoTui!=='function')return{ok:false,msg:'Chưa nhận ra hàm nhận đồ của game sau lần cập nhật này.'};
-    let room=true;try{if(typeof T1.conCho==='function')room=T1.conCho(nv,g.env.content,o.item)}catch{}
-    if(!room)return{ok:false,bag:true,msg:'Túi đầy! Đạo hữu hãy tự bán hoặc vứt bớt vật phẩm không cần thiết, rồi thanh toán lại.'};
-    if(money()<rest)return{ok:false,short:true,msg:`Chưa đủ linh thạch: cần ${F(rest)}, đang có ${F(money())}. ${this.canExtend(o)?`Có thể bấm "Giữ thêm ${ORDER_CFG.holdYears} năm" (phí ${F(this.extendFee(o))}).`:'Đơn này đã giữ thêm một lần, không giữ thêm được nữa.'}`};
-    const before=Number(nv.tuiDo?.[o.item]||0);
-    nv.linhThach=money()-rest;
-    try{T1.nhanVaoTui({...g.env,run:run(),meta:g.state.meta,enc:undefined,noticeLines:[]},o.item,o.qty)}catch(e){nv.linhThach=money()+rest;return{ok:false,msg:'Không nhận được hàng: '+(e?.message||e)}}
-    if(Number(me().tuiDo?.[o.item]||0)<=before){nv.linhThach=money()+rest;return{ok:false,bag:true,msg:'Túi đầy! Đạo hữu hãy tự bán hoặc vứt bớt vật phẩm không cần thiết, rồi thanh toán lại.'}}
-    this.list=this.load().filter(x=>x.id!==oid);this.save();syncGame();
-    return{ok:true,msg:`Vật phẩm «${itemName(o.item)}»${o.qty>1?' ×'+o.qty:''} đã được giao đến túi đồ của đạo hữu (đã trả nốt ${F(rest)} linh thạch).`};
+    const T1=TUI();
+    if(!T1||typeof T1.nhanVaoTui!=='function'||typeof T1.conCho!=='function')return{ok:false,msg:'Chưa nhận ra hàm nhận đồ của game sau lần cập nhật này.'};
+    const qtyOf=(nv,id)=>Number(nv.tuiDo?.[id]||0);
+    const r=gameTx(ctx=>{
+      const lst=Array.isArray(ctx.run.vktDon)?ctx.run.vktDon:[],o=lst.find(x=>x.id===oid),nv=ctx.run.nhanVat;
+      if(!o)return{ok:false,msg:'Không còn đơn này.'};
+      const y=Number(ctx.run.nam)||0;
+      if(y<o.readyYear)return{ok:false,msg:'Hàng chưa về.'};
+      if(y>o.holdUntil)return{ok:false,msg:'Đơn đã quá hạn giữ.'};
+      const rest=Math.max(0,o.total-o.deposit),have=Number(nv.linhThach)||0;
+      if(have<rest)return{ok:false,short:true,msg:`Chưa đủ linh thạch: cần ${F(rest)}, đang có ${F(have)}. ${(o.ext||0)<ORDER_CFG.maxExtend?`Có thể bấm "Giữ thêm ${ORDER_CFG.holdYears} năm" (phí ${F(Math.ceil(o.total*ORDER_CFG.extendFee))}).`:'Đơn này đã giữ thêm một lần, không giữ thêm được nữa.'}`};
+      if(!T1.conCho(nv,ctx.content,o.item))return{ok:false,bag:true,msg:'Túi đầy! Hãy tự bán hoặc vứt bớt vật phẩm không cần thiết, rồi thanh toán lại.'};
+      const before=qtyOf(nv,o.item);
+      nv.linhThach=have-rest;
+      const okAdd=T1.nhanVaoTui(ctx,o.item,o.qty);
+      /* nhận không đủ (túi chỉ chứa được một phần / để riêng chờ cất) → ném lỗi để game hoàn lại TOÀN BỘ, không mất tiền */
+      if(okAdd===false||qtyOf(ctx.run.nhanVat,o.item)-before<o.qty||(T1.coDoChoCat&&T1.coDoChoCat(ctx.run.nhanVat)))throw new Error('VKT_ABORT');
+      const left=lst.filter(x=>x!==o);if(left.length)ctx.run.vktDon=left;else delete ctx.run.vktDon;
+      return{ok:true,rest,qty:o.qty,item:o.item};
+    });
+    if(!r.ok)return r;
+    return{ok:true,msg:`Vật phẩm «${itemName(r.item)}»${r.qty>1?' ×'+r.qty:''} đã được giao đến túi đồ của đạo hữu (đã trả nốt ${F(r.rest)} linh thạch).`};
   },
   extend(oid){
-    const o=this.find(oid);if(!o)return{ok:false,msg:'Không còn đơn này.'};
-    if(this.status(o)==='lost')return{ok:false,msg:'Đơn đã quá hạn giữ.'};
-    if((o.ext||0)>=ORDER_CFG.maxExtend)return{ok:false,msg:'Đơn này đã giữ thêm một lần rồi, không giữ thêm được nữa.'};
-    const fee=this.extendFee(o);
-    if(money()<fee)return{ok:false,msg:`Chưa đủ linh thạch trả phí giữ thêm: cần ${F(fee)}, đang có ${F(money())}.`};
-    me().linhThach=money()-fee;syncGame();
-    o.holdUntil+=ORDER_CFG.holdYears;o.ext=(o.ext||0)+1;o.warned=false;this.save();
-    return{ok:true,msg:`Đã giữ thêm ${ORDER_CFG.holdYears} năm cho «${itemName(o.item)}», phí ${F(fee)} linh thạch (hạn mới còn ${yrs(o.holdUntil-nowYear())}).`};
+    const o0=this.find(oid);if(!o0)return{ok:false,msg:'Không còn đơn này.'};
+    const r=gameTx(ctx=>{
+      const o=(ctx.run.vktDon||[]).find(x=>x.id===oid),nv=ctx.run.nhanVat;
+      if(!o)return{ok:false,msg:'Không còn đơn này.'};
+      const y=Number(ctx.run.nam)||0;
+      if(y>o.holdUntil)return{ok:false,msg:'Đơn đã quá hạn giữ.'};
+      if((o.ext||0)>=ORDER_CFG.maxExtend)return{ok:false,msg:'Đơn này đã giữ thêm một lần rồi, không giữ thêm được nữa.'};
+      const fee=Math.ceil(o.total*ORDER_CFG.extendFee),have=Number(nv.linhThach)||0;
+      if(have<fee)return{ok:false,msg:`Chưa đủ linh thạch trả phí giữ thêm: cần ${F(fee)}, đang có ${F(have)}.`};
+      nv.linhThach=have-fee;o.holdUntil+=ORDER_CFG.holdYears;o.ext=(o.ext||0)+1;
+      return{ok:true,fee,left:o.holdUntil-y,item:o.item};
+    });
+    if(!r.ok)return r;
+    const fl=this.flags();if(fl.f[oid]){fl.f[oid].warned=false;fl.save()}
+    return{ok:true,msg:`Đã giữ thêm ${ORDER_CFG.holdYears} năm cho «${itemName(r.item)}», phí ${F(r.fee)} linh thạch (hạn mới còn ${yrs(r.left)}).`};
   },
   check(){
     if(!run().nhanVat)return;
     const list=this.load();if(!list.length)return;
-    let dirty=false;
+    const fl=this.flags();let dirty=false;
     for(const o of [...list]){
-      const st=this.status(o);
+      const st=this.status(o),F0=fl.f[o.id]||(fl.f[o.id]={});
       if(st==='lost'){
-        this.list=this.list.filter(x=>x!==o);dirty=true;
-        Modal.push({title:'Quá hạn giữ hàng',html:`<p>Đạo hữu không thanh toán kịp nên <b>${E(itemName(o.item))}${o.qty>1?' ×'+o.qty:''}</b> đã bị người khác lấy mất, tiền cọc <b>${F(o.deposit)}</b> linh thạch cũng không được hoàn lại.</p>`,btns:[{t:'Đã rõ'}]});
-      }else if(st==='ready'&&!o.told){
-        o.told=true;dirty=true;this.arrivalModal(o);
-      }else if(st==='ready'&&!o.warned&&o.holdUntil-nowYear()<=1){
-        o.warned=true;dirty=true;toast(`Sắp hết hạn giữ «${itemName(o.item)}» (còn ${yrs(o.holdUntil-nowYear())}). Hãy thanh toán hoặc giữ thêm.`,'',9000);
+        if(F0.lostShown)continue;F0.lostShown=true;dirty=true;
+        const id=o.id,it=o.item,q=o.qty,dep=o.deposit;
+        /* gỡ đơn quá hạn qua giao dịch của game, hoãn ra ngoài nhịp cập nhật hiện tại để khỏi chồng chéo */
+        setTimeout(()=>{const r=gameTx(ctx=>{const l=(ctx.run.vktDon||[]).filter(x=>x.id!==id);if(l.length)ctx.run.vktDon=l;else delete ctx.run.vktDon;return{ok:true}});if(r.ok){Modal.push({title:'Quá hạn giữ hàng',html:`<p>Đạo hữu không thanh toán kịp nên <b>${E(itemName(it))}${q>1?' ×'+q:''}</b> đã bị người khác lấy mất, tiền cọc <b>${F(dep)}</b> linh thạch cũng không được hoàn lại.</p>`,btns:[{t:'Đã rõ'}]});if(ui.isOpen&&ui.tab==='items')VIEWS.items()}},0);
+      }else if(st==='ready'&&!F0.told){
+        F0.told=true;dirty=true;this.arrivalModal(o);
+      }else if(st==='ready'&&!F0.warned&&o.holdUntil-nowYear()<=1){
+        F0.warned=true;dirty=true;toast(`Sắp hết hạn giữ «${itemName(o.item)}» (còn ${yrs(o.holdUntil-nowYear())}). Hãy thanh toán hoặc giữ thêm.`,'',9000);
       }
     }
-    if(dirty)this.save();
+    if(dirty)fl.save();
   },
   arrivalModal(o){
     const rest=this.remaining(o);
     Modal.push({title:'Hàng đã về',html:`<p>Vật phẩm <b>${E(itemName(o.item))}${o.qty>1?' ×'+o.qty:''}</b> đã được giao tới.</p><p>Thanh toán nốt <b>${F(rest)}</b> linh thạch để nhận vào túi đồ (đạo hữu đang có ${F(money())}).</p><small>Hạn giữ hàng còn ${yrs(o.holdUntil-nowYear())}. Quá hạn sẽ mất hàng và cả tiền cọc ${F(o.deposit)}.${this.canExtend(o)?` Được giữ thêm 1 lần ${ORDER_CFG.holdYears} năm, phí ${F(this.extendFee(o))} (10%).`:''}</small>`,
       btns:[
-        {t:'Thanh toán',pri:true,fn:()=>{const r=this.pay(o.id);if(!r.ok)return r.msg;toast(r.msg,'ok',6000);if(ui.tab==='items'&&ui.isOpen)VIEWS.items()}},
+        {t:'Thanh toán',pri:true,fn:()=>{const r=this.pay(o.id);if(!r.ok)return r.msg;toast(r.msg,'ok',6000);if(ui.tab==='items'&&ui.isOpen)VIEWS.items();else render()}},
         ...(this.canExtend(o)?[{t:`Giữ thêm ${ORDER_CFG.holdYears} năm (phí ${F(this.extendFee(o))})`,fn:()=>{const r=this.extend(o.id);if(!r.ok)return r.msg;toast(r.msg,'ok',6000)}}]:[]),
         {t:'Để sau'}
       ]});
   }
 };
-function syncGame(){try{g.store.setState({run:{...run()}})}catch{}}
+function syncGame(){}
 
 function orderConfirm(id,qty,after){
   const blk=orderBlock(id);if(blk){toast(blk,'',5000);return}
@@ -5917,6 +5976,16 @@ function npcGifts(id,npc,e){
 function npcPanel(x,npc,e,inv,fl){
   const parts=[];
   const nm=E(x.name);
+  /* 0. Gọi ra tương tác */
+  if(x.alive){
+    const busy=npcBusy(),far=!npcInRange(e,npc),dis=busy||far?'disabled':'';
+    const evs=far?[]:npcEvents(x.id,npc,e);
+    const btn=(k,a,t,pri)=>`<button class="btn ${pri?'pri':''}" data-npcgo="${k}" data-id="${E(x.id)}" ${a?`data-arg="${E(a)}"`:''} ${dis}>${t}</button>`;
+    const tip=busy||(far?'Ở xa quá tầm đi lại — phải tới gần mới gặp được.':'');
+    let rows=`<div class="acts">${btn('visit','','Thăm bạn cũ',1)}${btn('visit','Ghé thăm','Hàn huyên')}${btn('visit','Ở lại','Tu luyện cùng')}${btn('visit','Tặng','Tặng quà')}${npc.danhPhan==='dao_lu'?btn('dual','','Song tu'):''}${fl.drainOk&&!fl.foe?btn('drain','','Thải bổ'):''}<button class="btn" data-npcpin="${E(x.id)}">${npc.pinned?'Bỏ ghim':'Ghim'}</button>${run().dongHanh?.npc===x.id?'<button class="btn" data-npcend="1">Từ biệt (hết đồng hành)</button>':''}</div>`;
+    const evb=evs.map(v=>`<button class="btn" data-npcgo="ev" data-id="${E(x.id)}" data-arg="${E(v.id)}" ${dis} title="${v.gap==='cho_ho'?'Sự kiện ở nơi họ':'Họ tìm tới'}">${E(v.ten)}${EV_GROUP[v.kind]?` <small>· ${EV_GROUP[v.kind]}</small>`:''}</button>`).join('');
+    parts.push(`<div class="npc-sec"><b>Gọi ra · tương tác ngay</b> <span class="sub">${tip?'· '+E(tip):'· bấm là chạy luôn, diễn biến hiện ngay phía trên danh sách'}</span>${rows}${evs.length?`<div class="sub" style="margin-top:6px">Chuyện hợp với người này lúc này (${evs.length}) — đúng điều kiện của game:</div><div class="acts">${evb}</div>`:(far?'':'<div class="sub">Lúc này không có chuyện đặc biệt nào hợp với họ.</div>')}</div>`);
+  }
   /* 1. Tặng quà */
   if(x.alive&&!fl.foe){
     const G=npcGifts(x.id,npc,e),yr=Math.floor(run().nam),given=npc.lastGiftYear===yr;
@@ -5948,6 +6017,87 @@ function npcPanel(x,npc,e,inv,fl){
   parts.push(`<div class="npc-sec sub">Hảo cảm ${fav>0?'+':''}${F(fav)}${nx!==undefined?` · mốc kế ${nx>0?'+':''}${nx}`:' · đã tối đa'}. Hảo cảm ≥ 60 mới thải bổ được.</div>`);
   return parts.join('');
 }
+
+/* ───────── Nhân mạch: gọi NPC ra tương tác trực tiếp (mở encounter bằng core.startEncounter, lọc điều kiện bằng chuyenCua/trongTam/banCoTheTham của game) ───────── */
+const EV_SKIP=new Set(['ev.tham_ban_cu','ev.song_tu','ev.thai_bo']);
+const EV_GROUP={chien_dau:'Có giao chiến',tong_mon:'Sư môn',tu_luyen:'Tu luyện'};
+const evName=(d,nm)=>strip(T(d.ten||d.id)).replace(/\{[^}]*\}/g,nm).trim();
+function npcBusy(){const r=run();return r.active?'Đang có một sự kiện mở — xong việc đó đã.':r.bienCo?'Đang có biến cố chờ — xử lý trước.':''}
+function npcEvents(id,npc,e){
+  const out=[],CF=coreFn('chuyenCua'),DP=coreFn('dipCua');
+  if(!CF||!DP||!e||!npc||npc.song===false)return out;
+  let list=[];try{list=CF(e,id,DP(npc))||[]}catch{}
+  const nm=strip(npc.ten||'');
+  for(const d of list){if(EV_SKIP.has(d.id))continue;out.push({id:d.id,ten:evName(d,nm),kind:d.kind||'su_kien',gap:d.gap_o||'tim_toi'})}
+  return out;
+}
+function npcInRange(e,npc){try{const f=coreFn('trongTam');return f?!!f(e,npc):true}catch{return true}}
+function npcStart(evId,vars){
+  const SE=coreFn('startEncounter');
+  if(!SE||typeof g.dev!=='function')return 'Bản game này không cho tool mở sự kiện trực tiếp.';
+  const b=npcBusy();if(b)return b;
+  let err='';
+  g.dev(ctx=>{try{if(!SE(ctx,evId,ctx.run.viTri,vars))err='Game không mở được sự kiện này.'}catch(x){err=String(x?.message||x)}});
+  if(!err&&!run().active)err='Sự kiện không mở ra (có thể chưa đủ điều kiện).';
+  return err;
+}
+function encPick(match){
+  let v=null;try{v=g.encounterView?.()}catch{}
+  const c=v?.choices?.find(x=>x.available&&match(x.text||''));
+  if(!c)return false;g.choose(c.index);return true;
+}
+function npcLaunch(kind,id,arg){
+  const npc=run().npc[id];if(!npc||npc.song===false)return 'Người này không còn để gặp.';
+  const nm=strip(npc.ten||'');
+  if(kind==='visit'){
+    const BT=coreFn('banCoTheTham');let ok=true;
+    if(BT){ok=false;g.dev(ctx=>{try{ok=!!BT(ctx,ctx.run.viTri)?.includes?.(id)}catch{}})}
+    if(!ok){const e=g.readCtx?.();return npcInRange(e,npc)?'Mới gặp gần đây: phải cách một nhịp (vài tháng) kể từ lần gặp cuối mới thăm lại được.':nm+' ở xa quá tầm đi lại của ngươi.'}
+    const err=npcStart('ev.tham_ban_cu',{ban:id});if(err)return err;
+    if(arg)encPick(t=>t.startsWith(arg));
+    return '';
+  }
+  if(kind==='dual'){
+    const e=g.readCtx?.(),DU=coreFn('dualBlock'),why=DU&&e?DU(e,id):'';if(why)return why;
+    return npcStart('ev.song_tu',{dl:id});
+  }
+  if(kind==='drain'){
+    const e=g.readCtx?.(),DB=coreFn('drainBlock'),why=DB&&e?DB(e,id):'';if(why)return why;
+    const err=npcStart('ev.thai_bo',{});if(err)return err;
+    encPick(t=>t.includes(nm));return '';
+  }
+  if(kind==='ev'){
+    const e=g.readCtx?.();if(!npcInRange(e,npc))return nm+' ở xa quá tầm đi lại của ngươi.';
+    return npcStart(arg,{doi_tuong:id});
+  }
+  return 'Việc không rõ.';
+}
+function encLines(v){
+  const L=A(v.transcript).slice(-14),r=run();
+  return L.map(l=>{
+    const nm=l.ai&&r.npc?.[l.ai]?strip(r.npc[l.ai].ten||''):(l.ai||'');
+    const cls=l.kind==='choice'?'enc-ch':l.kind==='say'?'enc-say':l.kind==='result'||l.kind==='system'?'enc-sys':'enc-nar';
+    const t=strip(String(l.text||''));
+    return `<div class="${cls}">${l.kind==='say'&&nm?`<b>${E(nm)}:</b> `:''}${E(t)}</div>`;
+  }).join('');
+}
+function encCard(){
+  let v=null;try{v=g.encounterView?.()}catch{}
+  const w=run().active?.waiting;
+  if(!v&&!w)return '';
+  let inner='';
+  if(w?.kind==='npc_tang'){
+    let gv=null;try{gv=g.giftView?.()}catch{}
+    const items=A(gv?.options).map(o=>{const d=C.items.get(o.itemId);return `<div class="enc-gift"><span><b>${E(T(d?.ten||o.itemId))}</b> ×${F(o.count)} <small>· ${E(({rat_vui:'rất vui',vui:'vui',phep:'phải phép'})[o.level]||'')}${o.use?' · '+E(strip(o.use)):''}</small></span><span class="acts">${o.stackable&&o.count>1?`<input type="number" min="1" max="${o.count}" value="1" class="enc-q" style="width:56px">`:''}<button class="btn pri" data-encgift="${E(o.itemId)}">Tặng</button></span></div>`}).join('');
+    inner=`<div class="sub">Hộp tặng quà ${E(strip(gv?.name||''))} — mỗi năm chỉ nhận một món.</div>${items||'<div class="empty">Trong túi không có món nào tặng được.</div>'}<div class="acts"><button class="btn" data-encskip="1">Thôi</button></div>`;
+  }else if(w){
+    inner=`<div class="sub">Việc này đang chờ ở màn riêng của game (${E(w.kind)}). Thu nhỏ tool để xử lý trong game${w.kind==='do_hoi'?', hoặc bấm Xong để bỏ qua':''}.</div><div class="acts">${w.kind==='do_hoi'?'<button class="btn" data-encskip="1">Xong</button>':''}<button class="btn pri" data-encmin="1">Thu nhỏ tool</button></div>`;
+  }else{
+    const ch=A(v.choices).filter(c=>!c.thoat||true).map(c=>`<button class="btn ${c.thoat?'':'pri'}" data-encch="${c.index}" ${c.available?'':'disabled'} title="${E(c.lockedReason||'')}">${E(strip(c.text))}${c.chance?` <small>(${E(c.chance)})</small>`:''}${c.risk?` <small>⚔ ${E(c.risk.enemy||'')} · ${E(String(c.risk.level))}</small>`:''}</button>`).join('');
+    inner=(v.transcript?.length?'':`<div class="enc-nar">${E(strip(v.text||''))}</div>`)+encLines(v)+(v.done?`<div class="acts"><button class="btn pri" data-encclose="1">Đóng</button></div>`:`<div class="acts enc-choices">${ch}</div>`);
+  }
+  return `<div class="card enc" style="display:block"><b>${E(strip(v?.ten||v?.id||'Sự kiện'))}</b> <small>${E(strip(v?.noi||''))}</small><div class="enc-log">${inner}</div></div>`;
+}
 const PSORT={act:{name:'Có thể gặp trước',fn:(a,b)=>(+b.here-+a.here)||(+b.alive-+a.alive)||(a.travel||1e9)-(b.travel||1e9)},near:{name:'Gần nhất',fn:(a,b)=>(+b.alive-+a.alive)||((N(a.travel)?a.travel:1e9)-(N(b.travel)?b.travel:1e9))},fav:{name:'Hảo cảm cao',fn:(a,b)=>b.fav-a.fav},name:{name:'Theo tên',fn:(a,b)=>a.name.localeCompare(b.name,'vi')}};
 let pInv=new Map();const pUi={q:'',sort:'act',life:'alive',sex:'all',rel:'all',where:'all',act:'all',limit:40,open:{}};
 VIEWS.people=()=>{
@@ -5957,7 +6107,7 @@ VIEWS.people=()=>{
   const actOk=x=>{const fl=x.fl||{};switch(pUi.act){case'gift':return x.alive&&x.here&&run().npc[x.id].lastGiftYear!==Math.floor(run().nam);case'hunt':return !!fl.foe;case'invite':return !!fl.invite&&!fl.inviteReason;case'drain':return !!fl.drainOk;case'dual':return !!fl.dualOk;default:return true}};
   const rows=all.filter(x=>actOk(x)&&(!q||norm([x.name,x.title,x.rel,x.loc.note,x.realm].join(' ')).includes(q))&&(pUi.life==='all'||(pUi.life==='alive')===x.alive)&&(pUi.sex==='all'||x.sex===pUi.sex)&&(pUi.rel==='all'||x.rel===pUi.rel)&&(pUi.where==='all'||(pUi.where==='here'&&x.here)||(pUi.where==='known'&&x.loc.slot)||(pUi.where==='now'&&(x.loc.src==='now'||x.loc.src==='with'))||(pUi.where==='unknown'&&!x.loc.slot))).sort(PSORT[pUi.sort].fn),shown=rows.slice(0,pUi.limit);
   const sel=(id,arr,v)=>`<select id="${id}" class="grow">${arr.map(([k,n])=>`<option value="${E(k)}" ${k===v?'selected':''}>${E(n)}</option>`).join('')}</select>`;
-  body.innerHTML=`<div class="bar"><input type="search" id="p-q" class="grow" placeholder="Tìm tên, quan hệ, nơi ở…" value="${E(pUi.q)}"></div><div class="bar">${sel('p-sort',Object.entries(PSORT).map(([k,v])=>[k,v.name]),pUi.sort)}${sel('p-life',[['all','Còn sống & đã khuất'],['alive','Còn sống'],['dead','Đã khuất']],pUi.life)}</div><div class="bar">${sel('p-sex',[['all','Mọi giới'],['Nam','Nam'],['Nữ','Nữ']],pUi.sex)}${sel('p-rel',[['all','Mọi quan hệ'],...rels.map(x=>[x,x])],pUi.rel)}${sel('p-where',[['all','Mọi vị trí'],['here','Ở cùng nơi'],['now','Đang xuất hiện'],['known','Biết nơi ở'],['unknown','Chưa rõ tung tích']],pUi.where)}</div><div class="bar">${sel('p-act',NPC_FILTERS,pUi.act)}</div><div class="sum">${rows.length}/${all.length} nhân mạch · ${all.filter(x=>x.fl?.foe).length} kẻ thù còn sống · ${all.filter(x=>x.fl?.invite&&!x.fl.inviteReason).length} có thể mời tới</div>
+  body.innerHTML=encCard()+`<div class="bar"><input type="search" id="p-q" class="grow" placeholder="Tìm tên, quan hệ, nơi ở…" value="${E(pUi.q)}"></div><div class="bar">${sel('p-sort',Object.entries(PSORT).map(([k,v])=>[k,v.name]),pUi.sort)}${sel('p-life',[['all','Còn sống & đã khuất'],['alive','Còn sống'],['dead','Đã khuất']],pUi.life)}</div><div class="bar">${sel('p-sex',[['all','Mọi giới'],['Nam','Nam'],['Nữ','Nữ']],pUi.sex)}${sel('p-rel',[['all','Mọi quan hệ'],...rels.map(x=>[x,x])],pUi.rel)}${sel('p-where',[['all','Mọi vị trí'],['here','Ở cùng nơi'],['now','Đang xuất hiện'],['known','Biết nơi ở'],['unknown','Chưa rõ tung tích']],pUi.where)}</div><div class="bar">${sel('p-act',NPC_FILTERS,pUi.act)}</div><div class="sum">${rows.length}/${all.length} nhân mạch · ${all.filter(x=>x.fl?.foe).length} kẻ thù còn sống · ${all.filter(x=>x.fl?.invite&&!x.fl.inviteReason).length} có thể mời tới</div>
   ${shown.map(x=>`<article class="card ${x.alive?'':'late'}" ${x.loc.slot?`data-slot="${E(x.loc.slot)}" data-title="${E(x.name)}"`:''} style="grid-template-columns:34px 1fr auto"><div class="ico">${x.alive?(x.sex==='Nữ'?'女':'男'):'亡'}</div><div><b>${E(x.name)}</b><small>${E([x.title,x.realm,x.age!==null?x.age+' tuổi':''].filter(Boolean).join(' · '))}</small></div><div class="side">${N(x.travel)?fmtTime(x.travel):''}<small>${N(x.miles)?fmtMiles(x.miles):''}</small></div><div class="tags"><span class="tag">${E(x.rel)}</span><span class="tag ${x.fav>0?'g':x.fav<0?'r':''}">Hảo cảm ${x.fav>0?'+':''}${F(x.fav)}</span>${x.romance?'<span class="tag o">Có tình ý</span>':''}${x.hurt?`<span class="tag r">Đang trọng thương · ~${fmtTime(x.hurt)}</span>`:''}${x.debt?`<span class="tag r">Nợ ${F(x.debt)}</span>`:''}${x.alive?'':'<span class="tag r">Đã khuất</span>'}${x.fl?.foe?'<span class="tag r">Kẻ thù</span>':''}<span class="tag">${E(x.loc.note)}</span>${x.acts.map(a=>`<span class="tag g">${E(a)}</span>`).join('')}</div>${x.alive?`<div class="acts">${x.loc.slot?'<button class="btn" data-act="view">Xem bản đồ</button><button class="btn pri" data-act="go">Đường đi an toàn</button>':''}<button class="btn" data-npctoggle="${E(x.id)}">${pUi.open[x.id]?'Thu gọn':'Tương tác'}</button></div>`:''}${pUi.open[x.id]&&x.alive?`<div class="npc-panel" style="grid-column:1/-1">${npcPanel(x,run().npc[x.id],e0,pInv,x.fl||{})}</div>`:''}</article>`).join('')||'<div class="empty">Chưa có nhân mạch phù hợp.</div>'}${rows.length>shown.length?'<button class="btn" id="p-more" style="width:100%">Xem thêm</button>':''}`;
   $(body,'#p-more')?.addEventListener('click',()=>{pUi.limit+=40;render()});
   let t;$(body,'#p-q').oninput=e=>{pUi.q=e.target.value;pUi.limit=40;clearTimeout(t);t=setTimeout(()=>{VIEWS.people();const i=$(body,'#p-q');i.focus();i.setSelectionRange(i.value.length,i.value.length)},220)};
@@ -6181,6 +6331,6 @@ iv=setInterval(tick,5000);
 /* Không tự vẽ đường khi mở tool */
 try{Route.clear()}catch{try{stopDrawing()}catch{}}
 Alerts.check();ui.syncRouteChip();
-window.__VKT2__={destroy(){try{AutoFarm.stopRecord()}catch{}try{AutoFarm.stop()}catch{}try{document.getElementById(ID+'-afbar')?.remove();document.getElementById(ID+'-afstats')?.remove()}catch{}clearInterval(iv);clearTimeout(timer);try{dkMo.disconnect();document.getElementById(ID+'-afsum')?.remove()}catch{}try{vkMo.disconnect();vkClose()}catch{}try{qsMo.disconnect();qsStop();qsCss.remove();for(const ev of ['pointerdown','mousedown','click','dblclick','contextmenu'])document.removeEventListener(ev,qsPick,true);document.removeEventListener('keydown',qsKey,true);document.querySelectorAll('.vkt-qs-btn').forEach(x=>x.remove())}catch{}try{unsub?.()}catch{}stopDrawing();panel.remove();fab.remove();chip.remove();toasts.remove();styleEl.remove()},ui,Route,build:BUILD,VIEWS,BuildEngine,hooks:{realmRows,eventRows,treasureRows,jobRows,peopleRows,sectRows,checks,safePath,placeWindow,closedYears,openOnArrival,focusMap,startDrawing,stopDrawing,mapRoot,ORD,ORDER_CFG,coreContext,Alerts,AutoFarm}};
+window.__VKT2__={ORD,destroy(){try{AutoFarm.stopRecord()}catch{}try{AutoFarm.stop()}catch{}try{document.getElementById(ID+'-afbar')?.remove();document.getElementById(ID+'-afstats')?.remove()}catch{}clearInterval(iv);clearTimeout(timer);try{dkMo.disconnect();document.getElementById(ID+'-afsum')?.remove()}catch{}try{vkMo.disconnect();vkClose()}catch{}try{qsMo.disconnect();qsStop();qsCss.remove();for(const ev of ['pointerdown','mousedown','click','dblclick','contextmenu'])document.removeEventListener(ev,qsPick,true);document.removeEventListener('keydown',qsKey,true);document.querySelectorAll('.vkt-qs-btn').forEach(x=>x.remove())}catch{}try{unsub?.()}catch{}stopDrawing();panel.remove();fab.remove();chip.remove();toasts.remove();styleEl.remove()},ui,Route,build:BUILD,VIEWS,BuildEngine,hooks:{realmRows,eventRows,treasureRows,jobRows,peopleRows,sectRows,checks,safePath,placeWindow,closedYears,openOnArrival,focusMap,startDrawing,stopDrawing,mapRoot,ORD,ORDER_CFG,coreContext,Alerts,AutoFarm}};
 
 })();
