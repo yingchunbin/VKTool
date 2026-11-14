@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261114-dibao-v97',ID='vkt2',g=window.game;
+const BUILD='20261114-icon-v98',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -1545,6 +1545,7 @@ const CSS=`
 #${ID} .an,#${ID}-fab .an{display:inline-block;width:var(--s,22px);height:var(--s,22px);background:currentColor;-webkit-mask:var(--an) center/contain no-repeat;mask:var(--an) center/contain no-repeat;vertical-align:middle}#${ID} nav button i .an{display:block;margin:0 auto}#${ID} header .seal .an{background:#f0e9d6}#${ID}-fab{display:grid;place-items:center;line-height:1}#${ID}-fab b{position:absolute}#${ID} .gimg{width:20px;height:20px;object-fit:contain;vertical-align:middle;margin-right:5px}#${ID} .gimg.rk{width:16px;height:auto;margin:0 3px 0 0;filter:drop-shadow(0 0 1px #fff)}
 #${ID} .gi.k-item:not(.fb){background:none;border:0;overflow:visible}#${ID} .gi.k-item:not(.fb) img{filter:drop-shadow(0 0 1.5px rgba(255,248,230,.9)) drop-shadow(0 1px 1.5px rgba(40,25,10,.45))}#${ID} .gi.fb,#${ID} .gi.k-enemy,#${ID} .gi.k-face{background:#efe6cf;border:2px solid #8a8478;border-radius:3px;color:#6b5a3a;font-weight:700}
 #${ID} input[type=checkbox],#${ID} input[type=radio],#${ID} input[type=range]{accent-color:#7a1f1a}#${ID}{--ci:var(--co-icon,1)}#${ID} .an{width:calc(var(--s,22px)*var(--ci));height:calc(var(--s,22px)*var(--ci))}#${ID} .seal,#${ID} .gi{width:calc(var(--s,34px)*var(--ci));height:calc(var(--s,34px)*var(--ci))}
+#${ID} header .seal .an.nf,#${ID}-fab .an.nf{background:none;color:#f0e9d6}#${ID} .mchk{display:none}#${ID} .seal.nf::after{display:none}#${ID} .seal.nf::before{content:attr(data-g)}#${ID} .an.nf{-webkit-mask:none;mask:none;background:none;text-align:center;line-height:var(--s,22px);font-weight:700;font-size:calc(var(--s,22px)*.8)}#${ID} .an.nf::before{content:attr(data-g)}
 #${ID} .gi{display:inline-grid;place-items:center;flex:none;width:var(--s,34px);height:var(--s,34px);border-radius:8px;overflow:hidden;background:rgba(0,0,0,.22);border:1px solid rgba(160,130,60,.35);font-size:calc(var(--s,34px)*.5);color:var(--gold)}#${ID} .gi img{width:100%;height:100%;object-fit:contain;display:block}#${ID} .gi.fb{border-color:var(--gold2)}#${ID} .card{content-visibility:auto;contain-intrinsic-size:auto 66px}#${ID} .ico{grid-row:1/3;width:34px;height:34px;border-radius:8px;border:1px solid var(--gold2);color:var(--gold);display:grid;place-items:center;font-size:18px;background:rgba(0,0,0,.25)}
 #${ID} .card b{font-size:14.5px;color:#fff;line-height:1.3}
 #${ID} .card small,#${ID} .sub{color:var(--mute);font-size:12px;line-height:1.4}
@@ -1775,7 +1776,7 @@ ui.close=()=>{ui.isOpen=false;panel.classList.remove('open');fab.style.display='
 panel.addEventListener('click',e=>{if(Date.now()-(ui._t||0)<400){e.preventDefault();e.stopPropagation()}},true);
 $(panel,'#'+ID+'-x').onclick=ui.close;
 navEl.onclick=e=>{const b=e.target.closest('[data-t]');if(!b)return;ui.tab=b.dataset.t;store.set('tab',ui.tab);render()};
-function syncNav(){const m=iconMode();if(ui._navMode!==m){ui._navMode=m;$$(navEl,'button').forEach(b=>{const t=TABS.find(x=>x[0]===b.dataset.t),i=$(b,'i');if(t&&i)i.innerHTML=tabIco(t[0],t[1])});const sl=$(panel,'header .seal');if(sl)sl.innerHTML=m==='an'?anEl('logo'.replace('logo','lookup'),20):'仙';fab.firstChild&&fab.firstChild.nodeType===3?fab.firstChild.remove():0;if(!fab.querySelector('.an'))fab.insertAdjacentHTML('afterbegin',m==='an'?anEl('lookup',28):'仙');else if(m!=='an'){fab.querySelector('.an').remove();fab.insertAdjacentHTML('afterbegin','仙')}}$$(navEl,'button').forEach(b=>{const on=b.dataset.t===ui.tab;b.classList.toggle('on',on);if(on&&ui._navTab!==ui.tab){ui._navTab=ui.tab;try{navEl.scrollTo({left:Math.max(0,b.offsetLeft-(navEl.clientWidth-b.offsetWidth)/2),behavior:'auto'})}catch{}}});const n=Alerts.count;$$(navEl,'em').forEach(x=>x.remove());if(n.realm){$(navEl,'[data-t=realm]').insertAdjacentHTML('beforeend',`<em>${n.realm}</em>`)}}
+function syncNav(){const m=iconMode();if(ui._navMode!==m){ui._navMode=m;$$(navEl,'button').forEach(b=>{const t=TABS.find(x=>x[0]===b.dataset.t),i=$(b,'i');if(t&&i)i.innerHTML=tabIco(t[0],t[1])});const sl=$(panel,'header .seal');if(sl)sl.innerHTML=m==='an'?anEl('lookup',20,'仙'):'仙';fab.firstChild&&fab.firstChild.nodeType===3?fab.firstChild.remove():0;if(!fab.querySelector('.an'))fab.insertAdjacentHTML('afterbegin',m==='an'?anEl('lookup',28,'仙'):'仙');else if(m!=='an'){fab.querySelector('.an').remove();fab.insertAdjacentHTML('afterbegin','仙')}}$$(navEl,'button').forEach(b=>{const on=b.dataset.t===ui.tab;b.classList.toggle('on',on);if(on&&ui._navTab!==ui.tab){ui._navTab=ui.tab;try{navEl.scrollTo({left:Math.max(0,b.offsetLeft-(navEl.clientWidth-b.offsetWidth)/2),behavior:'auto'})}catch{}}});const n=Alerts.count;$$(navEl,'em').forEach(x=>x.remove());if(n.realm){$(navEl,'[data-t=realm]').insertAdjacentHTML('beforeend',`<em>${n.realm}</em>`)}}
 
 const hdrSub=()=>{const r=run(),i=info(r.viTri);const cg=C.canhGioi?.get?.(me().canhGioi)?.ten;return`Năm ${F(Math.floor(r.nam))} · ${T(i?.ten||'')}`};
 function render(){
@@ -1894,16 +1895,16 @@ const WILD_ICON={hoang_nguyen:'原',rung_ram:'林',son_mach:'嶺',ho_nuoc:'沼',
 let sealOk=null;
 (()=>{try{const im=new Image();im.onload=()=>{sealOk=true};im.onerror=()=>{sealOk=false};im.src='/img/node/thon.webp'}catch{sealOk=false}})();
 const nodeGlyph=id=>{try{const d=placeDef(id);if(!d)return'';if(d.id==='noi.hoang_da'){const dh=A(info(id)?.diaHinh).find(k=>WILD_ICON[k]);return WILD_ICON[dh]||'原'}return d.icon||''}catch{return''}};
-const sealIco=(glyph,sz=34)=>{const n=NODE_SEAL[glyph];if(!n||iconMode()==='han')return`<span class="seal fb" style="--s:${sz}px">${E(glyph||'地')}</span>`;return`<span class="seal" style="--s:${sz}px;--m:url(/img/node/${n}.webp);--c:${NODE_COL[glyph]||'#4a4a4a'}"></span>`};
+const sealIco=(glyph,sz=34)=>{const n=NODE_SEAL[glyph];if(!n||iconMode()==='han')return`<span class="seal fb" style="--s:${sz}px">${E(glyph||'地')}</span>`;return`<span class="seal" data-g="${E(glyph)}" style="--s:${sz}px;--m:url(/img/node/${n}.webp);--c:${NODE_COL[glyph]||'#4a4a4a'}"><img class="mchk" src="/img/node/${n}.webp" alt="" onerror="this.parentNode.classList.add('nf')"></span>`};
 /* Bộ biểu tượng theo cài đặt của game (ấn khắc "an" hay chữ Hán "han"): đọc từ thanh công cụ game đang hiển thị */
-const iconMode=()=>{if(sealOk===false)return'han';const h=document.querySelector('.hud-cong-cu');return!h||h.querySelector('.icon.an')?'an':'han'};
+const iconMode=()=>{try{const j=JSON.parse(localStorage.getItem('tu-tien.icons')||'{}');return j.ui==='han'?'han':'an'}catch{return'an'}};
 const UI_AN={quest:'su_kien',map:'ban_do',realm:'bi_canh',auto:'chien_dau',bounty:'viec',people:'nhan_mach',sect:'tong',breakthrough:'dot_pha',build:'noi_linh_mach',items:'cua_hang',check:'lookup',logo:'lookup'};
-const anEl=(name,sz)=>`<span class="an" style="--an:url(/img/node/${name}.webp);--s:${sz}px"></span>`;
-const tabIco=(k,glyph)=>iconMode()==='an'&&UI_AN[k]?anEl(UI_AN[k],22):E(glyph);
+const anEl=(name,sz,glyph='')=>`<span class="an" data-g="${E(glyph)}" style="--an:url(/img/node/${name}.webp);--s:${sz}px"><img class="mchk" src="/img/node/${name}.webp" alt="" onerror="this.parentNode.classList.add('nf')"></span>`;
+const tabIco=(k,glyph)=>iconMode()==='an'&&UI_AN[k]?anEl(UI_AN[k],22,glyph):E(glyph);
 /* Ảnh nhóm hành động của game (/img/icon/<tên>.webp) — ảnh nhỏ màu, ẩn đi nếu không tải được */
 const grpIco=(name,sz=20)=>`<img class="gimg" src="/img/icon/${name}.webp" alt="" width="${sz}" height="${sz}" onerror="this.remove()">`;
 const rankSeal=muc=>muc==='boss'?'<img class="gimg rk" src="/img/ui/an-boss.webp" alt="" onerror="this.remove()" title="Đầu lĩnh">':muc==='tinh_anh'?'<img class="gimg rk" src="/img/ui/an-tinh-anh.webp" alt="" onerror="this.remove()" title="Tinh anh">':'';
-const sealRaw=(name,col,sz=34,glyph='宗')=>iconMode()==='han'?`<span class="seal fb" style="--s:${sz}px">${E(glyph)}</span>`:`<span class="seal" style="--s:${sz}px;--m:url(/img/node/${name}.webp);--c:${col}"></span>`;
+const sealRaw=(name,col,sz=34,glyph='宗')=>iconMode()==='han'?`<span class="seal fb" style="--s:${sz}px">${E(glyph)}</span>`:`<span class="seal" data-g="${E(glyph)}" style="--s:${sz}px;--m:url(/img/node/${name}.webp);--c:${col}"><img class="mchk" src="/img/node/${name}.webp" alt="" onerror="this.parentNode.classList.add('nf')"></span>`;
 const SECT_SEAL={dai_tong_mon:'sect_great_hall',tong_mon:'tong',mon_phai:'sect_minor'},SECT_COL={chinh:'#1f5a6e',ma:'#8e1b2e',ta:'#6b2a9a'};
 const sectSeal=(x,sz)=>sealRaw(SECT_SEAL[x.tang]||'tong',SECT_COL[x.cm]||SECT_COL.chinh,sz);
 const placeIco=(id,loai,sz)=>sealIco(nodeGlyph(id)||MAP_GLYPH[loai]||'野',sz);
