@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261114-map-v93',ID='vkt2',g=window.game;
+const BUILD='20261114-npc-v94',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -42,7 +42,7 @@ function openOnArrival(slot,t){const r=run(),r2={...r,nam:r.nam+(N(t)?t:0)},ch=r
 /* ───────── loại nơi chốn & mức nguy hiểm ───────── */
 const PLACE_KIND={sao_huyet:'Sào huyệt yêu thú',di_tich:'Di tích',khoang_mach:'Khoáng mạch',bi_canh:'Bí cảnh'};
 const placeKind=i=>PLACE_KIND[String(i?.diaDanh?.loai||'')]||null;
-const KIND_ICON={su_kien:'事',chien_dau:'戰',tu_luyen:'修',cua_hang:'市',bi_canh:'秘',dot_pha:'破',tong_mon:'宗',linh_mach:'脈',di_tich:'跡',sao_huyet:'巢',khoang_mach:'礦',di_bao:'寶'};
+const KIND_ICON={su_kien:'?',chien_dau:'劍',tu_luyen:'坐',cua_hang:'市',bi_canh:'門',dot_pha:'雷',tong_mon:'宗',linh_mach:'泉',di_tich:'碑',sao_huyet:'巢',khoang_mach:'礦',di_bao:'寶'};
 const KIND_NAME={su_kien:'Sự kiện',chien_dau:'Chiến đấu',tu_luyen:'Tu luyện',cua_hang:'Cửa hàng',bi_canh:'Bí cảnh',dot_pha:'Đột phá',tong_mon:'Tông môn',linh_mach:'Linh mạch'};
 
 const CG_TEN={0:'Phàm nhân',1:'Luyện khí',2:'Trúc cơ',3:'Kết đan',4:'Nguyên anh',5:'Hóa thần',6:'Luyện hư',7:'Hợp đạo',8:'Đại thừa',9:'Độ kiếp'};
@@ -1540,6 +1540,8 @@ const CSS=`
 #${ID} .card.late{border-left-color:#6b6f7a;opacity:.62}
 #${ID} .card.d2{border-left-color:var(--amber)}#${ID} .card.d3{border-left-color:var(--red)}
 #${ID} .seg{display:flex;gap:0;margin:2px 0 8px;border:1px solid var(--gold2);border-radius:9px;overflow:hidden}#${ID} .seg button{flex:1;padding:8px 6px;font:inherit;font-weight:700;background:transparent;color:var(--mute);border:0;border-right:1px solid var(--gold2);cursor:pointer}#${ID} .seg button:last-child{border-right:0}#${ID} .seg button.on{background:var(--gold2);color:#1a1209}#${ID} .hrow{display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;padding:2px 0 6px;margin-bottom:2px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}#${ID} .hrow.wrap{flex-wrap:wrap;overflow:visible}#${ID} .hrow .chip{flex:none;white-space:nowrap}#${ID} .hrow .gl{flex:none;align-self:center;font-size:10.5px;letter-spacing:.04em;color:var(--mute);padding:0 2px 0 8px;border-left:1px solid rgba(160,130,60,.4)}#${ID} .mp-tool select{flex:none;max-width:42%}#${ID} .mp-tool .chip{flex:none}#${ID} .mp-tool .chip b{background:var(--gold2);color:#1a1209;border-radius:9px;padding:0 6px;margin-left:3px}#${ID} .chip.x{border-color:var(--cyan);color:var(--cyan)}#${ID} .fpanel{border:1px solid rgba(160,130,60,.4);border-radius:9px;padding:8px 10px;margin:2px 0 8px;display:grid;gap:8px;background:rgba(0,0,0,.12)}#${ID} .fpanel .ft{font-weight:700;margin-bottom:4px;color:var(--gold)}#${ID} .fpanel .frow{display:flex;gap:8px;flex-wrap:wrap}#${ID} .fpanel label{display:grid;gap:3px;font-size:11.5px;color:var(--mute);flex:1 1 140px}#${ID} .fpanel select{width:100%}
+#${ID} .ico.nd{border:0;background:none;padding:0;display:grid;place-items:center}#${ID} .seal{display:inline-grid;place-items:center;width:var(--s,34px);height:var(--s,34px);box-sizing:border-box;border-radius:3px;background:#efe6cf;border:2px solid #8a8478;font-weight:700;font-size:calc(var(--s,34px)*.45);color:#6b5a3a;position:relative}#${ID} .seal:not(.fb)::after{content:"";position:absolute;inset:12%;background:var(--c);-webkit-mask:var(--m) center/contain no-repeat;mask:var(--m) center/contain no-repeat}
+#${ID} .npc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:6px;margin-top:6px}#${ID} .npc-grid .npcb{width:100%;height:46px;min-height:46px;padding:3px 6px;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.2;overflow:hidden}#${ID} .npc-grid .npcb span{display:block;max-width:100%;font-size:12.5px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}#${ID} .npc-grid .npcb small{display:block;font-size:10.5px;opacity:.75;font-weight:400;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#${ID} .npc-grid .npcb:disabled{opacity:.5;cursor:not-allowed}#${ID} .dl-box{margin-top:8px;border:1px solid var(--vien);padding:6px 8px;background:#ffffff40}#${ID} .dl-box summary{cursor:pointer}#${ID} .dl-r{margin:2px 0}#${ID} .dl-r.ok{color:#2f6b4f}#${ID} .dl-r.no{color:#a3342b}#${ID} .dl-r i{opacity:.8;font-style:normal}
 #${ID} .gi{display:inline-grid;place-items:center;flex:none;width:var(--s,34px);height:var(--s,34px);border-radius:8px;overflow:hidden;background:rgba(0,0,0,.22);border:1px solid rgba(160,130,60,.35);font-size:calc(var(--s,34px)*.5);color:var(--gold)}#${ID} .gi img{width:100%;height:100%;object-fit:contain;display:block}#${ID} .gi.fb{border-color:var(--gold2)}#${ID} .card{content-visibility:auto;contain-intrinsic-size:auto 66px}#${ID} .ico{grid-row:1/3;width:34px;height:34px;border-radius:8px;border:1px solid var(--gold2);color:var(--gold);display:grid;place-items:center;font-size:18px;background:rgba(0,0,0,.25)}
 #${ID} .card b{font-size:14.5px;color:#fff;line-height:1.3}
 #${ID} .card small,#${ID} .sub{color:var(--mute);font-size:12px;line-height:1.4}
@@ -1621,6 +1623,7 @@ const CSS=`
 #${ID} .chip{border:1px solid var(--vien);background:linear-gradient(180deg,#ffffff8c,#f0e9d699);color:var(--paper);padding:3px 10px;font-size:12px}
 #${ID} .chip:hover{color:#7a1f1a;border-color:#7a1f1a}
 #${ID} .chip.on{background:#7a1f1a;border-color:#7a1f1a;color:#f0e9d6;font-weight:600}
+#${ID}-modal{background:rgba(20,18,14,.5)}#${ID}-modal .mbox{background:#f0e9d6;color:#2b2b2b;border:1px solid #2b2b2b8c;border-radius:1px;box-shadow:inset 0 0 0 3px #ffffff59,0 10px 34px #0000007a;padding:16px 18px;max-width:440px}#${ID}-modal h3{color:#7a1f1a;letter-spacing:.06em;font-size:17px;border-bottom:1px solid #2b2b2b2e;padding-bottom:6px}#${ID}-modal .mb small{color:#6b6558}#${ID}-modal .mb b{color:#7a1f1a}#${ID}-modal .macts{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}#${ID}-modal button.btn{border:1px solid #2b2b2b8c;border-radius:1px;background:linear-gradient(180deg,#ffffff8c,#f0e9d699);color:#2b2b2b;box-shadow:inset 0 0 0 2px #ffffff59,inset 0 -1px 0 2px #2b2b2b0f;min-height:40px;font-weight:600}#${ID}-modal button.btn:hover:not(:disabled){color:#7a1f1a;border-color:#7a1f1a;background:#7a1f1a12}#${ID}-modal button.btn.pri{background:#7a1f1a;border-color:#7a1f1a;color:#f0e9d6;box-shadow:inset 0 0 0 2px #7a1f1a,inset 0 0 0 3px #f0e9d6bf,0 2px 6px #7a1f1a40}#${ID}-modal button.btn.pri:hover:not(:disabled){background:#5e1713;color:#f0e9d6}#${ID}-modal .mmsg{color:#a3342b}
 #${ID} h3{color:#7a1f1a;letter-spacing:.06em}
 #${ID} h3::after{background:linear-gradient(90deg,var(--vien),transparent)}
 #${ID} .card,#${ID} .panel{background:#ffffff59;border:1px solid var(--vien2);border-left:3px solid var(--jade);border-radius:1px}
@@ -1775,13 +1778,13 @@ function tabSig(tab){
   return yr+'|'+bc.map(r=>r.slot+(r.ok?1:0)+(r.openNow?1:0)+q(r.travel)+q(r.opensIn)+q(r.closesIn)).join(';')+'|'+tr.active.map(r=>r.key+q(r.travel)+(r.ok?1:0)).join(';')+'|'+tr.waiting.map(r=>r.id+q(r.cd)).join(';');
 }
 
-const cardHtml=(r,opts={})=>`<article class="card ${r.ok?'':'late'} d${r.danger?.rank>=2?r.danger.rank:0}" data-slot="${E(r.slot)}" data-title="${E(r.title)}"><div class="ico">${E(r.icon||'事')}</div><div><b>${E(r.title)}</b><small>${E(r.kind)} · ${E(r.place)}${r.country?' · '+E(r.country):''}</small></div><div class="side">${fmtTime(r.travel)}<small>${fmtMiles(r.miles)}</small></div><div class="tags">${r.ok?'<span class="tag g">Tới kịp</span>':`<span class="tag r">${E(r.why||'Không tới kịp')}</span>`}${r.slack!==null&&r.ok?`<span class="tag o">Còn ${fmtTime(Math.max(0,r.slack))} khi tới nơi</span>`:''}${r.danger?.rank>=1?`<span class="tag ${r.danger.rank>=2?'r':''}">${r.danger.label}</span>`:''}${r.block?`<span class="tag o">⚠ ${E(r.block)}</span>`:''}${A(r.tags).map(t=>`<span class="tag">${E(t)}</span>`).join('')}${opts.extra||''}</div>${opts.after||''}<div class="acts"><button class="btn" data-act="view">Xem bản đồ</button><button class="btn pri" data-act="go">Đường đi an toàn</button></div></article>`;
+const cardHtml=(r,opts={})=>`<article class="card ${r.ok?'':'late'} d${r.danger?.rank>=2?r.danger.rank:0}" data-slot="${E(r.slot)}" data-title="${E(r.title)}"><div class="ico nd">${sealIco(r.icon||'?',34)}</div><div><b>${E(r.title)}</b><small>${E(r.kind)} · ${E(r.place)}${r.country?' · '+E(r.country):''}</small></div><div class="side">${fmtTime(r.travel)}<small>${fmtMiles(r.miles)}</small></div><div class="tags">${r.ok?'<span class="tag g">Tới kịp</span>':`<span class="tag r">${E(r.why||'Không tới kịp')}</span>`}${r.slack!==null&&r.ok?`<span class="tag o">Còn ${fmtTime(Math.max(0,r.slack))} khi tới nơi</span>`:''}${r.danger?.rank>=1?`<span class="tag ${r.danger.rank>=2?'r':''}">${r.danger.label}</span>`:''}${r.block?`<span class="tag o">⚠ ${E(r.block)}</span>`:''}${A(r.tags).map(t=>`<span class="tag">${E(t)}</span>`).join('')}${opts.extra||''}</div>${opts.after||''}<div class="acts"><button class="btn" data-act="view">Xem bản đồ</button><button class="btn pri" data-act="go">Đường đi an toàn</button></div></article>`;
 
 body.addEventListener('click',e=>{
   const tg=e.target.closest('[data-npctoggle]');
   if(tg){const id=tg.dataset.npctoggle;pUi.open[id]=!pUi.open[id];render();return}
   const ngo=e.target.closest('[data-npcgo]');
-  if(ngo){try{const err=npcLaunch(ngo.dataset.npcgo,ngo.dataset.id,ngo.dataset.arg||'');if(err)toast(err);}catch(x){toast(String(x?.message||x))}render();try{body.scrollTop=0}catch{}return}
+  if(ngo){let err='';try{err=npcLaunch(ngo.dataset.npcgo,ngo.dataset.id,ngo.dataset.arg||'')}catch(x){err=String(x?.message||x)}if(err){toast(err,'',6000);render();return}ui.close();toast('Đã mở trong game — chọn trực tiếp ở màn hình game.','ok',3500);return}
   const ech=e.target.closest('[data-encch]');
   if(ech){try{let v=null;try{v=g.encounterView?.()}catch{}const i=+ech.dataset.encch,c=v?.choices?.find(x=>x.index===i);if(c?.xacNhan&&!confirm(strip((c.xacNhan.tieu_de||'')+'\n'+(c.xacNhan.noi_dung||''))))return;g.choose(i)}catch(x){toast(String(x?.message||x))}render();return}
   if(e.target.closest('[data-encclose]')){try{g.closeEncounter()}catch(x){toast(String(x?.message||x))}render();return}
@@ -1867,6 +1870,16 @@ VIEWS.quest=()=>{
 /* Dữ liệu lấy thẳng từ world của game: slot → info(slot) (loại địa danh, quốc gia, cấp nền, địa hình, tộc yêu);
    điểm săn yêu dùng hàm game huntTargets/huntCount (world/hunt) chạy trên bản sao ngữ cảnh đặt vị trí ở ô cần xem. */
 const MAP_LOAI={kinh_do:'Kinh đô',thanh:'Thành',tran:'Trấn',thon:'Thôn',tong_mon:'Tông môn',nui:'Núi',rung:'Rừng',coc:'Cốc',dong:'Đồng hoang',dam:'Đầm',thac:'Thác',hoang_mac:'Hoang mạc',dinh:'Đỉnh',di_tich:'Di tích',bi_canh:'Bí cảnh',sao_huyet:'Sào huyệt yêu thú',linh_mach:'Linh mạch',khoang_mach:'Khoáng mạch',phuong_thi:'Phường thị',an_si:'Ẩn sĩ',quan_ai:'Quan ải'};
+/* Biểu tượng địa danh đúng như Chú giải của game: ấn /img/node/<tên>.webp tô màu theo ký hiệu, nền giấy + viền */
+const NODE_SEAL={村:'thon',鎮:'tran',城:'thanh',京:'kinh_do',宗:'tong',門:'bi_canh',巢:'sao_huyet',靈:'linh_dia',墟:'phe_tich',碑:'di_tich',府:'dong_phu',野:'hoang_da','?':'su_kien',劍:'chien_dau',坐:'tu_luyen',市:'cua_hang',雷:'dot_pha',泉:'linh_mach',秘:'mat_bi',賞:'viec',脈:'noi_linh_mach',礦:'khoang_mach',關:'quan_ai',坊:'phuong_thi',庵:'an_si',原:'wild_plain_grass',林:'wild_forest_pines',嶺:'wild_mountain_ridge',沼:'wild_marsh_reeds',漠:'wild_desert_dunes',淵:'vo_nhai_uyen'};
+const NODE_COL={村:'#7a5a2e',鎮:'#d07a1e',城:'#b5352a',京:'#a87c0a',宗:'#1f5a6e',門:'#5b3d7a',碑:'#7a6a4a',巢:'#8a3a1f',靈:'#3d6b45',墟:'#6b6358',府:'#a31d1d',脈:'#2a8077',礦:'#6e4b2a',關:'#4b5563',坊:'#8a6a1e',庵:'#5f6f52',野:'#4f5f1c',原:'#66721f',林:'#2e5b2a',嶺:'#5a5f6b',沼:'#466c78',漠:'#b39257','?':'#4a4a4a',劍:'#b23a2a',坐:'#2f6a8c',市:'#b08a2e',雷:'#6a3d9a',泉:'#2a8077',秘:'#1e1e1e',賞:'#9a5a12'};
+const WILD_ICON={hoang_nguyen:'原',rung_ram:'林',son_mach:'嶺',ho_nuoc:'沼',hoang_mac:'漠'};
+let sealOk=null;
+(()=>{try{const im=new Image();im.onload=()=>{sealOk=true};im.onerror=()=>{sealOk=false};im.src='/img/node/thon.webp'}catch{sealOk=false}})();
+const nodeGlyph=id=>{try{const d=placeDef(id);if(!d)return'';if(d.id==='noi.hoang_da'){const dh=A(info(id)?.diaHinh).find(k=>WILD_ICON[k]);return WILD_ICON[dh]||'原'}return d.icon||''}catch{return''}};
+const sealIco=(glyph,sz=34)=>{const n=NODE_SEAL[glyph];if(!n||sealOk===false)return`<span class="seal fb" style="--s:${sz}px">${E(glyph||'地')}</span>`;return`<span class="seal" style="--s:${sz}px;--m:url(/img/node/${n}.webp);--c:${NODE_COL[glyph]||'#4a4a4a'}"></span>`};
+const placeIco=(id,loai,sz)=>sealIco(nodeGlyph(id)||MAP_GLYPH[loai]||'野',sz);
+const MAP_GLYPH={kinh_do:'京',thanh:'城',tran:'鎮',thon:'村',tong_mon:'宗',nui:'嶺',rung:'林',coc:'野',dong:'原',dam:'沼',thac:'野',hoang_mac:'漠',dinh:'嶺',di_tich:'碑',bi_canh:'門',sao_huyet:'巢',linh_mach:'脈',khoang_mach:'礦',phuong_thi:'坊',an_si:'庵',quan_ai:'關'};
 const MAP_ICON={kinh_do:'都',thanh:'城',tran:'鎮',thon:'村',tong_mon:'宗',nui:'山',rung:'林',coc:'谷',dong:'原',dam:'澤',thac:'瀑',hoang_mac:'漠',dinh:'峰',di_tich:'跡',bi_canh:'秘',sao_huyet:'巢',linh_mach:'脈',khoang_mach:'礦',phuong_thi:'市',an_si:'隱',quan_ai:'關'};
 const MAP_WILD=['rung','nui','coc','dong','dam','hoang_mac','dinh'];
 const MAP_SUBS=[
@@ -1993,7 +2006,7 @@ function placeCard(it,extra=''){
   if(rc.block)tags.push(`<span class="tag o">⚠ ${E(rc.block)}</span>`);
   const tz=it.toc?T(C.tocYeu?.get?.('toc.'+it.toc)?.ten||''):'';
   if(tz&&it.loai==='sao_huyet')tags.push(`<span class="tag">Tộc ${E(tz)}</span>`);
-  return`<article class="card d${dg.rank>=2?dg.rank:0}" data-slot="${E(it.id)}" data-title="${E(it.ten)}"><div class="ico">${E(MAP_ICON[it.loai]||'地')}</div><div><b>${E(it.ten)}</b><small style="display:block">${E(MAP_LOAI[it.loai])}${it.qgTen?' · '+E(it.qgTen):''} · cấp nền ${E(capLabel(it.cap))}</small></div><div class="side">${here?'—':fmtTime(rc.travel)}<small>${here?'':fmtMiles(rc.miles)}</small></div><div class="tags">${tags.join('')}</div>${extra}<div class="acts"><button class="btn" data-act="view">Xem bản đồ</button><button class="btn pri" data-act="go">Đường đi an toàn</button></div></article>`;
+  return`<article class="card d${dg.rank>=2?dg.rank:0}" data-slot="${E(it.id)}" data-title="${E(it.ten)}"><div class="ico nd">${placeIco(it.id,it.loai,34)}</div><div><b>${E(it.ten)}</b><small style="display:block">${E(MAP_LOAI[it.loai])}${it.qgTen?' · '+E(it.qgTen):''} · cấp nền ${E(capLabel(it.cap))}</small></div><div class="side">${here?'—':fmtTime(rc.travel)}<small>${here?'':fmtMiles(rc.miles)}</small></div><div class="tags">${tags.join('')}</div>${extra}<div class="acts"><button class="btn" data-act="view">Xem bản đồ</button><button class="btn pri" data-act="go">Đường đi an toàn</button></div></article>`;
 }
 function farmExtra(it,qn){
   const h=mapHunt(it.id);if(!h)return'';
@@ -2460,7 +2473,7 @@ VIEWS.build=()=>{
 
 /* ───────── Đặt hàng vật phẩm (thay cho thêm thẳng vào túi) ─────────
    Cọc 30% khi đặt; hàng về sau vài năm tùy phẩm; hàng về thì trả nốt phần còn lại để nhận vào túi.
-   Chưa đủ tiền thì giữ thêm 5 năm; quá hạn giữ thì mất hàng và cả tiền cọc. Dị bảo / thần phẩm không đặt được. */
+   Chưa đủ tiền thì giữ thêm 5 năm; quá hạn giữ thì mất hàng và cả tiền cọc. Chỉ Dị bảo (Nghịch Thiên) không đặt được. */
 const ORDER_CFG={
   deposit:0.3,            // tiền cọc = 30% giá
   holdYears:5,            // hàng về được giữ bao lâu; bấm "Giữ thêm" cộng thêm chừng này
@@ -2473,10 +2486,8 @@ const ORDER_CFG={
 function orderBlock(id){
   const r=C.items.get(id);
   if(!r)return'Không có vật phẩm này.';
-  if(A(r.tag).includes('di_bao')||(r.pham_cap??0)>=8)return'Dị bảo / Nghịch Thiên không đặt mua được (vẫn tra cứu được).';
+  if(A(r.tag).includes('di_bao')||A(r.tag).includes('nghich_thien')||(r.pham_cap??0)>=8)return'Dị bảo (Nghịch Thiên) không đặt mua được.';
   if(!(r.gia>0))return'Vật này không có giá nên không đặt được.';
-  if(r.theo_kiep)return'Vật gắn với kiếp này, không đặt được.';
-  if(r.loai==='lenh_bai'||r.tran_phai||A(r.tag).includes('chi_khai_bao'))return'Vật đặc biệt, không có người nhận đặt.';
   if(!ORDER_CFG.mult[r.pham_cap])return(GRADE_NAMES[r.pham_cap]||'Phẩm này')+' không cho đặt hàng.';
   return'';
 }
@@ -6031,18 +6042,78 @@ function npcGifts(id,npc,e){
   let like='';try{like=String(g.relationInfo?.(id)?.like||'')}catch{}
   return{list:out,like};
 }
+/* ───────── Nhân mạch: luật thời gian & đạo lữ — đọc từ code game (banCoTheTham, ev.tham_ban_cu, ev.rung_dong/nhan_duyen) ───────── */
+const waitTxt=y=>{y=Math.max(0,+y||0);const m=Math.ceil(y*12-1e-6);if(m<=0)return'chưa tới 1 tháng';const Y=Math.floor(m/12),M=m%12;return(Y?Y+' năm':'')+(Y&&M?' ':'')+(M?M+' tháng':'')};
+const VISIT_GAP=5,FRIEND_REL=['bang_huu','tri_ky','ket_nghia','dao_lu'];
+function visitInfo(id,npc,e){
+  const r=run();
+  if(npc.chuaGap)return{ok:false,why:'Chưa từng gặp mặt nên chưa thăm được'};
+  if(!FRIEND_REL.includes(npc.danhPhan||''))return{ok:false,why:`Mới chỉ ${relName(npc.danhPhan||'quen_biet').toLowerCase()} — game chỉ cho "Thăm bạn cũ" với bằng hữu, tri kỷ, huynh đệ kết nghĩa hoặc đạo lữ`};
+  const last=npc.namGapCuoi??npc.namGap,since=r.nam-last,remain=VISIT_GAP-since;
+  if(remain>1e-9)return{ok:false,why:`Mới gặp cách đây ${waitTxt(since)} — game bắt cách nhau ${VISIT_GAP} năm, còn phải đợi ${waitTxt(remain)} nữa`,wait:remain};
+  if(!npcInRange(e,npc))return{ok:false,why:'Ở xa quá tầm đi lại của ngươi — phải tới gần mới thăm được'};
+  return{ok:true};
+}
+function evLimit(d){
+  const r=run(),h=r.history?.[d.id],L=d.limits||{};
+  if(L.moi_run!==undefined&&(h?.lan??0)>=L.moi_run)return'Đã hết lượt trong kiếp này';
+  if(L.hoi_chieu_nam!==undefined&&h&&Number.isFinite(h.namCuoi)){const w=L.hoi_chieu_nam-(r.nam-h.namCuoi);if(w>1e-9)return'Còn đợi '+waitTxt(w)}
+  return'';
+}
+const LIFE_YOUNG=0.4;
+function daoLuDiag(id,npc,e){
+  const r=run(),mv=me(),out={rows:[],step:'',blockWhy:''};
+  if(npc.danhPhan==='dao_lu'){out.done=true;return out}
+  if(npc.chuaGap||!npc.song)return out;
+  const mine=mv.gioiTinh??'nam',age=Math.floor(r.nam-npc.namSinh),life=Number(BASE_LIFE[npc.canhGioi])||0,lim=life*LIFE_YOUNG,fav=Number(npc.haoCam)||0;
+  const second=!!npc.tinhY,need=second?75:55;
+  const others=Object.entries(r.npc).filter(([k,n])=>k!==id&&n.song&&(n.tinhY||n.danhPhan==='dao_lu')).map(([,n])=>strip(n.ten||''));
+  const dl=Object.values(r.npc).filter(n=>n.danhPhan==='dao_lu').length;
+  const R=(ok,label,detail)=>out.rows.push({ok,label,detail});
+  R(['bang_huu','tri_ky'].includes(npc.danhPhan),'Danh phận bằng hữu hoặc tri kỷ',`hiện là ${relName(npc.danhPhan||'quen_biet').toLowerCase()}`);
+  R(fav>=need,`Hảo cảm ≥ ${need}`,`hiện ${F(fav)}`);
+  R(npc.gioiTinh&&npc.gioiTinh!==mine,'Khác giới với ngươi',`họ ${SEX[String(npc.gioiTinh||'').toLowerCase()]||'?'}, ngươi ${SEX[mine]||mine}`);
+  R(age<=lim,`Còn trẻ (tuổi ≤ ${Math.floor(lim)}, tức ${Math.round(LIFE_YOUNG*100)}% thọ nguyên cảnh giới hiện tại)`,`họ ${age} tuổi`);
+  if(!second)R(!npc.tinhY&&!others.length,'Cả ngươi lẫn họ chưa để ý ai khác',others.length?`đang có tình ý/đạo lữ với: ${others.slice(0,3).join(', ')}`:'chưa có');
+  else R(true,'Họ đã có tình ý với ngươi','đã nhận hoa');
+  R(dl===0,'Ngươi chưa có đạo lữ',dl?`đã có ${dl} đạo lữ`:'chưa có');
+  const bad=out.rows.filter(x=>!x.ok);
+  out.step=bad.length?'':(second?'ngo':'hoa');
+  out.pending=second?'ngo':'hoa';
+  out.blockWhy='';
+  return out;
+}
+function daoLuHtml(DL,npc){
+  if(DL.done)return'<div class="sub" style="margin-top:8px">💞 Đã là đạo lữ của ngươi.</div>';
+  if(!DL.rows.length)return'';
+  const ok=DL.rows.every(x=>x.ok);
+  return`<details class="dl-box" ${ok?'open':''}><summary><b>Đường tới đạo lữ</b> <span class="sub">· bước ${DL.pending==='ngo'?'2/2 · ngỏ ý kết đạo lữ':'1/2 · tỏ lòng bằng nhành hoa'} ${ok?'· đủ điều kiện, bấm nút phía trên':'· chưa đủ'}</span></summary>${DL.rows.map(x=>`<div class="sub dl-r ${x.ok?'ok':'no'}">${x.ok?'✔':'✘'} ${E(x.label)} <i>— ${E(x.detail)}</i></div>`).join('')}<div class="sub" style="margin-top:4px">Cả hai bước nằm trong "Thăm bạn cũ" (lựa chọn ẩn, chỉ hiện khi đủ điều kiện). Tỏ lòng còn một lần thử khí vận: hỏng thì tụt 3 hảo cảm. Sau khi họ nhận hoa và hảo cảm ≥ 75 mới ngỏ ý kết đạo lữ được.</div></details>`;
+}
 function npcPanel(x,npc,e,inv,fl){
   const parts=[];
   const nm=E(x.name);
-  /* 0. Gọi ra tương tác */
+  /* 0. Gọi ra tương tác — mỗi nút đã kiểm tra đúng điều kiện của game; bấm là mở ngay trong game */
   if(x.alive){
-    const busy=npcBusy(),far=!npcInRange(e,npc),dis=busy||far?'disabled':'';
-    const evs=far?[]:npcEvents(x.id,npc,e);
-    const btn=(k,a,t,pri)=>`<button class="btn ${pri?'pri':''}" data-npcgo="${k}" data-id="${E(x.id)}" ${a?`data-arg="${E(a)}"`:''} ${dis}>${t}</button>`;
-    const tip=busy||(far?'Ở xa quá tầm đi lại — phải tới gần mới gặp được.':'');
-    let rows=`<div class="acts">${btn('visit','','Thăm bạn cũ',1)}${btn('visit','Ghé thăm','Hàn huyên')}${btn('visit','Ở lại','Tu luyện cùng')}${btn('visit','Tặng','Tặng quà')}${npc.danhPhan==='dao_lu'?btn('dual','','Song tu'):''}${fl.drainOk&&!fl.foe?btn('drain','','Thải bổ'):''}<button class="btn" data-npcpin="${E(x.id)}">${npc.pinned?'Bỏ ghim':'Ghim'}</button>${run().dongHanh?.npc===x.id?'<button class="btn" data-npcend="1">Từ biệt (hết đồng hành)</button>':''}</div>`;
-    const evb=evs.map(v=>`<button class="btn" data-npcgo="ev" data-id="${E(x.id)}" data-arg="${E(v.id)}" ${dis} title="${v.gap==='cho_ho'?'Sự kiện ở nơi họ':'Họ tìm tới'}">${E(v.ten)}${EV_GROUP[v.kind]?` <small>· ${EV_GROUP[v.kind]}</small>`:''}</button>`).join('');
-    parts.push(`<div class="npc-sec"><b>Gọi ra · tương tác ngay</b> <span class="sub">${tip?'· '+E(tip):'· bấm là chạy luôn, diễn biến hiện ngay phía trên danh sách'}</span>${rows}${evs.length?`<div class="sub" style="margin-top:6px">Chuyện hợp với người này lúc này (${evs.length}) — đúng điều kiện của game:</div><div class="acts">${evb}</div>`:(far?'':'<div class="sub">Lúc này không có chuyện đặc biệt nào hợp với họ.</div>')}</div>`);
+    const busy=npcBusy(),VI=visitInfo(x.id,npc,e),DL=daoLuDiag(x.id,npc),yr=Math.floor(run().nam),giftWait=npc.lastGiftYear===yr?(yr+1-run().nam):0;
+    const evs=npcEvents(x.id,npc,e);
+    const notesM=new Map();
+    const B=(k,a,t,why,pri)=>{const dis=busy||why;if(why&&!busy){const l=notesM.get(why)||[];l.push(t);notesM.set(why,l)}return`<button class="btn npcb ${pri?'pri':''}" data-npcgo="${k}" data-id="${E(x.id)}" ${a?`data-arg="${E(a)}"`:''} ${dis?'disabled':''} ${why?`title="${E(why)}"`:''}><span>${t}</span></button>`};
+    const vWhy=VI.ok?'':VI.why;
+    const btns=[
+      B('visit','','Thăm bạn cũ',vWhy,1),
+      B('visit','han','Hàn huyên',vWhy),
+      B('visit','tu','Tu luyện cùng',vWhy),
+      B('visit','tang','Tặng quà',vWhy||(giftWait>0?`Năm nay đã tặng rồi — đợi sang năm (còn ${waitTxt(giftWait)})`:'')),
+      DL.step==='hoa'?B('visit','hoa','Tỏ lòng · tặng hoa',vWhy||DL.blockWhy):'',
+      DL.step==='ngo'?B('visit','ngo','Ngỏ ý kết đạo lữ',vWhy||DL.blockWhy):'',
+      npc.danhPhan==='dao_lu'?B('dual','','Song tu',''):'',
+      fl.drainOk&&!fl.foe?B('drain','','Thải bổ',''):'',
+      `<button class="btn npcb" data-npcpin="${E(x.id)}"><span>${npc.pinned?'Bỏ ghim':'Ghim'}</span></button>`,
+      run().dongHanh?.npc===x.id?'<button class="btn npcb" data-npcend="1"><span>Từ biệt</span></button>':''
+    ].filter(Boolean).join('');
+    const notes=[...notesM].map(([w,l])=>`<b>${l.join(' · ')}</b>: ${E(w)}`);
+    const evb=evs.map(v=>{const why=v.lock||(npcInRange(e,npc)?'':'Ở xa quá tầm đi lại');return`<button class="btn npcb" data-npcgo="ev" data-id="${E(x.id)}" data-arg="${E(v.id)}" ${busy||why?'disabled':''} title="${E((why?why+' — ':'')+(v.gap==='cho_ho'?'Sự kiện ở nơi họ':'Họ tìm tới'))}"><span>${E(v.ten)}${v.lock?`<small>${E(v.lock)}</small>`:EV_GROUP[v.kind]?`<small>${EV_GROUP[v.kind]}</small>`:''}</span></button>`}).join('');
+    parts.push(`<div class="npc-sec"><b>Gọi ra · tương tác ngay</b> <span class="sub">· bấm là mở ngay trong game, bảng tool tự hạ xuống</span>${busy?`<div class="sub" style="color:var(--amber)">${E(busy)}</div>`:''}<div class="npc-grid">${btns}</div>${notes.length?`<div class="sub" style="margin-top:6px;line-height:1.55">${notes.map(n=>'• '+n).join('<br>')}</div>`:''}${evs.length?`<div class="sub" style="margin:8px 0 4px">Chuyện hợp với người này lúc này (${evs.length}) — đúng điều kiện của game:</div><div class="npc-grid">${evb}</div>`:'<div class="sub" style="margin-top:6px">Lúc này không có chuyện đặc biệt nào hợp với họ.</div>'}${daoLuHtml(DL,npc)}</div>`);
   }
   /* 1. Tặng quà */
   if(x.alive&&!fl.foe){
@@ -6086,7 +6157,7 @@ function npcEvents(id,npc,e){
   if(!CF||!DP||!e||!npc||npc.song===false)return out;
   let list=[];try{list=CF(e,id,DP(npc))||[]}catch{}
   const nm=strip(npc.ten||'');
-  for(const d of list){if(EV_SKIP.has(d.id))continue;out.push({id:d.id,ten:evName(d,nm),kind:d.kind||'su_kien',gap:d.gap_o||'tim_toi'})}
+  for(const d of list){if(EV_SKIP.has(d.id))continue;out.push({id:d.id,ten:evName(d,nm),kind:d.kind||'su_kien',gap:d.gap_o||'tim_toi',lock:evLimit(d)})}
   return out;
 }
 function npcInRange(e,npc){try{const f=coreFn('trongTam');return f?!!f(e,npc):true}catch{return true}}
@@ -6108,11 +6179,15 @@ function npcLaunch(kind,id,arg){
   const npc=run().npc[id];if(!npc||npc.song===false)return 'Người này không còn để gặp.';
   const nm=strip(npc.ten||'');
   if(kind==='visit'){
+    const e0=g.readCtx?.(),VI=visitInfo(id,npc,e0);if(!VI.ok)return VI.why;
     const BT=coreFn('banCoTheTham');let ok=true;
     if(BT){ok=false;g.dev(ctx=>{try{ok=!!BT(ctx,ctx.run.viTri)?.includes?.(id)}catch{}})}
-    if(!ok){const e=g.readCtx?.();return npcInRange(e,npc)?'Mới gặp gần đây: phải cách một nhịp (vài tháng) kể từ lần gặp cuối mới thăm lại được.':nm+' ở xa quá tầm đi lại của ngươi.'}
+    if(!ok)return 'Game chưa cho thăm '+nm+' lúc này (điều kiện thời gian/khoảng cách chưa đủ).';
     const err=npcStart('ev.tham_ban_cu',{ban:id});if(err)return err;
-    if(arg)encPick(t=>t.startsWith(arg));
+    if(arg){
+      const M={han:t=>t.startsWith('Ghé thăm'),tu:t=>t.startsWith('Ở lại'),tang:t=>t.includes('một món đồ'),hoa:t=>t.includes('nhành hoa'),ngo:t=>t.startsWith('Ngỏ ý')}[arg];
+      if(M&&!encPick(M))return 'Lựa chọn này chưa mở trong game — sự kiện "Thăm bạn cũ" đã mở, ngươi chọn trực tiếp trong game.';
+    }
     return '';
   }
   if(kind==='dual'){
@@ -6165,7 +6240,7 @@ VIEWS.people=()=>{
   const actOk=x=>{const fl=x.fl||{};switch(pUi.act){case'gift':return x.alive&&x.here&&run().npc[x.id].lastGiftYear!==Math.floor(run().nam);case'hunt':return !!fl.foe;case'invite':return !!fl.invite&&!fl.inviteReason;case'drain':return !!fl.drainOk;case'dual':return !!fl.dualOk;default:return true}};
   const rows=all.filter(x=>actOk(x)&&(!q||norm([x.name,x.title,x.rel,x.loc.note,x.realm].join(' ')).includes(q))&&(pUi.life==='all'||(pUi.life==='alive')===x.alive)&&(pUi.sex==='all'||x.sex===pUi.sex)&&(pUi.rel==='all'||x.rel===pUi.rel)&&(pUi.where==='all'||(pUi.where==='here'&&x.here)||(pUi.where==='known'&&x.loc.slot)||(pUi.where==='now'&&(x.loc.src==='now'||x.loc.src==='with'))||(pUi.where==='unknown'&&!x.loc.slot))).sort(PSORT[pUi.sort].fn),shown=rows.slice(0,pUi.limit);
   const sel=(id,arr,v)=>`<select id="${id}" class="grow">${arr.map(([k,n])=>`<option value="${E(k)}" ${k===v?'selected':''}>${E(n)}</option>`).join('')}</select>`;
-  body.innerHTML=encCard()+`<div class="bar"><input type="search" id="p-q" class="grow" placeholder="Tìm tên, quan hệ, nơi ở…" value="${E(pUi.q)}"></div><div class="bar">${sel('p-sort',Object.entries(PSORT).map(([k,v])=>[k,v.name]),pUi.sort)}${sel('p-life',[['all','Còn sống & đã khuất'],['alive','Còn sống'],['dead','Đã khuất']],pUi.life)}</div><div class="bar">${sel('p-sex',[['all','Mọi giới'],['Nam','Nam'],['Nữ','Nữ']],pUi.sex)}${sel('p-rel',[['all','Mọi quan hệ'],...rels.map(x=>[x,x])],pUi.rel)}${sel('p-where',[['all','Mọi vị trí'],['here','Ở cùng nơi'],['now','Đang xuất hiện'],['known','Biết nơi ở'],['unknown','Chưa rõ tung tích']],pUi.where)}</div><div class="bar">${sel('p-act',NPC_FILTERS,pUi.act)}</div><div class="sum">${rows.length}/${all.length} nhân mạch · ${all.filter(x=>x.fl?.foe).length} kẻ thù còn sống · ${all.filter(x=>x.fl?.invite&&!x.fl.inviteReason).length} có thể mời tới</div>
+  body.innerHTML=`<div class="bar"><input type="search" id="p-q" class="grow" placeholder="Tìm tên, quan hệ, nơi ở…" value="${E(pUi.q)}"></div><div class="bar">${sel('p-sort',Object.entries(PSORT).map(([k,v])=>[k,v.name]),pUi.sort)}${sel('p-life',[['all','Còn sống & đã khuất'],['alive','Còn sống'],['dead','Đã khuất']],pUi.life)}</div><div class="bar">${sel('p-sex',[['all','Mọi giới'],['Nam','Nam'],['Nữ','Nữ']],pUi.sex)}${sel('p-rel',[['all','Mọi quan hệ'],...rels.map(x=>[x,x])],pUi.rel)}${sel('p-where',[['all','Mọi vị trí'],['here','Ở cùng nơi'],['now','Đang xuất hiện'],['known','Biết nơi ở'],['unknown','Chưa rõ tung tích']],pUi.where)}</div><div class="bar">${sel('p-act',NPC_FILTERS,pUi.act)}</div><div class="sum">${rows.length}/${all.length} nhân mạch · ${all.filter(x=>x.fl?.foe).length} kẻ thù còn sống · ${all.filter(x=>x.fl?.invite&&!x.fl.inviteReason).length} có thể mời tới</div>
   ${shown.map(x=>`<article class="card ${x.alive?'':'late'}" ${x.loc.slot?`data-slot="${E(x.loc.slot)}" data-title="${E(x.name)}"`:''} style="grid-template-columns:40px 1fr auto">${x.alive?npcIco(x.id,40):`<div class="ico">亡</div>`}<div><b>${E(x.name)}</b><small>${E([x.title,x.realm,x.age!==null?x.age+' tuổi':''].filter(Boolean).join(' · '))}</small></div><div class="side">${N(x.travel)?fmtTime(x.travel):''}<small>${N(x.miles)?fmtMiles(x.miles):''}</small></div><div class="tags"><span class="tag">${E(x.rel)}</span><span class="tag ${x.fav>0?'g':x.fav<0?'r':''}">Hảo cảm ${x.fav>0?'+':''}${F(x.fav)}</span>${x.romance?'<span class="tag o">Có tình ý</span>':''}${x.hurt?`<span class="tag r">Đang trọng thương · ~${fmtTime(x.hurt)}</span>`:''}${x.debt?`<span class="tag r">Nợ ${F(x.debt)}</span>`:''}${x.alive?'':'<span class="tag r">Đã khuất</span>'}${x.fl?.foe?'<span class="tag r">Kẻ thù</span>':''}<span class="tag">${E(x.loc.note)}</span>${x.acts.map(a=>`<span class="tag g">${E(a)}</span>`).join('')}</div>${x.alive?`<div class="acts">${x.loc.slot?'<button class="btn" data-act="view">Xem bản đồ</button><button class="btn pri" data-act="go">Đường đi an toàn</button>':''}<button class="btn" data-npctoggle="${E(x.id)}">${pUi.open[x.id]?'Thu gọn':'Tương tác'}</button></div>`:''}${pUi.open[x.id]&&x.alive?`<div class="npc-panel" style="grid-column:1/-1">${npcPanel(x,run().npc[x.id],e0,pInv,x.fl||{})}</div>`:''}</article>`).join('')||'<div class="empty">Chưa có nhân mạch phù hợp.</div>'}${rows.length>shown.length?'<button class="btn" id="p-more" style="width:100%">Xem thêm</button>':''}`;
   $(body,'#p-more')?.addEventListener('click',()=>{pUi.limit+=40;render()});
   let t;$(body,'#p-q').oninput=e=>{pUi.q=e.target.value;pUi.limit=40;clearTimeout(t);t=setTimeout(()=>{VIEWS.people();const i=$(body,'#p-q');i.focus();i.setSelectionRange(i.value.length,i.value.length)},220)};
