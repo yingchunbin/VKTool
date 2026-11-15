@@ -1306,7 +1306,8 @@ function treasureRows(){
 
 /* Bảo lục Nghịch Thiên: mọi vật tag di_bao đọc thẳng từ dữ liệu game, kèm nguồn có thể có được */
 const relicFlag=id=>'di_bao_xong_'+String(id).replace(/^item\./,'');
-const relicOwned=id=>{const r=run(),n=me();return Boolean(r.flags?.[relicFlag(id)])||Number(n.tuiDo?.[id]||0)>0||Number(n.choCat?.[id]||0)>0||Number(r.tongMon?.storage?.[id]||0)>0};
+const relicMeta=id=>{try{return A(g.state.meta?.tienLo?.relics).includes(id)}catch{return false}};
+const relicOwned=id=>{const r=run(),n=me();return relicMeta(id)||Boolean(r.flags?.[relicFlag(id)])||Number(n.tuiDo?.[id]||0)>0||Number(n.choCat?.[id]||0)>0||Number(r.tongMon?.storage?.[id]||0)>0};
 let _bossRelic=null;
 function relicBosses(){
   if(_bossRelic)return _bossRelic;
@@ -1332,7 +1333,7 @@ const relicCard=r=>{
   const tags=[r.where?`<span class="tag ${r.fixed?'g':'o'}">${E(r.where)}</span>`:'<span class="tag o">Không có sự kiện riêng — chỉ rơi ngẫu nhiên</span>',
     bs.length?`<span class="tag">Có thể rơi từ ${bs.length} thủ lĩnh ${E(cgTen(bs[0].cg))} (${(bs[0].rate*100).toFixed(0)}%/trận)</span>`:'',
     '<span class="tag">Vô Nhai Uyên: từ thủ quan tầng 40, mỗi thủ quan 1,5%</span>'].join('');
-  return`<article class="card ${r.owned?'late':''}"><div class="ico nd">${itemIco?itemIco(r.id,34):sealIco('寶',34)}</div><div><b>${E(r.ten)}</b><small>${r.owned?'Đã có / đã lấy trong kiếp này':'Chưa có'}</small><div class="sub" style="margin-top:3px">${E(r.goiy||r.mota)}</div><div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px">${tags}</div></div></article>`;
+  return`<article class="card ${r.owned?'late':''}"><div class="ico nd">${itemIco?itemIco(r.id,34):sealIco('寶',34)}</div><div><b>${E(r.ten)}</b><small>${r.owned?'Đã ghi vào Bảo lục / đã lấy':'Chưa có'}</small><div class="sub" style="margin-top:3px">${E(r.goiy||r.mota)}</div><div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px">${tags}</div></div></article>`;
 };
 
 /* Sắp xếp: tới kịp trước; việc gấp (còn ít thời gian dư) trước; sau đó gần trước */
@@ -1723,7 +1724,7 @@ const CSS=`
 `;
 const styleEl=document.createElement('style');styleEl.id=ID+'-style';styleEl.textContent=CSS;document.head.appendChild(styleEl);
 
-const TABS=[['quest','事','Nhiệm vụ'],['map','地','Bản đồ'],['realm','秘','Bí cảnh&Dị bảo'],['auto','自','Auto Farm'],['bounty','賞','Treo thưởng'],['people','人','Nhân mạch'],['sect','宗','Tông môn'],['breakthrough','破','Đột phá'],['build','脈','Kinh mạch'],['items','寶','Vật phẩm'],['check','察','Kiểm tra']];
+const TABS=[['quest','事','Nhiệm vụ'],['map','地','Bản đồ'],['realm','秘','Bí cảnh&Dị bảo'],['auto','自','Auto Farm'],['bounty','賞','Treo thưởng'],['people','人','Nhân mạch'],['sect','宗','Tông môn'],['breakthrough','破','Đột phá'],['build','脈','Kinh mạch'],['luan','輪','Luân hồi'],['dung','容','Dịch Dung'],['items','寶','Vật phẩm'],['check','察','Kiểm tra']];
 const panel=document.createElement('div');panel.id=ID;panel.setAttribute('role','dialog');
 panel.innerHTML=`<header><div class="seal">仙</div><div><h1>Vạn Kiếp Trợ Thủ</h1><small id="${ID}-sub"></small></div><button id="${ID}-wide" title="Mở rộng / thu nhỏ (kéo thanh tiêu đề để di chuyển, kéo góc dưới phải để đổi cỡ)" aria-label="Mở rộng">⤢</button><button id="${ID}-x" aria-label="Thu gọn">✕</button></header><div class="rz" title="Kéo để đổi cỡ"></div><div class="body" id="${ID}-body"></div><nav>${TABS.map(([k,i,n])=>`<button data-t="${k}"><i>${i}</i>${n}</button>`).join('')}</nav>`;
 const fab=document.createElement('div');fab.id=ID+'-fab';fab.innerHTML='仙<b></b>';fab.title='Vạn Kiếp Trợ Thủ';
@@ -1929,7 +1930,7 @@ const nodeGlyph=id=>{try{const d=placeDef(id);if(!d)return'';if(d.id==='noi.hoan
 const sealIco=(glyph,sz=34)=>{const n=NODE_SEAL[glyph];if(!n||iconMode()==='han')return`<span class="seal fb" style="--s:${sz}px">${E(glyph||'地')}</span>`;return`<span class="seal" data-g="${E(glyph)}" style="--s:${sz}px;--m:url(/img/node/${n}.webp);--c:${NODE_COL[glyph]||'#4a4a4a'}"><img class="mchk" src="/img/node/${n}.webp" alt="" onerror="this.parentNode.classList.add('nf')"></span>`};
 /* Bộ biểu tượng theo cài đặt của game (ấn khắc "an" hay chữ Hán "han"): đọc từ thanh công cụ game đang hiển thị */
 const iconMode=()=>{try{const j=JSON.parse(localStorage.getItem('tu-tien.icons')||'{}');return j.ui==='han'?'han':'an'}catch{return'an'}};
-const UI_AN={quest:'su_kien',map:'ban_do',realm:'bi_canh',auto:'chien_dau',bounty:'viec',people:'nhan_mach',sect:'tong',breakthrough:'dot_pha',build:'noi_linh_mach',items:'cua_hang',check:'lookup',logo:'lookup'};
+const UI_AN={quest:'su_kien',map:'ban_do',realm:'bi_canh',auto:'chien_dau',bounty:'viec',people:'nhan_mach',sect:'tong',breakthrough:'dot_pha',build:'noi_linh_mach',items:'cua_hang',check:'lookup',luan:'thanh_tuu',dung:'nhan_mach',logo:'lookup'};
 const anEl=(name,sz,glyph='')=>`<span class="an" data-g="${E(glyph)}" style="--an:url(/img/node/${name}.webp);--s:${sz}px"><img class="mchk" src="/img/node/${name}.webp" alt="" onerror="this.parentNode.classList.add('nf')"></span>`;
 const tabIco=(k,glyph)=>iconMode()==='an'&&UI_AN[k]?anEl(UI_AN[k],22,glyph):E(glyph);
 /* Ảnh nhóm hành động của game (/img/icon/<tên>.webp) — ảnh nhỏ màu, ẩn đi nếu không tải được */
@@ -2205,7 +2206,7 @@ VIEWS.realm=()=>{
   </div>`;
   let main='';
   if(sub==='bao_luc'){
-    main=`<h3>${grpIco('su_kien',20)}Vật Nghịch Thiên (dị bảo) trong game · ${rc0.length}</h3><div class="sub" style="margin:0 2px 6px">Mọi vật tag dị bảo đọc từ dữ liệu game. Vật chưa có nguồn cố định vẫn có thể rơi từ thủ lĩnh Hóa Thần cuối cảnh hoặc ở Vô Nhai Uyên; game ưu tiên rơi vật bạn chưa từng có. Thủ lĩnh: ${E(relicBosses().map(b=>b.ten).join(', '))}.</div>${rc0.map(relicCard).join('')}`;
+    main=`<h3>${grpIco('su_kien',20)}Vật Nghịch Thiên (dị bảo) trong game · ${rc0.length}</h3><div class="sub" style="margin:0 2px 6px">Mọi vật tag dị bảo đọc từ dữ liệu game; «đã có» tính theo Bảo lục qua các kiếp. Vật chưa có nguồn cố định vẫn có thể rơi từ thủ lĩnh Hóa Thần cuối cảnh hoặc ở Vô Nhai Uyên; game ưu tiên rơi vật bạn chưa từng có. Thủ lĩnh: ${E(relicBosses().map(b=>b.ten).join(', '))}.</div>${rc0.map(relicCard).join('')}`;
   }else if(sub==='di_bao'){
     main=`<h3>${grpIco('su_kien',20)}Dị bảo đang xuất hiện · ${act.length}</h3>${act.map(tCard).join('')||'<div class="empty">Chưa có dị bảo nào xuất hiện.</div>'}
     <h3>${grpIco('su_kien',20)}Các dị bảo khác · ${tr.waiting.length}</h3>${tr.waiting.map(treasureWaitCard).join('')||'<div class="empty">Không có.</div>'}`;
@@ -3033,6 +3034,75 @@ function checks(){
   else{for(const [k,label] of Object.entries(K.labels||{}))if(k!=='PO'&&!(K.viaPublic&&!(k in PUB_MAP)))add('Tính toán nâng cao',label,Boolean(K[k]));add('Tính toán nâng cao','Phiên bản game đang chạy',true,K.bundle||'')}
   return rows;
 }
+/* ───────── Tab: Luân hồi (thành tựu, Bảo lục, truyền thuyết xuyên kiếp) ───────── */
+const ACH_GRP=[['canh_gioi','Cảnh giới'],['pham_chat','Phẩm chất'],['tong_mon','Tông môn'],['dao_lu','Nhân duyên'],['ket_nghia','Nhân duyên'],['nuoc','Trúc cơ theo nước'],['nghe','Nghề'],['vo_nhai_uyen','Vô Nhai Uyên'],['chet','Cách chết'],['bao_luc','Bảo lục'],['tuyet_menh','Độc mệnh']];
+const achGroup=id=>{const k=String(id).replace(/^thanh_tuu\./,'').split('.')[0];return(ACH_GRP.find(x=>k===x[0]||k.startsWith(x[0]))||[k,'Khác'])[1]};
+const luanUi={tab:'tuu',showDone:false};
+VIEWS.luan=()=>{
+  const m=g.state.meta||{},tl=m.tienLo||{},got=new Set(A(tl.thanhTuu)),lore=new Set(A(tl.lore));
+  const list=[...C.thanhTuu.values()],pts=list.reduce((a,x)=>a+(Number(x.diem)||0),0),gotPts=list.filter(x=>got.has(x.id)).reduce((a,x)=>a+(Number(x.diem)||0),0);
+  const rc=relicCatalog(),rcOwned=rc.filter(x=>x.owned).length,loreAll=[...C.lore.values()];
+  const tabs=[['tuu',`Thành tựu · ${got.size}/${list.length}`],['lore',`Truyền thuyết · ${loreAll.filter(x=>lore.has(x.id)).length}/${loreAll.length}`]];
+  let main='';
+  if(luanUi.tab==='lore'){
+    main=`<div class="sub" style="margin:0 2px 6px">Truyền thuyết chưa tìm ra được giấu nội dung để khỏi lộ cốt truyện; chỉ hiện số lượng theo nhóm.</div>`+
+      [...new Set(loreAll.map(x=>x.nhom))].map(nh=>{const xs=loreAll.filter(x=>x.nhom===nh),k=xs.filter(x=>lore.has(x.id));
+        return`<article class="card"><div class="ico nd">${sealIco('書',34)}</div><div><b>${E(nh.replace(/_/g,' '))}</b><small>${k.length}/${xs.length} mảnh đã biết</small>${k.map(x=>`<details style="margin-top:3px"><summary>${E(T(x.ten))}</summary><div class="sub">${E(T(x.text||'').trim())}</div></details>`).join('')}${xs.length>k.length?`<div class="sub" style="margin-top:3px">Còn ${xs.length-k.length} mảnh chưa tìm ra.</div>`:''}</div></article>`}).join('');
+  }else{
+    const grp=new Map();
+    for(const x of list){const gn=achGroup(x.id);if(!grp.has(gn))grp.set(gn,[]);grp.get(gn).push(x)}
+    main=`<div class="bar"><label class="sub"><input type="checkbox" id="l-done" ${luanUi.showDone?'checked':''}> Hiện cả thành tựu đã đạt</label></div>`+
+      [...grp].map(([gn,xs])=>{
+        xs.sort((a,b)=>(got.has(a.id)-got.has(b.id))||(Number(b.diem)||0)-(Number(a.diem)||0));
+        const rows=xs.filter(x=>luanUi.showDone||!got.has(x.id));
+        if(!rows.length)return'';
+        return`<h3>${E(gn)} · ${xs.filter(x=>got.has(x.id)).length}/${xs.length}</h3>`+rows.map(x=>{
+          const ok=got.has(x.id),hid=x.an&&!ok;
+          return`<article class="card ${ok?'late':''}"><div class="ico nd">${sealIco(ok?'成':'未',30)}</div><div><b>${hid?'Thành tựu ẩn':E(T(x.ten))}</b><small>${hid?'Chưa lộ điều kiện — cứ chơi rồi sẽ biết.':E(T(x.mo_ta||''))}</small></div><div class="side"><b>${ok?'✓':'+'+F(x.diem||0)}</b><small>điểm</small></div></article>`}).join('');
+      }).join('');
+  }
+  body.innerHTML=`<div class="panel"><b style="color:var(--gold)">Luân hồi · kiếp ${F(m.kiep||run().kiep||0)}</b><div class="sub">Điểm thành tựu ${F(gotPts)}/${F(pts)} · điểm luân hồi hiện có ${F(m.diemLuanHoi||0)} · Bảo lục Nghịch Thiên ${rcOwned}/${rc.length}${rcOwned<rc.length?' (xem tab Bí cảnh & Dị bảo → Bảo lục)':''}</div></div>
+  <div class="bar">${tabs.map(([k,n])=>`<button type="button" class="btn ${luanUi.tab===k?'on':''}" data-luan="${k}">${E(n)}</button>`).join('')}</div>${main}`;
+  for(const b of $$(body,'[data-luan]'))b.onclick=()=>{luanUi.tab=b.dataset.luan;VIEWS.luan()};
+  const dn=$(body,'#l-done');if(dn)dn.onchange=()=>{luanUi.showDone=dn.checked;VIEWS.luan()};
+};
+
+/* ───────── Tab: Dịch Dung Quán (đổi tên nhân vật) ───────── */
+const DUNG_FEE=10000,DUNG_MAX=24;
+const dungUi={name:'',msg:'',ok:true};
+function dungCheck(raw){
+  const t=String(raw??'').replace(/\s+/g,' ').trim();
+  if(!t)return{ok:false,msg:'Hãy nhập tên mới.'};
+  if([...t].length>DUNG_MAX)return{ok:false,msg:`Tên tối đa ${DUNG_MAX} ký tự.`};
+  if(/[\u0000-\u001f\u007f<>\uE000-\uF8FF]/.test(t))return{ok:false,msg:'Tên có ký tự không dùng được.'};
+  if(t===me().ten)return{ok:false,msg:'Trùng tên hiện tại.'};
+  return{ok:true,name:t};
+}
+function dungDoi(raw){
+  const c=dungCheck(raw);if(!c.ok)return c;
+  const old=me().ten;
+  const r=gameTx(ctx=>{
+    const nv=ctx.run.nhanVat,have=Number(nv.linhThach)||0;
+    if(have<DUNG_FEE)return{ok:false,msg:`Chưa đủ linh thạch: cần ${F(DUNG_FEE)}, đang có ${F(have)}.`};
+    nv.linhThach=have-DUNG_FEE;nv.ten=c.name;
+    for(const e of A(ctx.run.thienKieuBang?.ds))if(e&&e.id==='nguoi_choi')e.ten=c.name;
+    return{ok:true};
+  });
+  if(!r.ok)return r;
+  return{ok:true,msg:`Đã đổi tên «${old}» thành «${c.name}», tốn ${F(DUNG_FEE)} linh thạch.`};
+}
+VIEWS.dung=()=>{
+  const nv=me(),have=Number(nv.linhThach)||0,enough=have>=DUNG_FEE;
+  body.innerHTML=`<div class="panel"><b style="color:var(--gold)">Dịch Dung Quán</b><div class="sub">Đổi tên đổi diện, người cũ coi như không quen. Mỗi lần đổi tốn <b>${F(DUNG_FEE)}</b> linh thạch (bạn có ${F(have)}). Tên mới hiện ở mọi nơi trong game, kể cả Thiên Kiều Bảng.</div></div>
+  <div class="panel"><div class="sub">Tên hiện tại: <b>${E(nv.ten||'—')}</b></div><div class="bar" style="margin-top:6px"><input type="text" id="d-name" class="grow" maxlength="${DUNG_MAX}" placeholder="Tên mới (tối đa ${DUNG_MAX} ký tự)" value="${E(dungUi.name)}"><button class="btn ${enough?'on':''}" id="d-go" ${enough?'':'disabled'}>Đổi tên · ${F(DUNG_FEE)}</button></div>${dungUi.msg?`<div class="sub" style="margin-top:6px;color:${dungUi.ok?'var(--jade)':'var(--red,#c4472c)'}">${E(dungUi.msg)}</div>`:''}</div>`;
+  $(body,'#d-name').oninput=e=>{dungUi.name=e.target.value};
+  $(body,'#d-go').onclick=()=>{
+    const c=dungCheck(dungUi.name);if(!c.ok){dungUi.msg=c.msg;dungUi.ok=false;VIEWS.dung();return}
+    if(!confirm(`Đổi tên thành «${c.name}»? Tốn ${F(DUNG_FEE)} linh thạch.`))return;
+    const r=dungDoi(dungUi.name);dungUi.msg=r.msg;dungUi.ok=r.ok;if(r.ok)dungUi.name='';VIEWS.dung();
+  };
+};
+
 VIEWS.check=()=>{
   const rows=checks(),bad=rows.filter(x=>x.ok===false),groups=[...new Set(rows.map(x=>x.group))];
   body.innerHTML=`<div class="panel"><b style="color:var(--gold)">${bad.length?`${bad.length} mục chưa khớp với bản game hiện tại`:'Mọi mục đều khớp với bản game'}</b><div class="sub">Phiên bản trợ thủ ${E(BUILD)}. Game vừa cập nhật mà có chức năng không chạy thì bấm kiểm tra lại, rồi sao chép báo cáo gửi cho người làm.</div><div class="acts" style="margin-top:8px"><button class="btn pri" id="c-run">Kiểm tra lại</button><button class="btn" id="c-copy">Sao chép báo cáo</button></div><div class="sub" id="c-msg"></div></div>
