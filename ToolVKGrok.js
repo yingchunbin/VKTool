@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261115-auto-v99',ID='vkt2',g=window.game;
+const BUILD='20261122-kinhmach-v103',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -162,7 +162,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
 
   // ── Ưu tiên bộ hàm công khai của game (window.tuTien.core): ổn định qua các bản cập nhật, không cần tải lại cả code game.
   // Khóa nội bộ (giữ tên cũ để phần còn lại của tool không đổi) → tên hàm công khai.
-  const PUB_MAP = { xo: 'khuonCua', eJ: 'tinhTocChien', Vr: 'taoBenTa', Ga: 'taoBenDich', Rt: 'tinhKinhMach', Tp: 'docKhuon', al: 'oCuaManh', Jh: 'kiemTraDat', kR: 'chuanBiDotPha', Hon: 'hangTong', wr: 'thieuDeThangCap', Kn: 'tongMonCua', ke: 'thoNguyenToiDa', Rsn: 'trialOpponent', ko: 'timDich', Qn: 'tenCanhGioi', mf: 'travelYears', Nin: 'facilitiesAt', H1: 'shelfStock', rn: 'canhGioi', fn: 'Rng', E1: 'giaMua', gP: 'slotDaMo', ni: 'nhanVaoTui', to: 'chuanBiBeQuan', qw: 'retreatTargetGain', Nb: 'retreatGain', Di: 'tocDoTuLuyen', jan: 'phanBoKhaoHach', bb: 'thieuDeKhaoHach', Lu: 'chuanBiLuyen', Pw: 'nguonDiemGoc', Rrn: 'bangTreoThuong', KI: 'bongLoc', KS: 'tienCuDuoc', kC: 'taoKinhMach', IP: 'giaBan' };
+  const PUB_MAP = { xo: 'khuonCua', eJ: 'tinhTocChien', Vr: 'taoBenTa', Ga: 'taoBenDich', Rt: 'tinhKinhMach', dmc: 'demonResistCurve', Tp: 'docKhuon', al: 'oCuaManh', Jh: 'kiemTraDat', kR: 'chuanBiDotPha', Hon: 'hangTong', wr: 'thieuDeThangCap', Kn: 'tongMonCua', ke: 'thoNguyenToiDa', Rsn: 'trialOpponent', ko: 'timDich', Qn: 'tenCanhGioi', mf: 'travelYears', Nin: 'facilitiesAt', H1: 'shelfStock', rn: 'canhGioi', fn: 'Rng', E1: 'giaMua', gP: 'slotDaMo', ni: 'nhanVaoTui', to: 'chuanBiBeQuan', qw: 'retreatTargetGain', Nb: 'retreatGain', Di: 'tocDoTuLuyen', jan: 'phanBoKhaoHach', bb: 'thieuDeKhaoHach', Lu: 'chuanBiLuyen', Pw: 'nguonDiemGoc', Rrn: 'bangTreoThuong', KI: 'bongLoc', KS: 'tienCuDuoc', kC: 'taoKinhMach', IP: 'giaBan' };
   function publicCore() {
     const core = window.tuTien && window.tuTien.core;
     if (!core || typeof core !== 'object') return null;
@@ -269,7 +269,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
   // _work = tổng thời gian CPU thật đã tính (không kể lúc nhường) — ngân sách thời gian của "polish" tính theo đó nên kết quả không đổi dù nhường nhiều hơn.
   let _yAt = performance.now(), _pAt = 0, _work = 0;
   const workNow = () => _work + (performance.now() - _yAt);
-  const yieldIf = async (onP, frac, label) => { const n = performance.now(); if (n - _yAt < 12) return; _work += n - _yAt; if (onP && n - _pAt > 250) { _pAt = n; onP(frac, label); } await sleep0(); _yAt = performance.now(); };
+  const yieldIf = async (onP, frac, label) => { const n = performance.now(); if (n - _yAt < 30) return; _work += n - _yAt; if (onP && n - _pAt > 250) { _pAt = n; onP(frac, label); } await sleep0(); _yAt = performance.now(); };
   // Bản sao nông cho phép tính: chỉ kinhMach.manh/mastery bị ghi đè (đều gán nguyên khối) nên không cần structuredClone cả nhân vật mỗi lần chấm
   const nvFork = (nv0) => ({ ...nv0, kinhMach: { ...nv0.kinhMach } });
   const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -330,6 +330,9 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     enemyRosterCache.set(key,out);return out
   }
   const benchEnemies=allGameEnemies;
+  // Khi tìm kiếm (ủ nhiệt / lấp hố / đánh bóng) chỉ mô phỏng một phần trận mẫu (rải đều theo cảnh giới + tiểu cảnh); bước chấm kết quả cuối vẫn dùng đủ bộ.
+  // Tu luyện gần như không cần trận (trọng số 0,05) nên lấy rất ít. Trước đây mỗi lần chấm chạy 60 trận → ~43% thời gian nằm ở mô phỏng trận.
+  const benchFast=(cg,tc,mode)=>{const all=allGameEnemies(cg,tc),k=mode==='tu'?10:2;return all.length<=8?all:all.filter((_,i)=>i%k===0)};
   function fight(P, E) {
     try { return S.core.eJ(P, E, {}); } catch { return { thang: false, nHiep: 30, khiHuyetThapNhat: 0, stTa: 0 }; }
   }
@@ -453,7 +456,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
   // Đọc thẳng hàm của game: tỉ lệ đột phá (chuanBiDotPha) + tu vi mỗi năm bế quan (chuanBiBeQuan) cho bộ kinh mạch đang xét
   function gameCultCtx(nv){const K=S.core,r={...g.state.run,nhanVat:nv};r.rngKeys??={};const meta=g.state.meta||{},rng=new K.fn(r.rng||[1]),cache=new Map();return{...g.env,run:r,meta,rng,enc:r.active,noticeLines:[],rngFor(key){let x=cache.get(key);if(!x){const seed=Object.hasOwn(r.rngKeys,key)?r.rngKeys[key]:undefined;x=seed===undefined?K.fn.fromSeed(`${r.seed}|rng|${key}`):new K.fn(seed);cache.set(key,x)}return x}}}
   function gameCult(nv){const K=S.core;if(!K||!K.kR||!K.to)return null;try{const c=gameCultCtx(nv),h=K.kR(c,{dan:[],thieuDot:0}),b=K.to(c);const tv=b&&!b.chan&&isFinite(b.tuViNam)?b.tuViNam:null;return{tiLe:isFinite(h.tiLe)&&h.tiLe>0?h.tiLe:0,tuVi:tv}}catch{return null}}
-  function makeEval(nv0,enemies,mode){const K=S.core,c=C(),cache=new Map();let refTu;return manh=>{const key=mode+'|'+manh.map(p=>p.key).sort().join('|');if(cache.has(key))return cache.get(key);const nv=nvFork(nv0);nv.kinhMach.manh=manh.map(p=>({...p.m}));applyMastery(nv);const R=K.Rt(nv,c),P=K.Vr(nv,c),mq=meridianQuality(R,P,mode),dead=mq.dead;let gc=null;if(!dead&&mode!=='danh'){if(refTu===undefined){const n0=clone(nv0);n0.kinhMach.manh=[];refTu=gameCult(n0)?.tuVi||0}gc=gameCult(nv)}let fightScore=0,wins=0;if(!dead)for(const{E}of enemies){const r=fight(P,E),hp=Math.max(0,Math.min(1,(r.khiHuyetThapNhat||0)/Math.max(1,P.khiHuyetToiDa))),dealt=Math.min(1,(r.stTa||0)*Math.max(1,r.nHiep||1)/Math.max(1,E.khiHuyetToiDa));if(r.thang){wins++;fightScore+=100+30*hp+50/Math.max(1,r.nHiep||1)}else if(r.ketQua&&r.ketQua.enemyFled){wins++;fightScore+=70+15*hp}else fightScore+=45*dealt}const toc=R.biDong?.toc_do||0,dp=R.biDong?.dot_pha||0,ktm=R.biDong?.khang_tam_ma||0,nghich=mq.nghich||0;
+  function makeEval(nv0,enemies,mode){const K=S.core,c=C(),cache=new Map();let refTu;return manh=>{const key=mode+'|'+manh.map(p=>p.key).sort().join('|');if(cache.has(key))return cache.get(key);const nv=nvFork(nv0);nv.kinhMach.manh=manh.map(p=>({...p.m}));applyMastery(nv);const R=K.Rt(nv,c),P=K.Vr(nv,c),mq=meridianQuality(R,P,mode),dead=mq.dead;let gc=null;if(!dead&&mode!=='danh'){if(refTu===undefined){const n0=clone(nv0);n0.kinhMach.manh=[];refTu=gameCult(n0)?.tuVi||0}gc=gameCult(nv)}let fightScore=0,wins=0;if(!dead)for(const{E}of enemies){const r=fight(P,E),hp=Math.max(0,Math.min(1,(r.khiHuyetThapNhat||0)/Math.max(1,P.khiHuyetToiDa))),dealt=Math.min(1,(r.stTa||0)*Math.max(1,r.nHiep||1)/Math.max(1,E.khiHuyetToiDa));if(r.thang){wins++;fightScore+=100+30*hp+50/Math.max(1,r.nHiep||1)}else if(r.ketQua&&r.ketQua.enemyFled){wins++;fightScore+=70+15*hp}else fightScore+=45*dealt}const toc=R.biDong?.toc_do||0,dp=R.biDong?.dot_pha||0,ktm=(()=>{const raw=R.biDong?.khang_tam_ma||0;try{if(K.dmc&&raw>0){const v=K.dmc(raw);if(Number.isFinite(v))return v}}catch{}return raw})(),nghich=mq.nghich||0;
       // Code game: phản phệ đột phá = min(0.15, 0.03*diemNghich*phanPhe); trần công pháp dot_pha = 0.12 (md)
       // Điểm nghịch: mảnh tương khắc kề nhau / nằm quá nửa trên ô khắc (tooltip game)
       const phaPhe=breakPenalty(nghich,nv),dpEff=Math.min(0.12,Math.max(0,dp));
@@ -697,7 +700,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
   }
 
   async function anneal({ nv0, mode, iters, init, onProg, label }) {
-    const enemies = benchEnemies(nv0.canhGioi, nv0.tieuCanhGioi || 0);
+    const enemies = benchFast(nv0.canhGioi, nv0.tieuCanhGioi || 0, mode);
     const ev = makeEval(nv0, enemies, mode);
     const { cand, g: gg } = await buildCandidates(nv0, !!(S.pref && S.pref.hypo));
     const ids = Object.keys(cand).filter((k) => cand[k].length);
@@ -992,7 +995,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
   }
   // Tu luyện/Cân bằng: đột phá công pháp là bắt buộc → chủ động thử cài các tâm pháp có dot_pha trước khi tìm kiếm ngẫu nhiên
   async function dpSeed(nv0,mode,seed){
-    const c=C(),enemies=benchEnemies(nv0.canhGioi,nv0.tieuCanhGioi||0),ev=makeEval(nv0,enemies,mode),{cand}=await buildCandidates(nv0,!!(S.pref&&S.pref.hypo));
+    const c=C(),enemies=benchFast(nv0.canhGioi,nv0.tieuCanhGioi||0,mode),ev=makeEval(nv0,enemies,mode),{cand}=await buildCandidates(nv0,!!(S.pref&&S.pref.hypo));
     const pack=list=>list.map(m=>({m,key:m.item+':'+m.x+','+m.y+','+m.xoay,cells:(cand[m.item]||[]).find(q=>q.m.x===m.x&&q.m.y===m.y&&q.m.xoay===m.xoay)?.cells||[]}));
     const dpIds=Object.keys(cand).filter(id=>cand[id].length&&(c.items.get(id)?.bi_dong?.dot_pha||0)>0).sort((a,b)=>{const f=id=>{const bd=c.items.get(id).bi_dong;return Math.min(.12,bd.dot_pha||0)*60000+(bd.toc_do||0)*2800};return f(b)-f(a)}).slice(0,6);
     let cur=A(seed).slice(),curS=ev(pack(cur)).s,rr=7;
@@ -1017,28 +1020,31 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
   }
   // Đánh bóng cuối: leo đồi thêm món mới / dời mảnh sang vị trí khác cho tới khi không còn cải thiện (kiểm tra thấy tìm ngẫu nhiên đôi khi bỏ sót một món còn đặt thêm được)
   async function polish(nv0,mode,manh,iters,onProg){
-    const enemies=benchEnemies(nv0.canhGioi,nv0.tieuCanhGioi||0),ev=makeEval(nv0,enemies,mode),{cand}=await buildCandidates(nv0,!!(S.pref&&S.pref.hypo));
+    // Hai tầng: quét nhanh bằng bộ trận rút gọn (evq), giữ vài ứng viên tốt nhất rồi mới chấm đủ trận (ev) để quyết định — nhanh hơn ~3 lần mà kết quả cuối vẫn do bộ đủ quyết định.
+    const enemies=benchEnemies(nv0.canhGioi,nv0.tieuCanhGioi||0),ev=makeEval(nv0,enemies,mode),evq=makeEval(nv0,benchFast(nv0.canhGioi,nv0.tieuCanhGioi||0,mode),mode),{cand}=await buildCandidates(nv0,!!(S.pref&&S.pref.hypo));
     const pk=l=>l.map(m=>({m,key:m.item+':'+m.x+','+m.y+','+m.xoay}));
     const cellsOf=m=>(cand[m.item]||[]).find(q=>q.m.x===m.x&&q.m.y===m.y&&q.m.xoay===m.xoay)?.cells||[];
     const trialOf=(keep,cd)=>[...keep.filter(m=>!cellsOf(m).some(x=>cd.cells.includes(x))),{...cd.m}];
-    const samples=iters>=1500?40:30,moveCap=1e9,t0=workNow(),budget=iters>=1500?45000:iters>=800?30000:20000,late=()=>workNow()-t0>budget;let rr=13;
+    const samples=iters>=1500?40:30,t0=workNow(),budget=iters>=1500?20000:iters>=800?10000:6000,late=()=>workNow()-t0>budget;let rr=13;
     const rnd=()=>{rr=(rr*16807)%2147483647;return rr/2147483647};
-    let cur=A(manh).slice(),curS=ev(pk(cur)).s;
+    let cur=A(manh).slice(),curS=ev(pk(cur)).s,curQ=evq(pk(cur)).s;
     for(let round=0;round<3&&!S.abort;round++){
-      let bestT=null,bestS=curS+1e-6;
+      const top=[];const offer=(q,tr)=>{if(q<=curQ+1e-6)return;top.push({q,tr});top.sort((x,y)=>y.q-x.q);if(top.length>3)top.pop()};
       const ids=Object.keys(cand).filter(id=>cand[id].length&&!cur.some(m=>m.item===id));
       let k=0;
       for(const id of ids){
         const arr=cand[id];
-        for(let t=0;t<Math.min(samples,arr.length);t++){const cd=t<samples/2?arr[Math.floor(t*arr.length/(samples/2))]:arr[Math.floor(rnd()*arr.length)],tr=trialOf(cur,cd),e=ev(pk(tr)).s;if(e>bestS){bestS=e;bestT=tr}await yieldIf(null,0)}
+        for(let t=0;t<Math.min(samples,arr.length);t++){const cd=t<samples/2?arr[Math.floor(t*arr.length/(samples/2))]:arr[Math.floor(rnd()*arr.length)],tr=trialOf(cur,cd);offer(evq(pk(tr)).s,tr);await yieldIf(null,0)}
         if(++k%12===0){if(S.abort||late())break}
       }
       for(let i=0;i<cur.length&&!S.abort;i++){
         const keep=cur.filter((_,j)=>j!==i),arr=cand[cur[i].item]||[];
-        for(let t=0;t<arr.length;t++){const cd=arr[t],tr=trialOf(keep,cd),e=ev(pk(tr)).s;if(e>bestS){bestS=e;bestT=tr}await yieldIf(null,0)}
+        for(let t=0;t<arr.length;t++){const cd=arr[t],tr=trialOf(keep,cd);offer(evq(pk(tr)).s,tr);await yieldIf(null,0)}
         if(late())break;
       }
-      if(!bestT)break;cur=bestT;curS=bestS;
+      let bestT=null,bestS=curS+1e-6;
+      for(const c of top){const e=ev(pk(c.tr)).s;if(e>bestS){bestS=e;bestT=c.tr}}
+      if(!bestT)break;cur=bestT;curS=bestS;curQ=evq(pk(cur)).s;
     }
     return cur;
   }
