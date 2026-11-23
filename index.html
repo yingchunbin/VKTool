@@ -3,11 +3,223 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>VKTool - Trợ thủ Vạn Kiếp Tu Tiên</title>
+<title>VKTool - Vạn Kiếp Trợ Thủ</title>
 <style>
-:root{color-scheme:light dark;--bg:#f5f6f8;--card:#fff;--text:#16202a;--muted:#596574;--line:#d8dee7;--brand:#8b1e1e;--good:#067647}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:860px;margin:auto;padding:28px 18px 56px}.hero,.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 8px 30px #10182812}.hero h1{margin:0;color:var(--brand)}.muted{color:var(--muted)}.grid{display:grid;gap:16px;margin-top:16px}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}button,.bookmark{border:1px solid var(--brand);border-radius:10px;padding:10px 14px;background:var(--brand);color:#fff;font-weight:700;text-decoration:none;cursor:pointer}.secondary{background:transparent;color:var(--brand)}code{overflow-wrap:anywhere}.status{margin-top:12px;padding:10px 12px;border-radius:10px;background:#ecfdf3;color:var(--good)}.status.bad{background:#fef3f2;color:#b42318}ol{padding-left:22px}@media (prefers-color-scheme:dark){:root{--bg:#11161c;--card:#181f27;--text:#eef2f6;--muted:#aab4c0;--line:#34404d}.status{background:#073b2a;color:#a6f4c5}.status.bad{background:#4a1717;color:#fecdca}}</style>
+:root{color-scheme:light dark;--bg:#f5f6f8;--card:#fff;--text:#16202a;--muted:#596574;--line:#d8dee7;--brand:#8b1e1e;--good:#067647;--soft:#f1f3f6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:860px;margin:auto;padding:28px 16px 56px}
+.hero,.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 8px 30px #10182812}
+.hero h1{margin:0;color:var(--brand)}
+.hero p{margin:.4em 0 0}
+.muted{color:var(--muted)}
+.grid{display:grid;gap:16px;margin-top:16px}
+h2{margin:0 0 .5em;font-size:1.25rem}
+h3{margin:1.1em 0 .3em;font-size:1.05rem}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+button,.bookmark{border:1px solid var(--brand);border-radius:10px;padding:10px 14px;background:var(--brand);color:#fff;font:inherit;font-weight:700;text-decoration:none;cursor:pointer}
+.secondary{background:transparent;color:var(--brand)}
+code{overflow-wrap:anywhere;background:var(--soft);padding:1px 5px;border-radius:5px;font-size:.92em}
+.status{margin-top:12px;padding:10px 12px;border-radius:10px;background:#ecfdf3;color:var(--good)}
+.status.bad{background:#fef3f2;color:#b42318}
+ol,ul{padding-left:22px;margin:.4em 0}
+li{margin:.25em 0}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 14px}
+.tabs button{background:transparent;color:var(--brand);padding:7px 12px}
+.tabs button[aria-selected="true"]{background:var(--brand);color:#fff}
+.pane[hidden]{display:none}
+.note{margin-top:12px;padding:10px 12px;border-radius:10px;background:var(--soft);border-left:4px solid var(--brand)}
+details{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:10px 0;background:var(--card)}
+details[open]{background:var(--soft)}
+summary{cursor:pointer;font-weight:700}
+summary .han{display:inline-block;width:1.6em;color:var(--brand)}
+details p{margin:.5em 0 0}
+.kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:0 6px;font-size:.9em;background:var(--card)}
+@media (prefers-color-scheme:dark){
+:root{--bg:#11161c;--card:#181f27;--text:#eef2f6;--muted:#aab4c0;--line:#34404d;--soft:#1f2832;--brand:#d86a6a}
+button,.bookmark{color:#11161c}
+.secondary{color:var(--brand)}
+.tabs button[aria-selected="true"]{color:#11161c}
+.status{background:#073b2a;color:#a6f4c5}
+.status.bad{background:#4a1717;color:#fecdca}
+}
+</style>
 </head>
-<body><main class="wrap"><section class="hero"><h1>VKTool</h1><p class="muted">Trợ thủ sự kiện, địa điểm, dị bảo, vật phẩm và nhiệm vụ cho Vạn Kiếp Tu Tiên.</p><div class="actions"><a id="bookmark" class="bookmark" href="#">VKTool Beta 34</a><button id="copy" type="button" class="secondary">Sao chép bookmarklet</button><button id="check" type="button" class="secondary">Kiểm tra bản phát hành</button></div><div id="status" class="status" aria-live="polite">Sẵn sàng.</div></section><section class="grid"><article class="card"><h2>Cài đặt</h2><ol><li>Hiện thanh dấu trang của trình duyệt.</li><li>Kéo nút <strong>VKTool Beta 34</strong> lên thanh dấu trang.</li><li>Mở game rồi bấm dấu trang vừa tạo.</li></ol></article><article class="card"><h2>Cập nhật</h2><p>Bookmarklet tự đóng bản cũ, xóa các giao diện Beta trước và nạp file mới với cache-busting.</p></article><article class="card"><h2>Tiến độ</h2><p>Xem <a href="TODO.md">TODO.md</a> và <a href="README.md">README.md</a>.</p></article></section></main>
+<body><main class="wrap">
+
+<section class="hero">
+<h1>VKTool</h1>
+<p class="muted">Vạn Kiếp Trợ Thủ: bảng tra cứu và tự động hóa cho game <b>Vạn Kiếp Tu Tiên</b>. Mọi số liệu đều đọc thẳng từ dữ liệu và hàm tính của chính game đang chạy, nên khi game cập nhật, công cụ tự theo kịp.</p>
+<div class="actions">
+<a id="bookmark" class="bookmark" href="#">VKTool</a>
+<button id="copy" type="button" class="secondary">Sao chép bookmarklet</button>
+<button id="check" type="button" class="secondary">Kiểm tra bản phát hành</button>
+</div>
+<div id="status" class="status" aria-live="polite">Sẵn sàng.</div>
+</section>
+
+<section class="grid">
+
+<article class="card" id="install">
+<h2>Cài bookmarklet</h2>
+<p class="muted">Bookmarklet là một dấu trang chứa đoạn mã. Mỗi lần vào game, bấm dấu trang này để nạp công cụ. Chọn thiết bị của bạn:</p>
+<div class="tabs" role="tablist">
+<button type="button" role="tab" data-os="pc" aria-selected="true">Máy tính</button>
+<button type="button" role="tab" data-os="ios" aria-selected="false">iPhone / iPad</button>
+<button type="button" role="tab" data-os="android" aria-selected="false">Android</button>
+</div>
+
+<div class="pane" data-pane="pc">
+<ol>
+<li>Hiện thanh dấu trang: Chrome, Edge, Brave bấm <span class="kbd">Ctrl</span>+<span class="kbd">Shift</span>+<span class="kbd">B</span>; Firefox bấm <span class="kbd">Ctrl</span>+<span class="kbd">Shift</span>+<span class="kbd">B</span>; Safari trên Mac chọn Xem → Hiện thanh dấu trang.</li>
+<li>Kéo nút <b>VKTool</b> ở đầu trang này lên thanh dấu trang.</li>
+<li>Mở game, vào một kiếp (phải thấy nhân vật rồi), bấm dấu trang <b>VKTool</b>. Biểu tượng <b>仙</b> sẽ hiện trong game.</li>
+</ol>
+<div class="note"><b>Không kéo được?</b> Bấm <i>Sao chép bookmarklet</i>, tạo dấu trang mới (chuột phải thanh dấu trang → Thêm trang), đặt tên VKTool và dán đoạn mã vào ô địa chỉ (URL). Hoặc mở game, nhấn <span class="kbd">F12</span>, qua thẻ Console, dán đoạn mã rồi Enter (nếu trình duyệt chặn dán, gõ <code>allow pasting</code> trước).</div>
+</div>
+
+<div class="pane" data-pane="ios" hidden>
+<p class="muted">Safari trên iOS không kéo thả được, nên làm theo cách "tạo dấu trang rồi sửa địa chỉ".</p>
+<ol>
+<li>Mở trang này bằng <b>Safari</b>, bấm <i>Sao chép bookmarklet</i>.</li>
+<li>Bấm nút Chia sẻ (hình vuông có mũi tên) → <b>Thêm dấu trang</b> → Lưu.</li>
+<li>Bấm biểu tượng quyển sách (Dấu trang), bấm <b>Sửa</b>, chọn dấu trang vừa lưu. Đổi tên thành <b>VKTool</b>, xóa toàn bộ phần địa chỉ cũ, <b>dán</b> đoạn mã đã sao chép vào, bấm Xong.</li>
+<li>Mở game và vào một kiếp. Bấm biểu tượng Dấu trang → chọn <b>VKTool</b> (hoặc gõ chữ <code>VKTool</code> vào thanh địa chỉ rồi chọn dấu trang trong gợi ý).</li>
+</ol>
+<div class="note">Nếu bị mất đoạn mã sau khi dán, hãy kiểm tra ô địa chỉ có bắt đầu bằng <code>javascript:</code> không; thiếu thì gõ thêm vào đầu. Chrome trên iOS không chạy được bookmarklet, hãy dùng Safari.</div>
+</div>
+
+<div class="pane" data-pane="android" hidden>
+<p class="muted">Cách ổn định nhất là dùng Chrome hoặc Firefox, thêm dấu trang rồi sửa địa chỉ.</p>
+<ol>
+<li>Mở trang này bằng Chrome, bấm <i>Sao chép bookmarklet</i>.</li>
+<li>Bấm menu ⋮ → ngôi sao (Thêm dấu trang) → <b>Sửa</b>. Đổi tên thành <b>VKTool</b>, xóa địa chỉ cũ, <b>dán</b> đoạn mã vào, Lưu.</li>
+<li>Mở game, vào một kiếp. Bấm vào thanh địa chỉ, gõ <code>VKTool</code>, rồi <b>chọn đúng dấu trang trong danh sách gợi ý</b> (không bấm Enter bằng chữ vừa gõ). Công cụ sẽ nạp ngay.</li>
+</ol>
+<div class="note"><b>Firefox Android:</b> sau khi tạo dấu trang như trên, gõ tên dấu trang vào thanh địa chỉ và chọn gợi ý; cách này cũng chạy được. Nếu Chrome không chạy dấu trang, thử mở game bằng Firefox hoặc Kiwi Browser.</div>
+</div>
+
+<h3>Lưu ý chung</h3>
+<ul>
+<li>Phải <b>đang ở trong một kiếp</b> thì công cụ mới nạp được; nếu chưa vào, sẽ hiện thông báo "Game chưa sẵn sàng".</li>
+<li>Mỗi lần tải lại trang game, bấm lại dấu trang một lần. Bấm lần nữa khi đã chạy thì công cụ tự đóng bản cũ rồi nạp lại.</li>
+<li>Bookmarklet luôn nạp bản mới nhất kèm mã chống cache, nên không phải cài lại khi công cụ cập nhật.</li>
+</ul>
+</article>
+
+<article class="card">
+<h2>Công cụ làm được gì</h2>
+<ul>
+<li><b>Tra cứu:</b> sự kiện, bản đồ, bí cảnh, dị bảo, vật phẩm, tông môn, nhân mạch, thành tựu luân hồi; vẽ đường đi tới nơi cần đến.</li>
+<li><b>Tính toán bằng đúng hàm của game:</b> thọ nguyên và tỉ lệ đột phá, điểm kinh mạch, chỉ số, kháng tâm ma.</li>
+<li><b>Xếp kinh mạch tối ưu:</b> theo lối tu bạn chọn, kể cả "xếp giả định" khi chưa đủ đồ, kèm danh sách món còn thiếu để đặt mua.</li>
+<li><b>Tự động:</b> Auto Farm đi săn, làm việc và xử lý sự kiện theo chính sách bạn đặt.</li>
+<li><b>Hỗ trợ thao tác:</b> đặt mua vật phẩm, kết giao hoặc tỏ lòng với NPC, dò căn cốt, đổi dung mạo.</li>
+<li>Đã được kiểm tra với game bản <b>0.3.0</b> (bản cập nhật lớn); tab <i>Kiểm tra</i> báo mục nào chưa khớp nếu game đổi tiếp.</li>
+</ul>
+<h3>Dùng giao diện</h3>
+<ul>
+<li>Bấm biểu tượng <b>仙</b> để mở hoặc thu panel. Nút <b>⤢</b> mở rộng hoặc thu nhỏ, nút <b>✕</b> thu gọn.</li>
+<li>Kéo thanh tiêu đề để di chuyển panel; kéo góc dưới bên phải để đổi cỡ.</li>
+<li>Khi đang vẽ đường tới một nơi, một nhãn nhỏ hiện ra với nút <b>✕</b> để xóa đường.</li>
+<li>Cài đặt của bạn (bộ lọc, lựa chọn) được nhớ trong trình duyệt.</li>
+</ul>
+</article>
+
+<article class="card">
+<h2>Cách dùng từng tab</h2>
+<p class="muted">Bấm vào tên tab để xem chi tiết.</p>
+
+<details><summary><span class="han">事</span>Nhiệm vụ</summary>
+<p>Liệt kê các sự kiện và việc đang có trong game kèm thông tin: nơi xảy ra, quãng đường đi, thời gian còn lại và <b>có kịp hay không</b>. Bấm một mục để vẽ đường tới đó. Dùng khi muốn biết nên đi đâu trước để không lỡ cơ duyên.</p></details>
+
+<details><summary><span class="han">地</span>Bản đồ</summary>
+<p>Tra cứu mọi địa danh: kinh đô, thành, trấn, thôn, tông môn, núi, rừng, cốc, di tích, bí cảnh, linh mạch, khoáng mạch, phường thị… Gõ tên vào ô tìm, lọc theo loại hoặc quốc gia, sắp theo gần nhất hay theo cấp nền. Hiện cả điểm săn yêu của từng nơi. Bấm để vẽ đường đi.</p></details>
+
+<details><summary><span class="han">秘</span>Bí cảnh &amp; Dị bảo</summary>
+<p>Gồm hai phần. <b>Bí cảnh:</b> bí cảnh đang mở, cảnh giới đề xuất và cảnh báo nếu ngoài tầm. <b>Dị bảo (Bảo lục Nghịch Thiên):</b> mọi vật Nghịch Thiên trong game, cách có được, vật nào bạn đã có qua các kiếp, và dị bảo đang xuất hiện. Dùng để lên kế hoạch săn bảo.</p></details>
+
+<details><summary><span class="han">自</span>Auto Farm</summary>
+<p>Tự đi quanh vùng: săn yêu, làm việc trên bản đồ, ghé thành trấn gần có việc. Cách dùng:</p>
+<ol>
+<li>Mở tab, chọn các tùy chọn trong mục <i>Tùy chọn chạy</i> (ghé thành thị, tốc chiến khi game cho phép, tránh tử địa hoặc khó thắng…).</li>
+<li>Đặt chính sách cho từng nhóm sự kiện (ví dụ nhóm quản lý, thế lực, gia tộc, danh tiếng, đạo thống) để quyết định có tham gia hay bỏ qua.</li>
+<li>Bấm <b>Bắt đầu</b>. Panel tự thu lại; điều khiển tạm dừng hoặc dừng nằm cạnh biểu tượng 仙.</li>
+</ol>
+<p>Khi bị thương mà túi không có đan chữa, công cụ sẽ nhắc nên mua Hồi Xuân Đan, Kim Sang Dược hoặc Sinh Cơ Đan. Khi túi đầy, đồ đang chờ sẽ được tự cất lại khi có chỗ, và công cụ <b>không tự vứt đồ</b>.</p></details>
+
+<details><summary><span class="han">賞</span>Treo thưởng</summary>
+<p>Hiện các việc treo thưởng bạn đã nhận, sắp theo thứ tự bạn chọn và nơi cần đi làm. Nhận việc ở bảng treo thưởng của thôn, trấn, thành, kinh đô hoặc điện nhiệm vụ tông môn, rồi quay lại tab này để theo dõi.</p></details>
+
+<details><summary><span class="han">人</span>Nhân mạch</summary>
+<p>Danh sách NPC bạn quen kèm quan hệ (quen biết, bằng hữu, tri kỷ, đạo lữ, kẻ thù…), nơi ở và cảnh giới. Có ô tìm và bộ lọc (đang ở đây, biết nơi ở, có thể tặng quà, mời, săn, hút, song tu). Các nút hành động:</p>
+<ul>
+<li><b>Kết giao / Tỏ lòng / Ngỏ ý kết đạo lữ:</b> chỉ hiện khi NPC đang ở cùng nơi với bạn và game cho phép; có lý do nếu chưa thể.</li>
+<li><b>Dò căn cốt:</b> xem căn cốt của NPC.</li>
+<li>Với NPC ở xa, công cụ đưa đường tới thăm.</li>
+</ul></details>
+
+<details><summary><span class="han">宗</span>Tông môn</summary>
+<p>Tra cứu tông môn theo lối tu, chính hoặc ma, hệ ngũ hành, quốc gia, tầng bậc; xem chưởng môn và cấp bậc của bạn. Chọn "Lối đang theo ở Kinh mạch" để chỉ thấy tông môn hợp lối tu đang xếp.</p></details>
+
+<details><summary><span class="han">破</span>Đột phá</summary>
+<p>Cho biết thọ nguyên còn lại, tu vi còn thiếu và tỉ lệ đột phá tính bằng chính hàm của game, kèm các tổ hợp đan dùng và mức thiêu đốt thọ. Dùng để biết khi nào nên đột phá và dùng đan nào. Lần đầu có thể mất một lúc để chuẩn bị phép tính.</p></details>
+
+<details><summary><span class="han">脈</span>Kinh mạch</summary>
+<p>Tự xếp các món đồ lên lưới kinh mạch cho điểm cao nhất. Cách dùng:</p>
+<ol>
+<li>Chọn <b>mục tiêu</b>: thiên về danh (chiến lực), tu luyện hoặc cân bằng.</li>
+<li>Chọn <b>lối tu</b> (hoặc để "Tự do") và độ kỹ của phép tính.</li>
+<li>Chọn mức <b>Lấp hố</b>: món thấp phẩm hơn phẩm chuẩn của cảnh giới quá mức này sẽ không được nhét chỉ để lấp ô trống (mặc định −2 phẩm; có thể chọn −1, −3 hoặc không giới hạn).</li>
+<li>Bấm xếp. Kết quả cho thấy chỉ số, kháng tâm ma thật, bộ đồ đã kích hoạt (ví dụ "Bộ X 2/3") và so sánh với hiện tại.</li>
+<li>Bấm <b>Xếp vào bộ</b> để áp dụng. Nếu thiếu đồ, dùng <b>xếp giả định</b>: công cụ xếp như thể đã có đủ và liệt kê món còn thiếu để bạn đặt mua. Món đã về túi sẽ tự biến mất khỏi danh sách đặt.</li>
+</ol>
+<p>Công cụ tính theo luật của game: màu ô, số huyệt phủ, sinh khắc giữa các mảnh kề, phẩm cấp so với cảnh giới và tác dụng của bộ đồ. Quá trình xếp mất khoảng một đến hai phút tùy máy.</p></details>
+
+<details><summary><span class="han">輪</span>Luân hồi</summary>
+<p>Danh sách thành tựu theo nhóm, điểm đã nhận và còn thiếu. Truyền thuyết chưa tìm ra được giấu nội dung để khỏi lộ cốt truyện, chỉ hiện số lượng. Có tùy chọn hiện cả thành tựu đã đạt.</p></details>
+
+<details><summary><span class="han">容</span>Dịch Dung</summary>
+<p>Đổi tên và diện mạo, người cũ coi như không quen. Hiện chi phí linh thạch cho mỗi lần đổi và báo bạn có đủ hay không. Tên mới hiện ở mọi nơi trong game, kể cả Thiên Kiều Bảng.</p></details>
+
+<details><summary><span class="han">寶</span>Vật phẩm</summary>
+<p>Tra cứu vật phẩm theo tên, loại, bộ đồ. Có thể <b>đặt mua</b> vật phẩm cần: công cụ giữ hàng với tiền cọc, báo khi hàng về để <b>thanh toán</b>. Quá hạn mà chưa thanh toán thì hàng bị người khác lấy và mất cọc, nên hãy theo dõi thời hạn. Đơn đã về được đánh dấu trong tab.</p></details>
+
+<details><summary><span class="han">察</span>Kiểm tra</summary>
+<p>Đối chiếu công cụ với phiên bản game đang chạy, báo mục nào chưa khớp. Khi game vừa cập nhật mà có chức năng không chạy, bấm kiểm tra lại, rồi sao chép báo cáo gửi cho người làm.</p></details>
+</article>
+
+<article class="card">
+<h2>Gỡ lỗi nhanh</h2>
+<ul>
+<li><b>Hiện "Game chưa sẵn sàng":</b> hãy vào một kiếp, đợi nhân vật hiện ra rồi bấm lại.</li>
+<li><b>Bấm dấu trang không có phản ứng:</b> kiểm tra đoạn mã bắt đầu bằng <code>javascript:</code>; trên điện thoại hãy chọn dấu trang từ gợi ý của thanh địa chỉ.</li>
+<li><b>Công cụ chạy sai sau khi game cập nhật:</b> mở tab Kiểm tra, sao chép báo cáo.</li>
+</ul>
+<p class="muted">Tiến độ: xem <a href="TODO.md">TODO.md</a> và <a href="README.md">README.md</a>.</p>
+</article>
+
+</section></main>
 <script>
-(()=>{const base=new URL('.',location.href).href;const src=base+'vk-tro-ly.js';const code=`javascript:(async()=>{try{window.__VK_EVENT_HUNTER__?.close?.()}catch{}['veh-beta32','veh-beta33','veh-beta34','veh-bubble'].forEach(id=>document.getElementById(id)?.remove());try{delete window.__VK_EVENT_HUNTER__}catch{}await import('${src}?v='+Date.now())})().catch(console.error)`;const bookmark=document.getElementById('bookmark'),status=document.getElementById('status');bookmark.href=code;document.getElementById('copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(code);status.className='status';status.textContent='Đã sao chép bookmarklet.'}catch{status.className='status bad';status.textContent='Không thể sao chép tự động. Hãy kéo nút bookmarklet lên thanh dấu trang.'}});document.getElementById('check').addEventListener('click',async()=>{status.className='status';status.textContent='Đang kiểm tra...';try{const text=await fetch(src+'?v='+Date.now()).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.text()});const v=text.match(/VK Event Hunter Beta \d+/)?.[0]||'Không nhận diện phiên bản';status.textContent=`${v} · ${text.length.toLocaleString('vi-VN')} ký tự · inspectReport: ${text.includes('inspectReport')?'có':'không'}`}catch(e){status.className='status bad';status.textContent='Kiểm tra thất bại: '+e.message}})})();
+(()=>{
+const base=new URL('.',location.href).href,src=base+'ToolVKGrok.js';
+const code="javascript:(async()=>{try{window.__VKT2__?.destroy?.()}catch{}await import('"+src+"?v='+Date.now())})().catch(e=>alert('VKTool: '+(e&&e.message||e)))";
+const bookmark=document.getElementById('bookmark'),status=document.getElementById('status');
+bookmark.href=code;
+bookmark.addEventListener('click',e=>{e.preventDefault();status.className='status';status.textContent='Hãy kéo nút này lên thanh dấu trang (hoặc xem hướng dẫn cài ở dưới); bấm tại đây không chạy công cụ.'});
+document.getElementById('copy').addEventListener('click',async()=>{
+try{await navigator.clipboard.writeText(code);status.className='status';status.textContent='Đã sao chép bookmarklet.'}
+catch{status.className='status bad';status.textContent='Không thể sao chép tự động. Hãy kéo nút VKTool lên thanh dấu trang, hoặc giữ nút rồi chọn sao chép liên kết.'}});
+document.getElementById('check').addEventListener('click',async()=>{
+status.className='status';status.textContent='Đang kiểm tra...';
+try{const text=await fetch(src+'?v='+Date.now()).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.text()});
+const v=(text.match(/BUILD='([^']+)'/)||[])[1]||'không nhận diện phiên bản';
+status.textContent='Bản '+v+' · '+text.length.toLocaleString('vi-VN')+' ký tự · tải được bình thường';
+}catch(e){status.className='status bad';status.textContent='Kiểm tra thất bại: '+e.message}});
+const tabs=[...document.querySelectorAll('[data-os]')],panes=[...document.querySelectorAll('[data-pane]')];
+const pick=os=>{tabs.forEach(b=>b.setAttribute('aria-selected',String(b.dataset.os===os)));panes.forEach(p=>p.hidden=p.dataset.pane!==os)};
+tabs.forEach(b=>b.addEventListener('click',()=>pick(b.dataset.os)));
+const ua=navigator.userAgent||'';
+pick(/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1)?'ios':/Android/.test(ua)?'android':'pc');
+})();
 </script></body></html>

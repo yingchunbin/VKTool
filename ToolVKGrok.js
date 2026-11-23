@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261123-game030-v106',ID='vkt2',g=window.game;
+const BUILD='20261123-game030-v107',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -333,6 +333,12 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
   // Khi tìm kiếm (ủ nhiệt / lấp hố / đánh bóng) chỉ mô phỏng một phần trận mẫu (rải đều theo cảnh giới + tiểu cảnh); bước chấm kết quả cuối vẫn dùng đủ bộ.
   // Tu luyện gần như không cần trận (trọng số 0,05) nên lấy rất ít. Trước đây mỗi lần chấm chạy 60 trận → ~43% thời gian nằm ở mô phỏng trận.
   const benchFast=(cg,tc,mode)=>{const all=allGameEnemies(cg,tc),k=mode==='tu'?10:2;return all.length<=8?all:all.filter((_,i)=>i%k===0)};
+  /* Phẩm đồ lấp hố. Game không nhân sức theo phẩm (số liệu nằm sẵn trong từng món; phẩm thấp so với pháp lực còn bị trần chiêu và giảm hiệu ứng đồ cũ),
+     nên một món phẩm thấp so với cảnh giới đóng góp gần như 0. Điểm cộng "lấp ô / thêm mảnh" chỉ là mồi cho thuật toán — không được tính cho món quá thấp phẩm,
+     và packFill (pha lấp hố cuối) không nhét món đó. Ngưỡng: phẩm ≥ phẩm chuẩn − khoảng cho phép (mặc định 2). */
+  const fillGap=()=>{const g=S.pref&&S.pref.fillGap;return Number.isFinite(g)?g:2};
+  const qualFill=id=>{const it=C().items.get(id);if(!it)return true;const ph=it.pham_cap||1;if(ph>=8)return true;const ref=S.pref&&S.pref._refPham;return !ref||ph>=ref-fillGap()};
+  const fillStat=list=>{let f=0,n=0,low=0;for(const p of list){const id=p.m?p.m.item:p.item;if(qualFill(id)){f+=p.cells?p.cells.length:0;n++}else low++}return{f,n,low}};
   function fight(P, E) {
     try { return S.core.eJ(P, E, {}); } catch { return { thang: false, nHiep: 30, khiHuyetThapNhat: 0, stTa: 0 }; }
   }
@@ -461,8 +467,8 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
       // Điểm nghịch: mảnh tương khắc kề nhau / nằm quá nửa trên ô khắc (tooltip game)
       const phaPhe=breakPenalty(nghich,nv),dpEff=Math.min(0.12,Math.max(0,dp));
       // Độ lấp: số ô bị mảnh chiếm (khuyến khích xếp đầy hơn khi giả định)
-      const filled=manh.reduce((a,p)=>a+(p.cells?p.cells.length:0),0);
-      const nPieces=manh.length;
+      const fs0=fillStat(manh),filled=fs0.f;
+      const nPieces=fs0.n-fs0.low*6;
       let score=-dead*1e12;
       if(mode==='danh'){
         // Mục tiêu chính: số trận thắng. Lấp ô chỉ phụ. Đủ linh lực ra chiêu.
@@ -612,6 +618,10 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
       // Pool rộng hơn để anneal có chỗ lấp đầy (giới hạn vẫn cần cho máy yếu)
       pool = scored.slice(0, 260).map((x) => x.id);
     }
+    { // phẩm chuẩn theo cảnh giới: Hoàng/Huyền… theo TIER_CG (cảnh g ↔ phẩm g+2), nhưng không cao hơn phẩm cao nhất trong pool (người nghèo đồ vẫn được lấp)
+      const nat=cg<=0?2:Math.min(7,cg+2);let mx=0;for(const id of pool){const ph=c.items.get(id)?.pham_cap||0;if(ph<8&&ph>mx)mx=ph}
+      S.pref=S.pref||{};S.pref._refPham=Math.min(nat,mx||nat);
+    }
     const ck = hypo + '|' + pool.join(',');
     { const m0 = _candCache.get(nv0); if (m0 && m0.has(ck)) return m0.get(ck); }
     const nvWork = hypo ? (() => {
@@ -651,15 +661,15 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
       const w=mode==='tu'?[.35,2800,20000,.15]:mode==='can'?[1.05,1500,6000,.8]:[2.5,2,1,2.2]; // danh: linh lực + uy chiêu
       const thongAll = R.manh.every((m) => !m || m.thong);
       const P=K.Vr(nv,c),mq=meridianQuality(R,P,mode);
-      const filled=manh.reduce((a,p)=>a+(p.cells?p.cells.length:0),0);
-      const pack=filled*10+manh.length*20;
+      const fs1=fillStat(manh),filled=fs1.f;
+      const pack=filled*10+(fs1.n-fs1.low*6)*20;
       const ngh=mq.nghich||0;
       if(mode==='tu'){
-        const pack2=filled*30+manh.length*40;
+        const pack2=filled*30+(fs1.n-fs1.low*6)*40;
         return (thongAll?0:-1e9)+w[0]*R.linhLuc+w[1]*toc+w[2]*dp+w[3]*uy+mq.score-ngh*25000+pack2+preferenceScore(manh,mode)+schoolDominanceScore(manh,mode);
       }
       if(mode==='can'){
-        const pack2=filled*35+manh.length*50;
+        const pack2=filled*35+(fs1.n-fs1.low*6)*50;
         return !thongAll?-1e15:w[0]*R.linhLuc+w[1]*toc+w[2]*dp+w[3]*uy+mq.score-ngh*1500+pack2+preferenceScore(manh,mode)+schoolDominanceScore(manh,mode);
       }
       return w[0]*R.linhLuc+w[1]*toc+w[2]*dp+w[3]*uy+mq.score+(thongAll?0:-1e9)-ngh*30+pack*4+preferenceScore(manh,mode)+schoolDominanceScore(manh,mode)+pathShareScore(manh,mode);
@@ -931,7 +941,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
       const nv=nvFork(nv0);nv.kinhMach.manh=manh.map(p=>({...p.m}));
       const R=K.Rt(nv,c),P=K.Vr(nv,c);
       const dead=(R.manh||[]).filter(x=>x&&!x.thong).length;
-      const filled=manh.reduce((a,p)=>a+(p.cells?p.cells.length:0),0);
+      const filled=fillStat(manh).f;
       let matchCells=0,cells=0;
       for(const p of manh){
         const n=p.cells?p.cells.length:0;cells+=n;
@@ -947,6 +957,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
         const used=new Set(cur.flatMap(p=>p.cells));
         for(const id of idsBySize){
           if(usedIds.has(id))continue;
+          if(!qualFill(id))continue; // không nhét món quá thấp phẩm chỉ để lấp ô
           const pathItem=isMatch(id);
           if(preferPath&&!pathItem)continue;
           if(!preferPath&&pathItem)continue;
@@ -2486,6 +2497,7 @@ VIEWS.build=()=>{
 
   const schoolSel='<select id="b-school" class="grow">'+[['tu_do','Tự do (không theo lối)'],...BUILDS.map(b=>[b.k,'['+b.nhom+'] '+b.ten])].map(([k,n])=>'<option value="'+E(k)+'" '+(k===(pathK||'tu_do')?'selected':'')+'>'+E(n)+'</option>').join('')+'</select>';
   const wSel='<select id="b-pw" class="grow">'+PATH_MUC.map(([v,t])=>'<option value="'+v+'" '+(String(pathW)===v?'selected':'')+'>'+E(t)+'</option>').join('')+'</select>';
+  const gapSel='<select id="b-gap" class="grow" title="Đồ thấp phẩm hơn mức này (so với phẩm chuẩn của cảnh giới) không được nhét chỉ để lấp ô trống">'+[['1','Lấp hố: sát phẩm (−1)'],['2','Lấp hố: −2 phẩm'],['3','Lấp hố: −3 phẩm'],['9','Lấp hố: không giới hạn']].map(([k,n])=>'<option value="'+k+'" '+(String(bld.fillGap??2)===k?'selected':'')+'>'+n+'</option>').join('')+'</select>';
   const itSel='<select id="b-it" class="grow">'+[['400','Nhanh'],['900','Cân bằng'],['1600','Tính kỹ'],['2800','Rất kỹ']].map(([k,n])=>'<option value="'+k+'" '+(String(bld.iters)===k?'selected':'')+'>'+n+'</option>').join('')+'</select>';
   const rSel='<div class="chips" style="flex-wrap:wrap;margin:6px 0">'+[1,2,3,4,5].map(r=>'<button type="button" class="chip '+(r===R?'on':'')+'" data-br="'+r+'">'+E(cgTen(r))+(r===R0?' · hiện':'')+'</button>').join('')+'</div>';
 
@@ -2513,7 +2525,7 @@ VIEWS.build=()=>{
 
   body.innerHTML='<div class="panel"><b style="color:var(--gold)">Kinh mạch · Lối build</b>'
     +'<div class="sub">Chọn lối + mức ưu tiên + mức tính. Thông số nhân vật đọc tự động.</div>'
-    +'<div class="bar" style="margin-top:8px;flex-wrap:wrap;gap:6px">'+schoolSel+wSel+itSel+'</div>'
+    +'<div class="bar" style="margin-top:8px;flex-wrap:wrap;gap:6px">'+schoolSel+wSel+itSel+gapSel+'</div>'
     +'<div class="sub" style="margin-top:6px">Gợi ý lối: '+(fitLine||'—')+'</div></div>'
     +'<div class="panel"><div class="sub" style="line-height:1.55">'
     +'<div><b>Thông số đang áp dụng</b></div>'
@@ -2548,6 +2560,7 @@ VIEWS.build=()=>{
   $(body,'#b-school')&&($(body,'#b-school').onchange=()=>{syncPath();VIEWS.build()});
   $(body,'#b-pw')&&($(body,'#b-pw').onchange=()=>{syncPath();VIEWS.build()});
   $(body,'#b-it')&&($(body,'#b-it').onchange=()=>{bld.iters=+$(body,'#b-it').value});
+  $(body,'#b-gap')&&($(body,'#b-gap').onchange=()=>{bld.fillGap=+$(body,'#b-gap').value});
   $$(body,'[data-br]').forEach(el=>el.onclick=()=>{bld.buildR=+el.dataset.br;VIEWS.build()});
   $$(body,'[data-mode]').forEach(x=>x.onclick=()=>{bld.mode=x.dataset.mode;VIEWS.build()});
   $(body,'#b-stop')&&($(body,'#b-stop').onclick=()=>BuildEngine.stop());
@@ -2560,6 +2573,7 @@ VIEWS.build=()=>{
     p.school=bld.path.k&&bld.path.w>0?bld.path.k:'tu_do';
     p.alignment=TA_BUILDS_B.includes(p.school)?'ta':'auto';
     p.hypo=!!hypo;
+    p.fillGap=Number.isFinite(bld.fillGap)?bld.fillGap:2;
     p.pathW=bld.path.w||0;
     bld.hypo=!!hypo;
     bld.busy=true;bld.msg=hypo?'Đang xếp giả định (toàn đồ game)…':'Đang chuẩn bị…';VIEWS.build();
