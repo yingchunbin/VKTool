@@ -1,19 +1,29 @@
-# VKTool — Vạn Kiếp Trợ Thủ
+# 仙 Vạn Kiếp Trợ Thủ
 
-Bookmarklet hỗ trợ người chơi game **Vạn Kiếp Tu Tiên**. Công cụ đọc dữ liệu và dùng chính các hàm tính của game đang chạy để tra cứu, tính toán và tự động hóa, nên khi game cập nhật, phần lớn chức năng tự theo kịp. Đã kiểm tra với game bản **0.3.0**.
+Công cụ hỗ trợ người chơi game **Vạn Kiếp Tu Tiên** chơi dễ dàng hơn: tra cứu, tính toán và làm thay những thao tác lặp lại. Công cụ đọc dữ liệu và dùng chính các hàm tính của game đang chạy, nên khi game cập nhật, phần lớn chức năng tự theo kịp. Đã kiểm tra với game bản **0.3.0**.
+
+> **Đây không phải công cụ hack hay cheat.** Công cụ không tạo tài nguyên từ hư không, không sửa chỉ số hay cảnh giới, không phá luật game. Bán, đặt hàng, xếp đồ đều theo giá và quy tắc của game.
+
+## Tuyên bố miễn trừ trách nhiệm
+
+- Đây là sản phẩm cá nhân của người chơi, **không chính thức**, không liên kết với nhà phát triển game.
+- **Cài hay không, dùng tính năng nào (kể cả Auto Farm) là quyền và trách nhiệm của bạn.** Không ai ép buộc cài đặt.
+- Công cụ được cung cấp **nguyên trạng**, không bảo đảm chạy đúng mọi lúc, nhất là khi game cập nhật.
+- Tác giả không chịu trách nhiệm về mọi hậu quả phát sinh từ việc cài và sử dụng, gồm lỗi, mất hoặc hỏng dữ liệu, thiệt hại trong game, hoặc việc bị xử lý theo quy định của game. Hãy tự đọc điều khoản của game và sao lưu dữ liệu trước khi dùng các tính năng tự động.
+- Nếu không đồng ý với các điều trên, xin đừng cài đặt hay sử dụng.
 
 ## Cài đặt
 
 Mở `index.html` qua GitHub Pages (`https://yingchunbin.github.io/VKTool/`) để có hướng dẫn chi tiết. Tóm tắt:
 
-- **Máy tính:** kéo nút **VKTool** lên thanh dấu trang.
-- **iOS (Safari) / Android (Chrome, Firefox):** bấm *Sao chép bookmarklet*, thêm dấu trang của trang này, sửa địa chỉ dấu trang thành đoạn mã vừa sao chép. Khi dùng, gõ tên dấu trang vào thanh địa chỉ và chọn đúng gợi ý.
+- **Máy tính:** kéo nút **vktt** lên thanh dấu trang.
+- **iOS (Safari) / Android (Chrome, Firefox):** bấm *Sao chép bookmarklet*, thêm dấu trang của trang này (đặt tên **vktt**), sửa địa chỉ dấu trang thành đoạn mã vừa sao chép. Khi dùng, gõ tên dấu trang vào thanh địa chỉ và chọn đúng gợi ý.
 - Phải đang ở trong một kiếp thì mới nạp được. Mỗi lần tải lại game, bấm lại dấu trang.
 
 Đoạn mã bookmarklet:
 
 ```
-javascript:(async()=>{try{window.__VKT2__?.destroy?.()}catch{}await import('https://yingchunbin.github.io/VKTool/ToolVKGrok.js?v='+Date.now())})().catch(e=>alert('VKTool: '+(e&&e.message||e)))
+javascript:(async()=>{try{window.__VKT2__?.destroy?.()}catch{}await import('https://yingchunbin.github.io/VKTool/ToolVKGrok.js?v='+Date.now())})().catch(e=>alert('Vạn Kiếp Trợ Thủ: '+(e&&e.message||e)))
 ```
 
 ## Giao diện chung

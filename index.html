@@ -3,62 +3,71 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>VKTool - Vạn Kiếp Trợ Thủ</title>
+<title>Vạn Kiếp Trợ Thủ</title>
 <style>
-:root{color-scheme:light dark;--bg:#f5f6f8;--card:#fff;--text:#16202a;--muted:#596574;--line:#d8dee7;--brand:#8b1e1e;--good:#067647;--soft:#f1f3f6}
+:root{color-scheme:light dark;--bg:#e7dfc8;--paper:#f4eedd;--paper2:#faf6ea;--ink:#2b2b2b;--muted:#6b6558;--line:#2b2b2b8c;--line2:#2b2b2b2e;--seal:#7a1f1a;--jade:#2f7a5c;--soft:#efe7d0;--warn:#9a7322}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+body{margin:0;background:var(--bg);background-image:radial-gradient(circle at 20% 0,#f4eedd88,transparent 60%);color:var(--ink);font:16px/1.65 "Noto Serif","Songti SC","Source Han Serif SC",Georgia,"Times New Roman",serif}
 .wrap{max-width:860px;margin:auto;padding:28px 16px 56px}
-.hero,.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 8px 30px #10182812}
-.hero h1{margin:0;color:var(--brand)}
+.hero,.card{background:linear-gradient(180deg,var(--paper2),var(--paper));border:1px solid var(--line);outline:1px solid var(--line2);outline-offset:-5px;border-radius:6px;padding:22px;box-shadow:0 6px 24px #2b2b2b30}
+.hero{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+.seal{flex:none;width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 30% 25%,#2b3550,#0e1118 70%);border:1.5px solid var(--seal);color:#c9a24a;font-size:34px;line-height:61px;text-align:center}
+.hero .t{flex:1 1 280px}
+.hero h1{margin:0;color:var(--seal);letter-spacing:.5px}
 .hero p{margin:.4em 0 0}
 .muted{color:var(--muted)}
 .grid{display:grid;gap:16px;margin-top:16px}
-h2{margin:0 0 .5em;font-size:1.25rem}
+h2{margin:0 0 .5em;font-size:1.25rem;color:var(--seal)}
 h3{margin:1.1em 0 .3em;font-size:1.05rem}
-.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
-button,.bookmark{border:1px solid var(--brand);border-radius:10px;padding:10px 14px;background:var(--brand);color:#fff;font:inherit;font-weight:700;text-decoration:none;cursor:pointer}
-.secondary{background:transparent;color:var(--brand)}
-code{overflow-wrap:anywhere;background:var(--soft);padding:1px 5px;border-radius:5px;font-size:.92em}
-.status{margin-top:12px;padding:10px 12px;border-radius:10px;background:#ecfdf3;color:var(--good)}
-.status.bad{background:#fef3f2;color:#b42318}
+h4{margin:.9em 0 .2em;font-size:.95rem;color:var(--seal)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;width:100%}
+button,.bookmark{border:1px solid var(--seal);border-radius:3px;padding:10px 14px;background:var(--seal);color:#f4eedd;font:inherit;font-weight:700;text-decoration:none;cursor:pointer}
+.secondary{background:transparent;color:var(--seal)}
+code{overflow-wrap:anywhere;background:var(--soft);padding:1px 5px;border-radius:3px;font-size:.9em}
+.status{margin-top:12px;padding:10px 12px;border-radius:3px;background:#dfeadb;color:#1f5a40;border:1px solid #2f7a5c66;width:100%}
+.status.bad{background:#f0d9d4;color:#7a1f1a;border-color:#7a1f1a66}
 ol,ul{padding-left:22px;margin:.4em 0}
 li{margin:.25em 0}
 .tabs{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 14px}
-.tabs button{background:transparent;color:var(--brand);padding:7px 12px}
-.tabs button[aria-selected="true"]{background:var(--brand);color:#fff}
+.tabs button{background:transparent;color:var(--seal);padding:7px 12px}
+.tabs button[aria-selected="true"]{background:var(--seal);color:#f4eedd}
 .pane[hidden]{display:none}
-.note{margin-top:12px;padding:10px 12px;border-radius:10px;background:var(--soft);border-left:4px solid var(--brand)}
-details{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:10px 0;background:var(--card)}
+.note{margin-top:12px;padding:10px 12px;border-radius:3px;background:var(--soft);border-left:4px solid var(--seal)}
+.warn{background:#f3e8c8;border-left-color:var(--warn)}
+details{border:1px solid var(--line2);border-radius:4px;padding:10px 14px;margin:10px 0;background:var(--paper2)}
 details[open]{background:var(--soft)}
 summary{cursor:pointer;font-weight:700}
-summary .han{display:inline-block;width:1.6em;color:var(--brand)}
+summary .han{display:inline-block;width:1.6em;color:var(--seal)}
 details p{margin:.5em 0 0}
-h4{margin:.9em 0 .2em;font-size:.95rem;color:var(--brand)}
-.kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:0 6px;font-size:.9em;background:var(--card)}
-@media (prefers-color-scheme:dark){
-:root{--bg:#11161c;--card:#181f27;--text:#eef2f6;--muted:#aab4c0;--line:#34404d;--soft:#1f2832;--brand:#d86a6a}
-button,.bookmark{color:#11161c}
-.secondary{color:var(--brand)}
-.tabs button[aria-selected="true"]{color:#11161c}
-.status{background:#073b2a;color:#a6f4c5}
-.status.bad{background:#4a1717;color:#fecdca}
-}
+.kbd{border:1px solid var(--line2);border-bottom-width:2px;border-radius:4px;padding:0 6px;font-size:.9em;background:var(--paper2)}
 .oneclick{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:6px 0 12px}
 .big{display:block;width:100%;padding:16px;font-size:1.1rem;text-align:center}
 .oneclick .big{width:auto;display:inline-block;padding:14px 28px}
 .install{margin:6px 0}
-.steps{margin:12px 0;padding:12px 12px 12px 34px;background:var(--soft);border-radius:12px}
+.steps{margin:12px 0;padding:12px 12px 12px 34px;background:var(--soft);border-radius:4px;border:1px solid var(--line2)}
 .steps[hidden]{display:none}
+.disc li{margin:.4em 0}
+@media (prefers-color-scheme:dark){
+:root{--bg:#14120e;--paper:#1f1c16;--paper2:#262219;--ink:#eee6d2;--muted:#b3a98f;--line:#eee6d28c;--line2:#eee6d226;--seal:#d9867a;--soft:#2c271d;--warn:#d1a84e}
+body{background-image:none}
+button,.bookmark{color:#14120e}
+.secondary{color:var(--seal)}
+.tabs button[aria-selected="true"]{color:#14120e}
+.status{background:#16352a;color:#a6f4c5;border-color:#2f7a5c}
+.status.bad{background:#3a1b17;color:#f3c6bf}
+.warn{background:#322a15}
+}
 </style>
 </head>
 <body><main class="wrap">
 
 <section class="hero">
-<h1>VKTool</h1>
-<p class="muted">Vạn Kiếp Trợ Thủ: bảng tra cứu và tự động hóa cho game <b>Vạn Kiếp Tu Tiên</b>. Mọi số liệu đều đọc thẳng từ dữ liệu và hàm tính của chính game đang chạy, nên khi game cập nhật, công cụ tự theo kịp.</p>
+<div class="seal" aria-hidden="true">仙</div>
+<div class="t"><h1>Vạn Kiếp Trợ Thủ</h1>
+<p class="muted">Công cụ hỗ trợ người chơi game <b>Vạn Kiếp Tu Tiên</b> chơi dễ dàng hơn: tra cứu, tính toán và làm thay những thao tác lặp lại. Mọi số liệu đều đọc từ dữ liệu và dùng chính các hàm tính của game đang chạy.</p>
+<p><b>Đây không phải công cụ hack hay cheat.</b> Xem <a href="#mien-tru">tuyên bố miễn trừ trách nhiệm</a> trước khi cài.</p></div>
 <div class="actions">
-<a id="bookmark" class="bookmark" href="#">VKTool</a>
+<a id="bookmark" class="bookmark" href="#" title="Kéo lên thanh dấu trang">vktt</a>
 <button id="copy" type="button" class="secondary">Sao chép bookmarklet</button>
 <button id="check" type="button" class="secondary">Kiểm tra bản phát hành</button>
 </div>
@@ -67,9 +76,21 @@ button,.bookmark{color:#11161c}
 
 <section class="grid">
 
+<article class="card" id="mien-tru">
+<h2>Về công cụ này &amp; miễn trừ trách nhiệm</h2>
+<ul class="disc">
+<li><b>Mục đích:</b> giúp chơi game thuận tiện hơn. Công cụ chỉ đọc dữ liệu có sẵn trong game, tính toán bằng chính hàm của game và thay bạn bấm những thao tác bạn vốn làm được (xếp kinh mạch, bán đồ, đặt hàng, đi săn, tra cứu…).</li>
+<li><b>Không phải cheat:</b> công cụ không tạo tài nguyên từ hư không, không sửa chỉ số hay cảnh giới, không phá luật game. Bán, đặt hàng, xếp đồ đều theo giá và quy tắc của game.</li>
+<li><b>Không chính thức:</b> đây là sản phẩm cá nhân của người chơi, không liên kết với nhà phát triển game.</li>
+<li><b>Quyền quyết định thuộc về bạn:</b> cài hay không, dùng tính năng nào (kể cả Auto Farm) là lựa chọn và trách nhiệm của bạn. Không ai ép buộc cài đặt.</li>
+<li><b>Miễn trừ trách nhiệm:</b> công cụ được cung cấp <i>nguyên trạng</i>, không bảo đảm chạy đúng mọi lúc, nhất là khi game cập nhật. Tác giả không chịu trách nhiệm về mọi hậu quả phát sinh từ việc cài và sử dụng, gồm lỗi, mất hoặc hỏng dữ liệu, thiệt hại trong game, hoặc việc bị xử lý theo quy định của game. Hãy tự đọc điều khoản của game và sao lưu dữ liệu trước khi dùng các tính năng tự động.</li>
+<li><b>Nếu không đồng ý</b> với các điều trên, xin đừng cài đặt hay sử dụng.</li>
+</ul>
+</article>
+
 <article class="card" id="install">
 <h2>Cài bookmarklet</h2>
-<p class="muted">Bookmarklet là một dấu trang chứa đoạn mã. Mỗi lần vào game, bấm dấu trang này để nạp công cụ. Chọn thiết bị của bạn:</p>
+<p class="muted">Bằng việc cài đặt, bạn xác nhận đã đọc và đồng ý với phần miễn trừ trách nhiệm ở trên. Bookmarklet là một dấu trang chứa đoạn mã. Mỗi lần vào game, bấm dấu trang này để nạp công cụ. Chọn thiết bị của bạn:</p>
 <div class="tabs" role="tablist">
 <button type="button" role="tab" data-os="pc" aria-selected="true">Máy tính</button>
 <button type="button" role="tab" data-os="ios" aria-selected="false">iPhone / iPad</button>
@@ -77,21 +98,21 @@ button,.bookmark{color:#11161c}
 </div>
 
 <div class="pane" data-pane="pc">
-<div class="oneclick"><a class="bookmark big" data-drag href="#">VKTool</a><span class="muted">Kéo nút này lên thanh dấu trang là xong (hiện thanh dấu trang bằng <span class="kbd">Ctrl</span>+<span class="kbd">Shift</span>+<span class="kbd">B</span>; Safari Mac: Xem → Hiện thanh dấu trang).</span></div>
+<div class="oneclick"><a class="bookmark big" data-drag href="#">vktt</a><span class="muted">Kéo nút này lên thanh dấu trang là xong (hiện thanh dấu trang bằng <span class="kbd">Ctrl</span>+<span class="kbd">Shift</span>+<span class="kbd">B</span>; Safari Mac: Xem → Hiện thanh dấu trang).</span></div>
 <button type="button" class="install" data-install="pc">Hoặc bấm để sao chép, rồi dán vào dấu trang</button>
-<ol class="steps" hidden><li>Đã sao chép. Chuột phải thanh dấu trang → <b>Thêm trang</b>.</li><li>Tên: <b>VKTool</b>. Địa chỉ (URL): <b>dán</b> đoạn mã, Lưu.</li><li>Vào game, vào một kiếp, bấm dấu trang <b>VKTool</b>.</li></ol>
+<ol class="steps" hidden><li>Đã sao chép. Chuột phải thanh dấu trang → <b>Thêm trang</b>.</li><li>Tên: <b>vktt</b>. Địa chỉ (URL): <b>dán</b> đoạn mã, Lưu.</li><li>Vào game, vào một kiếp, bấm dấu trang <b>vktt</b>.</li></ol>
 <div class="note">Cách khác: mở game, nhấn <span class="kbd">F12</span> → Console, dán đoạn mã rồi Enter (nếu bị chặn dán, gõ <code>allow pasting</code> trước). Dùng được ngay, không cần tạo dấu trang.</div>
 </div>
 
 <div class="pane" data-pane="ios" hidden>
 <button type="button" class="install big" data-install="ios">Cài đặt cho iPhone / iPad</button>
-<ol class="steps" hidden><li>Đã sao chép. Bấm nút <b>Chia sẻ</b> của Safari → <b>Thêm dấu trang</b> → Lưu.</li><li>Mở <b>Dấu trang</b> (biểu tượng quyển sách) → <b>Sửa</b> → chọn dấu trang vừa lưu.</li><li>Đổi tên thành <b>VKTool</b>, xóa địa chỉ cũ, <b>dán</b> đoạn mã, bấm Xong.</li><li>Vào game, vào một kiếp, mở Dấu trang và chọn <b>VKTool</b> (hoặc gõ <code>VKTool</code> vào thanh địa chỉ rồi chọn dấu trang trong gợi ý).</li></ol>
+<ol class="steps" hidden><li>Đã sao chép. Bấm nút <b>Chia sẻ</b> của Safari → <b>Thêm dấu trang</b> → Lưu.</li><li>Mở <b>Dấu trang</b> (biểu tượng quyển sách) → <b>Sửa</b> → chọn dấu trang vừa lưu.</li><li>Đổi tên thành <b>vktt</b>, xóa địa chỉ cũ, <b>dán</b> đoạn mã, bấm Xong.</li><li>Vào game, vào một kiếp, mở Dấu trang và chọn <b>vktt</b> (hoặc gõ <code>vktt</code> vào thanh địa chỉ rồi chọn dấu trang trong gợi ý).</li></ol>
 <div class="note">Phải dùng <b>Safari</b> (Chrome trên iOS không chạy được bookmarklet). Nếu địa chỉ dấu trang không bắt đầu bằng <code>javascript:</code> thì gõ thêm vào đầu.</div>
 </div>
 
 <div class="pane" data-pane="android" hidden>
 <button type="button" class="install big" data-install="android">Cài đặt cho Android</button>
-<ol class="steps" hidden><li>Đã sao chép. Trong Chrome bấm menu ⋮ → ngôi sao <b>Thêm dấu trang</b> → <b>Sửa</b>.</li><li>Tên: <b>VKTool</b>. Xóa địa chỉ cũ, <b>dán</b> đoạn mã, Lưu.</li><li>Vào game, vào một kiếp. Bấm thanh địa chỉ, gõ <code>VKTool</code> và <b>chọn đúng dấu trang trong danh sách gợi ý</b>.</li></ol>
+<ol class="steps" hidden><li>Đã sao chép. Trong Chrome bấm menu ⋮ → ngôi sao <b>Thêm dấu trang</b> → <b>Sửa</b>.</li><li>Tên: <b>vktt</b>. Xóa địa chỉ cũ, <b>dán</b> đoạn mã, Lưu.</li><li>Vào game, vào một kiếp. Bấm thanh địa chỉ, gõ <code>vktt</code> và <b>chọn đúng dấu trang trong danh sách gợi ý</b>.</li></ol>
 <div class="note">Firefox Android làm tương tự. Nếu Chrome không chạy dấu trang, thử Firefox hoặc Kiwi Browser.</div>
 </div>
 
@@ -160,13 +181,13 @@ button,.bookmark{color:#11161c}
 <script>
 (()=>{
 const base=new URL('.',location.href).href,src=base+'ToolVKGrok.js';
-const code="javascript:(async()=>{try{window.__VKT2__?.destroy?.()}catch{}await import('"+src+"?v='+Date.now())})().catch(e=>alert('VKTool: '+(e&&e.message||e)))";
+const code="javascript:(async()=>{try{window.__VKT2__?.destroy?.()}catch{}await import('"+src+"?v='+Date.now())})().catch(e=>alert('Vạn Kiếp Trợ Thủ: '+(e&&e.message||e)))";
 const bookmark=document.getElementById('bookmark'),status=document.getElementById('status');
 bookmark.href=code;document.querySelectorAll('[data-drag]').forEach(a=>{a.href=code;a.addEventListener('click',e=>{e.preventDefault();status.className='status';status.textContent='Hãy kéo nút này lên thanh dấu trang; bấm tại đây không chạy công cụ.'})});
 bookmark.addEventListener('click',e=>{e.preventDefault();status.className='status';status.textContent='Hãy kéo nút này lên thanh dấu trang (hoặc xem hướng dẫn cài ở dưới); bấm tại đây không chạy công cụ.'});
 document.getElementById('copy').addEventListener('click',async()=>{
 try{await navigator.clipboard.writeText(code);status.className='status';status.textContent='Đã sao chép bookmarklet.'}
-catch{status.className='status bad';status.textContent='Không thể sao chép tự động. Hãy kéo nút VKTool lên thanh dấu trang, hoặc giữ nút rồi chọn sao chép liên kết.'}});
+catch{status.className='status bad';status.textContent='Không thể sao chép tự động. Hãy kéo nút Vạn Kiếp Trợ Thủ lên thanh dấu trang, hoặc giữ nút rồi chọn sao chép liên kết.'}});
 document.getElementById('check').addEventListener('click',async()=>{
 status.className='status';status.textContent='Đang kiểm tra...';
 try{const text=await fetch(src+'?v='+Date.now()).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.text()});
@@ -174,7 +195,7 @@ const v=(text.match(/BUILD='([^']+)'/)||[])[1]||'không nhận diện phiên b�
 status.textContent='Bản '+v+' · '+text.length.toLocaleString('vi-VN')+' ký tự · tải được bình thường';
 }catch(e){status.className='status bad';status.textContent='Kiểm tra thất bại: '+e.message}});
 const doCopy=async()=>{try{await navigator.clipboard.writeText(code);return true}catch{const t=document.createElement('textarea');t.value=code;t.style.cssText='position:fixed;opacity:0';document.body.append(t);t.select();let ok=false;try{ok=document.execCommand('copy')}catch{}t.remove();return ok}};
-document.querySelectorAll('[data-install]').forEach(b=>b.addEventListener('click',async()=>{const ok=await doCopy();const st=b.parentElement.querySelector('.steps');st.hidden=false;st.scrollIntoView({block:'nearest',behavior:'smooth'});status.className=ok?'status':'status bad';status.textContent=ok?'Đã sao chép bookmarklet. Làm theo các bước bên dưới.':'Không sao chép tự động được: nhấn giữ nút VKTool (máy tính) hoặc dùng cách Console.'}));
+document.querySelectorAll('[data-install]').forEach(b=>b.addEventListener('click',async()=>{const ok=await doCopy();const st=b.parentElement.querySelector('.steps');st.hidden=false;st.scrollIntoView({block:'nearest',behavior:'smooth'});status.className=ok?'status':'status bad';status.textContent=ok?'Đã sao chép bookmarklet. Làm theo các bước bên dưới.':'Không sao chép tự động được: nhấn giữ nút Vạn Kiếp Trợ Thủ (máy tính) hoặc dùng cách Console.'}));
 const tabs=[...document.querySelectorAll('[data-os]')],panes=[...document.querySelectorAll('[data-pane]')];
 const pick=os=>{tabs.forEach(b=>b.setAttribute('aria-selected',String(b.dataset.os===os)));panes.forEach(p=>p.hidden=p.dataset.pane!==os)};
 tabs.forEach(b=>b.addEventListener('click',()=>pick(b.dataset.os)));
