@@ -34,6 +34,7 @@ details[open]{background:var(--soft)}
 summary{cursor:pointer;font-weight:700}
 summary .han{display:inline-block;width:1.6em;color:var(--brand)}
 details p{margin:.5em 0 0}
+h4{margin:.9em 0 .2em;font-size:.95rem;color:var(--brand)}
 .kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:0 6px;font-size:.9em;background:var(--card)}
 @media (prefers-color-scheme:dark){
 :root{--bg:#11161c;--card:#181f27;--text:#eef2f6;--muted:#aab4c0;--line:#34404d;--soft:#1f2832;--brand:#d86a6a}
@@ -43,6 +44,12 @@ button,.bookmark{color:#11161c}
 .status{background:#073b2a;color:#a6f4c5}
 .status.bad{background:#4a1717;color:#fecdca}
 }
+.oneclick{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:6px 0 12px}
+.big{display:block;width:100%;padding:16px;font-size:1.1rem;text-align:center}
+.oneclick .big{width:auto;display:inline-block;padding:14px 28px}
+.install{margin:6px 0}
+.steps{margin:12px 0;padding:12px 12px 12px 34px;background:var(--soft);border-radius:12px}
+.steps[hidden]{display:none}
 </style>
 </head>
 <body><main class="wrap">
@@ -70,34 +77,25 @@ button,.bookmark{color:#11161c}
 </div>
 
 <div class="pane" data-pane="pc">
-<ol>
-<li>Hiện thanh dấu trang: Chrome, Edge, Brave bấm <span class="kbd">Ctrl</span>+<span class="kbd">Shift</span>+<span class="kbd">B</span>; Firefox bấm <span class="kbd">Ctrl</span>+<span class="kbd">Shift</span>+<span class="kbd">B</span>; Safari trên Mac chọn Xem → Hiện thanh dấu trang.</li>
-<li>Kéo nút <b>VKTool</b> ở đầu trang này lên thanh dấu trang.</li>
-<li>Mở game, vào một kiếp (phải thấy nhân vật rồi), bấm dấu trang <b>VKTool</b>. Biểu tượng <b>仙</b> sẽ hiện trong game.</li>
-</ol>
-<div class="note"><b>Không kéo được?</b> Bấm <i>Sao chép bookmarklet</i>, tạo dấu trang mới (chuột phải thanh dấu trang → Thêm trang), đặt tên VKTool và dán đoạn mã vào ô địa chỉ (URL). Hoặc mở game, nhấn <span class="kbd">F12</span>, qua thẻ Console, dán đoạn mã rồi Enter (nếu trình duyệt chặn dán, gõ <code>allow pasting</code> trước).</div>
+<div class="oneclick"><a class="bookmark big" data-drag href="#">VKTool</a><span class="muted">Kéo nút này lên thanh dấu trang là xong (hiện thanh dấu trang bằng <span class="kbd">Ctrl</span>+<span class="kbd">Shift</span>+<span class="kbd">B</span>; Safari Mac: Xem → Hiện thanh dấu trang).</span></div>
+<button type="button" class="install" data-install="pc">Hoặc bấm để sao chép, rồi dán vào dấu trang</button>
+<ol class="steps" hidden><li>Đã sao chép. Chuột phải thanh dấu trang → <b>Thêm trang</b>.</li><li>Tên: <b>VKTool</b>. Địa chỉ (URL): <b>dán</b> đoạn mã, Lưu.</li><li>Vào game, vào một kiếp, bấm dấu trang <b>VKTool</b>.</li></ol>
+<div class="note">Cách khác: mở game, nhấn <span class="kbd">F12</span> → Console, dán đoạn mã rồi Enter (nếu bị chặn dán, gõ <code>allow pasting</code> trước). Dùng được ngay, không cần tạo dấu trang.</div>
 </div>
 
 <div class="pane" data-pane="ios" hidden>
-<p class="muted">Safari trên iOS không kéo thả được, nên làm theo cách "tạo dấu trang rồi sửa địa chỉ".</p>
-<ol>
-<li>Mở trang này bằng <b>Safari</b>, bấm <i>Sao chép bookmarklet</i>.</li>
-<li>Bấm nút Chia sẻ (hình vuông có mũi tên) → <b>Thêm dấu trang</b> → Lưu.</li>
-<li>Bấm biểu tượng quyển sách (Dấu trang), bấm <b>Sửa</b>, chọn dấu trang vừa lưu. Đổi tên thành <b>VKTool</b>, xóa toàn bộ phần địa chỉ cũ, <b>dán</b> đoạn mã đã sao chép vào, bấm Xong.</li>
-<li>Mở game và vào một kiếp. Bấm biểu tượng Dấu trang → chọn <b>VKTool</b> (hoặc gõ chữ <code>VKTool</code> vào thanh địa chỉ rồi chọn dấu trang trong gợi ý).</li>
-</ol>
-<div class="note">Nếu bị mất đoạn mã sau khi dán, hãy kiểm tra ô địa chỉ có bắt đầu bằng <code>javascript:</code> không; thiếu thì gõ thêm vào đầu. Chrome trên iOS không chạy được bookmarklet, hãy dùng Safari.</div>
+<button type="button" class="install big" data-install="ios">Cài đặt cho iPhone / iPad</button>
+<ol class="steps" hidden><li>Đã sao chép. Bấm nút <b>Chia sẻ</b> của Safari → <b>Thêm dấu trang</b> → Lưu.</li><li>Mở <b>Dấu trang</b> (biểu tượng quyển sách) → <b>Sửa</b> → chọn dấu trang vừa lưu.</li><li>Đổi tên thành <b>VKTool</b>, xóa địa chỉ cũ, <b>dán</b> đoạn mã, bấm Xong.</li><li>Vào game, vào một kiếp, mở Dấu trang và chọn <b>VKTool</b> (hoặc gõ <code>VKTool</code> vào thanh địa chỉ rồi chọn dấu trang trong gợi ý).</li></ol>
+<div class="note">Phải dùng <b>Safari</b> (Chrome trên iOS không chạy được bookmarklet). Nếu địa chỉ dấu trang không bắt đầu bằng <code>javascript:</code> thì gõ thêm vào đầu.</div>
 </div>
 
 <div class="pane" data-pane="android" hidden>
-<p class="muted">Cách ổn định nhất là dùng Chrome hoặc Firefox, thêm dấu trang rồi sửa địa chỉ.</p>
-<ol>
-<li>Mở trang này bằng Chrome, bấm <i>Sao chép bookmarklet</i>.</li>
-<li>Bấm menu ⋮ → ngôi sao (Thêm dấu trang) → <b>Sửa</b>. Đổi tên thành <b>VKTool</b>, xóa địa chỉ cũ, <b>dán</b> đoạn mã vào, Lưu.</li>
-<li>Mở game, vào một kiếp. Bấm vào thanh địa chỉ, gõ <code>VKTool</code>, rồi <b>chọn đúng dấu trang trong danh sách gợi ý</b> (không bấm Enter bằng chữ vừa gõ). Công cụ sẽ nạp ngay.</li>
-</ol>
-<div class="note"><b>Firefox Android:</b> sau khi tạo dấu trang như trên, gõ tên dấu trang vào thanh địa chỉ và chọn gợi ý; cách này cũng chạy được. Nếu Chrome không chạy dấu trang, thử mở game bằng Firefox hoặc Kiwi Browser.</div>
+<button type="button" class="install big" data-install="android">Cài đặt cho Android</button>
+<ol class="steps" hidden><li>Đã sao chép. Trong Chrome bấm menu ⋮ → ngôi sao <b>Thêm dấu trang</b> → <b>Sửa</b>.</li><li>Tên: <b>VKTool</b>. Xóa địa chỉ cũ, <b>dán</b> đoạn mã, Lưu.</li><li>Vào game, vào một kiếp. Bấm thanh địa chỉ, gõ <code>VKTool</code> và <b>chọn đúng dấu trang trong danh sách gợi ý</b>.</li></ol>
+<div class="note">Firefox Android làm tương tự. Nếu Chrome không chạy dấu trang, thử Firefox hoặc Kiwi Browser.</div>
 </div>
+
+<div class="note"><b>Vì sao chưa thể tự cài hoàn toàn?</b> Trình duyệt không cho một trang web tự tạo dấu trang hay tự chạy mã trên trang khác, nên bước cuối luôn phải do bạn thao tác một lần. Cài xong thì mỗi lần vào game chỉ cần một chạm.</div>
 
 <h3>Lưu ý chung</h3>
 <ul>
@@ -114,7 +112,7 @@ button,.bookmark{color:#11161c}
 <li><b>Tính toán bằng đúng hàm của game:</b> thọ nguyên và tỉ lệ đột phá, điểm kinh mạch, chỉ số, kháng tâm ma.</li>
 <li><b>Xếp kinh mạch tối ưu:</b> theo lối tu bạn chọn, kể cả "xếp giả định" khi chưa đủ đồ, kèm danh sách món còn thiếu để đặt mua.</li>
 <li><b>Tự động:</b> Auto Farm đi săn, làm việc và xử lý sự kiện theo chính sách bạn đặt.</li>
-<li><b>Hỗ trợ thao tác:</b> đặt mua vật phẩm, kết giao hoặc tỏ lòng với NPC, dò căn cốt, đổi dung mạo.</li>
+<li><b>Hỗ trợ thao tác:</b> bán nhanh nhiều món ngay trong túi đồ, đặt mua vật phẩm, kết giao hoặc tỏ lòng với NPC, dò căn cốt, đổi dung mạo.</li>
 <li>Đã được kiểm tra với game bản <b>0.3.0</b> (bản cập nhật lớn); tab <i>Kiểm tra</i> báo mục nào chưa khớp nếu game đổi tiếp.</li>
 </ul>
 <h3>Dùng giao diện</h3>
@@ -127,66 +125,26 @@ button,.bookmark{color:#11161c}
 </article>
 
 <article class="card">
+<h2>Bán nhanh trong túi đồ</h2>
+<ul><li>Trong màn hình <b>túi đồ</b> của game, công cụ thêm nút <b>Bán nhanh</b> cạnh nút thao tác của túi. Không cần vào cửa hàng.</li><li>Bấm <b>Bán nhanh</b>, rồi bấm các ô vật phẩm muốn bán (bấm lại để bỏ chọn). Ô được chọn viền đỏ.</li><li>Nút đổi thành <b>Bán N món · +X</b>, tức số món và số linh thạch dự kiến. Bấm nút đó để bán hết, bấm <b>Esc</b> hoặc bấm nút khi chưa chọn gì để thoát.</li><li>Bán <b>trọn cả chồng</b> của mỗi món đã chọn, giá tính bằng đúng hàm giá bán của game.</li><li>Không bán được: vật đã khóa, lệnh bài, vật phẩm trận phái, vật không có giá, bảo vật Nghịch Thiên. Không bán được khi đang trong trận.</li><li>Nếu trong số chọn có vật phẩm phẩm cao (từ Thiên trở lên) thì hỏi xác nhận trước khi bán.</li></ul>
+</article>
+
+<article class="card">
 <h2>Cách dùng từng tab</h2>
 <p class="muted">Bấm vào tên tab để xem chi tiết.</p>
-
-<details><summary><span class="han">事</span>Nhiệm vụ</summary>
-<p>Liệt kê các sự kiện và việc đang có trong game kèm thông tin: nơi xảy ra, quãng đường đi, thời gian còn lại và <b>có kịp hay không</b>. Bấm một mục để vẽ đường tới đó. Dùng khi muốn biết nên đi đâu trước để không lỡ cơ duyên.</p></details>
-
-<details><summary><span class="han">地</span>Bản đồ</summary>
-<p>Tra cứu mọi địa danh: kinh đô, thành, trấn, thôn, tông môn, núi, rừng, cốc, di tích, bí cảnh, linh mạch, khoáng mạch, phường thị… Gõ tên vào ô tìm, lọc theo loại hoặc quốc gia, sắp theo gần nhất hay theo cấp nền. Hiện cả điểm săn yêu của từng nơi. Bấm để vẽ đường đi.</p></details>
-
-<details><summary><span class="han">秘</span>Bí cảnh &amp; Dị bảo</summary>
-<p>Gồm hai phần. <b>Bí cảnh:</b> bí cảnh đang mở, cảnh giới đề xuất và cảnh báo nếu ngoài tầm. <b>Dị bảo (Bảo lục Nghịch Thiên):</b> mọi vật Nghịch Thiên trong game, cách có được, vật nào bạn đã có qua các kiếp, và dị bảo đang xuất hiện. Dùng để lên kế hoạch săn bảo.</p></details>
-
-<details><summary><span class="han">自</span>Auto Farm</summary>
-<p>Tự đi quanh vùng: săn yêu, làm việc trên bản đồ, ghé thành trấn gần có việc. Cách dùng:</p>
-<ol>
-<li>Mở tab, chọn các tùy chọn trong mục <i>Tùy chọn chạy</i> (ghé thành thị, tốc chiến khi game cho phép, tránh tử địa hoặc khó thắng…).</li>
-<li>Đặt chính sách cho từng nhóm sự kiện (ví dụ nhóm quản lý, thế lực, gia tộc, danh tiếng, đạo thống) để quyết định có tham gia hay bỏ qua.</li>
-<li>Bấm <b>Bắt đầu</b>. Panel tự thu lại; điều khiển tạm dừng hoặc dừng nằm cạnh biểu tượng 仙.</li>
-</ol>
-<p>Khi bị thương mà túi không có đan chữa, công cụ sẽ nhắc nên mua Hồi Xuân Đan, Kim Sang Dược hoặc Sinh Cơ Đan. Khi túi đầy, đồ đang chờ sẽ được tự cất lại khi có chỗ, và công cụ <b>không tự vứt đồ</b>.</p></details>
-
-<details><summary><span class="han">賞</span>Treo thưởng</summary>
-<p>Hiện các việc treo thưởng bạn đã nhận, sắp theo thứ tự bạn chọn và nơi cần đi làm. Nhận việc ở bảng treo thưởng của thôn, trấn, thành, kinh đô hoặc điện nhiệm vụ tông môn, rồi quay lại tab này để theo dõi.</p></details>
-
-<details><summary><span class="han">人</span>Nhân mạch</summary>
-<p>Danh sách NPC bạn quen kèm quan hệ (quen biết, bằng hữu, tri kỷ, đạo lữ, kẻ thù…), nơi ở và cảnh giới. Có ô tìm và bộ lọc (đang ở đây, biết nơi ở, có thể tặng quà, mời, săn, hút, song tu). Các nút hành động:</p>
-<ul>
-<li><b>Kết giao / Tỏ lòng / Ngỏ ý kết đạo lữ:</b> chỉ hiện khi NPC đang ở cùng nơi với bạn và game cho phép; có lý do nếu chưa thể.</li>
-<li><b>Dò căn cốt:</b> xem căn cốt của NPC.</li>
-<li>Với NPC ở xa, công cụ đưa đường tới thăm.</li>
-</ul></details>
-
-<details><summary><span class="han">宗</span>Tông môn</summary>
-<p>Tra cứu tông môn theo lối tu, chính hoặc ma, hệ ngũ hành, quốc gia, tầng bậc; xem chưởng môn và cấp bậc của bạn. Chọn "Lối đang theo ở Kinh mạch" để chỉ thấy tông môn hợp lối tu đang xếp.</p></details>
-
-<details><summary><span class="han">破</span>Đột phá</summary>
-<p>Cho biết thọ nguyên còn lại, tu vi còn thiếu và tỉ lệ đột phá tính bằng chính hàm của game, kèm các tổ hợp đan dùng và mức thiêu đốt thọ. Dùng để biết khi nào nên đột phá và dùng đan nào. Lần đầu có thể mất một lúc để chuẩn bị phép tính.</p></details>
-
-<details><summary><span class="han">脈</span>Kinh mạch</summary>
-<p>Tự xếp các món đồ lên lưới kinh mạch cho điểm cao nhất. Cách dùng:</p>
-<ol>
-<li>Chọn <b>mục tiêu</b>: thiên về danh (chiến lực), tu luyện hoặc cân bằng.</li>
-<li>Chọn <b>lối tu</b> (hoặc để "Tự do") và độ kỹ của phép tính.</li>
-<li>Chọn mức <b>Lấp hố</b>: món thấp phẩm hơn phẩm chuẩn của cảnh giới quá mức này sẽ không được nhét chỉ để lấp ô trống (mặc định −2 phẩm; có thể chọn −1, −3 hoặc không giới hạn).</li>
-<li>Bấm xếp. Kết quả cho thấy chỉ số, kháng tâm ma thật, bộ đồ đã kích hoạt (ví dụ "Bộ X 2/3") và so sánh với hiện tại.</li>
-<li>Bấm <b>Xếp vào bộ</b> để áp dụng. Nếu thiếu đồ, dùng <b>xếp giả định</b>: công cụ xếp như thể đã có đủ và liệt kê món còn thiếu để bạn đặt mua. Món đã về túi sẽ tự biến mất khỏi danh sách đặt.</li>
-</ol>
-<p>Công cụ tính theo luật của game: màu ô, số huyệt phủ, sinh khắc giữa các mảnh kề, phẩm cấp so với cảnh giới và tác dụng của bộ đồ. Quá trình xếp mất khoảng một đến hai phút tùy máy.</p></details>
-
-<details><summary><span class="han">輪</span>Luân hồi</summary>
-<p>Danh sách thành tựu theo nhóm, điểm đã nhận và còn thiếu. Truyền thuyết chưa tìm ra được giấu nội dung để khỏi lộ cốt truyện, chỉ hiện số lượng. Có tùy chọn hiện cả thành tựu đã đạt.</p></details>
-
-<details><summary><span class="han">容</span>Dịch Dung</summary>
-<p>Đổi tên và diện mạo, người cũ coi như không quen. Hiện chi phí linh thạch cho mỗi lần đổi và báo bạn có đủ hay không. Tên mới hiện ở mọi nơi trong game, kể cả Thiên Kiều Bảng.</p></details>
-
-<details><summary><span class="han">寶</span>Vật phẩm</summary>
-<p>Tra cứu vật phẩm theo tên, loại, bộ đồ. Có thể <b>đặt mua</b> vật phẩm cần: công cụ giữ hàng với tiền cọc, báo khi hàng về để <b>thanh toán</b>. Quá hạn mà chưa thanh toán thì hàng bị người khác lấy và mất cọc, nên hãy theo dõi thời hạn. Đơn đã về được đánh dấu trong tab.</p></details>
-
-<details><summary><span class="han">察</span>Kiểm tra</summary>
-<p>Đối chiếu công cụ với phiên bản game đang chạy, báo mục nào chưa khớp. Khi game vừa cập nhật mà có chức năng không chạy, bấm kiểm tra lại, rồi sao chép báo cáo gửi cho người làm.</p></details>
+<details><summary><span class="han">事</span>Nhiệm vụ</summary><p>Liệt kê sự kiện và cơ duyên đang có trên bản đồ, cho biết đi tới nơi mất bao lâu và có kịp hay không.</p><h4>Tìm và lọc</h4><ul><li>Ô tìm khớp theo tên sự kiện, địa danh, loại, quốc gia và nhãn.</li><li>Hàng nút bấm lọc theo loại sự kiện; nút <b>Chỉ nơi tới kịp</b> bật sẵn, tắt đi để xem cả những nơi không kịp.</li><li>Sắp xếp: Khẩn cấp trước (sắp hết hạn lên đầu) · Gần nhất · Theo loại · An toàn trước.</li></ul><h4>Mỗi thẻ cho biết</h4><ul><li>Tên, loại, nơi xảy ra, quốc gia, thời gian đi và số dặm.</li><li>Nhãn <i>Tới kịp</i> hoặc lý do không kịp; <i>Còn … khi tới nơi</i> là thời gian dư sau khi tới.</li><li>Mức nguy hiểm của nơi đó so với cảnh giới của bạn, cảnh báo (nếu có) và các nhãn của sự kiện.</li></ul><h4>Nút trên thẻ</h4><ul><li><b>Xem bản đồ</b>: mở bản đồ game tại nơi đó.</li><li><b>Đường đi an toàn</b>: tính đường ngắn nhất tránh nơi hiểm và vẽ lên bản đồ; một nhãn nhỏ cạnh biểu tượng 仙 cho phép xóa đường.</li></ul></details>
+<details><summary><span class="han">地</span>Bản đồ</summary><p>Tra cứu mọi nơi trên bản đồ, tìm nơi săn hoặc nơi bán một vật phẩm, tìm vùng săn yêu. Dữ liệu lấy từ world của game; lần đầu mở có thể mất vài giây để lập chỉ mục.</p><h4>Ba chế độ</h4><ul><li><b>Địa danh</b>: chia nhóm Thành thị (kinh đô, thành) · Thôn trấn · Bí cảnh và di tích · Linh mạch và khoáng mạch · Phường thị, ẩn sĩ, quan ải · Sào huyệt yêu thú.</li><li><b>Tìm vật</b>: gõ tên nguyên liệu, linh dược, trứng thú, bí phương, yêu tài… hoặc chọn nhóm vật (Nguyên liệu · Công thức và pháp · Đồ dùng). Kết quả cho biết nơi săn được, nơi bán, nơi có cơ duyên.</li><li><b>Săn yêu</b>: các vùng hoang dã (rừng, núi, cốc, đồng hoang, đầm, hoang mạc, đỉnh). Gõ tên nguyên liệu hoặc thảo dược để tìm vùng có nó; danh sách và tỉ lệ do game tính tại từng ô.</li></ul><h4>Bộ lọc và sắp xếp</h4><ul><li>Lọc theo loại nơi, vị trí, quốc gia.</li><li><b>Chỉ nơi vừa sức</b>: bỏ các vùng có độ khó cao hơn bạn quá nửa cảnh giới.</li><li>Với chế độ săn: <b>Còn lượt săn</b> (mỗi nơi tối đa 3 lần) và <b>Có tộc yêu bản địa</b>.</li><li>Sắp xếp: Gần nhất · Cấp nền thấp đến cao · Cấp nền cao đến thấp · Tên A đến Z.</li><li>Danh sách dài tự chia trang, bấm xem thêm để tải tiếp.</li></ul><h4>Mỗi thẻ cho biết</h4><ul><li>Biểu tượng đúng như Chú giải của game, loại nơi, quốc gia, cấp nền, địa hình, thời gian đi.</li><li>Nút <b>Xem bản đồ</b> và <b>Đường đi an toàn</b> như tab Nhiệm vụ.</li></ul></details>
+<details><summary><span class="han">秘</span>Bí cảnh &amp; Dị bảo</summary><p>Ba mục con, chọn ở hàng nút trên cùng.</p><h4>Bí cảnh</h4><ul><li>Xếp theo giờ mở cửa; tiêu đề cho biết tổng số và số bí cảnh đang mở.</li><li>Mỗi thẻ: cảnh giới vào được, mỗi lần mở bao lâu, chu kỳ mở, và có tới kịp không (nên khởi hành sau bao lâu để tới đúng lúc mở).</li><li>Khi thu gọn panel, công cụ vẫn báo (thông báo nhỏ và số trên icon 仙) mỗi khi có bí cảnh mở cửa mà bạn tới kịp.</li></ul><h4>Dị bảo</h4><ul><li><b>Dị bảo đang xuất hiện</b>: nơi xuất hiện, dị bảo gì, kẻ canh giữ, cảnh giới đề xuất (đánh dấu nếu ngoài tầm: game vẫn cho vào nhưng kẻ canh giữ rất khó), điều kiện cần, tỉ lệ xuất hiện mỗi lần, hồi chiêu mấy năm, cách lấy.</li><li><b>Các dị bảo khác</b>: những dị bảo đang chờ xuất hiện.</li><li>Dị bảo mới xuất hiện cũng được báo khi bạn đang thu gọn panel.</li></ul><h4>Bảo lục Nghịch Thiên</h4><ul><li>Toàn bộ vật Nghịch Thiên trong game, kèm số bạn đã có (tính qua các kiếp, hiện dạng đã có/tổng).</li><li>Cho biết nguồn cố định nếu có; vật chưa có nguồn cố định vẫn có thể rơi từ thủ lĩnh Hóa Thần cuối cảnh hoặc ở Vô Nhai Uyên. Game ưu tiên rơi vật bạn chưa từng có.</li></ul></details>
+<details><summary><span class="han">自</span>Auto Farm</summary><p>Tự đi quanh vùng: săn yêu, làm việc trên bản đồ, ghé nơi gần có việc, xử lý sự kiện. Bấm <b>Bắt đầu</b> thì panel thu lại; nút tạm dừng và dừng nằm cạnh biểu tượng 仙.</p><h4>Tùy chọn chạy</h4><ul><li>Hộp chọn: Chỉ săn yêu · Ưu tiên nơi gần · Ghé thành thị hoặc trấn gần · Việc trên bản đồ · Săn yêu hoang dã · Hái thuốc dại · Tốc chiến (khi game cho phép) · Tránh tử địa hoặc khó thắng · Tự chọn lựa chọn · Tự dùng thuốc chữa thương · Dừng nếu hết thuốc (từ thương nặng) · Bản đồ tự dõi theo nhân vật.</li><li><b>Xử trí kẻ bại</b>: Tha mạng · Tự động (kết liễu lấy đồ nếu game không cảnh báo) · Kết liễu · Phế tu vi · Sưu hồn (nếu có).</li><li><b>Ưu tiên khi chọn lựa chọn</b>: Cân bằng · Tu vi và lịch luyện · Tài nguyên (linh thạch, đồ) · Chỉ số (thần thức, khí vận, đạo tâm…).</li><li><b>Lùng con đầu đàn</b>: Săn thường trước, hiểm mới lùng đầu đàn · Không bao giờ · Ưu tiên lùng đầu đàn.</li><li><b>Né săn quái</b>: nhập tên yêu thú cần tránh, cách nhau dấu phẩy.</li><li><b>Dừng khi thọ nguyên còn ≤ N năm</b> (mặc định 3).</li><li><b>Đuổi theo hay buông tha</b> kẻ bỏ chạy: Buông tha · Đuổi theo · Tự động (tha nếu đang bị thương).</li></ul><h4>Chính sách lựa chọn</h4><ul><li>Trong một sự kiện, Auto <b>không</b> chọn lựa chọn có hệ quả mà bạn chưa cho phép (đọc từ hiệu ứng thật của game, kể cả khi thất bại). Nếu mọi cửa đều trái chính sách thì bấm Thoát.</li><li>Các mục cho phép: Tâm ma tăng · Gieo oán, đắc tội người · Có thể trọng thương · Tốn linh thạch hoặc công hiến · Mất vật phẩm · Hao thọ nguyên · Gia nhập hoặc rời môn phái, thế lực · Sát nhân, diệt khẩu.</li><li>Mẫu nhanh: Chính đạo an toàn · Ma tu, tà đạo · Liều lĩnh (trừ trọng thương).</li></ul><h4>Nhóm sự kiện</h4><ul><li>Bật hoặc tắt từng nhóm (và nhóm con) mà Auto sẽ làm: Săn yêu và thú dữ · Hoang dã và thám hiểm · Bí cảnh, dị bảo, di tích · Biến cố dọc đường · Thành trấn và phong thổ · Nhân mạch và duyên · Nghề và ngự linh · Treo thưởng và nhiệm vụ · Quản lý, thế lực, gia tộc · Danh tiếng và đạo thống · Tông môn · Tà đạo và tâm ma · Khác. Toàn bộ sự kiện của game đều đã được phân nhóm.</li><li>Các việc tông môn tuyển đồ, đại bỉ, công phá sơn môn mặc định không tham gia.</li></ul><h4>Nhật ký và mục tiêu</h4><ul><li><b>Nhật ký sự kiện</b>: mỗi sự kiện gặp được ghi nhóm, nội dung, mọi lựa chọn (rủi ro, lý do bị loại), lựa chọn đã bấm, kết quả. Có nút Tải JSON, Copy bản đọc, Xóa.</li><li><b>Nhật ký chạy</b> (hệ thống) và nút <b>Xuất log</b> để gửi khi gặp lỗi; thống kê OK, bỏ, lỗi, số lần chữa.</li><li><b>Mục tiêu gần đến xa</b>: danh sách điểm săn kèm thời gian đi, mức nguy hiểm, số lần săn còn lại (x/3), nhãn Việc gấp; nút Xem và Đường.</li><li>Khi túi đầy, đồ đang chờ được tự cất vào khi có chỗ; Auto <b>không bao giờ tự vứt đồ</b>. Nếu bị thương mà túi không có đan chữa, công cụ nhắc mua Hồi Xuân Đan, Kim Sang Dược hoặc Sinh Cơ Đan.</li></ul></details>
+<details><summary><span class="han">賞</span>Treo thưởng</summary><p>Các việc treo thưởng bạn đã nhận.</p><ul><li>Nhận việc ở bảng treo thưởng của thôn, trấn, thành, kinh đô hoặc điện nhiệm vụ tông môn, rồi quay lại tab này.</li><li>Việc có nơi làm rõ ràng hiện thẻ giống tab Nhiệm vụ (thời gian đi, tới kịp hay không, nút Xem bản đồ và Đường đi an toàn). Việc chưa rõ nơi hiện nhãn <i>Chưa rõ nơi làm việc</i>.</li><li>Sắp xếp: Khẩn cấp trước · Gần nhất · Theo loại · An toàn trước.</li></ul></details>
+<details><summary><span class="han">人</span>Nhân mạch</summary><p>Danh sách NPC bạn biết, kèm việc có thể làm với từng người.</p><h4>Tìm và lọc</h4><ul><li>Ô tìm theo tên, danh hiệu, quan hệ, nơi ở, cảnh giới.</li><li>Sắp xếp: Có thể gặp trước · Gần nhất · Hảo cảm cao · Theo tên.</li><li>Lọc: còn sống hoặc đã khuất; giới; quan hệ (quen biết, đối thủ, bằng hữu, hiềm khích, kẻ thù, tử thù, tri kỷ, huynh đệ kết nghĩa, đạo lữ, sư phụ, kẻ phản bội); vị trí (ở cùng nơi, đang xuất hiện, biết nơi ở, chưa rõ tung tích).</li><li>Lọc theo việc: <b>Có thể tặng quà ngay · Kẻ thù truy tìm được · Mời tới được · Thải bổ được · Song tu được</b>.</li></ul><h4>Trong mỗi thẻ NPC</h4><ul><li>Nơi ở gốc (thế lực, động phủ, quê nhà, nơi gặp gần nhất), tình trạng (trọng thương, đang đồng hành, nợ, có tình ý, kẻ thù).</li><li><b>Tặng quà</b>: món họ ưa, năm nay đã tặng chưa (mỗi năm một lần), cần ở cùng nơi.</li><li><b>Mời tới chỗ ta</b>: bao lâu họ sẽ tới và vật phẩm cần.</li><li><b>Thải bổ, Song tu</b> với đạo lữ (cách nhau tối thiểu 5 năm) kèm lợi ích dự kiến.</li><li><b>Kết giao, Tỏ lòng, Ngỏ ý kết đạo lữ</b>: nút hiện khi NPC đang ở cùng nơi và game cho phép, kèm lý do nếu chưa thể. Với NPC ở xa, công cụ dẫn đường tới thăm.</li><li><b>Dò căn cốt</b> của NPC.</li><li>Nút Xem bản đồ và Đường đi an toàn tới nơi họ ở.</li></ul></details>
+<details><summary><span class="han">宗</span>Tông môn</summary><p>Tra cứu tông môn trong thế giới game.</p><ul><li>Ô tìm theo tên tông môn, chưởng môn, hệ, quốc gia.</li><li>Lọc: lối tu (có mục <i>Lối đang theo ở Kinh mạch</i> để chỉ thấy tông môn hợp lối bạn đang xếp) · quy mô (đại tông môn, tông môn, môn phái) · chính hoặc ma · hệ ngũ hành · ẩn các tông môn đã diệt.</li><li>Sắp xếp: Gần nhất · Quy mô lớn trước · Đang tuyển đồ trước · Theo tên.</li><li>Mỗi thẻ: tên và chữ Hán, quy mô, quốc gia, hệ, chưởng môn, cấp bậc của bạn nếu đã vào, còn bao năm thì hết kỳ tuyển đồ, thời gian đi tới đó, nút Xem bản đồ và Đường đi an toàn.</li></ul></details>
+<details><summary><span class="han">破</span>Đột phá</summary><p>Tính thọ nguyên và đột phá bằng đúng hàm của game. Lần đầu mở cần chuẩn bị phép tính trong giây lát.</p><ul><li><b>Tu vi</b>: tiểu cảnh hiện tại, tu vi còn thiếu, thọ nguyên còn lại.</li><li><b>Kế hoạch tới Đại viên mãn</b>: bế quan tại nơi đang đứng cần khoảng bao lâu.</li><li><b>Bình cảnh trong tiểu cảnh</b>: giải thích phần tu vi dư dồn vào bình cảnh và đan phá chướng nào dùng được.</li><li><b>Đột phá lên cảnh giới kế</b>: tỉ lệ khi không dùng gì, và tỉ lệ khi dùng từng đan hoặc cặp đan trong túi, kể cả mức thiêu đốt thọ nguyên.</li><li><b>Chấn tổn đột phá</b>: đạo cơ hiện có và đan chữa phù hợp.</li><li>Ở cảnh giới cao nhất game có, tab báo không còn cảnh giới để đột phá.</li></ul></details>
+<details><summary><span class="han">脈</span>Kinh mạch</summary><p>Tự xếp đồ lên lưới kinh mạch, tính theo luật của game (màu ô, số huyệt phủ, sinh khắc giữa mảnh kề, phẩm so với cảnh giới, bộ đồ, kháng tâm ma).</p><h4>Thiết lập</h4><ul><li><b>Lối build</b>: Tự do hoặc một lối tu (kiếm tu, thể tu, phật tu, ma tu, độc cổ, hợp hoan, luyện thi, quỷ tu, ngự thú, khôi lỗi, phù, trận, đan, luyện bảo, các lối hệ…). Tab gợi ý ba lối hợp nhất với nhân vật.</li><li><b>Mức ưu tiên lối</b>: Không theo lối (chỉ xét sức mạnh) · Ưu tiên đồ của lối · Ưu tiên mạnh · Chỉ dùng đồ của lối.</li><li><b>Mức tính</b>: Nhanh · Cân bằng · Tính kỹ · Rất kỹ (càng kỹ càng lâu, thường từ khoảng một đến vài phút).</li><li><b>Lấp hố</b>: Sát phẩm (−1) · −2 phẩm (mặc định) · −3 phẩm · Không giới hạn. Đồ thấp phẩm hơn mức này (so với phẩm chuẩn của cảnh giới) không được nhét chỉ để lấp ô trống.</li><li>Khung <i>Thông số đang áp dụng</i> hiện cảnh giới, thể chất, linh căn, hệ chính và phụ, lối xếp và số bộ kinh mạch đang mở.</li></ul><h4>Xếp tối ưu (dùng đồ trong túi)</h4><ul><li>Bấm <b>Xếp kinh mạch tối ưu</b>: công cụ xếp ba hướng, <b>Chiến đấu</b> (tối ưu số trận thắng trên trận mẫu tinh anh và boss), <b>Tu luyện</b> (bắt buộc đột phá công pháp đến trần 12%, dồn thêm tốc độ tu luyện và kháng tâm ma, không để điểm nghịch), <b>Cân bằng</b> (thắng ở mức khá, vẫn có đột phá và tốc độ tu luyện).</li><li>Mỗi kết quả hiện lưới xếp, danh sách mảnh (hệ, cảnh giới, hệ số), kháng tâm ma thật, bộ đồ đang kích hoạt (ví dụ Bộ X 2/3), đột phá, điểm nghịch.</li><li>Bấm <b>Xếp vào bộ 1/2/3</b> hoặc <b>Xếp cả 3 bộ</b> để áp dụng ngay (cần mở đủ số bộ kinh mạch). Túi đầy thì công cụ báo món nào bị kẹt, không tự vứt đồ.</li></ul><h4>Phân tích giả định</h4><ul><li>Chế độ <b>Giả định</b> dùng cùng thuật toán nhưng chọn từ toàn bộ đồ trong game phù hợp cảnh giới, để biết bộ lý tưởng.</li><li>Hai nút <b>Thực tế / Giả định</b> chuyển qua lại giữa hai kết quả.</li><li>Món còn thiếu hiện kèm nút <b>Đặt hàng</b> (xem tab Vật phẩm). Món đã về túi tự biến mất khỏi danh sách thiếu.</li></ul><h4>Danh mục đồ gợi ý</h4><ul><li>Theo lối đã chọn, liệt kê đồ nên lắp ở cảnh giới hiện tại theo nhóm (tâm pháp, ngũ linh, công pháp, pháp khí, đồ phụ…), đánh dấu món bạn đã có, kèm giá.</li></ul></details>
+<details><summary><span class="han">輪</span>Luân hồi</summary><p>Theo dõi thành tựu và điểm của các kiếp.</p><ul><li>Đầu tab: kiếp hiện tại, điểm thành tựu đã có trên tổng, điểm luân hồi hiện có, và số vật Nghịch Thiên trong Bảo lục.</li><li>Thành tựu xếp theo nhóm; có tùy chọn hiện cả thành tựu đã đạt.</li><li>Truyền thuyết chưa tìm ra được giấu nội dung để khỏi lộ cốt truyện, chỉ hiện số mảnh còn thiếu.</li></ul></details>
+<details><summary><span class="han">容</span>Dịch Dung</summary><p>Dịch Dung Quán: đổi tên và diện mạo, người cũ coi như không quen.</p><ul><li>Hiện tên hiện tại, ô nhập tên mới (tối đa 24 ký tự) và nút <b>Đổi tên</b> kèm phí 10.000 linh thạch mỗi lần.</li><li>Báo rõ khi không đủ linh thạch. Tên mới hiện ở mọi nơi trong game, kể cả Thiên Kiều Bảng.</li></ul></details>
+<details><summary><span class="han">寶</span>Vật phẩm</summary><p>Ba mục con: Danh sách · Tìm theo hình · Đơn hàng.</p><h4>Danh sách</h4><ul><li>Toàn bộ vật phẩm của game. Ô tìm và lọc theo loại (công pháp, pháp khí, đan dược, linh dược, nguyên liệu, yêu tài, phù lục, trận bàn, đơn phương, dụng cụ…), theo phẩm; riêng công pháp và pháp khí lọc thêm theo hệ.</li><li>Mỗi vật cho biết phẩm, hệ, từ cảnh giới nào dùng được, giá, số đang có trong túi và số đang chờ cất; nhãn <i>Bộ X</i> nếu thuộc bộ đồ (đủ 2 món trở lên trên kinh mạch thì có hiệu ứng bộ).</li><li>Nút đặt hàng ngay trên vật phẩm.</li></ul><h4>Tìm theo hình</h4><ul><li>Chấm hoặc kéo chuột để vẽ hình các ô; kết quả lọc ngay trong lúc vẽ. Hình xoay 90° vẫn khớp, có tùy chọn cho lật gương.</li><li>Ba cách khớp: <b>cùng hình</b> · <b>mảnh nhỏ hơn đặt lọt trong hình vẽ</b> · <b>mảnh lớn hơn chứa trọn hình vẽ</b>. Lọc theo Công pháp và Pháp khí, chỉ công pháp, chỉ pháp khí, theo phẩm.</li><li>Dùng khi cần tìm mảnh vừa một chỗ trống trên lưới kinh mạch.</li></ul><h4>Đơn hàng</h4><ul><li>Đặt mua vật phẩm bằng linh thạch, thay cho việc thêm thẳng vào túi. Mọi vật đều đặt được trừ dị bảo (Nghịch Thiên) và vật không có giá.</li><li>Cọc 30% khi đặt. Giá = giá gốc × hệ số theo phẩm (Phàm ×1, Hoàng ×2, Huyền ×3, Địa ×4, Thiên ×5, Tiên ×7, Thần ×10). Số lượng tối đa mỗi đơn giảm dần theo phẩm (Phàm 15 … Thiên trở lên 1).</li><li>Hàng về sau 0,5 đến 5 năm tùy phẩm. Khi hàng về, trả nốt phần còn lại để nhận vào túi (tab báo bao nhiêu đơn đã về).</li><li>Được giữ hàng 5 năm. Chưa đủ tiền có thể <b>Giữ thêm</b> một lần với phí 10% giá đơn. Quá hạn thì mất hàng và mất cả tiền cọc.</li><li>Túi đầy thì chưa nhận được, không mất linh thạch; hãy bán hoặc vứt bớt rồi thanh toán lại.</li></ul></details>
+<details><summary><span class="han">察</span>Kiểm tra</summary><p>Đối chiếu công cụ với bản game đang chạy.</p><ul><li>Hiện số mục khớp và chưa khớp, chia theo nhóm (✔ khớp, ✘ chưa khớp, kèm ghi chú), và số bản của công cụ.</li><li>Có nhóm kiểm tra riêng cho các tính năng mới của game 0.3.0 (kết giao, dò căn cốt, cất đồ chờ, bộ đồ, kháng tâm ma).</li><li>Nút chuẩn bị lại phép tính của game, và nút <b>sao chép báo cáo</b> để gửi cho người làm khi game vừa cập nhật mà có chức năng không chạy.</li></ul></details>
 </article>
 
 <article class="card">
@@ -196,7 +154,6 @@ button,.bookmark{color:#11161c}
 <li><b>Bấm dấu trang không có phản ứng:</b> kiểm tra đoạn mã bắt đầu bằng <code>javascript:</code>; trên điện thoại hãy chọn dấu trang từ gợi ý của thanh địa chỉ.</li>
 <li><b>Công cụ chạy sai sau khi game cập nhật:</b> mở tab Kiểm tra, sao chép báo cáo.</li>
 </ul>
-<p class="muted">Tiến độ: xem <a href="TODO.md">TODO.md</a> và <a href="README.md">README.md</a>.</p>
 </article>
 
 </section></main>
@@ -205,7 +162,7 @@ button,.bookmark{color:#11161c}
 const base=new URL('.',location.href).href,src=base+'ToolVKGrok.js';
 const code="javascript:(async()=>{try{window.__VKT2__?.destroy?.()}catch{}await import('"+src+"?v='+Date.now())})().catch(e=>alert('VKTool: '+(e&&e.message||e)))";
 const bookmark=document.getElementById('bookmark'),status=document.getElementById('status');
-bookmark.href=code;
+bookmark.href=code;document.querySelectorAll('[data-drag]').forEach(a=>{a.href=code;a.addEventListener('click',e=>{e.preventDefault();status.className='status';status.textContent='Hãy kéo nút này lên thanh dấu trang; bấm tại đây không chạy công cụ.'})});
 bookmark.addEventListener('click',e=>{e.preventDefault();status.className='status';status.textContent='Hãy kéo nút này lên thanh dấu trang (hoặc xem hướng dẫn cài ở dưới); bấm tại đây không chạy công cụ.'});
 document.getElementById('copy').addEventListener('click',async()=>{
 try{await navigator.clipboard.writeText(code);status.className='status';status.textContent='Đã sao chép bookmarklet.'}
@@ -216,6 +173,8 @@ try{const text=await fetch(src+'?v='+Date.now()).then(r=>{if(!r.ok)throw new Err
 const v=(text.match(/BUILD='([^']+)'/)||[])[1]||'không nhận diện phiên bản';
 status.textContent='Bản '+v+' · '+text.length.toLocaleString('vi-VN')+' ký tự · tải được bình thường';
 }catch(e){status.className='status bad';status.textContent='Kiểm tra thất bại: '+e.message}});
+const doCopy=async()=>{try{await navigator.clipboard.writeText(code);return true}catch{const t=document.createElement('textarea');t.value=code;t.style.cssText='position:fixed;opacity:0';document.body.append(t);t.select();let ok=false;try{ok=document.execCommand('copy')}catch{}t.remove();return ok}};
+document.querySelectorAll('[data-install]').forEach(b=>b.addEventListener('click',async()=>{const ok=await doCopy();const st=b.parentElement.querySelector('.steps');st.hidden=false;st.scrollIntoView({block:'nearest',behavior:'smooth'});status.className=ok?'status':'status bad';status.textContent=ok?'Đã sao chép bookmarklet. Làm theo các bước bên dưới.':'Không sao chép tự động được: nhấn giữ nút VKTool (máy tính) hoặc dùng cách Console.'}));
 const tabs=[...document.querySelectorAll('[data-os]')],panes=[...document.querySelectorAll('[data-pane]')];
 const pick=os=>{tabs.forEach(b=>b.setAttribute('aria-selected',String(b.dataset.os===os)));panes.forEach(p=>p.hidden=p.dataset.pane!==os)};
 tabs.forEach(b=>b.addEventListener('click',()=>pick(b.dataset.os)));
