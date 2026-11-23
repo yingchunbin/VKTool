@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261122-game030-v104',ID='vkt2',g=window.game;
+const BUILD='20261123-game030-v106',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -265,11 +265,11 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     try { const ch = new MessageChannel(); let q = []; ch.port1.onmessage = () => { const a = q; q = []; for (const f of a) f(); }; return () => new Promise((r) => { q.push(r); ch.port2.postMessage(0); }); }
     catch { return () => new Promise((r) => setTimeout(r, 0)); }
   })();
-  // Nhường luồng cho giao diện mỗi ~12ms (trước kia ≥40ms và nhiều đoạn tính liền vài giây); cập nhật tiến độ ≥250ms/lần.
+  // Nhường luồng cho giao diện mỗi ~200ms CPU: mỗi lần nhường trình duyệt/game vẽ lại một khung (~30–60ms chờ), nhường dày (30ms) làm chờ chiếm >50% thời gian xếp; điểm và bố cục không đổi (đã đối chiếu); cập nhật tiến độ ≥250ms/lần.
   // _work = tổng thời gian CPU thật đã tính (không kể lúc nhường) — ngân sách thời gian của "polish" tính theo đó nên kết quả không đổi dù nhường nhiều hơn.
   let _yAt = performance.now(), _pAt = 0, _work = 0;
   const workNow = () => _work + (performance.now() - _yAt);
-  const yieldIf = async (onP, frac, label) => { const n = performance.now(); if (n - _yAt < 30) return; _work += n - _yAt; if (onP && n - _pAt > 250) { _pAt = n; onP(frac, label); } await sleep0(); _yAt = performance.now(); };
+  const yieldIf = async (onP, frac, label) => { const n = performance.now(); if (n - _yAt < 200) return; _work += n - _yAt; if (onP && n - _pAt > 250) { _pAt = n; onP(frac, label); } await sleep0(); _yAt = performance.now(); };
   // Bản sao nông cho phép tính: chỉ kinhMach.manh/mastery bị ghi đè (đều gán nguyên khối) nên không cần structuredClone cả nhân vật mỗi lần chấm
   const nvFork = (nv0) => ({ ...nv0, kinhMach: { ...nv0.kinhMach } });
   const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -1162,8 +1162,8 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     S.results=out;return out;
   }
   function missingForManh(manh){
-    const bag=G().state.run.nhanVat.tuiDo||{};
-    return [...new Set(A(manh).map(m=>m.item).filter(id=>(bag[id]||0)<1))];
+    const nvl=G().state.run.nhanVat,bag=nvl.tuiDo||{},eq=new Set(A(nvl.kinhMach?.manh).map(m=>m&&m.item));
+    return [...new Set(A(manh).map(m=>m.item).filter(id=>(bag[id]||0)<1&&!eq.has(id)))];
   }
   async function apply(mode,slot,opts={}){
     const r=S.results?.[mode]?.best;if(!r)return{ok:false,msg:'Chưa có kết quả.'};
@@ -2783,11 +2783,16 @@ function orderRowHtml(id,r){
   return`<div class="acts" style="grid-column:1/3"><input class="qty" type="number" inputmode="numeric" min="1" max="${mq}" value="1" aria-label="Số lượng"><button class="btn pri" data-order="${E(id)}">Đặt hàng</button></div><small style="grid-column:1/3">Giá ${F(orderUnit(id))}/món (×${orderMult(id)}) · cọc ${F(orderDeposit(orderUnit(id)))} · về sau ${yrs(orderWait(id))}${o?` · <b>đang có đơn</b>`:''}</small>`;
 }
 /* Danh sách món còn thiếu của bộ giả định, kèm nút đặt hàng */
-function missingOrderHtml(ids){
-  const rows=A(ids).map(id=>{
+function missingOrderHtml(ids0){
+  // Lọc theo túi TẠI LÚC VẼ (không theo lúc xếp): món đã về túi / đang chờ cất thì không còn là "thiếu"
+  const eqNow=new Set(A(me().kinhMach?.manh).map(m=>m&&m.item));
+  const ids=A(ids0).filter(id=>!(inBag(id)>0||eqNow.has(id)));
+  if(!ids.length&&A(ids0).length)return`<div class="sub" style="margin:6px 0 2px"><span class="tag g">Đã đủ ${A(ids0).length} món trong túi</span> — bấm "Áp dụng" để xếp lên kinh mạch.</div>`;
+  const rows=ids.map(id=>{
     const blk=orderBlock(id),o=ORD.byItem(id),rec=C.items.get(id)||{};
     let act;
-    if(o){const st=ORD.status(o);act=st==='wait'?`<span class="tag o">Đã đặt · về sau ${yrs(o.readyYear-nowYear())}</span>`:`<span class="tag g">Hàng đã về</span> <button class="btn" data-order-go="1" style="flex:none;padding:2px 8px;font-size:12px">Thanh toán</button>`}
+    if(waiting(id)>0)act=`<span class="tag o" title="Túi đầy nên món này đang nằm ở chờ cất">Đang chờ cất vào túi</span>`;
+    else if(o){const st=ORD.status(o);act=st==='wait'?`<span class="tag o">Đã đặt · về sau ${yrs(o.readyYear-nowYear())}</span>`:`<span class="tag g">Hàng đã về</span> <button class="btn" data-order-go="1" style="flex:none;padding:2px 8px;font-size:12px">Thanh toán</button>`}
     else if(blk)act=`<span class="tag r" title="${E(blk)}">Không đặt được</span>`;
  else if(money()<orderDeposit(orderUnit(id)))act=`<span class="tag o" title="Cần ${F(orderDeposit(orderUnit(id)))} linh thạch đặt cọc">Chưa đủ tiền cọc ${F(orderDeposit(orderUnit(id)))}</span>`;
     else act=`<button class="btn pri" data-order-item="${E(id)}" style="flex:none;padding:2px 8px;font-size:12px">Đặt hàng · cọc ${F(orderDeposit(orderUnit(id)))}</button>`;
