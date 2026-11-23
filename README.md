@@ -114,7 +114,7 @@ Tự đi quanh vùng: săn yêu, làm việc trên bản đồ, ghé nơi gần 
 
 **Tùy chọn chạy**
 
-- Hộp chọn: Chỉ săn yêu · Ưu tiên nơi gần · Ghé thành thị hoặc trấn gần · Việc trên bản đồ · Săn yêu hoang dã · Hái thuốc dại · Tốc chiến (khi game cho phép) · Tránh tử địa hoặc khó thắng · Tự chọn lựa chọn · Tự dùng thuốc chữa thương · Dừng nếu hết thuốc (từ thương nặng) · Bản đồ tự dõi theo nhân vật.
+- Hộp chọn: Chỉ săn yêu · Ưu tiên nơi gần · Ghé thành thị hoặc trấn gần · Việc trên bản đồ · Săn yêu hoang dã · Hái thuốc dại · Hái dược viên và chờ mùa thuốc (tốn thời gian, mặc định tắt) · Tốc chiến (khi game cho phép) · Tránh tử địa hoặc khó thắng · Tự chọn lựa chọn · Tự dùng thuốc chữa thương · Dừng nếu hết thuốc (từ thương nặng) · Bản đồ tự dõi theo nhân vật.
 - **Xử trí kẻ bại**: Tha mạng · Tự động (kết liễu lấy đồ nếu game không cảnh báo) · Kết liễu · Phế tu vi · Sưu hồn (nếu có).
 - **Ưu tiên khi chọn lựa chọn**: Cân bằng · Tu vi và lịch luyện · Tài nguyên (linh thạch, đồ) · Chỉ số (thần thức, khí vận, đạo tâm…).
 - **Lùng con đầu đàn**: Săn thường trước, hiểm mới lùng đầu đàn · Không bao giờ · Ưu tiên lùng đầu đàn.

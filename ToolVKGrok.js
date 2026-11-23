@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261123-game030-v108',ID='vkt2',g=window.game;
+const BUILD='20261123-game030-v109',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -3260,6 +3260,7 @@ const AutoFarm={
     includePlaceActs:true,
     includeNearPlaces:true,
     includeHaiThuoc:false,
+    includeDuocVien:false, // Hái dược viên + Chờ mùa thuốc (sản nghiệp dược viên, 0.3.0): tốn thời gian nên mặc định tắt
     preferNear:true,
     tocChien:true,
     skipTuDia:true,
@@ -4370,6 +4371,7 @@ const AutoFarm={
       return this.placeActs().some(a=>a&&a.id==='ev.san_yeu'&&!a.lockedReason);
     }
     if(/hai_thuoc|thuoc_dai/i.test(id)&&!this.opts.includeHaiThuoc)return false;
+    if(this.isDuocVienEnc(id)&&!this.opts.includeDuocVien)return false;
     // su_kien / overlay / the_cuc / chien_dau / tien_ich tại chỗ → theo content
     // Chuyện lớn (overlay) / Thời thế (the_cuc) / Trước mắt (su_kien): làm tất cả trừ tông môn tuyển đồ/đại bỉ/công phá & vay nợ/đấu giá…
     if(loai==='su_kien'||loai==='the_cuc'||loai==='overlay'){
@@ -4387,12 +4389,14 @@ const AutoFarm={
       if(l==='overlay'||l==='su_kien')return 0;
       if(l==='the_cuc')return 1;
       if(id==='ev.san_yeu')return 2;
-      if(l==='tien_ich'&&/hai_thuoc|thuoc_dai/i.test(id))return 9;
+      if(l==='tien_ich'&&(/hai_thuoc|thuoc_dai/i.test(id)||this.isDuocVienEnc(id)))return 9;
       if(l==='tien_ich')return 4;
       return 5;
     };
     return acts.sort((a,b)=>rank(a)-rank(b)||String(a.id).localeCompare(String(b.id)));
   },
+  /* Việc dược viên của sản nghiệp (ev.hd_hai_duoc_vien, ev.hd_cho_mua_thuoc…): chờ mùa thuốc mỗi lần mất vài năm */
+  isDuocVienEnc(id){return /^ev\.hd_(hai_duoc_vien|cho_mua_thuoc|duoc_vien)/i.test(String(id||''))},
   goEnter(slot){
     if(!slot)return false;
     try{
@@ -4865,7 +4869,7 @@ const AutoFarm={
     const activeId=run().active?.id||'';
     let encKind='';
     try{encKind=String(C.encounters?.get?.(activeId)?.kind||'')}catch{}
-    const isShop=encKind==='cua_hang'||this.isNonFarmEnc(activeId);
+    const isShop=encKind==='cua_hang'||this.isNonFarmEnc(activeId)||(this.isDuocVienEnc(activeId)&&!this.opts.includeDuocVien);
 
     // Cửa hàng / non-farm: thoát ngay
     if(isShop){
@@ -5840,6 +5844,7 @@ const AutoFarm={
       const ml=store.get('afMinLife',null);if(ml!==null&&ml!==undefined&&N(+ml))this.opts.minLifeYears=+ml;
       const h=store.get('afAutoHeal',null);if(h!==null&&h!==undefined)this.opts.autoHeal=!!h;
       const ht=store.get('afHaiThuoc',null);if(typeof ht==='boolean')this.opts.includeHaiThuoc=ht;
+      const dv=store.get('afDuocVien',null);if(typeof dv==='boolean')this.opts.includeDuocVien=dv;
     }catch{}
     this.push('Bắt đầu Auto Farm','ok',{opts:{...this.opts},thuong:this.injuryName(this.injuryLevel())});
     this.dumpState('start');
@@ -6099,6 +6104,7 @@ function afWire(){
 }
 VIEWS.auto=()=>{
   try{const h=store.get('afHaiThuoc');if(typeof h==='boolean')AutoFarm.opts.includeHaiThuoc=h}catch{}
+  try{const h=store.get('afDuocVien');if(typeof h==='boolean')AutoFarm.opts.includeDuocVien=h}catch{}
   const list=AutoFarm.targets().slice(0,40);
   const o=AutoFarm.opts;
   const inj=AutoFarm.injuryLevel();
@@ -6122,6 +6128,7 @@ VIEWS.auto=()=>{
     <label class="sub"><input type="checkbox" id="af-nodes" ${o.includeMapNodes!==false?'checked':''}> Việc trên bản đồ</label>
     <label class="sub"><input type="checkbox" id="af-wild" ${o.includeWildSan!==false?'checked':''}> Săn yêu hoang dã</label>
     <label class="sub"><input type="checkbox" id="af-herb" ${o.includeHaiThuoc?'checked':''}> Hái thuốc dại</label>
+    <label class="sub" title="Hái dược viên và Dựng lều chờ mùa thuốc ở nơi có sản nghiệp dược viên. Mỗi lần chờ mùa thuốc tốn vài năm tuổi thọ, nên mặc định tắt."><input type="checkbox" id="af-duoc" ${o.includeDuocVien?'checked':''}> Hái dược viên · chờ mùa thuốc (tốn thời gian)</label>
     <label class="sub"><input type="checkbox" id="af-toc" ${o.tocChien?'checked':''}> Tốc chiến (khi game cho phép)</label>
     <label class="sub"><input type="checkbox" id="af-tudia" ${o.skipTuDia?'checked':''}> Tránh tử địa / khó thắng</label>
     <label class="sub"><input type="checkbox" id="af-choose" ${o.autoChoose?'checked':''}> Tự chọn lựa chọn</label>
@@ -6191,6 +6198,7 @@ VIEWS.auto=()=>{
   $(body,'#af-wild').onchange=e=>{o.includeWildSan=e.target.checked;VIEWS.auto()};
   $(body,'#af-herb').onchange=e=>{o.includeHaiThuoc=e.target.checked;store.set('afHaiThuoc',o.includeHaiThuoc);VIEWS.auto()};
   $(body,'#af-herb').onchange=e=>{o.includeHaiThuoc=e.target.checked;store.set('afHaiThuoc',o.includeHaiThuoc);VIEWS.auto()};
+  $(body,'#af-duoc').onchange=e=>{o.includeDuocVien=e.target.checked;store.set('afDuocVien',o.includeDuocVien);VIEWS.auto()};
   $(body,'#af-toc').onchange=e=>{o.tocChien=e.target.checked};
   $(body,'#af-tudia').onchange=e=>{o.skipTuDia=e.target.checked;VIEWS.auto()};
   $(body,'#af-choose').onchange=e=>{o.autoChoose=e.target.checked};
