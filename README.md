@@ -1,29 +1,19 @@
-# 仙 Vạn Kiếp Trợ Thủ
+# VKTool — Vạn Kiếp Trợ Thủ
 
-Công cụ hỗ trợ người chơi game **Vạn Kiếp Tu Tiên** chơi dễ dàng hơn: tra cứu, tính toán và làm thay những thao tác lặp lại. Công cụ đọc dữ liệu và dùng chính các hàm tính của game đang chạy, nên khi game cập nhật, phần lớn chức năng tự theo kịp. Đã kiểm tra với game bản **0.3.0**.
-
-> **Đây không phải công cụ hack hay cheat.** Công cụ không tạo tài nguyên từ hư không, không sửa chỉ số hay cảnh giới, không phá luật game. Bán, đặt hàng, xếp đồ đều theo giá và quy tắc của game.
-
-## Tuyên bố miễn trừ trách nhiệm
-
-- Đây là sản phẩm cá nhân của người chơi, **không chính thức**, không liên kết với nhà phát triển game.
-- **Cài hay không, dùng tính năng nào (kể cả Auto Farm) là quyền và trách nhiệm của bạn.** Không ai ép buộc cài đặt.
-- Công cụ được cung cấp **nguyên trạng**, không bảo đảm chạy đúng mọi lúc, nhất là khi game cập nhật.
-- Tác giả không chịu trách nhiệm về mọi hậu quả phát sinh từ việc cài và sử dụng, gồm lỗi, mất hoặc hỏng dữ liệu, thiệt hại trong game, hoặc việc bị xử lý theo quy định của game. Hãy tự đọc điều khoản của game và sao lưu dữ liệu trước khi dùng các tính năng tự động.
-- Nếu không đồng ý với các điều trên, xin đừng cài đặt hay sử dụng.
+Bookmarklet hỗ trợ người chơi game **Vạn Kiếp Tu Tiên**. Công cụ đọc dữ liệu và dùng chính các hàm tính của game đang chạy để tra cứu, tính toán và tự động hóa, nên khi game cập nhật, phần lớn chức năng tự theo kịp. Đã kiểm tra với game bản **0.3.0**.
 
 ## Cài đặt
 
 Mở `index.html` qua GitHub Pages (`https://yingchunbin.github.io/VKTool/`) để có hướng dẫn chi tiết. Tóm tắt:
 
-- **Máy tính:** kéo nút **vktt** lên thanh dấu trang.
-- **iOS (Safari) / Android (Chrome, Firefox):** bấm *Sao chép bookmarklet*, thêm dấu trang của trang này (đặt tên **vktt**), sửa địa chỉ dấu trang thành đoạn mã vừa sao chép. Khi dùng, gõ tên dấu trang vào thanh địa chỉ và chọn đúng gợi ý.
+- **Máy tính:** kéo nút **VKTool** lên thanh dấu trang.
+- **iOS (Safari) / Android (Chrome, Firefox):** bấm *Sao chép bookmarklet*, thêm dấu trang của trang này, sửa địa chỉ dấu trang thành đoạn mã vừa sao chép. Khi dùng, gõ tên dấu trang vào thanh địa chỉ và chọn đúng gợi ý.
 - Phải đang ở trong một kiếp thì mới nạp được. Mỗi lần tải lại game, bấm lại dấu trang.
 
 Đoạn mã bookmarklet:
 
 ```
-javascript:(async()=>{try{window.__VKT2__?.destroy?.()}catch{}await import('https://yingchunbin.github.io/VKTool/ToolVKGrok.js?v='+Date.now())})().catch(e=>alert('Vạn Kiếp Trợ Thủ: '+(e&&e.message||e)))
+javascript:(async()=>{try{window.__VKT2__?.destroy?.()}catch{}await import('https://yingchunbin.github.io/VKTool/ToolVKGrok.js?v='+Date.now())})().catch(e=>alert('VKTool: '+(e&&e.message||e)))
 ```
 
 ## Giao diện chung
@@ -114,7 +104,7 @@ Tự đi quanh vùng: săn yêu, làm việc trên bản đồ, ghé nơi gần 
 
 **Tùy chọn chạy**
 
-- Hộp chọn: Chỉ săn yêu · Ưu tiên nơi gần · Ghé thành thị hoặc trấn gần · Việc trên bản đồ · Săn yêu hoang dã · Hái thuốc dại · Hái dược viên và chờ mùa thuốc (tốn thời gian, mặc định tắt) · Tốc chiến (khi game cho phép) · Tránh tử địa hoặc khó thắng · Tự chọn lựa chọn · Tự dùng thuốc chữa thương · Dừng nếu hết thuốc (từ thương nặng) · Bản đồ tự dõi theo nhân vật.
+- Hộp chọn: Chỉ săn yêu · Ưu tiên nơi gần · Ghé thành thị hoặc trấn gần · Việc trên bản đồ · Săn yêu hoang dã · Hái thuốc dại · Tốc chiến (khi game cho phép) · Tránh tử địa hoặc khó thắng · Tự chọn lựa chọn · Tự dùng thuốc chữa thương · Dừng nếu hết thuốc (từ thương nặng) · Bản đồ tự dõi theo nhân vật.
 - **Xử trí kẻ bại**: Tha mạng · Tự động (kết liễu lấy đồ nếu game không cảnh báo) · Kết liễu · Phế tu vi · Sưu hồn (nếu có).
 - **Ưu tiên khi chọn lựa chọn**: Cân bằng · Tu vi và lịch luyện · Tài nguyên (linh thạch, đồ) · Chỉ số (thần thức, khí vận, đạo tâm…).
 - **Lùng con đầu đàn**: Săn thường trước, hiểm mới lùng đầu đàn · Không bao giờ · Ưu tiên lùng đầu đàn.
@@ -182,12 +172,12 @@ Tra cứu tông môn trong thế giới game.
 
 Tính thọ nguyên và đột phá bằng đúng hàm của game. Lần đầu mở cần chuẩn bị phép tính trong giây lát.
 
-- **Tu vi**: tiểu cảnh hiện tại, tu vi còn thiếu, thọ nguyên còn lại.
-- **Kế hoạch tới Đại viên mãn**: bế quan tại nơi đang đứng cần khoảng bao lâu.
-- **Bình cảnh trong tiểu cảnh**: giải thích phần tu vi dư dồn vào bình cảnh và đan phá chướng nào dùng được.
-- **Đột phá lên cảnh giới kế**: tỉ lệ khi không dùng gì, và tỉ lệ khi dùng từng đan hoặc cặp đan trong túi, kể cả mức thiêu đốt thọ nguyên.
-- **Chấn tổn đột phá**: đạo cơ hiện có và đan chữa phù hợp.
-- Ở cảnh giới cao nhất game có, tab báo không còn cảnh giới để đột phá.
+- **Tu vi & kế hoạch**: tiểu cảnh hiện tại, tu vi còn thiếu, thọ nguyên còn lại, bế quan tại nơi đang đứng cần bao lâu và có kịp thọ hay không.
+- **Bình cảnh**: giải thích phần tu vi dư dồn vào bình cảnh; liệt kê đan phá chướng từng cảnh giới, mỗi món có mô tả, giá, số đang có và công dụng.
+- **Đột phá lên cảnh giới kế**: tỉ lệ không dùng gì chia theo từng khoản (gốc cảnh giới, linh khí, phẩm chất, linh căn, phản phệ, độ khó); nơi đột phá (linh khí, độ yên, nguy cơ bị quấy rầy, thuê linh mạch); cầu phẩm; thiêu đốt thọ nguyên; phương án tốt nhất với đồ đang có. Nếu chưa tới Đại viên mãn, tab dự tính như thể đã tới.
+- **Đan và linh quả hỗ trợ đột phá**: bấm từng món để xem mô tả, +tỉ lệ, giảm tâm ma, tăng phẩm, cảnh giới áp dụng, giá, số đang có, và lý do game không cho dùng nếu có.
+- **Chấn tổn đột phá**, **Ôn dưỡng phẩm chất**, **Đan tăng tu vi & luyện hóa**, **Giảm tâm ma**, **Thọ nguyên**: mỗi nhóm liệt kê đủ vật phẩm, công dụng theo chính hàm mô tả của game, kèm dược kháng hiện tại của bạn.
+- Ở cảnh giới cao nhất game có, tab báo không còn cảnh giới để đột phá nhưng vẫn liệt kê các nhóm vật phẩm.
 
 ### 脈 Kinh mạch
 
