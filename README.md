@@ -161,7 +161,18 @@ Danh sách NPC bạn biết, kèm việc có thể làm với từng người.
 
 ### 宗 Tông môn
 
-Tra cứu tông môn trong thế giới game.
+Tra cứu tông môn trong thế giới game, và khi bạn đã vào tông thì xem đủ tình trạng của mình ở đó.
+
+**Sơn môn của bạn (khi đã vào tông)**
+
+- Cấp bậc, công tích, cống hiến; bậc kế cần thêm gì; lý do chưa lên được Trưởng lão (nếu có); đặc ân và lối tu của tông.
+- **Bổng lộc** đang chờ lĩnh (linh thạch, cống hiến) · giá đổi vật phẩm bằng cống hiến theo cấp bậc · tỉ lệ quyên linh thạch và số đã quyên trong năm · giá linh mạch của tông · phí xuống núi · số ô kho tông.
+- **Luật tông**: tội danh đang mang (và tội chưa bị phát giác), ngưỡng bị triệu tập, đang chịu xử, nhiệm vụ hay thư của tông, phần thưởng chờ chọn.
+- **Đặc quyền**: hầu cận, phong riêng, điện đang theo, tiến cử đồng môn.
+- **Bí cảnh của tông**: đang mở hay còn bao lâu nữa mở, bạn có suất không, loại bí cảnh; **đoàn thám hiểm** có thể cử đi.
+- Mọi số liệu lấy thẳng từ hàm của game, không tự tính.
+
+**Danh sách tông môn**
 
 - Ô tìm theo tên tông môn, chưởng môn, hệ, quốc gia.
 - Lọc: lối tu (có mục *Lối đang theo ở Kinh mạch* để chỉ thấy tông môn hợp lối bạn đang xếp) · quy mô (đại tông môn, tông môn, môn phái) · chính hoặc ma · hệ ngũ hành · ẩn các tông môn đã diệt.
