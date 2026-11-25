@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261125-game030-v117',ID='vkt2',g=window.game;
+const BUILD='20261125-game030-v119',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -3102,7 +3102,7 @@ const GRADE_NAMES={1:'Phàm phẩm',2:'Hoàng phẩm',3:'Huyền phẩm',4:'Đ�
 let itemIdx=null;
 const setNameOf=id=>{try{const sid=C.setOfItem?.get?.(id);return sid?String(T(C.itemSets?.get?.(sid)?.ten||'')):''}catch{return''}};
 const itemIndex=()=>itemIdx||(itemIdx=[...C.items].map(([id,r])=>({id,r,name:T(r.ten||id),key:norm(`${r.ten||''} ${TYPE_NAMES[r.loai]||r.loai||''} ${A(r.tag).join(' ')} ${A(r.he).join(' ')} ${setNameOf(id)}`)})).sort((a,b)=>a.name.localeCompare(b.name,'vi')));
-const itemUi={q:'',type:'all',grade:'all',he:'all',bag:false,limit:30};
+const itemUi={q:'',type:'all',grade:'all',he:'all',bag:false,limit:30,open:store.get('itemOpen',true)};
 const inBag=id=>Number(me().tuiDo?.[id]||0),waiting=id=>Number(me().choCat?.[id]||0);
 /* ───────── Tab con: Tìm theo hình (công pháp / pháp khí) ───────── */
 const PHAM_COLOR_DEF={1:'#2b2b2b',2:'#4f8a3c',3:'#4a68a6',4:'#7a4ba3',5:'#c9661a',6:'#c64a96',7:'#b52a24',8:'#8a4fc0'};
@@ -3348,9 +3348,10 @@ VIEWS.itemsList=()=>{
     <select id="i-grade"><option value="all">Mọi phẩm</option>${grades.map(g=>`<option value="${g}" ${String(itemUi.grade)===String(g)?'selected':''}>${E(GRADE_NAMES[g]||('Phẩm '+g))}</option>`).join('')}</select>
     ${heSel}
     <button class="chip ${itemUi.bag?'on':''}" id="i-bag">Đang có</button>
+    <button class="chip" id="i-fold" title="Mở hoặc thu gọn chi tiết của mọi vật phẩm đang hiện">${itemUi.open?'Thu gọn chi tiết':'Mở chi tiết'}</button>
   </div>
   <div class="sum">${F(all.length)} / ${F(allIdx.length)} vật phẩm${all.length>shown.length?` · hiện ${shown.length}`:''}</div>
-  ${shown.map(({id,r})=>`<article class="card" data-item="${E(id)}" style="grid-template-columns:auto 1fr auto">${itemIco(id,36)}<div><b style="color:${phamColor(r.pham_cap)}">${E(T(r.ten||id))}</b><small>${E(TYPE_NAMES[r.loai]||r.loai||'')} · ${gradeHtml(r.pham_cap)}${N(r.canh_gioi)?` · ${E(cgTen(r.canh_gioi)||('cảnh '+r.canh_gioi))}`:''}${A(r.he).length?' · '+heHtml(r.he):''}${setNameOf(id)?' · <b title="Đủ 2 món trở lên trên kinh mạch thì có hiệu ứng bộ">Bộ '+E(setNameOf(id))+'</b>':''}</small></div><div class="side">${inBag(id)?`Túi: ${F(inBag(id))}`:''}${waiting(id)?`<small>Chờ cất: ${F(waiting(id))}</small>`:''}</div>${r.mo_ta?`<small style="grid-column:1/3">${E(T(r.mo_ta).slice(0,140))}</small>`:''}${orderRowHtml(id,r)}</article>`).join('')||'<div class="empty">Không tìm thấy vật phẩm.</div>'}
+  ${shown.map(({id,r})=>`<article class="card" data-item="${E(id)}" style="grid-template-columns:auto 1fr auto">${itemIco(id,36)}<div><b style="color:${phamColor(r.pham_cap)}">${E(T(r.ten||id))}</b><small>${E(TYPE_NAMES[r.loai]||r.loai||'')} · ${gradeHtml(r.pham_cap)}${N(r.canh_gioi)?` · ${E(cgTen(r.canh_gioi)||('cảnh '+r.canh_gioi))}`:''}${A(r.he).length?' · '+heHtml(r.he):''}${setNameOf(id)?' · <b title="Đủ 2 món trở lên trên kinh mạch thì có hiệu ứng bộ">Bộ '+E(setNameOf(id))+'</b>':''}</small></div><div class="side">${inBag(id)?`Túi: ${F(inBag(id))}`:''}${waiting(id)?`<small>Chờ cất: ${F(waiting(id))}</small>`:''}</div><details class="itd" data-id="${E(id)}" ${itemUi.open?'open':''} style="grid-column:1/-1"><summary style="cursor:pointer;color:var(--cyan);font-size:12px">Chi tiết vật phẩm</summary><div class="itd-body">${r.mo_ta?`<small class="itd-fb">${E(T(r.mo_ta))}</small>`:''}</div></details>${orderRowHtml(id,r)}</article>`).join('')||'<div class="empty">Không tìm thấy vật phẩm.</div>'}
   ${all.length>shown.length?'<button class="btn" id="i-more" style="width:100%">Xem thêm</button>':''}`;
   let t;$(body,'#i-q').oninput=e=>{itemUi.q=e.target.value;itemUi.limit=30;clearTimeout(t);t=setTimeout(()=>{VIEWS.items();const i=$(body,'#i-q');i.focus();i.setSelectionRange(i.value.length,i.value.length)},250)};
   $(body,'#i-type').onchange=e=>{itemUi.type=e.target.value;if(itemUi.type!=='cong_phap'&&itemUi.type!=='phap_khi')itemUi.he='all';itemUi.limit=30;render()};
@@ -3358,6 +3359,12 @@ VIEWS.itemsList=()=>{
   $(body,'#i-he')&&($(body,'#i-he').onchange=e=>{itemUi.he=e.target.value;itemUi.limit=30;render()});
   $(body,'#i-bag').onclick=()=>{itemUi.bag=!itemUi.bag;itemUi.limit=30;render()};
   $(body,'#i-more')?.addEventListener('click',()=>{itemUi.limit+=30;render()});
+  $(body,'#i-fold').onclick=()=>{itemUi.open=!itemUi.open;store.set('itemOpen',itemUi.open);VIEWS.itemsList()};
+  /* Thẻ chi tiết do chính game dựng (chỉ số, tác dụng, yêu cầu, nguyên liệu…), gắn khi mở để nhẹ */
+  $$(body,'details.itd').forEach(d=>{
+    const fill=()=>{const box=$(d,'.itd-body');if(!box||box.dataset.mounted)return;box.dataset.mounted='1';try{const k=window.tuTien?.ui?.kit;if(k?.itemCard){const n=k.itemCard({id:d.dataset.id});box.innerHTML='';box.appendChild(n)}}catch{}};
+    if(d.open)fill();d.addEventListener('toggle',()=>{if(d.open)fill()});
+  });
   $$(body,'[data-order]').forEach(b=>b.onclick=()=>{const card=b.closest('[data-item]'),q=Math.max(1,Math.floor(Number($(card,'.qty').value)||1));orderConfirm(b.dataset.order,q,()=>VIEWS.items())});
   $$(body,'.qty').forEach(i=>i.onkeydown=e=>{if(e.key==='Enter')i.closest('[data-item]').querySelector('[data-order]')?.click()});
 };
@@ -3583,6 +3590,8 @@ const AutoFarm={
     skipTuDia:true,
     autoChoose:true,
     autoHeal:true,
+    bqHeal:true,bqMinLevel:2, // hết thuốc mà bị thương từ mức này: tự bế quan đủ năm để lành hẳn
+    sell:{on:false,when:'full',minStacks:60,kinds:[],grades:[1,2,3],keepEach:0,keepHeal:true,trade:'all',trip:true,tripYears:0.3},
     healMinLevel:1,
     pauseIfNoHeal:true,
     pursuit:'release',
@@ -4257,6 +4266,11 @@ const AutoFarm={
     if(lv<min)return 'ok';
     if(run().active||run().tran||run().bienCo)return 'busy';
     const pick=this.pickHealItem();
+    if(!pick&&this.opts.bqHeal&&lv>=Math.max(1,Number(this.opts.bqMinLevel||2))){
+      const r=this.retreatHeal();
+      if(r==='healed')return 'healed';
+      if(r==='partial')return 'partial';
+    }
     if(!pick){
       if(!this._noHealAt||Date.now()-this._noHealAt>15000){this._noHealAt=Date.now();this.push(`Thương thế: ${this.injuryName(lv)} — túi không có đan chữa dùng được`,'err',{reason})}
       if(this.opts.pauseIfNoHeal&&lv>=2){
@@ -4277,6 +4291,123 @@ const AutoFarm={
       this.push('useItem chữa lỗi: '+(e.message||e),'err');
       return 'err';
     }
+  },
+  /* ── Bế quan dưỡng thương: hết thuốc thì ngồi đúng số năm để thương thế lành hẳn (bế quan lành nhanh ×1,5, lại còn được tu vi) ── */
+  retreatHeal(){
+    const lv=this.injuryLevel();if(lv<=0)return 'ok';
+    if(this.busy())return 'busy';
+    try{
+      const K=window.tuTien?.core?.['kernel/time'];
+      const need=Number(K?.namLanhHet?.(me()));
+      if(!(need>0))return 'ok';
+      const years=Math.max(1/12,need/1.5+0.03);
+      if(typeof g.chuanBiBeQuan!=='function'||typeof g.beQuan!=='function'||typeof g.nhapDinh!=='function')throw new Error('Game không có API bế quan');
+      const q=g.chuanBiBeQuan({nam:years,dan:[]}),cb=q?.cb;
+      if(!cb)throw new Error('Không đọc được điều kiện bế quan');
+      if(cb.chan){this.noteOnce('bqchan',`Bế quan dưỡng thương bị chặn ở đây: ${this.stripText(cb.chan)}`);return 'blocked'}
+      const life=this.lifeLeft?.();
+      if(N(life)&&years>=life-this.minLife()){this.noteOnce('bqlife','Không bế quan dưỡng thương: thọ còn quá ít');return 'blocked'}
+      const y=Math.min(years,Number(cb.namToiDa)||years);
+      const rent=Number(cb.rentPerYear||0)*y;
+      if(rent>Number(me().linhThach||0)){this.noteOnce('bqrent','Không đủ linh thạch trả chỗ ngồi bế quan');return 'blocked'}
+      g.beQuan();
+      if(run().active?.id!=='ev.be_quan')throw new Error('Không mở được bế quan');
+      g.choose(0);
+      if(run().active?.waiting?.kind!=='be_quan'){try{g.closeEncounter?.()}catch{}throw new Error('Không vào được bảng nhập định')}
+      const before=this.injuryName(lv),nam0=nowYear();
+      g.nhapDinh({nam:y,dan:[]});
+      try{if(run().active?.waiting?.kind==='be_quan')g.nhapDinh(null)}catch{}
+      const after=this.injuryLevel();
+      this.stats.bq=(this.stats.bq||0)+1;
+      this.push(`Bế quan dưỡng thương ${y.toFixed(2)} năm (${before} → ${this.injuryName(after)}) · +${(nowYear()-nam0).toFixed(2)} năm`,'ok',{need,years:y});
+      return after>0?'partial':'healed';
+    }catch(e){
+      this.push('Bế quan dưỡng thương lỗi: '+(e.message||e),'err');
+      try{if(run().active?.id==='ev.be_quan'||run().active?.waiting?.kind==='be_quan')g.closeEncounter?.()}catch{}
+      return 'err';
+    }
+  },
+  noteOnce(key,msg){this._noted=this._noted||{};if(this._noted[key]&&Date.now()-this._noted[key]<30000)return;this._noted[key]=Date.now();this.push(msg,'err')},
+
+  /* ── Tự bán đồ: dùng đúng "Bán nhanh" của game (previewBulkSell/shopSellBulk) theo loại + phẩm đã tick ── */
+  sellRanges(){const gs=[...new Set(A(this.opts.sell.grades).map(Number).filter(x=>x>=1&&x<=8))].sort((a,b)=>a-b),out=[];for(const x of gs){const l=out[out.length-1];if(l&&l[1]===x-1)l[1]=x;else out.push([x,x])}return out},
+  sellFilters(){
+    const o=this.opts.sell,kinds=A(o.kinds);if(!kinds.length)return[];
+    const hold={};
+    if(o.keepHeal){for(const [id,q] of Object.entries(me().tuiDo||{})){if(q>0&&this.itemHealPower(C.items?.get?.(id))>0)hold[id]=q}}
+    return this.sellRanges().map(([a,b])=>({kinds:[...kinds],minGrade:a,maxGrade:b,keepEach:Math.max(0,Math.min(99,Math.floor(Number(o.keepEach)||0))),hold,...(o.trade&&o.trade!=='all'?{trade:o.trade}:{})}));
+  },
+  sellPreview(filters){let q=0,p=0;for(const f of filters){try{const v=g.previewBulkSell(f);q+=v.totalQty||0;p+=v.totalPrice||0}catch{}}return{q,p}},
+  isBuyShop(a){const d=C.encounters?.get?.(a?.id);return!!(d&&a.group==='mua_ban'&&a.loai==='tien_ich'&&d.kind==='cua_hang'&&!d.dau_gia&&d.thu_mua!==false)},
+  sellShopsHere(){return this.placeActs().filter(a=>this.isBuyShop(a))},
+  leaveAnyShop(){for(const f of ['leaveShop','leaveAuction','closeEncounter']){if(!run().active)break;try{g[f]?.()}catch{}}if(run().active)this.noteOnce('shopstuck','Không thoát được tiệm: '+(run().active?.id||'?'))},
+  bagCount(){return Object.values(me().tuiDo||{}).reduce((x,y)=>x+(y>0?y:0),0)},
+  /* Tiệm chỉ trả tới hết quỹ của nó, nên ghé lần lượt mọi tiệm thu mua tại nơi này và Bán nhanh ở từng tiệm */
+  sellHere(){
+    if(this.busy()||!this.inPlace())return 'noplace';
+    const filters=this.sellFilters();if(!filters.length)return 'nofilter';
+    const slot=run().viTri;let sold=0,gain=0,shops=0,lastName='';
+    for(const a of this.sellShopsHere()){
+      try{
+        g.chooseActivity(a.id);
+        const sv=g.shopView?.();
+        if(!sv||!sv.buys){this.leaveAnyShop();continue}
+        const n0=this.bagCount(),lt0=Number(me().linhThach||0);
+        for(const f of filters){const v=g.previewBulkSell(f);if(v.totalQty>0)g.shopSellBulk(f)}
+        const ds=n0-this.bagCount(),dg=Number(me().linhThach||0)-lt0;
+        this.leaveAnyShop();
+        if(ds>0){sold+=ds;gain+=dg;shops++;lastName=T(a.ten||'tiệm')}
+        if(!filters.some(f=>{try{return g.previewBulkSell(f).totalQty>0}catch{return false}}))break;
+      }catch(e){this.push('Bán nhanh lỗi: '+(e.message||e),'err');this.leaveAnyShop()}
+    }
+    if(!sold)return 'nothing';
+    this.stats.sell=(this.stats.sell||0)+sold;this.stats.sellGain=(this.stats.sellGain||0)+gain;
+    this.push(`Bán nhanh${shops>1?` tại ${shops} tiệm`:' tại '+lastName}: ${F(sold)} món, +${F(gain)} linh thạch`,'ok',{slot,sold,gain});
+    return 'sold';
+  },
+  sellDue(){
+    const o=this.opts.sell;if(!o.on||!this.sellFilters().length)return false;
+    const yr=nowYear();if(this._sellNext&&yr<this._sellNext)return false;
+    if(o.when==='visit')return true;
+    const stacks=Object.values(me().tuiDo||{}).filter(q=>q>0).length;
+    return stacks>=Math.max(1,Number(o.minStacks)||60)||Object.keys(me().choCat||{}).length>0;
+  },
+  sellShopSlots(){
+    const yr=Math.floor(nowYear()*4),key=run().seed+'|'+yr+'|'+run().viTri;
+    if(this._sellSlots?.key===key)return this._sellSlots.list;
+    const out=[],PA=window.tuTien?.core?.index?.placeActivities,e=PA?g.readCtx?.():null;
+    if(PA&&e){
+      const maxY=Number(this.opts.sell.tripYears)||0.3;
+      for(const sl of A(W.slots)){
+        const id=sl?.id;if(!id||!hasSlot(id)||this.isSlotBanned(id)||travelBlock(id,true))continue;
+        const tv=travelTo(id);if(!N(tv)||tv>maxY)continue;
+        if(this.opts.skipTuDia&&danger(id).rank>=3&&id!==run().viTri)continue;
+        let acts=[];try{acts=PA(e,id)}catch{}
+        if(acts.some(a=>this.isBuyShop(a)))out.push({slot:id,tv});
+      }
+      out.sort((a,b)=>a.tv-b.tv);
+    }
+    this._sellSlots={key,list:out};return out;
+  },
+  /* Mỗi nhịp rảnh: tới hạn thì bán ngay nếu đang ở nơi có tiệm thu mua, không thì (nếu bật) đi tới tiệm gần nhất */
+  sellStep(){
+    if(!this.sellDue())return false;
+    const o=this.opts.sell,yr=nowYear();
+    if(this.inPlace()){
+      const r=this.sellHere();
+      if(r==='sold'){this._sellNext=yr+0.2;this._sellTrip=0;this._sellTarget=null;return true}
+      if(r==='nothing'||r==='nofilter'){if(this.sellShopsHere().length)this._sellNext=yr+(o.when==='visit'?0.5:0.3)}
+      if(r==='err'){this._sellNext=yr+0.5;return false}
+    }
+    if(!o.trip||o.when==='visit')return false;
+    if(this._sellTrip>=3){this._sellNext=yr+1;this._sellTrip=0;return false}
+    if(this._sellTarget&&this._sellTarget===run().viTri&&!this.inPlace()){this._sellTrip++;return this.goEnter(run().viTri)}
+    const L=this.sellShopSlots().filter(x=>x.slot!==run().viTri);
+    if(!L.length){this._sellNext=yr+0.5;this.noteOnce('sellnoshop','Tự bán: không có tiệm thu mua trong tầm đi tới — tăng "xa tối đa" hoặc bán tay');return false}
+    this._sellTrip=(this._sellTrip||0)+1;
+    this.push(`Đi bán đồ: ${T(info(L[0].slot)?.ten||info(L[0].slot)?.diaDanh?.ten||L[0].slot)} (${fmtTime(L[0].tv)})`,'dbg');
+    this._sellTarget=L[0].slot;
+    return this.goEnter(L[0].slot);
   },
   ensureHealthy(beforeFight){
     let guard=0;
@@ -4578,10 +4709,12 @@ const AutoFarm={
   _grpIdx:null,
   loadCfg(){
     try{const o=store.get('afGrpOff',null);this.opts.grpOff=new Set(Array.isArray(o)?o:this.GRP_DEF_OFF)}catch{this.opts.grpOff=new Set(this.GRP_DEF_OFF)}
+    try{const q=store.get('afSell',null);if(q&&typeof q==='object')this.opts.sell={...this.opts.sell,...q,kinds:A(q.kinds),grades:A(q.grades)}}catch{}
+    try{const b=store.get('afBq',null);if(b&&typeof b==='object'){if(typeof b.on==='boolean')this.opts.bqHeal=b.on;if(N(b.lv))this.opts.bqMinLevel=b.lv}}catch{}
     try{const q=store.get('afPol',null);this.opts.pol={...this.POL_DEF,...(q&&typeof q==='object'?q:{})}}catch{this.opts.pol={...this.POL_DEF}}
   },
   P(){if(!this.opts.pol)this.loadCfg();return this.opts.pol},
-  saveCfg(){try{store.set('afGrpOff',[...this.opts.grpOff]);store.set('afPol',this.opts.pol)}catch{}},
+  saveCfg(){try{store.set('afGrpOff',[...this.opts.grpOff]);store.set('afPol',this.opts.pol);store.set('afSell',this.opts.sell);store.set('afBq',{on:this.opts.bqHeal,lv:this.opts.bqMinLevel})}catch{}},
   grpIndex(){
     if(this._grpIdx)return this._grpIdx;
     const m=new Map();
@@ -5913,6 +6046,11 @@ const AutoFarm={
         if(hs==='no-item-pause'||hs==='critical'){this.schedule();return}
       }
 
+      // Tự bán đồ (Bán nhanh của game) theo loại + phẩm đã tick
+      if(!this.busy()){
+        try{if(this.sellStep()){this.schedule();return}}catch(e){this.push('sellStep: '+(e.message||e),'err')}
+      }
+
       // 0.3.0: đồ nhận mà túi đầy nằm ở "chờ cất" (choCat) — thử cất vào túi, không được thì chỉ ghi chú (không tự vứt)
       if(!this.busy()){
         try{
@@ -6350,6 +6488,61 @@ function afGrpHtml(){
     <div class="bar"><button class="btn" data-gall="1">Chọn hết</button><button class="btn" data-gall="0">Bỏ hết</button><button class="btn" data-gdef="1">Mặc định</button></div>
     ${body_}</div>`;
 }
+function afSellHtml(){
+  const o=AutoFarm.opts.sell,kinds=[...new Set([...C.items.values()].map(r=>r.loai).filter(Boolean))].sort((a,b)=>String(TYPE_NAMES[a]||a).localeCompare(TYPE_NAMES[b]||b,'vi'));
+  const chip=(grp,val,label,on)=>`<label class="chip ${on?'on':''}" style="cursor:pointer"><input type="checkbox" data-sg="${grp}" value="${E(val)}" ${on?'checked':''} style="display:none">${E(label)}</label>`;
+  const nk=A(o.kinds).length,ng=A(o.grades).length;
+  return`<div id="af-sell" class="panel"><div class="sub">Dùng đúng chức năng <b>Bán nhanh</b> trong túi đồ của game: tới hạn thì vào tiệm thu mua và bán toàn bộ loại + phẩm đã tick. Món đã khóa, di vật và đồ tiệm không thu thì game tự bỏ qua.</div>
+  <div class="bar" style="flex-wrap:wrap;gap:8px;margin-top:6px">
+    <label class="sub"><input type="checkbox" id="sl-on" ${o.on?'checked':''}> <b>Bật tự bán đồ</b></label>
+    <label class="sub">Khi <select id="sl-when"><option value="full" ${o.when==='full'?'selected':''}>túi nhiều đồ</option><option value="visit" ${o.when==='visit'?'selected':''}>mỗi lần ghé nơi có tiệm</option></select></label>
+    <label class="sub" ${o.when==='visit'?'style="opacity:.5"':''}>từ <input type="number" id="sl-stacks" min="1" max="999" value="${E(o.minStacks)}" style="width:64px"> loại vật phẩm (hoặc có đồ chờ cất)</label>
+  </div>
+  <div class="sub" style="margin:8px 0 3px"><b>Loại</b> (${nk}/${kinds.length}) <button class="btn" data-sa="kinds-all">Chọn tất cả</button> <button class="btn" data-sa="kinds-none">Bỏ chọn</button></div>
+  <div class="hrow" style="flex-wrap:wrap">${kinds.map(k=>chip('kinds',k,TYPE_NAMES[k]||k,A(o.kinds).includes(k))).join('')}</div>
+  <div class="sub" style="margin:8px 0 3px"><b>Phẩm</b> (${ng}/8) <button class="btn" data-sa="grades-all">Chọn tất cả</button> <button class="btn" data-sa="grades-none">Bỏ chọn</button></div>
+  <div class="hrow" style="flex-wrap:wrap">${[1,2,3,4,5,6,7,8].map(x=>chip('grades',String(x),GRADE_NAMES[x],A(o.grades).map(Number).includes(x))).join('')}</div>
+  <div class="bar" style="flex-wrap:wrap;gap:8px;margin-top:8px">
+    <label class="sub">Giữ lại mỗi món <input type="number" id="sl-keep" min="0" max="99" value="${E(o.keepEach)}" style="width:56px"></label>
+    <label class="sub"><input type="checkbox" id="sl-heal" ${o.keepHeal?'checked':''}> Không bán đan chữa thương</label>
+    <label class="sub">Tiệm thu <select id="sl-trade"><option value="all" ${o.trade==='all'?'selected':''}>mọi món</option><option value="specialty" ${o.trade==='specialty'?'selected':''}>chỉ món đúng ngành (giá cao)</option></select></label>
+  </div>
+  <div class="bar" style="flex-wrap:wrap;gap:8px">
+    <label class="sub" ${o.when==='visit'?'style="opacity:.5"':''}><input type="checkbox" id="sl-trip" ${o.trip?'checked':''}> Tự đi tới tiệm thu mua gần nhất, trong <input type="number" id="sl-tripy" min="0.05" max="5" step="0.05" value="${E(o.tripYears)}" style="width:64px"> năm đường</label>
+    <button class="btn" id="sl-now">Bán ngay tại đây</button>
+  </div>
+  <div class="sub" id="sl-msg" style="margin-top:4px"></div></div>`;
+}
+function afSellWire(){
+  const o=AutoFarm.opts.sell,box=$(body,'#af-sell');if(!box)return;
+  const save=()=>AutoFarm.saveCfg();
+  box.addEventListener('change',e=>{
+    const t=e.target;
+    if(t.dataset.sg){const grp=t.dataset.sg,set=new Set(A(o[grp]).map(String));t.checked?set.add(t.value):set.delete(t.value);o[grp]=grp==='grades'?[...set].map(Number).sort((a,b)=>a-b):[...set];save();t.closest('label').classList.toggle('on',t.checked);return}
+    if(t.id==='sl-on'){o.on=t.checked;save();AutoFarm._sellNext=0;VIEWS.auto();return}
+    if(t.id==='sl-when'){o.when=t.value;save();VIEWS.auto();return}
+    if(t.id==='sl-stacks'){o.minStacks=Math.max(1,+t.value||60);save()}
+    if(t.id==='sl-keep'){o.keepEach=Math.max(0,Math.min(99,Math.floor(+t.value||0)));save()}
+    if(t.id==='sl-heal'){o.keepHeal=t.checked;save()}
+    if(t.id==='sl-trade'){o.trade=t.value;save()}
+    if(t.id==='sl-trip'){o.trip=t.checked;save()}
+    if(t.id==='sl-tripy'){o.tripYears=Math.max(0.05,+t.value||0.3);save();AutoFarm._sellSlots=null}
+  });
+  box.addEventListener('click',e=>{
+    const b=e.target.closest('[data-sa]');
+    if(b){const [grp,mode]=b.dataset.sa.split('-');
+      if(grp==='kinds')o.kinds=mode==='all'?[...new Set([...C.items.values()].map(r=>r.loai).filter(Boolean))]:[];
+      else o.grades=mode==='all'?[1,2,3,4,5,6,7,8]:[];
+      save();VIEWS.auto();return}
+    if(e.target.id==='sl-now'){
+      const m=$(box,'#sl-msg');
+      if(AutoFarm.busy()){m.textContent='Đang bận sự kiện/trận, thử lại sau.';return}
+      if(!AutoFarm.inPlace()){m.textContent='Hãy đứng trong một thành/thôn/trấn có tiệm thu mua (vào nơi đó trước).';return}
+      const r=AutoFarm.sellHere();
+      m.textContent={sold:'Đã bán xong — xem nhật ký chạy để biết số món và linh thạch.',nothing:'Không có món nào khớp ở các tiệm tại đây (hoặc tiệm không thu).',nofilter:'Chưa tick loại hoặc phẩm nào.',noplace:'Nơi này không có tiệm.',err:'Có lỗi, xem nhật ký chạy.'}[r]||r;
+    }
+  });
+}
 function afSec(key,title,inner,open){
   const on=AF_UI.sec.has(key)?AF_UI.sec.get(key):open;
   return `<details class="sec" data-sec="${key}" ${on?'open':''}><summary>${title}</summary><div class="secb">${inner}</div></details>`;
@@ -6437,7 +6630,7 @@ VIEWS.auto=()=>{
     <button class="btn" id="af-refresh">Quét lại</button>
     <button class="btn" id="af-export">Xuất log</button>
   </div>
-  <div class="sum" id="af-stats">OK ${AutoFarm.stats.ok} · bỏ ${AutoFarm.stats.skip} · lỗi ${AutoFarm.stats.err} · chữa ${AutoFarm.stats.heal||0}${AutoFarm.running?(AutoFarm.paused?' · TẠM DỪNG':' · ĐANG CHẠY'):''}</div>
+  <div class="sum" id="af-stats">OK ${AutoFarm.stats.ok} · bỏ ${AutoFarm.stats.skip} · lỗi ${AutoFarm.stats.err} · chữa ${AutoFarm.stats.heal||0} · bế quan ${AutoFarm.stats.bq||0} · bán ${AutoFarm.stats.sell||0} món${AutoFarm.running?(AutoFarm.paused?' · TẠM DỪNG':' · ĐANG CHẠY'):''}</div>
   ${afSec('opt','Tùy chọn chạy',`<div class="bar" style="flex-wrap:wrap;gap:8px">
     <label class="sub"><input type="checkbox" id="af-san" ${o.onlySanYeu?'checked':''}> Chỉ săn yêu</label>
     <label class="sub"><input type="checkbox" id="af-near" ${o.preferNear!==false?'checked':''}> Ưu tiên nơi gần</label>
@@ -6450,7 +6643,9 @@ VIEWS.auto=()=>{
     <label class="sub"><input type="checkbox" id="af-tudia" ${o.skipTuDia?'checked':''}> Tránh tử địa / khó thắng</label>
     <label class="sub"><input type="checkbox" id="af-choose" ${o.autoChoose?'checked':''}> Tự chọn lựa chọn</label>
     <label class="sub"><input type="checkbox" id="af-heal" ${o.autoHeal?'checked':''}> Tự dùng thuốc chữa thương</label>
-    <label class="sub"><input type="checkbox" id="af-pauseheal" ${o.pauseIfNoHeal?'checked':''}> Dừng nếu hết thuốc (nặng+)</label>
+    <label class="sub" title="Hết thuốc chữa thương mà bị thương từ mức đã chọn: tự bế quan đúng số năm để thương thế lành hẳn (bế quan lành nhanh ×1,5 và còn được tu vi), khỏi phải ở chỗ săn yêu chờ lành."><input type="checkbox" id="af-bq" ${o.bqHeal?'checked':''}> Hết thuốc thì bế quan dưỡng thương, từ</label>
+    <select id="af-bqlv"><option value="1" ${o.bqMinLevel==1?'selected':''}>Thương nhẹ</option><option value="2" ${o.bqMinLevel==2?'selected':''}>Thương nặng</option><option value="3" ${o.bqMinLevel==3?'selected':''}>Trọng thương</option></select>
+    <label class="sub"><input type="checkbox" id="af-pauseheal" ${o.pauseIfNoHeal?'checked':''}> Dừng nếu hết thuốc (nặng+) khi không bế quan được</label>
     <label class="sub"><input type="checkbox" id="af-mapfollow" ${store.get('mapFollow',true)!==false?'checked':''}> Bản đồ tự dõi theo nhân vật</label>
   </div>
   <div class="bar">
@@ -6493,6 +6688,7 @@ VIEWS.auto=()=>{
     </label>
   </div>
   </div>`,true)}
+  ${afSec('sell','Tự bán đồ (Bán nhanh của game)'+(o.sell.on?' · <small>đang bật</small>':''),afSellHtml(),!!o.sell.on)}
   ${afSec('pol','Chính sách lựa chọn',afPolHtml(),false)}
   ${afSec('grp','Nhóm sự kiện Auto sẽ làm <small id="af-grp-total"></small>',afGrpHtml(),false)}
   ${afSec('jrn','Nhật ký sự kiện <small id="af-jrn-n">'+AutoFarm.jr.list.length+' bản ghi</small>',afJrnHtml(),false)}
@@ -6521,6 +6717,9 @@ VIEWS.auto=()=>{
   $(body,'#af-choose').onchange=e=>{o.autoChoose=e.target.checked};
   $(body,'#af-heal').onchange=e=>{o.autoHeal=e.target.checked;store.set('afAutoHeal',o.autoHeal)};
   $(body,'#af-pauseheal').onchange=e=>{o.pauseIfNoHeal=e.target.checked};
+  $(body,'#af-bq').onchange=e=>{o.bqHeal=e.target.checked;AutoFarm.saveCfg()};
+  $(body,'#af-bqlv').onchange=e=>{o.bqMinLevel=+e.target.value||2;AutoFarm.saveCfg()};
+  afSellWire();
   $(body,'#af-mapfollow').onchange=e=>{try{store.set('mapFollow',e.target.checked)}catch{}};
   $(body,'#af-xutri').onchange=e=>{o.xuTri=e.target.value;store.set('xuTri',o.xuTri);toast('Đã nhớ: xử tù binh = '+o.xuTri,'ok',2200)};
   $(body,'#af-avoid').onchange=e=>{o.avoidBeasts=String(e.target.value||'');store.set('afAvoid',o.avoidBeasts);toast('Né: '+(o.avoidBeasts||'(trống)'),'ok',2000)};

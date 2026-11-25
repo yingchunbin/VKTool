@@ -104,13 +104,19 @@ Tự đi quanh vùng: săn yêu, làm việc trên bản đồ, ghé nơi gần 
 
 **Tùy chọn chạy**
 
-- Hộp chọn: Chỉ săn yêu · Ưu tiên nơi gần · Ghé thành thị hoặc trấn gần · Việc trên bản đồ · Săn yêu hoang dã · Hái thuốc dại · Tốc chiến (khi game cho phép) · Tránh tử địa hoặc khó thắng · Tự chọn lựa chọn · Tự dùng thuốc chữa thương · Dừng nếu hết thuốc (từ thương nặng) · Bản đồ tự dõi theo nhân vật.
+- Hết thuốc chữa thương mà bị thương từ mức đã chọn (mặc định Thương nặng) thì Auto tự **bế quan đúng số năm để thương thế lành hẳn** (bế quan lành nhanh ×1,5 và còn được tu vi), không phải ở lại chỗ săn yêu chờ lành. Nếu nơi đó không cho bế quan, thiếu linh thạch hoặc thọ quá ít thì quay về cách cũ (dừng). Hộp chọn: Chỉ săn yêu · Ưu tiên nơi gần · Ghé thành thị hoặc trấn gần · Việc trên bản đồ · Săn yêu hoang dã · Hái thuốc dại · Tốc chiến (khi game cho phép) · Tránh tử địa hoặc khó thắng · Tự chọn lựa chọn · Tự dùng thuốc chữa thương · Dừng nếu hết thuốc (từ thương nặng) · Bản đồ tự dõi theo nhân vật.
 - **Xử trí kẻ bại**: Tha mạng · Tự động (kết liễu lấy đồ nếu game không cảnh báo) · Kết liễu · Phế tu vi · Sưu hồn (nếu có).
 - **Ưu tiên khi chọn lựa chọn**: Cân bằng · Tu vi và lịch luyện · Tài nguyên (linh thạch, đồ) · Chỉ số (thần thức, khí vận, đạo tâm…).
 - **Lùng con đầu đàn**: Săn thường trước, hiểm mới lùng đầu đàn · Không bao giờ · Ưu tiên lùng đầu đàn.
 - **Né săn quái**: nhập tên yêu thú cần tránh, cách nhau dấu phẩy.
 - **Dừng khi thọ nguyên còn ≤ N năm** (mặc định 3).
 - **Đuổi theo hay buông tha** kẻ bỏ chạy: Buông tha · Đuổi theo · Tự động (tha nếu đang bị thương).
+
+**Tự bán đồ**
+
+- Dùng đúng chức năng **Bán nhanh** của game (xem trước rồi bán hàng loạt). Tick **loại** và **phẩm** nào thì tự bán loại đó, có nút Chọn tất cả và Bỏ chọn. Game tự bỏ qua món đã khóa, di vật và món tiệm không thu.
+- Bán **khi túi nhiều đồ** (từ N loại vật phẩm hoặc có đồ chờ cất) hoặc **mỗi lần ghé nơi có tiệm**. Có thể bật tự đi tới tiệm thu mua gần nhất trong số năm đường đã đặt, bán xong Auto Farm tiếp tục như cũ.
+- Tùy chọn: giữ lại N món mỗi loại, không bán đan chữa thương, chỉ bán món đúng ngành của tiệm (giá cao). Tiệm chỉ trả tới hết quỹ của nó nên tool ghé lần lượt mọi tiệm thu mua tại nơi đó. Nút **Bán ngay tại đây** để thử.
 
 **Chính sách lựa chọn**
 
@@ -240,7 +246,7 @@ Ba mục con: Danh sách · Tìm theo hình · Đơn hàng.
 
 **Danh sách**
 
-- Toàn bộ vật phẩm của game. Hình vật phẩm lấy từ game; Công pháp và Bí phương (game không có ảnh riêng) được ghép bằng đúng bộ dựng của game: nền cuộn theo phẩm cấp kèm biểu tượng chiêu thức hoặc ảnh thành phẩm. Ô tìm và lọc theo loại (công pháp, pháp khí, đan dược, linh dược, nguyên liệu, yêu tài, phù lục, trận bàn, đơn phương, dụng cụ…), theo phẩm; riêng công pháp và pháp khí lọc thêm theo hệ.
+- Toàn bộ vật phẩm của game. Mỗi món có mục **Chi tiết vật phẩm** dùng đúng thẻ của game (chỉ số, tác dụng, yêu cầu, nguyên liệu, thành phẩm); bấm nút **Thu gọn chi tiết / Mở chi tiết** trên đầu để gập hoặc mở hết, hoặc bấm riêng từng món. Hình vật phẩm lấy từ game; Công pháp và Bí phương (game không có ảnh riêng) được ghép bằng đúng bộ dựng của game: nền cuộn theo phẩm cấp kèm biểu tượng chiêu thức hoặc ảnh thành phẩm. Ô tìm và lọc theo loại (công pháp, pháp khí, đan dược, linh dược, nguyên liệu, yêu tài, phù lục, trận bàn, đơn phương, dụng cụ…), theo phẩm; riêng công pháp và pháp khí lọc thêm theo hệ.
 - Mỗi vật cho biết phẩm, hệ, từ cảnh giới nào dùng được, giá, số đang có trong túi và số đang chờ cất; nhãn *Bộ X* nếu thuộc bộ đồ (đủ 2 món trở lên trên kinh mạch thì có hiệu ứng bộ).
 - Nút đặt hàng ngay trên vật phẩm.
 
