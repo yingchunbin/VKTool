@@ -114,9 +114,9 @@ Tự đi quanh vùng: săn yêu, làm việc trên bản đồ, ghé nơi gần 
 
 **Tự bán đồ**
 
-- Dùng đúng chức năng **Bán nhanh** của game (xem trước rồi bán hàng loạt). Tick **loại** và **phẩm** nào thì tự bán loại đó, có nút Chọn tất cả và Bỏ chọn. Game tự bỏ qua món đã khóa, di vật và món tiệm không thu.
-- Bán **khi túi nhiều đồ** (từ N loại vật phẩm hoặc có đồ chờ cất) hoặc **mỗi lần ghé nơi có tiệm**. Có thể bật tự đi tới tiệm thu mua gần nhất trong số năm đường đã đặt, bán xong Auto Farm tiếp tục như cũ.
-- Tùy chọn: giữ lại N món mỗi loại, không bán đan chữa thương, chỉ bán món đúng ngành của tiệm (giá cao). Tiệm chỉ trả tới hết quỹ của nó nên tool ghé lần lượt mọi tiệm thu mua tại nơi đó. Nút **Bán ngay tại đây** để thử.
+- Dùng chính nút **Bán nhanh** của tool (cạnh nút Dọn túi trong túi đồ): bán thẳng trong túi theo giá của game, không cần đi tới thành thị hay tiệm. Tick **loại** và **phẩm** nào thì tự bán loại đó, có nút Chọn tất cả và Bỏ chọn.
+- Tự bán **khi túi nhiều đồ** (từ N loại vật phẩm hoặc có đồ chờ cất), bán xong Auto Farm chạy tiếp như cũ.
+- Tùy chọn: giữ lại N món mỗi loại, không bán đan chữa thương. Bỏ qua món đã khóa, lệnh bài, Bảo vật Nghịch Thiên, món không có giá. Nút **Bán ngay** để thử.
 
 **Chính sách lựa chọn**
 

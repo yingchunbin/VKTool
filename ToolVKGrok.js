@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261125-game030-v119',ID='vkt2',g=window.game;
+const BUILD='20261125-game030-v121',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -4338,76 +4338,32 @@ const AutoFarm={
     return this.sellRanges().map(([a,b])=>({kinds:[...kinds],minGrade:a,maxGrade:b,keepEach:Math.max(0,Math.min(99,Math.floor(Number(o.keepEach)||0))),hold,...(o.trade&&o.trade!=='all'?{trade:o.trade}:{})}));
   },
   sellPreview(filters){let q=0,p=0;for(const f of filters){try{const v=g.previewBulkSell(f);q+=v.totalQty||0;p+=v.totalPrice||0}catch{}}return{q,p}},
-  isBuyShop(a){const d=C.encounters?.get?.(a?.id);return!!(d&&a.group==='mua_ban'&&a.loai==='tien_ich'&&d.kind==='cua_hang'&&!d.dau_gia&&d.thu_mua!==false)},
-  sellShopsHere(){return this.placeActs().filter(a=>this.isBuyShop(a))},
-  leaveAnyShop(){for(const f of ['leaveShop','leaveAuction','closeEncounter']){if(!run().active)break;try{g[f]?.()}catch{}}if(run().active)this.noteOnce('shopstuck','Không thoát được tiệm: '+(run().active?.id||'?'))},
   bagCount(){return Object.values(me().tuiDo||{}).reduce((x,y)=>x+(y>0?y:0),0)},
-  /* Tiệm chỉ trả tới hết quỹ của nó, nên ghé lần lượt mọi tiệm thu mua tại nơi này và Bán nhanh ở từng tiệm */
-  sellHere(){
-    if(this.busy()||!this.inPlace())return 'noplace';
-    const filters=this.sellFilters();if(!filters.length)return 'nofilter';
-    const slot=run().viTri;let sold=0,gain=0,shops=0,lastName='';
-    for(const a of this.sellShopsHere()){
-      try{
-        g.chooseActivity(a.id);
-        const sv=g.shopView?.();
-        if(!sv||!sv.buys){this.leaveAnyShop();continue}
-        const n0=this.bagCount(),lt0=Number(me().linhThach||0);
-        for(const f of filters){const v=g.previewBulkSell(f);if(v.totalQty>0)g.shopSellBulk(f)}
-        const ds=n0-this.bagCount(),dg=Number(me().linhThach||0)-lt0;
-        this.leaveAnyShop();
-        if(ds>0){sold+=ds;gain+=dg;shops++;lastName=T(a.ten||'tiệm')}
-        if(!filters.some(f=>{try{return g.previewBulkSell(f).totalQty>0}catch{return false}}))break;
-      }catch(e){this.push('Bán nhanh lỗi: '+(e.message||e),'err');this.leaveAnyShop()}
-    }
-    if(!sold)return 'nothing';
-    this.stats.sell=(this.stats.sell||0)+sold;this.stats.sellGain=(this.stats.sellGain||0)+gain;
-    this.push(`Bán nhanh${shops>1?` tại ${shops} tiệm`:' tại '+lastName}: ${F(sold)} món, +${F(gain)} linh thạch`,'ok',{slot,sold,gain});
-    return 'sold';
+  /* Gọi thẳng "Bán nhanh" trong túi đồ của tool (cùng hàm giá IP của game, không cần tiệm/thành thị) */
+  sellAnywhere(){
+    const o=this.opts.sell;if(!A(o.kinds).length||!A(o.grades).length)return'nofilter';
+    if(this.busy())return'busy';
+    const r=qsAutoSell({kinds:A(o.kinds),grades:A(o.grades).map(Number),keepEach:Math.max(0,Math.min(99,Math.floor(Number(o.keepEach)||0))),keepHeal:!!o.keepHeal,isHeal:it=>this.itemHealPower(it)>0});
+    if(!r)return'wait';
+    if(r.err){this.push('Bán nhanh lỗi: '+r.err,'err');return'err'}
+    if(!r.pcs)return'nothing';
+    this.stats.sell=(this.stats.sell||0)+r.pcs;this.stats.sellGain=(this.stats.sellGain||0)+r.gold;
+    this.push(`Bán nhanh: ${F(r.kinds)} món (${F(r.pcs)} cái), +${F(r.gold)} linh thạch`+(r.skipped.length?` · bỏ qua ${r.skipped.length} món không bán được`:''),'ok',{sold:r.pcs,gain:r.gold});
+    return'sold';
   },
   sellDue(){
-    const o=this.opts.sell;if(!o.on||!this.sellFilters().length)return false;
+    const o=this.opts.sell;if(!o.on||!A(o.kinds).length||!A(o.grades).length)return false;
     const yr=nowYear();if(this._sellNext&&yr<this._sellNext)return false;
-    if(o.when==='visit')return true;
     const stacks=Object.values(me().tuiDo||{}).filter(q=>q>0).length;
     return stacks>=Math.max(1,Number(o.minStacks)||60)||Object.keys(me().choCat||{}).length>0;
   },
-  sellShopSlots(){
-    const yr=Math.floor(nowYear()*4),key=run().seed+'|'+yr+'|'+run().viTri;
-    if(this._sellSlots?.key===key)return this._sellSlots.list;
-    const out=[],PA=window.tuTien?.core?.index?.placeActivities,e=PA?g.readCtx?.():null;
-    if(PA&&e){
-      const maxY=Number(this.opts.sell.tripYears)||0.3;
-      for(const sl of A(W.slots)){
-        const id=sl?.id;if(!id||!hasSlot(id)||this.isSlotBanned(id)||travelBlock(id,true))continue;
-        const tv=travelTo(id);if(!N(tv)||tv>maxY)continue;
-        if(this.opts.skipTuDia&&danger(id).rank>=3&&id!==run().viTri)continue;
-        let acts=[];try{acts=PA(e,id)}catch{}
-        if(acts.some(a=>this.isBuyShop(a)))out.push({slot:id,tv});
-      }
-      out.sort((a,b)=>a.tv-b.tv);
-    }
-    this._sellSlots={key,list:out};return out;
-  },
-  /* Mỗi nhịp rảnh: tới hạn thì bán ngay nếu đang ở nơi có tiệm thu mua, không thì (nếu bật) đi tới tiệm gần nhất */
+  /* Mỗi nhịp rảnh: tới hạn thì Bán nhanh ngay trong túi */
   sellStep(){
     if(!this.sellDue())return false;
-    const o=this.opts.sell,yr=nowYear();
-    if(this.inPlace()){
-      const r=this.sellHere();
-      if(r==='sold'){this._sellNext=yr+0.2;this._sellTrip=0;this._sellTarget=null;return true}
-      if(r==='nothing'||r==='nofilter'){if(this.sellShopsHere().length)this._sellNext=yr+(o.when==='visit'?0.5:0.3)}
-      if(r==='err'){this._sellNext=yr+0.5;return false}
-    }
-    if(!o.trip||o.when==='visit')return false;
-    if(this._sellTrip>=3){this._sellNext=yr+1;this._sellTrip=0;return false}
-    if(this._sellTarget&&this._sellTarget===run().viTri&&!this.inPlace()){this._sellTrip++;return this.goEnter(run().viTri)}
-    const L=this.sellShopSlots().filter(x=>x.slot!==run().viTri);
-    if(!L.length){this._sellNext=yr+0.5;this.noteOnce('sellnoshop','Tự bán: không có tiệm thu mua trong tầm đi tới — tăng "xa tối đa" hoặc bán tay');return false}
-    this._sellTrip=(this._sellTrip||0)+1;
-    this.push(`Đi bán đồ: ${T(info(L[0].slot)?.ten||info(L[0].slot)?.diaDanh?.ten||L[0].slot)} (${fmtTime(L[0].tv)})`,'dbg');
-    this._sellTarget=L[0].slot;
-    return this.goEnter(L[0].slot);
+    const yr=nowYear(),d=this.sellAnywhere();
+    if(d==='sold'){this._sellNext=yr+0.2;return true}
+    if(d==='wait'){this._sellNext=yr+0.01;return false}
+    this._sellNext=yr+(d==='err'?0.5:0.3);return false;
   },
   ensureHealthy(beforeFight){
     let guard=0;
@@ -6492,11 +6448,10 @@ function afSellHtml(){
   const o=AutoFarm.opts.sell,kinds=[...new Set([...C.items.values()].map(r=>r.loai).filter(Boolean))].sort((a,b)=>String(TYPE_NAMES[a]||a).localeCompare(TYPE_NAMES[b]||b,'vi'));
   const chip=(grp,val,label,on)=>`<label class="chip ${on?'on':''}" style="cursor:pointer"><input type="checkbox" data-sg="${grp}" value="${E(val)}" ${on?'checked':''} style="display:none">${E(label)}</label>`;
   const nk=A(o.kinds).length,ng=A(o.grades).length;
-  return`<div id="af-sell" class="panel"><div class="sub">Dùng đúng chức năng <b>Bán nhanh</b> trong túi đồ của game: tới hạn thì vào tiệm thu mua và bán toàn bộ loại + phẩm đã tick. Món đã khóa, di vật và đồ tiệm không thu thì game tự bỏ qua.</div>
+  return`<div id="af-sell" class="panel"><div class="sub">Dùng chính nút <b>Bán nhanh</b> (cạnh nút Dọn túi trong túi đồ): tới hạn thì tự bán những món thuộc loại + phẩm đã tick ngay trong túi, không cần đi tới thành thị hay tiệm. Món đã khóa, lệnh bài, Bảo vật Nghịch Thiên và món không có giá được bỏ qua.</div>
   <div class="bar" style="flex-wrap:wrap;gap:8px;margin-top:6px">
     <label class="sub"><input type="checkbox" id="sl-on" ${o.on?'checked':''}> <b>Bật tự bán đồ</b></label>
-    <label class="sub">Khi <select id="sl-when"><option value="full" ${o.when==='full'?'selected':''}>túi nhiều đồ</option><option value="visit" ${o.when==='visit'?'selected':''}>mỗi lần ghé nơi có tiệm</option></select></label>
-    <label class="sub" ${o.when==='visit'?'style="opacity:.5"':''}>từ <input type="number" id="sl-stacks" min="1" max="999" value="${E(o.minStacks)}" style="width:64px"> loại vật phẩm (hoặc có đồ chờ cất)</label>
+    <label class="sub">Bán khi túi có từ <input type="number" id="sl-stacks" min="1" max="999" value="${E(o.minStacks)}" style="width:64px"> loại vật phẩm (hoặc có đồ chờ cất)</label>
   </div>
   <div class="sub" style="margin:8px 0 3px"><b>Loại</b> (${nk}/${kinds.length}) <button class="btn" data-sa="kinds-all">Chọn tất cả</button> <button class="btn" data-sa="kinds-none">Bỏ chọn</button></div>
   <div class="hrow" style="flex-wrap:wrap">${kinds.map(k=>chip('kinds',k,TYPE_NAMES[k]||k,A(o.kinds).includes(k))).join('')}</div>
@@ -6505,14 +6460,11 @@ function afSellHtml(){
   <div class="bar" style="flex-wrap:wrap;gap:8px;margin-top:8px">
     <label class="sub">Giữ lại mỗi món <input type="number" id="sl-keep" min="0" max="99" value="${E(o.keepEach)}" style="width:56px"></label>
     <label class="sub"><input type="checkbox" id="sl-heal" ${o.keepHeal?'checked':''}> Không bán đan chữa thương</label>
-    <label class="sub">Tiệm thu <select id="sl-trade"><option value="all" ${o.trade==='all'?'selected':''}>mọi món</option><option value="specialty" ${o.trade==='specialty'?'selected':''}>chỉ món đúng ngành (giá cao)</option></select></label>
   </div>
-  <div class="bar" style="flex-wrap:wrap;gap:8px">
-    <label class="sub" ${o.when==='visit'?'style="opacity:.5"':''}><input type="checkbox" id="sl-trip" ${o.trip?'checked':''}> Tự đi tới tiệm thu mua gần nhất, trong <input type="number" id="sl-tripy" min="0.05" max="5" step="0.05" value="${E(o.tripYears)}" style="width:64px"> năm đường</label>
-    <button class="btn" id="sl-now">Bán ngay tại đây</button>
-  </div>
+  <div class="bar" style="flex-wrap:wrap;gap:8px"><button class="btn" id="sl-now">Bán ngay</button></div>
   <div class="sub" id="sl-msg" style="margin-top:4px"></div></div>`;
 }
+const SLM={sold:'Đã bán xong — xem nhật ký chạy để biết số món và linh thạch.',nothing:'Không có món nào khớp loại + phẩm đã tick.',nofilter:'Chưa tick loại hoặc phẩm nào.',err:'Có lỗi, xem nhật ký chạy.',busy:'Đang bận sự kiện/trận, thử lại sau.'};
 function afSellWire(){
   const o=AutoFarm.opts.sell,box=$(body,'#af-sell');if(!box)return;
   const save=()=>AutoFarm.saveCfg();
@@ -6520,13 +6472,9 @@ function afSellWire(){
     const t=e.target;
     if(t.dataset.sg){const grp=t.dataset.sg,set=new Set(A(o[grp]).map(String));t.checked?set.add(t.value):set.delete(t.value);o[grp]=grp==='grades'?[...set].map(Number).sort((a,b)=>a-b):[...set];save();t.closest('label').classList.toggle('on',t.checked);return}
     if(t.id==='sl-on'){o.on=t.checked;save();AutoFarm._sellNext=0;VIEWS.auto();return}
-    if(t.id==='sl-when'){o.when=t.value;save();VIEWS.auto();return}
     if(t.id==='sl-stacks'){o.minStacks=Math.max(1,+t.value||60);save()}
     if(t.id==='sl-keep'){o.keepEach=Math.max(0,Math.min(99,Math.floor(+t.value||0)));save()}
     if(t.id==='sl-heal'){o.keepHeal=t.checked;save()}
-    if(t.id==='sl-trade'){o.trade=t.value;save()}
-    if(t.id==='sl-trip'){o.trip=t.checked;save()}
-    if(t.id==='sl-tripy'){o.tripYears=Math.max(0.05,+t.value||0.3);save();AutoFarm._sellSlots=null}
   });
   box.addEventListener('click',e=>{
     const b=e.target.closest('[data-sa]');
@@ -6537,9 +6485,9 @@ function afSellWire(){
     if(e.target.id==='sl-now'){
       const m=$(box,'#sl-msg');
       if(AutoFarm.busy()){m.textContent='Đang bận sự kiện/trận, thử lại sau.';return}
-      if(!AutoFarm.inPlace()){m.textContent='Hãy đứng trong một thành/thôn/trấn có tiệm thu mua (vào nơi đó trước).';return}
-      const r=AutoFarm.sellHere();
-      m.textContent={sold:'Đã bán xong — xem nhật ký chạy để biết số món và linh thạch.',nothing:'Không có món nào khớp ở các tiệm tại đây (hoặc tiệm không thu).',nofilter:'Chưa tick loại hoặc phẩm nào.',noplace:'Nơi này không có tiệm.',err:'Có lỗi, xem nhật ký chạy.'}[r]||r;
+      let r=AutoFarm.sellAnywhere();
+      if(r==='wait'){setTimeout(()=>{const r2=AutoFarm.sellAnywhere();m.textContent=SLM[r2]||r2},700);m.textContent='Đang nạp hàm giá của game…';return}
+      m.textContent=SLM[r]||r;
     }
   });
 }
@@ -7179,6 +7127,26 @@ function qsBar(){
     if(n.classList.contains('dang-chon')!==QS.on)n.classList.toggle('dang-chon',QS.on);
     n.disabled=QS.busy;
   });
+}
+function qsAutoSell(o){
+  if(!QS.K?.IP){if(!QS.loading){QS.loading=1;BuildEngine.ensureCore().then(k=>{QS.K=k}).catch(()=>{}).finally(()=>{QS.loading=0})}return null}
+  const nv=me(),ks=new Set(o.kinds),gs=new Set(o.grades),skipped=[];let gold=0,pcs=0,kinds=0;
+  try{
+    const ctx=qsCtx();
+    for(const id of Object.keys(nv.tuiDo||{})){
+      const it=C.items.get(id),n=Number(nv.tuiDo[id]||0);
+      if(!it||n<=0||!ks.has(it.loai)||!gs.has(Number(it.pham)))continue;
+      if(o.keepHeal&&o.isHeal&&o.isHeal(it))continue;
+      if(qsBlock(id)){skipped.push(id);continue}
+      const m=n-(o.keepEach||0);if(m<=0)continue;
+      let p=0;for(let a=0;a<m;a++){const x=Number(QS.K.IP(ctx,id,undefined,a));if(!Number.isFinite(x)){p=NaN;break}p+=x}
+      if(!Number.isFinite(p)){skipped.push(id);continue}
+      nv.tuiDo[id]=n-m;if(!(nv.tuiDo[id]>0))delete nv.tuiDo[id];
+      nv.linhThach=Number(nv.linhThach||0)+p;gold+=p;pcs+=m;kinds++;
+    }
+    if(pcs)g.store.setState({run:{...run(),nhanVat:{...nv,tuiDo:{...nv.tuiDo}}}});
+  }catch(e){return{err:e.message||String(e),kinds,pcs,gold,skipped}}
+  return{kinds,pcs,gold,skipped};
 }
 function qsClick(){if(!QS.on)return qsStart();if(qsTotals().kinds)qsDoSell();else qsStop()}
 async function qsStart(){
