@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261124-game030-v111',ID='vkt2',g=window.game;
+const BUILD='20261125-game030-v117',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -1642,7 +1642,7 @@ const CSS=`
 #${ID} .gi.k-item:not(.fb){background:none;border:0;overflow:visible}#${ID} .gi.k-item:not(.fb) img{filter:drop-shadow(0 0 1.5px rgba(255,248,230,.9)) drop-shadow(0 1px 1.5px rgba(40,25,10,.45))}#${ID} .gi.fb,#${ID} .gi.k-enemy,#${ID} .gi.k-face{background:#efe6cf;border:2px solid #8a8478;border-radius:3px;color:#6b5a3a;font-weight:700}
 #${ID} input[type=checkbox],#${ID} input[type=radio],#${ID} input[type=range]{accent-color:#7a1f1a}#${ID}{--ci:var(--co-icon,1)}#${ID} .an{width:calc(var(--s,22px)*var(--ci));height:calc(var(--s,22px)*var(--ci))}#${ID} .seal,#${ID} .gi{width:calc(var(--s,34px)*var(--ci));height:calc(var(--s,34px)*var(--ci))}
 #${ID} header .seal .an.nf,#${ID}-fab .an.nf{background:none;color:#f0e9d6}#${ID} .mchk{display:none}#${ID} .seal.nf::after{display:none}#${ID} .seal.nf::before{content:attr(data-g)}#${ID} .an.nf{-webkit-mask:none;mask:none;background:none;text-align:center;line-height:var(--s,22px);font-weight:700;font-size:calc(var(--s,22px)*.8)}#${ID} .an.nf::before{content:attr(data-g)}
-#${ID} .gi{display:inline-grid;place-items:center;flex:none;width:var(--s,34px);height:var(--s,34px);border-radius:8px;overflow:hidden;background:rgba(0,0,0,.22);border:1px solid rgba(160,130,60,.35);font-size:calc(var(--s,34px)*.5);color:var(--gold)}#${ID} .gi img{width:100%;height:100%;object-fit:contain;display:block}#${ID} .gi.fb{border-color:var(--gold2)}#${ID} .card{content-visibility:auto;contain-intrinsic-size:auto 66px}#${ID} .ico{grid-row:1/3;width:34px;height:34px;border-radius:8px;border:1px solid var(--gold2);color:var(--gold);display:grid;place-items:center;font-size:18px;background:rgba(0,0,0,.25)}
+#${ID} .gi .vat-anh{display:block;margin:0;width:100%;height:100%;filter:none;transform:none}#${ID} .gi .vat-anh-ghep>img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}#${ID} .gi .vat-anh-ghep>img.vat-anh-goc{inset:auto 0 0 auto;width:52%;height:52%}#${ID} .gi .vat-anh-ghep>.vat-chieu>img{position:static;width:100%;height:100%}#${ID} .gi:has(.vat-anh-ghep){overflow:visible;background:none;border:0}#${ID} .gi{display:inline-grid;place-items:center;flex:none;width:var(--s,34px);height:var(--s,34px);border-radius:8px;overflow:hidden;background:rgba(0,0,0,.22);border:1px solid rgba(160,130,60,.35);font-size:calc(var(--s,34px)*.5);color:var(--gold)}#${ID} .gi img{width:100%;height:100%;object-fit:contain;display:block}#${ID} .gi.fb{border-color:var(--gold2)}#${ID} .card{content-visibility:auto;contain-intrinsic-size:auto 66px}#${ID} .ico{grid-row:1/3;width:34px;height:34px;border-radius:8px;border:1px solid var(--gold2);color:var(--gold);display:grid;place-items:center;font-size:18px;background:rgba(0,0,0,.25)}
 #${ID} .card b{font-size:14.5px;color:#fff;line-height:1.3}
 #${ID} .card small,#${ID} .sub{color:var(--mute);font-size:12px;line-height:1.4}
 #${ID} .side{text-align:right;font-size:13px;color:var(--cyan);white-space:nowrap}
@@ -2023,16 +2023,49 @@ const MAP_MODES=[['dd','Địa danh'],['tim','Tìm vật'],['farm','Săn yêu']]
 const MAP_CATS=MAP_SUBS.filter(x=>x[0]!=='tim'&&x[0]!=='farm');
 const mapMode=()=>mapSt.sub==='tim'?'tim':mapSt.sub==='farm'?'farm':'dd';
 const KIND_GROUPS=[['Nguyên liệu',['yeu_tai','linh_duoc','nguyen_lieu','trung_thu']],['Công thức · pháp',['don_phuong','cong_phap','phu_luc','tran_ban','tran_van']],['Đồ dùng',['dan_duoc','phap_khi','dung_cu','phuong_tien','tru_vat','di_hoa','dac_san']]];
-const mapSt={sub:store.get('mapSub','thanh_thi'),q:'',qg:'all',sort:'near',lv:'all',loai:'all',kind:'all',safe:false,left:false,clan:false,n:40,t:0,filtOpen:store.get('mapFilt',innerWidth>700)};
+const mapSt={sell:null,back:null,sub:store.get('mapSub','thanh_thi'),q:'',qg:'all',sort:'near',lv:'all',loai:'all',kind:'all',safe:false,left:false,clan:false,n:40,t:0,filtOpen:store.get('mapFilt',innerWidth>700)};
 const MapDB={key:'',list:[],byId:new Map(),hunt:new Map(),huntKey:''};
 /* ───────── Ảnh của game (tuTien.assets): icon vật, yêu thú, mặt NPC — tải lười, có chữ dự phòng khi không có ảnh ───────── */
-const IMGC=new Map();
+const IMGC=new Map(),IMGC_MISS=new Map();
 function gameImgUrl(kind,id,a,b,c){
-  const k=kind+'|'+id+'|'+(a??'')+'|'+(b??'')+'|'+(c??'');let u=IMGC.get(k);if(u!==undefined)return u;
+  const k=kind+'|'+id+'|'+(a??'')+'|'+(b??'')+'|'+(c??'');let u=IMGC.get(k);if(u!==undefined&&(u||Date.now()<(IMGC_MISS.get(k)||0)))return u;
   try{const AS=window.tuTien?.assets;u=kind==='face'?AS?.npcFace?.(id,a,b,c):AS?.get?.(kind,id)}catch{}
-  u=typeof u==='string'?u:'';if(IMGC.size>6000)IMGC.clear();IMGC.set(k,u);return u;
+  u=typeof u==='string'?u:'';if(IMGC.size>6000){IMGC.clear();IMGC_MISS.clear()}IMGC.set(k,u);if(!u)IMGC_MISS.set(k,Date.now()+4000);return u;
 }
-const gi=(kind,id,fb,sz,a,b,c)=>{const u=gameImgUrl(kind,id,a,b,c);return`<span class="gi k-${kind}${u?'':' fb'}" style="--s:${sz||34}px" data-fb="${E(fb||'')}">${u?`<img src="${E(u)}" loading="lazy" decoding="async" alt="">`:E(fb||'')}</span>`};
+/* Công pháp & Bí phương không có ảnh riêng: game tự ghép (nền cuộn sách + biểu tượng chiêu/thành phẩm). Dùng đúng bộ dựng của game
+   (ui.kit.itemIcon), chụp lại HTML tĩnh một lần rồi dán vào mọi chỗ cần, nên giống hệt trong game. */
+const COMP=new Map(),COMP_Q=[],COMP_P=new Set();let COMP_RUN=false,COMP_HOST=null;
+function itemComposed(id){
+  if(COMP.has(id))return COMP.get(id);
+  if(!COMP_P.has(id)&&window.tuTien?.ui?.kit?.itemIcon){COMP_P.add(id);COMP_Q.push(id);if(!COMP_RUN){COMP_RUN=true;setTimeout(compPump,0)}}
+  return'';
+}
+function compPump(){
+  const kit=window.tuTien?.ui?.kit;if(!kit?.itemIcon){COMP_RUN=false;return}
+  if(!COMP_HOST||!COMP_HOST.isConnected){COMP_HOST=document.createElement('div');COMP_HOST.style.cssText='position:fixed;left:-9999px;top:0;width:60px;height:60px;visibility:hidden;pointer-events:none';document.body.appendChild(COMP_HOST)}
+  const batch=COMP_Q.splice(0,24),els=[];
+  for(const id of batch){try{const n=kit.itemIcon({id,size:48});COMP_HOST.appendChild(n);els.push([id,n])}catch{COMP.set(id,'')}}
+  const grab=(tries)=>{
+    const wait=[];
+    for(const [id,n] of els){
+      const v=n.querySelector('.vat-anh');
+      if(v){let h=v.outerHTML.replace(/\scho-tai|\svua-tai/g,'').replace(/style="[^"]*"/,'style="width:100%;height:100%"').replace(/\sloading="[^"]*"/g,'');COMP.set(id,h);n.remove();paintComposed(id)}
+      else if(tries>0)wait.push([id,n]);else{COMP.set(id,'');n.remove()}
+    }
+    if(wait.length){els.length=0;els.push(...wait);setTimeout(()=>grab(tries-1),60)}
+    else next();
+  };
+  const next=()=>{if(COMP_Q.length)setTimeout(compPump,16);else COMP_RUN=false};
+  setTimeout(()=>grab(10),30);
+}
+function paintComposed(id){
+  const h=COMP.get(id);if(!h)return;
+  try{document.querySelectorAll('[data-cid]').forEach(el=>{if(el.dataset.cid!==id||el.dataset.done)return;el.innerHTML=h;el.classList.remove('fb');el.dataset.done='1'})}catch{}
+}
+const gi=(kind,id,fb,sz,a,b,c)=>{
+  const u=gameImgUrl(kind,id,a,b,c);
+  if(!u&&kind==='item'){const lo=C.items?.get?.(id)?.loai;if(lo==='cong_phap'||lo==='don_phuong'){const h=itemComposed(id);if(h)return`<span class="gi k-item" style="--s:${sz||34}px;position:relative">${h}</span>`;return`<span class="gi k-item fb" style="--s:${sz||34}px" data-fb="${E(fb||'')}" data-cid="${E(id)}">${E(fb||'')}</span>`}}
+  return`<span class="gi k-${kind}${u?'':' fb'}" style="--s:${sz||34}px" data-fb="${E(fb||'')}">${u?`<img src="${E(u)}" loading="lazy" decoding="async" alt="">`:E(fb||'')}</span>`};
 const ITEM_GLYPH={dan_duoc:'丹',linh_duoc:'藥',nguyen_lieu:'材',yeu_tai:'妖',trung_thu:'卵',don_phuong:'方',cong_phap:'法',phap_khi:'器',phu_luc:'符',tran_ban:'陣',tran_van:'紋',di_hoa:'異',dac_san:'產',dung_cu:'具',phuong_tien:'騎',tru_vat:'囊'};
 const itemIco=(id,sz)=>gi('item',id,ITEM_GLYPH[C.items.get(id)?.loai]||'物',sz);
 const enemyIco=(id,sz)=>gi('enemy',id,'妖',sz);
@@ -2047,19 +2080,38 @@ const KIND_FILT=['yeu_tai','linh_duoc','nguyen_lieu','trung_thu','don_phuong','d
 const PHAM_V=['Phàm','Hoàng','Huyền','Địa','Thiên','Tiên','Thần'];
 const gradeTxt=(a,b)=>{const x=PHAM_V[Math.max(1,a)-1]||'?',y=PHAM_V[Math.max(1,b)-1]||'?';return a===b?x+' phẩm':x+'–'+y+' phẩm'};
 /* Hàng hóa & cơ duyên tại từng ô — gọi hàm placeInfo của game (danh mục theo loại vật + phẩm cấp, các duyên có thể gặp) */
+let _mctx=null;
+function mapCtx(){const k=run().seed+'|'+Math.floor(nowYear()*12)+'|'+me().canhGioi;if(!_mctx||_mctx.k!==k)_mctx={k,e:g.readCtx?.()};return _mctx.e}
 function mapPlace(id){
   const D=mapBase(),nv=me(),key=run().seed+'|'+nv.canhGioi+'|'+nv.tieuCanhGioi;
   if(D.plKey!==key){D.pl=new Map();D.plKey=key;D.idx=new Map();D.idxKey='';D.idxPos=0}
   if(D.pl.has(id))return D.pl.get(id);
   let out={goods:[],occ:[]};
-  try{const PI=coreFn('placeInfo'),e=g.readCtx?.();if(PI&&e){const r=PI({...e,run:{...e.run,viTri:id}});out={goods:A(r.goods).map(x=>({kind:x.kind,a:x.minGrade,b:x.maxGrade,some:!!x.sometimes})),occ:A(r.occasions).map(o=>({id:o.id,ten:T(o.ten),goods:A(o.goods).map(x=>({kind:x.kind,a:x.minGrade,b:x.maxGrade,some:!!x.sometimes}))}))}}}catch{}
+  try{const PI=coreFn('placeInfo'),e=mapCtx();if(PI&&e){const r=PI({...e,run:{...e.run,viTri:id}});out={goods:A(r.goods).map(x=>({kind:x.kind,a:x.minGrade,b:x.maxGrade,some:!!x.sometimes})),occ:A(r.occasions).map(o=>({id:o.id,ten:T(o.ten),goods:A(o.goods).map(x=>({kind:x.kind,a:x.minGrade,b:x.maxGrade,some:!!x.sometimes}))}))}}}catch{}
   D.pl.set(id,out);return out;
 }
 /* Chỉ mục tìm kiếm: lập dần ở nền để gõ tìm không bị đơ */
+/* Kệ hàng THẬT (tiệm, đấu giá, sự kiện đang bày) lấy từ bộ quét của "Tìm nơi bán" */
+function mapShelf(slot){return SELL.cache?.bySlot?.get(slot)||[]}
+let _inm=null;
+function itemNameIdx(){
+  if(_inm&&_inm.n===C.items.size)return _inm.l;
+  const l=[];for(const [id,rec] of C.items){const nm=T(rec.ten||'');if(nm)l.push({id,nm,n:norm(nm),pc:rec.pham_cap||0})}
+  _inm={n:C.items.size,l};return l;
+}
+/* Nền: dò kệ hàng thật rồi lập lại chỉ mục để gõ tên vật phẩm cụ thể cũng tìm được */
+function mapShelfBoot(){
+  if(SELL.cache||SELL.prep||SELL.boot)return;
+  SELL.boot={a:0,b:0};
+  sellPrepare((a,b)=>{SELL.boot.a=a;SELL.boot.b=b;if(ui.isOpen&&ui.tab==='map'&&!mapSt.sell){const e=$(body,'#mp-shelf');if(e)e.textContent=`đang dò kệ hàng thật ${a}/${b}`}})
+    .then(()=>{SELL.boot=null;const D=mapBase();D.idx=new Map();D.idxDone='';D.idxRun=false;if(ui.isOpen&&ui.tab==='map'&&!mapSt.sell)VIEWS.map()})
+    .catch(()=>{SELL.boot=null});
+}
 function mapIdxOne(x,D){
   if(D.idx.has(x.id))return D.idx.get(x.id);
   const kinds=new Set(),hay=[x.ten,x.qgTen,MAP_LOAI[x.loai]];
   const pl=mapPlace(x.id);
+  for(const it of mapShelf(x.id)){kinds.add(it.kind);hay.push(it.nm,KIND_VI[it.kind]||'');if(it.auction)hay.push('đấu giá dau gia')}
   for(const gd of pl.goods){kinds.add(gd.kind);hay.push(KIND_VI[gd.kind]||'')}
   for(const o of pl.occ){hay.push(o.ten);for(const gd of o.goods){kinds.add(gd.kind);hay.push(KIND_VI[gd.kind]||'')}}
   if(MAP_WILD.includes(x.loai)||x.loai==='sao_huyet'){
@@ -2110,7 +2162,7 @@ function mapHunt(id){
   if(D.hunt.has(id))return D.hunt.get(id);
   let out=null;
   try{
-    const HT=coreFn('huntTargets'),HC=coreFn('huntCount'),e=g.readCtx?.();
+    const HT=coreFn('huntTargets'),HC=coreFn('huntCount'),e=mapCtx();
     if(HT&&e){
       const e2={...e,run:{...e.run,viTri:id}};
       const HD=coreFn('huntDrops'),HB=coreFn('herbsAt');
@@ -2166,18 +2218,27 @@ function matScore(x,qn){
   for(const gd of pl.goods)if(norm(KIND_VI[gd.kind]||'').includes(qn))b=Math.max(b,0.04);
   if(matScoreC.size>6000)matScoreC.clear();matScoreC.set(k,b);return b;
 }
+function shelfExtra(id,qn){
+  const l=mapShelf(id);if(!l.length)return'';
+  const m=qn?l.filter(x=>norm(x.nm).includes(qn)||norm(KIND_VI[x.kind]||'').includes(qn)):[];
+  if(!m.length)return'';
+  m.sort((a,b)=>b.pc-a.pc);
+  return`<div class="sub" style="grid-column:1/-1;margin:4px 0 2px;line-height:1.5"><b>Đang bày thật tại đây</b> <span class="sub">(${F(m.length)} món khớp)</span><div class="chips" style="flex-wrap:wrap;overflow:visible;margin-top:3px">${m.slice(0,8).map(x=>`<span class="tag g" style="white-space:normal">${E(x.nm)} · ${E(GRADE_NAMES[x.pc]||'')}${x.soon?(x.soon==='ky_sau'?' · đấu giá kỳ sau, sau '+fmtTime(x.wait):x.soon==='hoi_muon'?' · đại hội (không kịp)':' · đại hội sắp mở, sau '+fmtTime(x.wait)):x.auction?' · đấu giá':x.left>1?' · còn '+F(x.left):''}</span>`).join('')}${m.length>8?`<span class="tag">…+${F(m.length-8)}</span>`:''}</div></div>`;
+}
 function goodsExtra(it,qn){
-  const pl=mapPlace(it.id);if(!pl.goods.length&&!pl.occ.length)return'';
+  const sh=shelfExtra(it.id,qn);
+  const pl=mapPlace(it.id);if(!pl.goods.length&&!pl.occ.length)return sh;
   const chip=gd=>`<span class="tag ${qn&&norm(KIND_VI[gd.kind]||'').includes(qn)?'g':''}">${E(KIND_VI[gd.kind]||gd.kind)} · ${E(gradeTxt(gd.a,gd.b))}${gd.some?' · đôi khi':''}</span>`;
   const hit=[];
   if(qn){for(const gd of pl.goods)if(norm(KIND_VI[gd.kind]||'').includes(qn))hit.push(`${KIND_VI[gd.kind]}: có ở nơi này (${gradeTxt(gd.a,gd.b)}${gd.some?', đôi khi':''})`);for(const o of pl.occ){const m=o.goods.filter(gd=>norm(KIND_VI[gd.kind]||'').includes(qn));if(norm(o.ten).includes(qn)||m.length)hit.push(`Duyên “${o.ten}”${m.length?': '+m.map(gd=>KIND_VI[gd.kind]+' '+gradeTxt(gd.a,gd.b)).join(', '):''}`)}}
   const hl=hit.slice(0,4).map(l=>`<div class="tag g" style="display:block;margin:3px 0;white-space:normal;line-height:1.4">${anEl('lookup',13)} ${E(l)}</div>`).join('');
   const goods=pl.goods.length?`<div style="margin:4px 0"><b>Có thể kiếm / mua</b><div class="chips" style="flex-wrap:wrap;overflow:visible;margin-top:3px">${pl.goods.map(chip).join('')}</div></div>`:'';
   const occ=pl.occ.length?`<div style="margin:4px 0"><b>Duyên có thể gặp</b>${pl.occ.map(o=>`<div class="sub" style="margin:2px 0"><b>${E(o.ten)}</b>${o.goods.length?' — '+E(o.goods.map(gd=>(KIND_VI[gd.kind]||gd.kind)+' '+gradeTxt(gd.a,gd.b)).join(', ')):''}</div>`).join('')}</div>`:'';
-  return`<div class="sub" style="grid-column:1/-1;margin:2px 0;line-height:1.5">${hl}<details${hit.length?' open':''}><summary style="cursor:pointer;color:var(--cyan)">Hàng hóa &amp; cơ duyên (${pl.goods.length+pl.occ.length})</summary>${goods}${occ}<div class="sub">Theo cảnh giới hiện tại; hàng trên kệ đổi theo năm.</div></details></div>`;
+  return sh+`<div class="sub" style="grid-column:1/-1;margin:2px 0;line-height:1.5">${hl}<details${hit.length?' open':''}><summary style="cursor:pointer;color:var(--cyan)">Hàng hóa &amp; cơ duyên (${pl.goods.length+pl.occ.length})</summary>${goods}${occ}<div class="sub">Theo cảnh giới hiện tại; hàng trên kệ đổi theo năm.</div></details></div>`;
 }
-function spiritAt(id){try{const f=coreFn('spiritQi'),e=g.readCtx?.();return f&&e?Number(f({...e,run:{...e.run,viTri:id}},id))||0:0}catch{return 0}}
+function spiritAt(id){try{const f=coreFn('spiritQi'),e=mapCtx();return f&&e?Number(f({...e,run:{...e.run,viTri:id}},id))||0:0}catch{return 0}}
 VIEWS.map=()=>{
+  if(mapSt.sell)return sellView();
   const D=mapBase(),sub=MAP_SUBS.find(x=>x[0]===mapSt.sub)||MAP_SUBS[0],loais=sub[2],isFarm=sub[0]==='farm';
   const cur=D.byId.get(run().viTri)||(()=>{const s=hasSlot(run().viTri)?W.slot(run().viTri):null;return s?{x:s.x,y:s.y}:{x:0,y:0}})();
   const q=norm(mapSt.q);
@@ -2186,7 +2247,13 @@ VIEWS.map=()=>{
   let rows=base.filter(x=>(mapSt.qg==='all'||x.qg===mapSt.qg)&&(mapSt.loai==='all'||x.loai===mapSt.loai)&&(mapSt.lv==='all'||capIdx(x.cap)===+mapSt.lv));
   if(mapSt.safe)rows=rows.filter(x=>danger(x.id).rank<=1);
   mapPrefetch(loais);
+  if(mapMode()==='tim'||q)mapShelfBoot();
   const needIdx=!!q||mapSt.kind!=='all';
+  let itemChips='';
+  if(q.length>=2&&mapMode()!=='dd'){
+    const im=itemNameIdx().filter(x=>x.n.includes(q)).sort((a,b)=>(b.n.startsWith(q)-a.n.startsWith(q))||b.pc-a.pc||a.nm.length-b.nm.length).slice(0,14);
+    if(im.length)itemChips=`<div class="sub" style="margin:4px 2px 2px"><b>Vật phẩm trùng tên</b> — bấm để xem nơi còn hàng:</div><div class="hrow" style="flex-wrap:wrap">${im.map(x=>`<button class="chip" data-sellitem="${E(x.id)}" style="color:${phamColor(x.pc)}">${E(x.nm)}</button>`).join('')}</div>`;
+  }
   const idxPct=D.list.length?Math.round(100*D.idx.size/D.list.length):100,idxBusy=D.idxDone!==D.plKey;
   if(isFarm&&(mapSt.left||mapSt.clan))rows=rows.filter(x=>{const h=mapHunt(x.id);return h&&(!mapSt.left||h.left>0)&&(!mapSt.clan||h.tg.some(t=>t.local))});
   if(needIdx)rows=rows.filter(x=>{const ix=D.idx.get(x.id);if(!ix)return false;return(mapSt.kind==='all'||ix.kinds.has(mapSt.kind))&&(!q||ix.hay.includes(q))});
@@ -2228,9 +2295,11 @@ VIEWS.map=()=>{
   ui._mapSig=[mapSt.sub,mapSt.q,mapSt.qg,mapSt.sort,mapSt.lv,mapSt.loai,mapSt.kind,idxBusy,mapSt.safe,mapSt.left,mapSt.clan,mapSt.n,mapSt.filtOpen,rows.length,shown.map(x=>x.id).join(',')].join('|');
   body.innerHTML=`${modeBar}${catBar}${kindBar}${toolbar}${actBar}${panelF}
   ${mode==='dd'?`<div class="sub" style="margin:2px 2px 4px">${E(sub[3])}</div>`:''}
-  <div class="sum">${rows.length}/${base.length} nơi · ${E(SORT[mapSt.sort][0].toLowerCase())}${needIdx&&idxBusy?` · <span style="color:var(--amber)">đang lập chỉ mục ${idxPct}%… kết quả sẽ đầy đủ sau ít giây</span>`:''}</div>
+  ${itemChips}
+  <div class="sum">${rows.length}/${base.length} nơi · ${E(SORT[mapSt.sort][0].toLowerCase())}${needIdx&&idxBusy?` · <span style="color:var(--amber)">đang lập chỉ mục ${idxPct}%… kết quả sẽ đầy đủ sau ít giây</span>`:''}${needIdx&&SELL.boot?` · <span style="color:var(--amber)" id="mp-shelf">đang dò kệ hàng thật ${SELL.boot.a}/${SELL.boot.b}</span>`:''}</div>
   ${shown.map(it=>placeCard(it,(MAP_WILD.includes(it.loai)||it.loai==='sao_huyet'?farmExtra(it,q):'')+goodsExtra(it,q))).join('')||'<div class="empty">Không có nơi phù hợp.<br>Thử bỏ bớt bộ lọc.</div>'}
   ${rows.length>shown.length?`<div class="acts" style="justify-content:center;margin:8px 0"><button class="btn" id="mp-more">Xem thêm ${Math.min(40,rows.length-shown.length)} nơi (còn ${rows.length-shown.length})</button></div>`:''}`;
+  $$(body,'[data-sellitem]').forEach(b=>b.onclick=()=>sellOpen(b.dataset.sellitem,'map'));
   const reset=()=>Object.assign(mapSt,{qg:'all',lv:'all',loai:'all',kind:'all',safe:false,left:false,clan:false,sort:'near',n:40});
   $$(body,'[data-mmode]').forEach(b=>b.onclick=()=>{const m=b.dataset.mmode;if(m===mapMode())return;if(mapMode()==='dd')mapSt.lastCat=mapSt.sub;mapSt.sub=m==='dd'?(mapSt.lastCat&&MAP_CATS.some(x=>x[0]===mapSt.lastCat)?mapSt.lastCat:'thanh_thi'):m;store.set('mapSub',mapSt.sub);reset();render()});
   $$(body,'[data-msub]').forEach(b=>b.onclick=()=>{mapSt.sub=b.dataset.msub;store.set('mapSub',mapSt.sub);reset();render()});
@@ -2589,6 +2658,7 @@ VIEWS.build=()=>{
   $(body,'#b-go')&&($(body,'#b-go').onclick=()=>runOptimize(false));
   $(body,'#b-go-hypo')&&($(body,'#b-go-hypo').onclick=()=>runOptimize(true));
   $$(body,'[data-order-item]').forEach(b=>b.onclick=()=>orderConfirm(b.dataset.orderItem,1,()=>render()));
+  $$(body,'[data-sell]').forEach(b=>b.onclick=()=>sellOpen(b.dataset.sell,ui.tab));
   $$(body,'[data-order-go]').forEach(b=>b.onclick=()=>{itemSub.v='orders';ui.tab='items';store.set('tab','items');render()});
   $$(body,'[data-apply-slot]').forEach(btn=>btn.onclick=async()=>{
     const slot=+btn.dataset.applySlot;
@@ -2797,6 +2867,200 @@ function orderRowHtml(id,r){
   const o=ORD.byItem(id),mq=orderMaxQty(id);
   return`<div class="acts" style="grid-column:1/3"><input class="qty" type="number" inputmode="numeric" min="1" max="${mq}" value="1" aria-label="Số lượng"><button class="btn pri" data-order="${E(id)}">Đặt hàng</button></div><small style="grid-column:1/3">Giá ${F(orderUnit(id))}/món (×${orderMult(id)}) · cọc ${F(orderDeposit(orderUnit(id)))} · về sau ${yrs(orderWait(id))}${o?` · <b>đang có đơn</b>`:''}</small>`;
 }
+/* ───────── Tìm nơi bán: dò kệ hàng + đấu giá của từng nơi bằng chính hàm của game, tính tại NĂM TỚI NƠI (kệ đổi hàng mỗi năm) ───────── */
+const SELL={cache:null,st:new Map(),prep:null};
+const sellKeyNow=()=>`${run().seed}|${Math.floor(nowYear())}|${run().viTri||''}|${me().canhGioi}|${me().tieuCanhGioi}|${A(W.slots).length}|${Object.keys(run().noiChon||{}).length}`;
+/* Mọi nơi trong thế giới: kể cả chưa khám phá, ẩn sương mù, tông môn ẩn, hoang dã, động phủ (haven) và ngoài hải */
+function sellSlots(e){
+  const out=[],seen=new Set(),add=sl=>{if(sl&&sl.id&&!seen.has(sl.id)){seen.add(sl.id);out.push(sl)}};
+  A(W.slots).forEach(add);
+  const w=e.world||{},arr=x=>Array.isArray(x)?x:(x&&typeof x==='object'?Object.values(x):[]);
+  arr(w.seaSlots).forEach(add);arr(w.havenSlots).forEach(add);
+  return out;
+}
+async function sellPrepare(onProg){
+  const key=sellKeyNow();if(SELL.cache?.key===key)return SELL.cache;
+  if(SELL.prep&&SELL.prep.key===key)return SELL.prep.p;
+  const p=(async()=>{
+    const c=window.tuTien?.core||{},PA=c.index?.placeActivities,SS=c['encounter/shop/index'],ML=c['world/market_rules'],LK=c['world/lookup'],AU=c['encounter/auction'];
+    if(!(PA&&SS?.shelfStock&&SS?.shopItemsAt&&ML?.baseStock&&ML?.boughtAt&&ML?.stockKey&&ML?.stockLeft&&LK?.stocksItem&&LK?.shopNameAt&&LK?.sellsItem&&AU?.periodKey&&AU?.buildAuction&&typeof g.readCtx==='function'))throw new Error('Không đọc được hàm kệ hàng của game (bản game có thể đã đổi).');
+    const e=g.readCtx(),base=+e.run.nam,idx=new Map(),pairs=[],slots=sellSlots(e);
+    const put=(id,row)=>{let l=idx.get(id);if(!l)idx.set(id,l=[]);l.push(row)};
+    const soon=new Map(),putSoon=(id,row)=>{let l=soon.get(id);if(!l)soon.set(id,l=[]);l.push(row)};
+    let n=0;
+    for(const sl of slots){
+      if(++n%10===0){onProg&&onProg(n,slots.length);await new Promise(r=>setTimeout(r,0))}
+      const tv=travelTo(sl.id);if(!N(tv))continue;
+      let acts;try{e.run.nam=base+tv;acts=PA(e,sl.id)}catch{continue}
+      for(const a of A(acts)){
+        const d=e.content.encounters.get(a.id);if(!d)continue;
+        try{
+          if(d.dau_gia){
+            const k=AU.periodKey(e,d,{slot:sl.id}),au=AU.buildAuction(e,d,{slot:sl.id},k);
+            for(const lot of A(au?.lots))put(lot.itemId,{slot:sl.id,tv,enc:d.id,shop:T(d.ten||'Đấu giá'),auction:true,left:1,start:lot.start,src:a.loai,sec:!!sl.an});
+            const cy=Number(d.dau_gia.chu_ky_nam)||0;
+            if(cy>0){const k2=k+cy,au2=AU.buildAuction(e,d,{slot:sl.id},k2),wait=Math.max(0,k2-(base+tv));
+              for(const lot of A(au2?.lots))putSoon(lot.itemId,{slot:sl.id,tv,enc:d.id,shop:T(d.ten||'Đấu giá'),auction:true,start:lot.start,kind:'ky_sau',wait,sec:!!sl.an})}
+          }else if(d.kind==='cua_hang'||A(d.ke_hang).length){
+            pairs.push({slot:sl.id,tv,d});
+            const shelf=A(SS.shelfStock(e,d.id,sl.id)),shop=T(String(LK.shopNameAt(e,d,sl.id)||d.ten||'Tiệm'));
+            for(const id of A(SS.shopItemsAt(e,[d.id],sl.id))){
+              if(!LK.stocksItem(e,d,sl.id,id))continue;
+              const se=shelf.find(x=>x.itemId===id),ch=d.choices?.find(cc=>A(cc.effects).some(x=>x.mua!==undefined&&(typeof x.mua==='string'?x.mua:x.mua&&x.mua.id)===id));
+              const bq=ML.baseStock(e,id,sl.id,se?{ton:se.ton}:ch),left=ML.stockLeft(bq,ML.boughtAt(e,sl.id,ML.stockKey(d.id,id),bq));
+              if(left>0)put(id,{slot:sl.id,tv,enc:d.id,shop,left,src:a.loai,sec:!!sl.an});
+            }
+          }
+        }catch{}
+      }
+    }
+    /* Đại hội đấu giá (thế cục): đang diễn ra mà không kịp tới + sắp mở theo lịch của game */
+    try{
+      const TG=e.run.theGioi||{},defs=[...e.content.theCuc.values()].map(tc=>({tc,encs:A(tc.encounter).map(i=>e.content.encounters.get(i)).filter(d=>d&&d.dau_gia&&!d.dau_gia.chu_ky_nam)})).filter(x=>x.encs.length);
+      const slotOk=new Map(slots.map(x=>[x.id,x]));
+      for(const {tc,encs} of defs){
+        const dur=A(tc.keo_dai_nam),ev=[];
+        for(const x of A(TG.dangDien))if(x.id===tc.id&&slotOk.has(x.slot))ev.push({slot:x.slot,from:x.tuNam,to:x.denNam,known:true});
+        for(const [k,v] of Object.entries(TG.lich||{})){const m=k.split('@');if(m[0]===tc.id&&slotOk.has(m[1])&&v>base&&!ev.some(z=>z.slot===m[1]&&z.from>=v-1e-6))ev.push({slot:m[1],from:v,to:v+(dur.length?(dur[0]+dur[1])/2:0.5),known:false,sched:true})}
+        for(const z of ev){
+          const tv=travelTo(z.slot);if(!N(tv))continue;
+          const arrive=base+tv;if(z.known&&arrive<z.to)continue; /* kịp tới: đã nằm trong bộ quét thường */
+          for(const d of encs){
+            let au;try{au=AU.buildAuction(e,d,{slot:z.slot},z.from)}catch{continue}
+            for(const lot of A(au?.lots))putSoon(lot.itemId,{slot:z.slot,tv,enc:d.id,shop:T(d.ten||'Đại hội đấu giá'),auction:true,start:lot.start,kind:z.known?'hoi_muon':'hoi_sap',wait:Math.max(0,z.from-base),endsIn:z.to-base,sec:!!slotOk.get(z.slot)?.an})
+          }
+        }
+      }
+    }catch(err){console.warn('hoi dau gia',err)}
+    e.run.nam=base;
+    const bySlot=new Map();
+    for(const [iid,rows] of idx){const rec=C.items.get(iid);if(!rec)continue;const nm=T(rec.ten||''),kd=rec.loai||'';for(const r of rows){let l=bySlot.get(r.slot);if(!l)bySlot.set(r.slot,l=[]);l.push({id:iid,nm,kind:kd,left:r.left,auction:!!r.auction,shop:r.shop,pc:rec.pham_cap||0})}}
+    for(const [iid,rows] of soon){const rec=C.items.get(iid);if(!rec)continue;const nm=T(rec.ten||''),kd=rec.loai||'';for(const r of rows){let l=bySlot.get(r.slot);if(!l)bySlot.set(r.slot,l=[]);l.push({id:iid,nm,kind:kd,left:1,auction:true,shop:r.shop,pc:rec.pham_cap||0,soon:r.kind,wait:r.wait})}}
+    return SELL.cache={key,idx,soon,pairs,e,base,LK,slots,bySlot,rnd:new Map(),pool:new Map()};
+  })();
+  SELL.prep={key,p};
+  try{return await p}finally{SELL.prep=null}
+}
+/* Tiệm ngẫu nhiên (gánh hàng rong, chợ đêm thú cổ…): game chọn khi nơi đó "làm mới sự kiện", nên chỉ tính được XÁC SUẤT
+   bằng đúng hàm đủ điều kiện + trọng số của game, mô phỏng cách game bốc sự kiện (bốc không hoàn lại, k theo loại nơi). */
+function sellPool(c,slot){
+  let r=c.pool.get(slot);if(r)return r;
+  const D=c.e.content,DR=window.tuTien.core['encounter/director'],rej=DR.placeRejecter(c.e,slot);
+  const list=[];
+  try{for(const d of D.encounters.values()){
+    if(d.tien_ich||(d.lam_moi||'thoang_qua')!=='thoang_qua'||rej(d))continue;
+    if(!DR.eligible(c.e,d,slot))continue;
+    let w=0;try{w=Number(DR.weightFor(c.e,d,slot))||0}catch{w=Number(d.weight)||1}
+    if(w>0)list.push({d,w});
+  }}catch{}
+  let kr=[1,2];try{const kind=info(slot)?.diaDanh?.loai;for(const v of D.noiChon.values())if(A(v.loai).includes(kind)&&A(v.so_su_kien).length===2){kr=v.so_su_kien;break}}catch{}
+  r={list,kr};c.pool.set(slot,r);return r;
+}
+function sellChance(r,dId){
+  const {list,kr}=r,i0=list.findIndex(x=>x.d.id===dId);if(i0<0)return 0;
+  let hit=0;const T=300;
+  for(let t=0;t<T;t++){
+    const k=kr[0]+Math.floor(Math.random()*(kr[1]-kr[0]+1));let pool=list.slice(),sum=pool.reduce((a,x)=>a+x.w,0);
+    for(let j=0;j<k&&pool.length;j++){let u=Math.random()*sum,q=0;for(;q<pool.length-1;q++){u-=pool[q].w;if(u<=0)break}const x=pool[q];if(x.d.id===dId){hit++;break}sum-=x.w;pool.splice(q,1)}
+  }
+  return hit/T;
+}
+async function sellRandom(id,onProg){
+  const c=SELL.cache;if(c.rnd.has(id))return c.rnd.get(id);
+  const out=[],have=new Set((c.idx.get(id)||[]).map(r=>r.slot+'|'+r.enc));
+  const DR=window.tuTien.core['encounter/director'],cand=[...c.e.content.encounters.values()].filter(d=>!d.tien_ich&&!d.dau_gia&&d.kind==='cua_hang'&&A(d.ke_hang).length&&!d.bien_co);
+  let n=0;
+  for(const sl of c.slots){
+    if(++n%40===0){onProg&&onProg(n,c.slots.length);await new Promise(r=>setTimeout(r,0))}
+    const tv=travelTo(sl.id);if(!N(tv))continue;
+    let hits=[];
+    try{c.e.run.nam=c.base+tv;
+      for(const d of cand){if(have.has(sl.id+'|'+d.id))continue;
+        if(!DR.eligible(c.e,d,sl.id))continue;
+        if(DR.placeRejecter(c.e,sl.id)(d))continue;
+        if(c.LK.sellsItem(c.e,d,sl.id,id))hits.push(d)}
+    }catch{}
+    for(const d of hits){const ch=sellChance(sellPool(c,sl.id),d.id);if(ch>0)out.push({slot:sl.id,tv,enc:d.id,shop:T(d.ten||'Tiệm'),chance:ch,sec:!!sl.an})}
+  }
+  c.e.run.nam=c.base;
+  out.sort((a,b)=>b.chance-a.chance||a.tv-b.tv);
+  c.rnd.set(id,out);return out;
+}
+function sellLater(id){
+  const c=SELL.cache,out=[],seen=new Set((c.idx.get(id)||[]).map(r=>r.slot+'|'+r.enc));
+  for(const q of c.pairs){if(seen.has(q.slot+'|'+q.d.id))continue;try{c.e.run.nam=c.base+q.tv;if(c.LK.sellsItem(c.e,q.d,q.slot,id))out.push({slot:q.slot,tv:q.tv,shop:T(String(c.LK.shopNameAt(c.e,q.d,q.slot)||q.d.ten||'Tiệm'))})}catch{}}
+  c.e.run.nam=c.base;return out.sort((a,b)=>a.tv-b.tv);
+}
+async function sellFind(id){
+  const prev=SELL.st.get(id);if(prev?.busy)return;
+  SELL.st.set(id,{busy:true,prog:''});
+  try{
+    await sellPrepare((a,b)=>{const s=SELL.st.get(id);if(s&&s.busy){s.prog=`${a}/${b} nơi`;const el=body.querySelector('#sl-prog');if(el)el.textContent=s.prog}});
+    const c=SELL.cache,now=(c.idx.get(id)||[]).slice().sort((a,b)=>a.tv-b.tv||milesTo(a.slot)-milesTo(b.slot)),later=sellLater(id);
+    SELL.st.get(id).prog='ước lượng tiệm ngẫu nhiên…';
+    const rnd=await sellRandom(id,(a,b)=>{const s=SELL.st.get(id);if(s&&s.busy){s.prog=`tiệm ngẫu nhiên ${a}/${b}`;const el=body.querySelector('#sl-prog');if(el)el.textContent=s.prog}});
+    SELL.st.set(id,{now,later,rnd,soon:(c.soon.get(id)||[]).slice().sort((a,b)=>(a.wait||0)-(b.wait||0)||a.tv-b.tv),total:c.slots.length,shown:6,year:Math.floor(nowYear())});
+  }catch(e){SELL.st.set(id,{err:String(e?.message||e)})}
+  sellPaint(id);
+}
+function sellPaint(id){if(ui.isOpen&&ui.tab==='map'&&mapSt.sell===id)VIEWS.map()}
+function sellOpen(id,from){
+  mapSt.sell=id;mapSt.back=from||null;mapSt.sn=8;mapSt.sn2=6;mapSt.sn3=6;mapSt.sn4=6;
+  ui.tab='map';store.set('tab','map');
+  const s=SELL.st.get(id),stale=s&&!s.busy&&s.year!==Math.floor(nowYear());
+  if(!s||s.err||stale)sellFind(id);
+  render();try{body.scrollTop=0}catch{}
+}
+function sellExtra(r,kind){
+  const tg=[];
+  if(kind==='now'){
+    if(r.auction)tg.push(`<span class="tag o">${E(r.shop)} · đấu giá, có đối thủ tranh${N(r.start)?` · khởi điểm ${F(r.start)} linh thạch`:''}</span>`);
+    else tg.push(`<span class="tag g">${E(r.shop)} · còn ${F(r.left)} món</span>`);
+  }else if(kind==='soon'){
+    const w=N(r.wait)?r.wait:0,lbl={ky_sau:`đấu giá kỳ sau, mở sau ${fmtTime(w)}`,hoi_muon:`đại hội đang diễn ra nhưng kết thúc sau ${fmtTime(r.endsIn)}, đi mất ${fmtTime(r.tv)} nên không kịp`,hoi_sap:`đại hội dự kiến mở sau ${fmtTime(w)} (theo lịch của game, món có thể lệch chút)`}[r.kind]||'đấu giá sắp tới';
+    tg.push(`<span class="tag o">${E(r.shop)} · ${E(lbl)}${N(r.start)?` · khởi điểm ${F(r.start)} linh thạch`:''}</span>`);
+  }else if(kind==='rnd')tg.push(`<span class="tag o">${E(r.shop)} · gặp ngẫu nhiên, khoảng ${Math.max(1,Math.round(r.chance*100))}% mỗi lần làm mới</span>`);
+  else tg.push(`<span class="tag">${E(r.shop)} · năm nay chưa bày, thử ghé lại năm khác</span>`);
+  if(r.sec)tg.push('<span class="tag">Nơi ẩn / chưa lộ trên bản đồ</span>');
+  return`<div class="tags" style="grid-column:1/-1;margin:2px 0">${tg.join('')}</div>`;
+}
+function sellCard(r,kind){
+  const D=mapBase(),it=D.byId.get(r.slot);
+  if(it)return placeCard(it,sellExtra(r,kind));
+  const i=info(r.slot),title=T(i?.ten||i?.diaDanh?.ten||r.slot);
+  return`<article class="card" data-slot="${E(r.slot)}" data-title="${E(title)}"><div><b>${E(title)}</b></div><div class="side">${fmtTime(r.tv)}</div>${sellExtra(r,kind)}<div class="acts"><button class="btn" data-act="view">Xem bản đồ</button><button class="btn pri" data-act="go">Đường đi an toàn</button></div></article>`;
+}
+function sellView(){
+  const id=mapSt.sell,s=SELL.st.get(id),rec=C.items.get(id)||{};
+  const back=mapSt.back&&mapSt.back!=='map'?`<button class="btn" id="sl-back">← Quay lại ${E((TABS.find(x=>x[0]===mapSt.back)||[])[2]||'')}</button>`:'';
+  let h=`<div class="card" style="grid-template-columns:auto 1fr;margin-bottom:6px">${itemIco(id,40)}<div><b style="color:${phamColor(rec.pham_cap)}">${E(itemName(id))}</b><small style="display:block">${E(GRADE_NAMES[rec.pham_cap]||'')} · Tìm nơi bán — giá niêm yết ${F(orderUnit(id))}</small></div></div>
+  <div class="acts" style="margin:0 0 6px">${back}<button class="btn" id="sl-again">Dò lại</button><button class="btn" id="sl-exit">Thoát tìm nơi bán</button></div>`;
+  if(!s||s.busy)h+=`<div class="empty">Đang dò kệ hàng các nơi… <span id="sl-prog">${E(s?.prog||'')}</span></div>`;
+  else if(s.err)h+=`<div class="sub" style="color:#a3342b">${E(s.err)}</div>`;
+  else{
+    const yr=Math.floor(nowYear());
+    if(s.year!==yr)h+=`<div class="sub"><span class="tag o">Đã sang năm mới — kệ hàng đổi, bấm “Dò lại”.</span></div>`;
+    const n=mapSt.sn||8,sure=s.now.filter(r=>r.src==='tien_ich'),temp=s.now.filter(r=>r.src!=='tien_ich');
+    const sec=(t,hint)=>`<div class="sum">${t}</div>${hint?`<div class="sub" style="margin:0 2px 4px">${hint}</div>`:''}`;
+    if(sure.length)h+=sec(`${F(sure.length)} nơi chắc chắn còn hàng khi bạn tới`,'Tiệm cố định và nhà đấu giá của nơi đó (đã tính theo năm tới nơi, đã trừ hàng bị mua hết) · gần nhất trước')+sure.slice(0,n).map(r=>sellCard(r,'now')).join('')+(sure.length>n?`<div class="acts" style="justify-content:center;margin:8px 0"><button class="btn" id="sl-more">Xem thêm ${Math.min(8,sure.length-n)} nơi (còn ${sure.length-n})</button></div>`:'');
+    if(temp.length)h+=sec(`${F(temp.length)} nơi đang có sự kiện bày món này`,'Sự kiện/thế cục đã xuất hiện sẵn tại nơi đó (chợ phiên, đại hội đấu giá, gánh hàng rong…). Có thể đổi khi nơi đó làm mới sự kiện.')+temp.slice(0,mapSt.sn2||6).map(r=>sellCard(r,'now')).join('')+(temp.length>(mapSt.sn2||6)?`<div class="acts" style="justify-content:center;margin:8px 0"><button class="btn" id="sl-more2">Xem thêm ${Math.min(6,temp.length-(mapSt.sn2||6))} nơi (còn ${temp.length-(mapSt.sn2||6)})</button></div>`:'');
+    if(!s.now.length)h+=`<div class="empty"><span class="tag r">Hiện không nơi nào chắc chắn bày bán hoặc đấu giá món này</span></div>`;
+    const sn=s.soon||[];
+    if(sn.length)h+=sec(`${F(sn.length)} phiên đấu giá khác có món này`,'Đấu giá kỳ sau của nhà đấu giá, đại hội đã diễn ra nhưng không kịp tới, và đại hội sắp mở theo lịch của game · sớm nhất trước')+sn.slice(0,mapSt.sn4||6).map(r=>sellCard(r,'soon')).join('')+(sn.length>(mapSt.sn4||6)?`<div class="acts" style="justify-content:center;margin:8px 0"><button class="btn" id="sl-more4">Xem thêm ${Math.min(6,sn.length-(mapSt.sn4||6))} phiên (còn ${sn.length-(mapSt.sn4||6)})</button></div>`:'');
+    const rn=s.rnd||[];
+    if(rn.length)h+=sec(`${F(rn.length)} nơi có thể gặp tiệm ngẫu nhiên bán món này`,'Game bốc ngẫu nhiên khi nơi đó làm mới sự kiện, nên không chắc có. Tỉ lệ là ước tính theo đúng điều kiện và trọng số của game · cao nhất trước')+rn.slice(0,mapSt.sn3||6).map(r=>sellCard(r,'rnd')).join('')+(rn.length>(mapSt.sn3||6)?`<div class="acts" style="justify-content:center;margin:8px 0"><button class="btn" id="sl-more3">Xem thêm ${Math.min(6,rn.length-(mapSt.sn3||6))} nơi (còn ${rn.length-(mapSt.sn3||6)})</button></div>`:'');
+    if(!s.now.length&&!(s.rnd||[]).length&&!(s.soon||[]).length&&s.later.length)h+=`<div class="sum">Các tiệm có thể bày món này vào năm khác</div>${s.later.slice(0,5).map(r=>sellCard(r,'later')).join('')}${s.later.length>5?`<div class="sub">…và ${F(s.later.length-5)} tiệm khác.</div>`:''}`;
+    if(!s.now.length&&!(s.rnd||[]).length&&!(s.soon||[]).length&&!s.later.length)h+=`<div class="sub">Món này không có trong kệ tiệm nào; chỉ gặp nhờ cơ duyên, rơi từ quái, hoặc đặt hàng qua tool.</div>`;
+    h+=`<div class="sub" style="margin-top:6px;opacity:.8">Đã quét ${F(s.total||0)} nơi, kể cả nơi chưa khám phá và tông môn ẩn. Gánh hàng rong dọc đường là sự kiện ngẫu nhiên lúc đi đường nên không thể chỉ ra nơi cụ thể. Đấu giá còn phụ thuộc đối thủ trả giá.</div>`;
+  }
+  ui._mapSig='sell|'+id+'|'+(s?(s.busy?'b'+(s.prog||''):s.year+'|'+(s.now?.length||0)):'')+'|'+(mapSt.sn||8);
+  body.innerHTML=h;
+  const on=(i,f)=>{const el=$(body,'#'+i);if(el)el.onclick=f};
+  on('sl-back',()=>{const t=mapSt.back;mapSt.sell=null;mapSt.back=null;ui.tab=t;store.set('tab',t);render()});
+  on('sl-exit',()=>{mapSt.sell=null;mapSt.back=null;render()});
+  on('sl-again',()=>{sellFind(id);render()});
+  on('sl-more',()=>{mapSt.sn=(mapSt.sn||8)+8;VIEWS.map()});on('sl-more2',()=>{mapSt.sn2=(mapSt.sn2||6)+6;VIEWS.map()});on('sl-more3',()=>{mapSt.sn3=(mapSt.sn3||6)+6;VIEWS.map()});on('sl-more4',()=>{mapSt.sn4=(mapSt.sn4||6)+6;VIEWS.map()});
+}
 /* Danh sách món còn thiếu của bộ giả định, kèm nút đặt hàng */
 function missingOrderHtml(ids0){
   // Lọc theo túi TẠI LÚC VẼ (không theo lúc xếp): món đã về túi / đang chờ cất thì không còn là "thiếu"
@@ -2811,7 +3075,8 @@ function missingOrderHtml(ids0){
     else if(blk)act=`<span class="tag r" title="${E(blk)}">Không đặt được</span>`;
  else if(money()<orderDeposit(orderUnit(id)))act=`<span class="tag o" title="Cần ${F(orderDeposit(orderUnit(id)))} linh thạch đặt cọc">Chưa đủ tiền cọc ${F(orderDeposit(orderUnit(id)))}</span>`;
     else act=`<button class="btn pri" data-order-item="${E(id)}" style="flex:none;padding:2px 8px;font-size:12px">Đặt hàng · cọc ${F(orderDeposit(orderUnit(id)))}</button>`;
-    return`<div class="card" style="grid-template-columns:auto 1fr auto;padding:6px 8px">${itemIco(id,30)}<div><b style="color:${phamColor(rec.pham_cap)}">${E(itemName(id))}</b><small> ${E(GRADE_NAMES[rec.pham_cap]||'')}${blk?' · '+E(blk):` · giá ${F(orderUnit(id))}`}</small></div><div class="side">${act}</div></div>`;
+    const sb=`<button class="btn" data-sell="${E(id)}" style="flex:none;padding:2px 8px;font-size:12px" title="Chuyển sang tab Bản đồ và liệt kê các nơi còn hàng">Tìm nơi bán</button>`;
+    return`<div><div class="card" style="grid-template-columns:auto 1fr auto;padding:6px 8px">${itemIco(id,30)}<div><b style="color:${phamColor(rec.pham_cap)}">${E(itemName(id))}</b><small> ${E(GRADE_NAMES[rec.pham_cap]||'')}${blk?' · '+E(blk):` · giá ${F(orderUnit(id))}`}</small></div><div class="side">${act}<div style="margin-top:4px">${sb}</div></div></div></div>`;
   }).join('');
   return`<div class="sub" style="margin:6px 0 2px"><b>Còn thiếu ${A(ids).length} món</b> — cần đủ trong túi mới xếp được:</div>${rows}`;
 }
@@ -2858,8 +3123,9 @@ function detectGameColors(){
   }catch{}
   return gameColors=out;
 }
-const heColor=h=>detectGameColors().he[h]||(h==='am'?'#9a86c8':HE_COLOR[h])||'#ccc';
-const phamColor=p=>detectGameColors().pham[p]||PHAM_COLOR_DEF[p]||'#ccc';
+const heColor=h=>{const c=detectGameColors().he[h];return colorOk(c)?c:(h==='am'?'#9a86c8':HE_COLOR[h])||'#7a1f1a'};
+const colorOk=c=>!!c&&!/transparent|inherit|currentcolor|initial|unset|var\(|rgba?\([^)]*[,/]\s*0(\.0+)?\s*\)\s*$/i.test(String(c).trim());
+const phamColor=p=>{const c=detectGameColors().pham[p];return colorOk(c)?c:(PHAM_COLOR_DEF[p]||'#7a1f1a')};
 const heHtml=list=>A(list).map(h=>`<span style="background:${heColor(h)};color:${h==='am'?'#f0e9d6':'#2b2b2b'};font-weight:600;padding:0 5px;border:1px solid rgba(43,43,43,.3)">${E(ELEMENT_NAMES[h]||h)}</span>`).join(' ');
 const gradeHtml=p=>N(p)?`<span style="color:${phamColor(p)};font-weight:700">${E(GRADE_NAMES[p]||('Phẩm '+p))}</span>`:'';
 const shapeUi={cells:new Set(),tab:'exact',loai:'all',mirror:false,grade:'all',res:null,limit:20};
@@ -6844,6 +7110,6 @@ iv=setInterval(tick,5000);
 /* Không tự vẽ đường khi mở tool */
 try{Route.clear()}catch{try{stopDrawing()}catch{}}
 Alerts.check();ui.syncRouteChip();
-window.__VKT2__={ORD,BuildEngine,AutoFarm,coreContext,sectRows,destroy(){try{AutoFarm.stopRecord()}catch{}try{AutoFarm.stop()}catch{}try{document.getElementById(ID+'-afbar')?.remove();document.getElementById(ID+'-afstats')?.remove()}catch{}clearInterval(iv);clearTimeout(timer);try{dkMo.disconnect();document.getElementById(ID+'-afsum')?.remove()}catch{}try{vkMo.disconnect();vkClose()}catch{}try{qsMo.disconnect();qsStop();qsCss.remove();for(const ev of ['pointerdown','mousedown','click','dblclick','contextmenu'])document.removeEventListener(ev,qsPick,true);document.removeEventListener('keydown',qsKey,true);document.querySelectorAll('.vkt-qs-btn').forEach(x=>x.remove())}catch{}try{unsub?.()}catch{}stopDrawing();panel.remove();fab.remove();chip.remove();toasts.remove();styleEl.remove()},ui,Route,build:BUILD,VIEWS,BuildEngine,hooks:{realmRows,eventRows,treasureRows,jobRows,peopleRows,sectRows,checks,safePath,placeWindow,closedYears,openOnArrival,focusMap,startDrawing,stopDrawing,mapRoot,ORD,ORDER_CFG,coreContext,Alerts,AutoFarm}};
+window.__VKT2__={ORD,BuildEngine,AutoFarm,coreContext,sectRows,sellFind,sellOpen,sellView,SELL,destroy(){try{AutoFarm.stopRecord()}catch{}try{AutoFarm.stop()}catch{}try{document.getElementById(ID+'-afbar')?.remove();document.getElementById(ID+'-afstats')?.remove()}catch{}clearInterval(iv);clearTimeout(timer);try{dkMo.disconnect();document.getElementById(ID+'-afsum')?.remove()}catch{}try{vkMo.disconnect();vkClose()}catch{}try{qsMo.disconnect();qsStop();qsCss.remove();for(const ev of ['pointerdown','mousedown','click','dblclick','contextmenu'])document.removeEventListener(ev,qsPick,true);document.removeEventListener('keydown',qsKey,true);document.querySelectorAll('.vkt-qs-btn').forEach(x=>x.remove())}catch{}try{unsub?.()}catch{}stopDrawing();panel.remove();fab.remove();chip.remove();toasts.remove();styleEl.remove()},ui,Route,build:BUILD,VIEWS,BuildEngine,hooks:{realmRows,eventRows,treasureRows,jobRows,peopleRows,sectRows,checks,safePath,placeWindow,closedYears,openOnArrival,focusMap,startDrawing,stopDrawing,mapRoot,ORD,ORDER_CFG,coreContext,Alerts,AutoFarm}};
 
 })();

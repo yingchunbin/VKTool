@@ -61,7 +61,7 @@ Tra cứu mọi nơi trên bản đồ, tìm nơi săn hoặc nơi bán một v�
 **Ba chế độ**
 
 - **Địa danh**: chia nhóm Thành thị (kinh đô, thành) · Thôn trấn · Bí cảnh và di tích · Linh mạch và khoáng mạch · Phường thị, ẩn sĩ, quan ải · Sào huyệt yêu thú.
-- **Tìm vật**: gõ tên nguyên liệu, linh dược, trứng thú, bí phương, yêu tài… hoặc chọn nhóm vật (Nguyên liệu · Công thức và pháp · Đồ dùng). Kết quả cho biết nơi săn được, nơi bán, nơi có cơ duyên.
+- **Tìm vật** (nay dò cả kệ hàng thật của mọi tiệm và nhà đấu giá, gõ tên cụ thể như “Hồi Xuân Đan” hay nhóm như “công pháp” đều ra; thẻ hiện danh sách món đang bày thật tại nơi đó; có hàng chip tên trùng, bấm để xem nơi còn hàng; lần đầu dò nền khoảng nửa phút): gõ tên nguyên liệu, linh dược, trứng thú, bí phương, yêu tài… hoặc chọn nhóm vật (Nguyên liệu · Công thức và pháp · Đồ dùng). Kết quả cho biết nơi săn được, nơi bán, nơi có cơ duyên.
 - **Săn yêu**: các vùng hoang dã (rừng, núi, cốc, đồng hoang, đầm, hoang mạc, đỉnh). Gõ tên nguyên liệu hoặc thảo dược để tìm vùng có nó; danh sách và tỉ lệ do game tính tại từng ô.
 
 **Bộ lọc và sắp xếp**
@@ -213,6 +213,7 @@ Tự xếp đồ lên lưới kinh mạch, tính theo luật của game (màu ô
 - Chế độ **Giả định** dùng cùng thuật toán nhưng chọn từ toàn bộ đồ trong game phù hợp cảnh giới, để biết bộ lý tưởng.
 - Hai nút **Thực tế / Giả định** chuyển qua lại giữa hai kết quả.
 - Món còn thiếu hiện kèm nút **Đặt hàng** (xem tab Vật phẩm). Món đã về túi tự biến mất khỏi danh sách thiếu.
+- Nút **Tìm nơi bán** trên từng món thiếu: tự nhảy sang **tab Bản đồ**, dò kệ hàng của các tiệm ở thành, trấn, thôn và các nhà đấu giá trên toàn bản đồ bằng đúng hàm của game, tính theo **năm bạn tới nơi** (kệ đổi hàng mỗi năm) và đã trừ hàng đã bị mua hết. Kết quả hiện bên dưới bằng thẻ địa điểm của tab Bản đồ (có nút **Quay lại Kinh mạch**), xếp theo gần nhất, kèm tên tiệm, số còn lại, thời gian đi, mức nguy hiểm, nút Xem bản đồ và Đường đi an toàn. Món không nơi nào bày thì báo rõ, kèm các tiệm có thể bày vào năm khác. Quét **toàn bộ thế giới** (hơn 1.600 nơi, kể cả nơi chưa khám phá, tông môn ẩn, động phủ, ngoài hải), chia 3 nhóm: **chắc chắn còn hàng** (tiệm cố định, chợ phiên, nhà đấu giá), **đang có sự kiện bày hàng** (đại hội đấu giá, gánh hàng rong, chợ đêm đã xuất hiện sẵn) và **có thể gặp ngẫu nhiên** (kèm tỉ lệ ước tính theo đúng điều kiện và trọng số của game). Có thêm nhóm **phiên đấu giá khác**: đấu giá kỳ sau của nhà đấu giá thường và đấu giá lâu, đại hội đấu giá đang diễn ra nhưng không kịp tới, và đại hội sắp mở theo lịch của game (món có thể lệch chút). Gánh hàng rong dọc đường là sự kiện ngẫu nhiên lúc đi đường nên không chỉ ra được nơi cụ thể. Lần dò đầu mất khoảng nửa phút, các món sau chỉ vài giây.
 
 **Danh mục đồ gợi ý**
 
@@ -239,7 +240,7 @@ Ba mục con: Danh sách · Tìm theo hình · Đơn hàng.
 
 **Danh sách**
 
-- Toàn bộ vật phẩm của game. Ô tìm và lọc theo loại (công pháp, pháp khí, đan dược, linh dược, nguyên liệu, yêu tài, phù lục, trận bàn, đơn phương, dụng cụ…), theo phẩm; riêng công pháp và pháp khí lọc thêm theo hệ.
+- Toàn bộ vật phẩm của game. Hình vật phẩm lấy từ game; Công pháp và Bí phương (game không có ảnh riêng) được ghép bằng đúng bộ dựng của game: nền cuộn theo phẩm cấp kèm biểu tượng chiêu thức hoặc ảnh thành phẩm. Ô tìm và lọc theo loại (công pháp, pháp khí, đan dược, linh dược, nguyên liệu, yêu tài, phù lục, trận bàn, đơn phương, dụng cụ…), theo phẩm; riêng công pháp và pháp khí lọc thêm theo hệ.
 - Mỗi vật cho biết phẩm, hệ, từ cảnh giới nào dùng được, giá, số đang có trong túi và số đang chờ cất; nhãn *Bộ X* nếu thuộc bộ đồ (đủ 2 món trở lên trên kinh mạch thì có hiệu ứng bộ).
 - Nút đặt hàng ngay trên vật phẩm.
 
