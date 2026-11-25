@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261125-game030-v121',ID='vkt2',g=window.game;
+const BUILD='20261126-game030-v122',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -4345,25 +4345,26 @@ const AutoFarm={
     if(this.busy())return'busy';
     const r=qsAutoSell({kinds:A(o.kinds),grades:A(o.grades).map(Number),keepEach:Math.max(0,Math.min(99,Math.floor(Number(o.keepEach)||0))),keepHeal:!!o.keepHeal,isHeal:it=>this.itemHealPower(it)>0});
     if(!r)return'wait';
+    if(r.noprice){this.noteOnce('sellnoprice','Tự bán: không nạp được hàm giá của game ('+r.noprice+')');return'err'}
     if(r.err){this.push('Bán nhanh lỗi: '+r.err,'err');return'err'}
-    if(!r.pcs)return'nothing';
+    if(!r.pcs){this.noteOnce('sellnone',`Tự bán: túi ${r.total} loại, ${r.match} khớp loại+phẩm đã tick, ${r.held} giữ lại, ${r.skipped.length} không bán được (khóa/không giá) → không có gì để bán`);return'nothing'}
     this.stats.sell=(this.stats.sell||0)+r.pcs;this.stats.sellGain=(this.stats.sellGain||0)+r.gold;
     this.push(`Bán nhanh: ${F(r.kinds)} món (${F(r.pcs)} cái), +${F(r.gold)} linh thạch`+(r.skipped.length?` · bỏ qua ${r.skipped.length} món không bán được`:''),'ok',{sold:r.pcs,gain:r.gold});
     return'sold';
   },
   sellDue(){
     const o=this.opts.sell;if(!o.on||!A(o.kinds).length||!A(o.grades).length)return false;
-    const yr=nowYear();if(this._sellNext&&yr<this._sellNext)return false;
+    if(this._sellAt&&Date.now()<this._sellAt)return false;
     const stacks=Object.values(me().tuiDo||{}).filter(q=>q>0).length;
     return stacks>=Math.max(1,Number(o.minStacks)||60)||Object.keys(me().choCat||{}).length>0;
   },
   /* Mỗi nhịp rảnh: tới hạn thì Bán nhanh ngay trong túi */
   sellStep(){
     if(!this.sellDue())return false;
-    const yr=nowYear(),d=this.sellAnywhere();
-    if(d==='sold'){this._sellNext=yr+0.2;return true}
-    if(d==='wait'){this._sellNext=yr+0.01;return false}
-    this._sellNext=yr+(d==='err'?0.5:0.3);return false;
+    const d=this.sellAnywhere();
+    if(d==='sold'){this._sellAt=Date.now()+3000;return true}
+    if(d==='wait'||d==='busy')return false;
+    this._sellAt=Date.now()+(d==='err'?30000:15000);return false;
   },
   ensureHealthy(beforeFight){
     let guard=0;
@@ -6471,7 +6472,7 @@ function afSellWire(){
   box.addEventListener('change',e=>{
     const t=e.target;
     if(t.dataset.sg){const grp=t.dataset.sg,set=new Set(A(o[grp]).map(String));t.checked?set.add(t.value):set.delete(t.value);o[grp]=grp==='grades'?[...set].map(Number).sort((a,b)=>a-b):[...set];save();t.closest('label').classList.toggle('on',t.checked);return}
-    if(t.id==='sl-on'){o.on=t.checked;save();AutoFarm._sellNext=0;VIEWS.auto();return}
+    if(t.id==='sl-on'){o.on=t.checked;save();AutoFarm._sellAt=0;VIEWS.auto();return}
     if(t.id==='sl-stacks'){o.minStacks=Math.max(1,+t.value||60);save()}
     if(t.id==='sl-keep'){o.keepEach=Math.max(0,Math.min(99,Math.floor(+t.value||0)));save()}
     if(t.id==='sl-heal'){o.keepHeal=t.checked;save()}
@@ -7129,24 +7130,26 @@ function qsBar(){
   });
 }
 function qsAutoSell(o){
-  if(!QS.K?.IP){if(!QS.loading){QS.loading=1;BuildEngine.ensureCore().then(k=>{QS.K=k}).catch(()=>{}).finally(()=>{QS.loading=0})}return null}
-  const nv=me(),ks=new Set(o.kinds),gs=new Set(o.grades),skipped=[];let gold=0,pcs=0,kinds=0;
+  if(!QS.K?.IP){if(!QS.loading){QS.loading=1;QS.loadErr=null;BuildEngine.ensureCore().then(k=>{QS.K=k;if(!k?.IP)QS.loadErr='không thấy hàm giá bán (IP) của game'}).catch(e=>{QS.loadErr=e.message||String(e)}).finally(()=>{QS.loading=0})}return QS.loadErr&&!QS.loading?{noprice:QS.loadErr}:null}
+  const nv=me(),ks=new Set(o.kinds),gs=new Set(o.grades),skipped=[];let gold=0,pcs=0,kinds=0,match=0,held=0,total=0;
   try{
     const ctx=qsCtx();
     for(const id of Object.keys(nv.tuiDo||{})){
       const it=C.items.get(id),n=Number(nv.tuiDo[id]||0);
-      if(!it||n<=0||!ks.has(it.loai)||!gs.has(Number(it.pham)))continue;
-      if(o.keepHeal&&o.isHeal&&o.isHeal(it))continue;
+      if(!it||n<=0)continue;total++;
+      if(!ks.has(it.loai)||!gs.has(Number(it.pham)))continue;
+      match++;
+      if(o.keepHeal&&o.isHeal&&o.isHeal(it)){held++;continue}
       if(qsBlock(id)){skipped.push(id);continue}
-      const m=n-(o.keepEach||0);if(m<=0)continue;
+      const m=n-(o.keepEach||0);if(m<=0){held++;continue}
       let p=0;for(let a=0;a<m;a++){const x=Number(QS.K.IP(ctx,id,undefined,a));if(!Number.isFinite(x)){p=NaN;break}p+=x}
       if(!Number.isFinite(p)){skipped.push(id);continue}
       nv.tuiDo[id]=n-m;if(!(nv.tuiDo[id]>0))delete nv.tuiDo[id];
       nv.linhThach=Number(nv.linhThach||0)+p;gold+=p;pcs+=m;kinds++;
     }
     if(pcs)g.store.setState({run:{...run(),nhanVat:{...nv,tuiDo:{...nv.tuiDo}}}});
-  }catch(e){return{err:e.message||String(e),kinds,pcs,gold,skipped}}
-  return{kinds,pcs,gold,skipped};
+  }catch(e){return{err:e.message||String(e),kinds,pcs,gold,skipped,total,match,held}}
+  return{kinds,pcs,gold,skipped,total,match,held};
 }
 function qsClick(){if(!QS.on)return qsStart();if(qsTotals().kinds)qsDoSell();else qsStop()}
 async function qsStart(){
@@ -7195,6 +7198,7 @@ const qsCss=document.createElement('style');qsCss.id=ID+'-qs-style';
 qsCss.textContent=`.vkt-qs-on .bnv-tui [data-tui]:not(.trong){cursor:pointer}.vkt-qs-sel{outline:2px solid #7a1f1a!important;outline-offset:-2px;box-shadow:0 0 0 2px rgba(122,31,26,.35) inset,0 0 8px rgba(122,31,26,.55)!important}
 .vkt-qs-btn{margin-left:6px}.vkt-qs-btn .vkt-qs-ico{display:inline-block;vertical-align:-.15em}`;
 document.head.appendChild(qsCss);
+setInterval(()=>{try{const o=AutoFarm.opts?.sell;if(o&&o.on&&!QS.busy)AutoFarm.sellStep()}catch{}},4000);
 let qsRaf=0;
 function qsInject(){qsRaf=0;try{document.querySelectorAll('.bnv-don-nut:not(.vkt-qs-btn)').forEach(b=>{const p=b.parentElement;if(!p)return;let n=p.querySelector(':scope > .vkt-qs-btn');if(!n){n=document.createElement('button');n.type='button';n.className='nut-phu bnv-don-nut vkt-qs-btn';const ic=b.firstElementChild;n.innerHTML=`<span class="${ic?E(ic.getAttribute('class')||''):''} vkt-qs-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5h4a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3h4"/></svg></span> <span class="vkt-qs-lab">Bán nhanh</span>`;n.onclick=e=>{e.stopPropagation();qsClick()};b.after(n)}});qsBar();qsMarks();if(QS.on&&!document.querySelector('.bnv-tui'))qsStop()}catch{}}
 const qsMo=new MutationObserver(()=>{if(!qsRaf)qsRaf=requestAnimationFrame(qsInject)});
