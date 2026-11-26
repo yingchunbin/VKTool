@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261126-game030-v127',ID='vkt2',g=window.game;
+const BUILD='20261126-game030-v132',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -362,6 +362,10 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
   // Luật tà của game (evilSchoolOf): tag ma/thi/quy/doc/hop_hoan/nghich, hoặc ngự linh loại thi/hồn
   function evilSchoolG(it){const t=A(it?.tag),n=['ma','thi','quy','doc','hop_hoan'].find(x=>t.includes(x))||(t.includes('nghich')?'nghich':null);if(n)return n;const l=it?.ngu_linh?.loai;return l==='thi'?'thi':l==='hon'?'quy':null}
   function itemAlignment(it){return evilSchoolG(it)?'ta':'chinh'}
+  /* Đồ tà (ma/huyết, thi, quỷ, độc cổ, hợp hoan, nghịch) chỉ dùng khi nhân vật đã là tà tu hoặc người dùng chọn hẳn lối tà.
+     Chính đạo mà xếp đồ tà vào lưới thì phần ô tà vượt ngưỡng sẽ đẩy đạo đồ sang tà đạo (game: Ol/XC). */
+  const EVIL_SCHOOLS=['ma','doc','hop_hoan','thi','quy'];
+  function evilBlocked(nv,it,school){return !!evilSchoolG(it)&&(nv?.path??'chinh')!=='ta'&&!EVIL_SCHOOLS.includes(school)}
   // Hệ số phản phệ của thể chất (dac_tinh.phan_phe, mặc định 1): đột phá −min(15%, 3% × điểm nghịch × hệ số)
   function phanPheMul(nv){try{return Number(C().theChat?.get?.(nv?.theChat)?.dac_tinh?.phan_phe??1)||1}catch{return 1}}
   function breakPenalty(nghich,nv){return Math.min(0.15,0.03*(nghich||0)*phanPheMul(nv))}
@@ -532,6 +536,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
         const it = c.items.get(id);
         if (!it || (it.loai !== 'cong_phap' && it.loai !== 'phap_khi') || !it.hinh) return false;
         if ((it.canh_gioi ?? 0) > cg) return false;
+        if (evilBlocked(nv0, it, school)) return false;
         const raw = [...A(it.tag), ...TP(it.tran_phai)].map(String);
         const match = school === 'tu_do' || schoolMatch(school, tags0, raw, it);
         const isTam = it.loai === 'cong_phap' && !it.chieu;
@@ -574,6 +579,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
         if (!it || (it.loai !== 'cong_phap' && it.loai !== 'phap_khi') || !it.hinh) continue;
         const icg = it.canh_gioi ?? 0;
         if (icg > cg) continue;
+        if (evilBlocked(nv0, it, school)) continue;
         const tags = [...(it.tag || []), ...(typeof it.tran_phai === 'string' ? [it.tran_phai] : [])].map(String);
         if (tags.includes('nghich_thien') || tags.includes('di_bao') || (it.pham_cap ?? 0) >= 8 || it.tran_phai) continue;
         const match = school === 'tu_do' || schoolMatch(school, BUILD_TAGS[school] || [], tags, it)
@@ -4125,7 +4131,7 @@ const AutoFarm={
     const payload={
       build:BUILD,
       at:new Date().toISOString(),
-      note:'Log auto đầy đủ: mỗi dòng có snap (noiActs, choices+risk, active, sanYeuLeft, gains) giống hướng ghi tay',
+      note:'Log auto đầy đủ: mỗi dòng có snap (noiActs, choices+risk, active, sanYeuLeft, gains). Dòng "pick →" có dec (mọi lựa chọn: ev, thành phần, rủi ro, lý do bị loại, điểm); dòng "kết quả" ghi thay đổi LT/tu vi/thương/tâm ma/năm/vật phẩm sau sự kiện',
       state:this.dumpState('export'),
       gains:this.gainsDelta(),
       gainsBase:this.gainsBase||null,
@@ -4359,7 +4365,7 @@ const AutoFarm={
     if(r.err){this.push('Bán nhanh lỗi: '+r.err,'err');return'err'}
     this._sellMsg=r.pcs?`Lần bán gần nhất: ${F(r.pcs)} cái, +${F(r.gold)} linh thạch`:`Chưa có gì để bán (túi ${r.total} loại, ${r.match} khớp loại+phẩm)`;
     if(!r.pcs)return'nothing'
-    this.stats.sell=(this.stats.sell||0)+r.pcs;this.stats.sellGain=(this.stats.sellGain||0)+r.gold;
+    this._selfLt=(this._selfLt||0)+r.gold;this._soldBag=this._soldBag||{};for(const [i,q] of Object.entries(r.sold||{}))this._soldBag[i]=(this._soldBag[i]||0)+q;this.stats.sell=(this.stats.sell||0)+r.pcs;this.stats.sellGain=(this.stats.sellGain||0)+r.gold;
     this.push(`Bán nhanh: ${F(r.kinds)} món (${F(r.pcs)} cái), +${F(r.gold)} linh thạch`+(r.skipped.length?` · bỏ qua ${r.skipped.length} món không bán được`:''),'ok',{sold:r.pcs,gain:r.gold});
     return'sold';
   },
@@ -4659,20 +4665,21 @@ const AutoFarm={
     return (cur?`<div class="sub"><b>Đang mở:</b> ${E(cur.ten||cur.id)} (${A(cur.steps).length} bước)</div>`:'')+(rows.map(one).join('')||'<div class="sub">Chưa có bản ghi. Chạy Auto, mỗi sự kiện gặp sẽ được ghi lại ở đây.</div>');
   },
   /* ── Nhóm sự kiện + chính sách lựa chọn (người dùng tự chọn theo lối tu: chính đạo / ma tu / liều…) ── */
-  POL_DEF:{tamMa:false,oan:false,thuongNang:false,tonLT:false,matVat:false,thoNguyen:false,giaNhap:false,giet:false},
+  POL_DEF:{tamMa:false,oan:false,thuongNang:false,tonLT:false,tonNho:true,matVat:false,thoNguyen:false,giaNhap:false,giet:false},
   POL_INFO:[
     ['tamMa','Tâm ma tăng','Cho phép lựa chọn làm tăng tâm ma (hợp ma tu / tà đạo)'],
     ['oan','Gieo oán · đắc tội người','Gieo oán hận (plant_seed), quan hệ NPC xấu đi'],
     ['thuongNang','Có thể trọng thương','Lựa chọn có thể gây thương thế từ cấp 2 trở lên'],
     ['tonLT','Tốn linh thạch / công hiến','Mua, nộp phí, đổi vật, hối lộ, chuộc người…'],
+    ['tonNho','Tốn nhỏ khi lời rõ','Chấp nhận trả ≤3% linh thạch (tối đa 60), hoặc đưa đi một món lẻ, khi giá trị nhận lại cao hơn hẳn. Bật mặc định'],
     ['matVat','Mất vật phẩm','Giao nộp, bị lấy mất đồ hoặc đặc sản trong túi'],
     ['thoNguyen','Hao thọ nguyên','Đổi thọ nguyên lấy lợi ích'],
     ['giaNhap','Gia nhập / rời môn phái · thế lực','Đổi tông môn, lập / diệt thế lực, nhập gia, tông chủ, quốc sư, khách khanh, gửi con vào tông…'],
     ['giet','Sát nhân · diệt khẩu','Giết NPC trong lựa chọn']],
   POL_PRESET:{
-    chinh:{tamMa:false,oan:false,thuongNang:false,tonLT:false,matVat:false,thoNguyen:false,giaNhap:false,giet:false},
-    ma:{tamMa:true,oan:true,thuongNang:false,tonLT:false,matVat:false,thoNguyen:false,giaNhap:false,giet:true},
-    lieu:{tamMa:true,oan:true,thuongNang:false,tonLT:true,matVat:false,thoNguyen:false,giaNhap:true,giet:true}},
+    chinh:{tonNho:true,tamMa:false,oan:false,thuongNang:false,tonLT:false,matVat:false,thoNguyen:false,giaNhap:false,giet:false},
+    ma:{tonNho:true,tamMa:true,oan:true,thuongNang:false,tonLT:false,matVat:false,thoNguyen:false,giaNhap:false,giet:true},
+    lieu:{tonNho:true,tamMa:true,oan:true,thuongNang:false,tonLT:true,matVat:false,thoNguyen:false,giaNhap:true,giet:true}},
   GRP_DEF_OFF:['tongmon/dac_biet'],
   _grpIdx:null,
   loadCfg(){
@@ -4767,6 +4774,7 @@ const AutoFarm={
     if(!s)return false;
     if(this.grpBlocked(s))return true;
     if(this.SKIP_PLACE_ACTS.has(s))return true;
+    try{if(this.groupOf(s).k==='vuot_bien')return true}catch{}
     try{
       const k=String(C.encounters?.get?.(s)?.kind||'');
       if(k==='cua_hang'||k==='tu_luyen'||k==='dot_pha')return true;
@@ -5127,7 +5135,12 @@ const AutoFarm={
       if(ef.stat&&typeof ef.stat==='object')for(const v of Object.values(ef.stat))add('stat',(Number(v)||0)*W.stat);
       if(ef.khi_van!=null)add('khiVan',num(ef.khi_van)*W.khiVan);
       if(ef.dao_tam!=null)add('daoTam',num(ef.dao_tam)*W.daoTam);
-      if(ef.tam_ma!=null)add('tamMa',num(ef.tam_ma)*W.tamMa);
+      if(ef.tam_ma!=null){
+        /* giảm tâm ma chỉ có giá trị đến mức tâm ma đang có (không có tâm ma thì cúng bái giải tâm ma vô ích) */
+        let v=num(ef.tam_ma);if(v<0){const cur=Number(run()?.tamMa)||0;v=-Math.min(-v,cur)}
+        add('tamMa',v*W.tamMa);
+      }
+      if(ef.plant_seed!=null&&/"?loai"?\s*:\s*"no_|^no_/.test(typeof ef.plant_seed==='string'?ef.plant_seed:JSON.stringify(ef.plant_seed)))add('no',-150);
       if(ef.injury!=null)add('injury',Math.max(1,num(ef.injury))*W.injury);
       if(ef.tho_nguyen!=null)add('tho',num(ef.tho_nguyen)*(W.tho<0?-W.tho:W.tho));
       if(ef.danh_vong!=null)add('dv',(typeof ef.danh_vong==='object'?Object.values(ef.danh_vong).reduce((t,v)=>t+(Number(v)||0),0):num(ef.danh_vong))*W.dv);
@@ -5271,6 +5284,14 @@ const AutoFarm={
       const t=strip(c.text);
       return /^(đi|thôi|hủy|đóng|bỏ qua|rời|đi tiếp|đi qua|rời đi|lui ra|cáo từ|không mua|không nhận|để sau)\s*$/i.test(t);
     };
+    /* Lựa chọn "không làm gì" viết thành câu thường (vd. «Bỏ đi, mặc cát lấp»): effects rỗng hoặc chỉ có lời kể → coi là lối rút, giá trị 0 */
+    const isNoop=c=>{
+      try{
+        const raw=this.rawChoice(c);if(!raw||raw.check)return false;
+        const L=[...A(raw.effects),...A(raw.success),...A(raw.failure),...A(raw.partial)];
+        return L.every(x=>x&&typeof x==='object'&&Object.keys(x).every(k=>k==='log'||k==='say'||k==='lore'||k==='if'));
+      }catch{return false}
+    };
     const chanceOf=c=>{
       const ch=c.chance;
       if(ch==null)return null;
@@ -5330,7 +5351,28 @@ const AutoFarm={
     narrow(notHet,'đã hết duyên');
 
     // Chính sách tài nguyên: tốn LT/công hiến/thọ nguyên chỉ bị loại khi người dùng KHÔNG cho phép
-    const spendBad=c=>{const q=this.choiceSpendsResource(c);if(q.thoNguyen&&!pol.thoNguyen)return true;return !pol.tonLT&&q.spends&&!q.thoNguyen};
+    let _freeBest=null;
+    const freeBest=()=>{
+      if(_freeBest!=null)return _freeBest;
+      let m=0;
+      for(const x of list){try{const q=this.choiceSpendsResource(x);if(q.spends||q.thoNguyen)continue;const e=this.choiceEV(x,null,lv(x));if(e.pts>m)m=e.pts}catch{}}
+      return _freeBest=m;
+    };
+    /* Tốn nhỏ/mất ít mà lời rõ (giá trị kỳ vọng đã trừ phí): cho qua nếu bật «Tốn nhỏ khi lời rõ».
+       Lời từ 25 điểm, hoặc từ 8 điểm khi hơn hẳn (≥20) mọi cửa không tốn — tránh phải chọn cửa tệ như bỏ mặc người chết đói. */
+    const smallOk=c=>{
+      const ev=this.choiceEV(c,null,lv(c)).pts;
+      return ev>=25||(ev>=8&&ev-freeBest()>=20);
+    };
+    const spendBad=c=>{
+      const q=this.choiceSpendsResource(c);if(q.thoNguyen&&!pol.thoNguyen)return true;
+      if(pol.tonLT||!q.spends||q.thoNguyen)return false;
+      if(pol.tonNho!==false&&!q.congHien&&q.linhThach<0){
+        const cap=Math.min(60,Math.max(5,Number(me().linhThach||0)*.03));
+        if(-q.linhThach<=cap&&smallOk(c))return false;
+      }
+      return true;
+    };
     const free=pool.filter(c=>!spendBad(c));
     if(free.length)narrow(free,'tốn tài nguyên');
     else{
@@ -5345,7 +5387,7 @@ const AutoFarm={
         if(h.injury>=2&&!pol.thuongNang)v.push('có thể trọng thương');
         if(h.tamMa>0&&!pol.tamMa)v.push('tăng tâm ma');
         if(h.karma&&!pol.oan)v.push('gieo oán / đắc tội');
-        if(h.lose&&!pol.matVat)v.push('mất vật phẩm');
+        if(h.lose&&!pol.matVat&&!(pol.tonNho!==false&&this.choiceEV(c,null,lv(c)).pts>=40))v.push('mất vật phẩm');
         if(h.join&&!pol.giaNhap)v.push('đổi môn phái');
         if(h.kill&&!pol.giet)v.push('sát nhân');
         c._viol=v;return v;
@@ -5404,16 +5446,30 @@ const AutoFarm={
         if(ch<0.3&&l!=='an_toan')score-=30;
       }
       // Thoát: chỉ khi không còn việc
-      if(isThoat(c))score-=80;
+      if(isThoat(c)){
+        /* Thoát phạt nặng khi còn việc; nhưng nếu mọi cửa khác đều lỗ rõ (≥4 điểm, thường tốn cả năm) thì thoát là lựa chọn đúng */
+        if(this._thoatOk==null||this._thoatList!==list){
+          this._thoatList=list;
+          this._thoatOk=!list.some(x=>{if(isThoat(x))return false;try{return this.choiceEV(x,null,lv(x)).pts>-4}catch{return true}});
+        }
+        score-=this._thoatOk?5:80;
+      }
       // Đang bị thương: tránh cửa có giao chiến
       if(this.injuryLevel()>=1&&l&&l!=='an_toan')score-=60;
       // Lui lấy phần thưởng đã có thì đáng giá hơn đánh tiếp
-      if(/lấy (tiền|thưởng|lời)|nhận thưởng|thu hoạch|rút lui/i.test(strip(c.text)))score+=45;
+      if(/lấy (tiền|thưởng|lời)|nhận thưởng|thu hoạch/i.test(strip(c.text)))score+=45;
+      else if(/rút lui/i.test(strip(c.text))&&(this.rec&&this.inFight?.()||run().tran))score+=45; // «Rút lui» chỉ được cộng khi đang giữa trận, không phải cửa đầu của nhiệm vụ
       // Lui đi/bỏ đi tay không: kém hơn làm việc
       if(/^(lặng lẽ lui|lui đi|bỏ đi|làm ngơ|mặc kệ|lờ đi)/i.test(strip(c.text)))score-=40;
       // Giá trị kỳ vọng từ effects thật của game (tu vi, linh thạch, đồ, chỉ số, khí vận, lịch luyện…), giới hạn ±70 để không đè luật an toàn
       const ev=this.choiceEV(c,ch,l);
-      score+=Math.max(-70,Math.min(70,ev.pts*.5));c._ev=ev;
+      /* Giá trị kỳ vọng quyết định thật sự; lỗ nhỏ (≤4 điểm, thường chỉ là thời gian) bỏ qua để không bỏ chuyện dẫn truyện; có chuỗi/cờ thì cộng thêm giá trị tiềm năng.
+         Lối rút tay không (effects rỗng) có giá trị 0 nên thắng mọi cửa lỗ thật (thương tích, mất tiền, tốn thời gian lớn). */
+      {let p=ev.pts,pot=false;
+       try{const raw=this.rawChoice(c);pot=!!(raw&&/start_chain|advance_chain|goto_encounter|goto_scene|"flag"|lore/.test(JSON.stringify(raw))&&!isNoop(c))}catch{}
+       if(pot){if(p<0&&p>=-4)p=0;p+=4}
+       score+=Math.max(-110,Math.min(110,p*.9))}
+      c._ev=ev;
       if(A(c.vat).length)score+=4;
       if(c.phucHet)score-=60;
       // Mua/cược
@@ -5433,7 +5489,19 @@ const AutoFarm={
     const best=scored[0]?.c||null;
     if(best){
       const ch=chanceOf(best);
-      this.push('pick → ['+(best.index+1)+'] '+strip(best.text).slice(0,42)+(best.risk&&best.risk.enemy&&!strip(best.text).includes(best.risk.enemy)?' ('+best.risk.enemy+')':'')+' risk='+(lv(best)||'none')+(ch!=null?(' ch='+ch):'')+' ev='+(best._ev?best._ev.pts.toFixed(1):'-')+' score='+scored[0].score.toFixed(1),'dbg',{scores:scored.slice(0,6).map(x=>({i:x.c.index,t:strip(x.c.text).slice(0,40),s:Math.round(x.score)})),poolSize:pool.length,listSize:list.length,enc:activeId,kind:encKind});
+      this.push('pick → ['+(best.index+1)+'] '+strip(best.text).slice(0,42)+(best.risk&&best.risk.enemy&&!strip(best.text).includes(best.risk.enemy)?' ('+best.risk.enemy+')':'')+' risk='+(lv(best)||'none')+(ch!=null?(' ch='+ch):'')+' ev='+(best._ev?best._ev.pts.toFixed(1):'-')+' score='+scored[0].score.toFixed(1),'dbg',{scores:scored.slice(0,6).map(x=>({i:x.c.index,t:strip(x.c.text).slice(0,40),s:Math.round(x.score)})),poolSize:pool.length,listSize:list.length,enc:activeId,kind:encKind,
+        /* chi tiết quyết định: mọi lựa chọn của sự kiện, vì sao bị loại, điểm, giá trị kỳ vọng và các thành phần */
+        dec:(()=>{try{
+          const drop=new Map((D.drops||[]).map(d=>[d.i,d.w]));
+          return{ev:activeId,ten:T(this.encDef(activeId)?.ten||''),pick:best.index,
+            choices:list.map(c=>{let ev=c._ev;try{if(!ev)ev=this.choiceEV(c,null,lv(c))}catch{}
+              let sp=null;try{const q=this.choiceSpendsResource(c);if(q.spends)sp={lt:q.linhThach,ch:q.congHien,tho:q.thoNguyen||0}}catch{}
+              const sc=scored.find(x=>x.c===c);
+              return{i:c.index,t:strip(c.text).slice(0,70),risk:lv(c)||null,enemy:c.risk?.enemy||null,ev:ev?+ev.pts.toFixed(1):null,parts:ev?Object.fromEntries(Object.entries(ev.parts||{}).map(([k,v])=>[k,+Number(v).toFixed(1)])):null,
+                hz:c._hz?Object.fromEntries(Object.entries(c._hz).filter(([,v])=>v)):null,viol:c._viol&&c._viol.length?c._viol:null,spend:sp,noop:isNoop(c)||undefined,drop:drop.get(c.index)||null,score:sc?Math.round(sc.score):null,chance:chanceOf(c)}})}
+        }catch(e){return{err:String(e.message||e)}}})()});
+      try{if(this._dec)this.outcomeCheck(true)}catch{} // lựa chọn trước trong cùng sự kiện: chốt kết quả trước khi ghi lựa chọn mới
+      this._dec={t:Date.now(),ev:activeId,ten:T(this.encDef(activeId)?.ten||''),text:strip(best.text).slice(0,60),snap:this.outSnap()};
     }
     return best;
   },
@@ -5981,8 +6049,29 @@ const AutoFarm={
     }
   },
   tryCombat(){return this.tryEncounter()},
+  /* Ảnh chụp chỉ số để so sánh trước/sau một sự kiện (ghi "kết quả" vào log) */
+  outSnap(){
+    try{const r=run(),nv=r.nhanVat||{};const bag={...(nv.tuiDo||{})};for(const [i,q] of Object.entries(this._soldBag||{}))bag[i]=(bag[i]||0)+q; // cộng lại món đã Bán nhanh để không lẫn vào kết quả sự kiện
+      return{nam:Number(r.nam)||0,lt:Number(nv.linhThach||0)-(this._selfLt||0),tuVi:Number(nv.tuVi||0),thuong:Number(nv.thuongThe||0),tamMa:Number(r.tamMa||0),ll:Number(nv.lichLuyen||0),bag,slot:r.viTri}}catch{return null}
+  },
+  outcomeCheck(force){
+    const d=this._dec;if(!d)return;
+    const r=run(),act=r.active;
+    if(!force){
+      if(act&&act.id===d.ev&&Date.now()-d.t<20000)return;           // sự kiện vẫn đang chạy
+      if(r.tran&&!r.tran.ketThuc&&Date.now()-d.t<60000)return;      // đang đánh
+    }
+    this._dec=null;
+    const a=d.snap,b=this.outSnap();if(!a||!b)return;
+    const items={};for(const id of new Set([...Object.keys(a.bag),...Object.keys(b.bag)])){const dq=(b.bag[id]||0)-(a.bag[id]||0);if(dq){let n=id;try{n=T(C.items.get(id)?.ten||id)}catch{}items[n]=dq}}
+    const dl={nam:+(b.nam-a.nam).toFixed(3),lt:Math.round(b.lt-a.lt),tuVi:+(b.tuVi-a.tuVi).toFixed(2),thuong:b.thuong-a.thuong,tamMa:+(b.tamMa-a.tamMa).toFixed(1),ll:+(b.ll-a.ll).toFixed(1)};
+    const parts=[];if(dl.lt)parts.push((dl.lt>0?'+':'')+dl.lt+' LT');if(dl.tuVi)parts.push((dl.tuVi>0?'+':'')+dl.tuVi+' tu vi');if(dl.thuong)parts.push('thương '+(dl.thuong>0?'+':'')+dl.thuong);if(dl.tamMa)parts.push('tâm ma '+(dl.tamMa>0?'+':'')+dl.tamMa);if(dl.nam)parts.push(dl.nam+' năm');
+    const it=Object.entries(items);if(it.length)parts.push(it.slice(0,6).map(([n,q])=>(q>0?'+':'')+q+' '+n).join(', '));
+    this.push('kết quả «'+(d.ten||d.ev)+'» ['+d.text+'] → '+(parts.join(' · ')||'không đổi'),'dbg',{ev:d.ev,pick:d.text,delta:dl,items,ms:Date.now()-d.t});
+  },
   async tick(){
     if(!this.running)return;
+    try{this.outcomeCheck()}catch{}
     this.stepN++;
     try{this.trackGains();this.syncGainsBar()}catch{}
     try{this.jrnSync()}catch{}
@@ -7155,7 +7244,7 @@ function qsBar(){
 }
 function qsAutoSell(o){
   if(!QS.K?.IP){if(!QS.loading){QS.loading=1;QS.loadErr=null;BuildEngine.ensureCore().then(k=>{QS.K=k;if(!k?.IP)QS.loadErr='không thấy hàm giá bán (IP) của game'}).catch(e=>{QS.loadErr=e.message||String(e)}).finally(()=>{QS.loading=0})}return QS.loadErr&&!QS.loading?{noprice:QS.loadErr}:null}
-  const nv=me(),ks=new Set(o.kinds),gs=new Set(o.grades),skipped=[];let gold=0,pcs=0,kinds=0,match=0,held=0,total=0;
+  const nv=me(),ks=new Set(o.kinds),gs=new Set(o.grades),skipped=[];let gold=0,pcs=0,kinds=0,match=0,held=0,total=0;const sold={};
   try{
     const ctx=qsCtx();
     for(const id of Object.keys(nv.tuiDo||{})){
@@ -7169,11 +7258,11 @@ function qsAutoSell(o){
       let p=0;for(let a=0;a<m;a++){const x=Number(QS.K.IP(ctx,id,undefined,a));if(!Number.isFinite(x)){p=NaN;break}p+=x}
       if(!Number.isFinite(p)){skipped.push(id);continue}
       nv.tuiDo[id]=n-m;if(!(nv.tuiDo[id]>0))delete nv.tuiDo[id];
-      nv.linhThach=Number(nv.linhThach||0)+p;gold+=p;pcs+=m;kinds++;
+      nv.linhThach=Number(nv.linhThach||0)+p;gold+=p;pcs+=m;kinds++;sold[id]=m;
     }
     if(pcs)g.store.setState({run:{...run(),nhanVat:{...nv,tuiDo:{...nv.tuiDo}}}});
-  }catch(e){return{err:e.message||String(e),kinds,pcs,gold,skipped,total,match,held}}
-  return{kinds,pcs,gold,skipped,total,match,held};
+  }catch(e){return{err:e.message||String(e),kinds,pcs,gold,skipped,total,match,held,sold}}
+  return{kinds,pcs,gold,skipped,total,match,held,sold};
 }
 function qsClick(){if(!QS.on)return qsStart();if(qsTotals().kinds)qsDoSell();else qsStop()}
 async function qsStart(){
