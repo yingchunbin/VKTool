@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261126-game030-v132',ID='vkt2',g=window.game;
+const BUILD='20261126-game030-v133',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -4377,6 +4377,7 @@ const AutoFarm={
   },
   /* Mỗi nhịp rảnh: tới hạn thì Bán nhanh ngay trong túi */
   sellStep(){
+    if(!this.running||this.paused)return false;
     if(!this.sellDue())return false;
     const d=this.sellAnywhere();
     if(d==='sold'){this._sellAt=Date.now()+3000;return true}
@@ -7311,7 +7312,7 @@ const qsCss=document.createElement('style');qsCss.id=ID+'-qs-style';
 qsCss.textContent=`.vkt-qs-on .bnv-tui [data-tui]:not(.trong){cursor:pointer}.vkt-qs-sel{outline:2px solid #7a1f1a!important;outline-offset:-2px;box-shadow:0 0 0 2px rgba(122,31,26,.35) inset,0 0 8px rgba(122,31,26,.55)!important}
 .vkt-qs-btn{margin-left:6px}.vkt-qs-btn .vkt-qs-ico{display:inline-block;vertical-align:-.15em}`;
 document.head.appendChild(qsCss);
-setInterval(()=>{try{AutoFarm.P();const o=AutoFarm.opts?.sell;if(o&&o.on&&!QS.busy)AutoFarm.sellStep()}catch(e){try{AutoFarm._sellMsg='Lỗi tự bán: '+(e.message||e);AutoFarm.noteOnce('sellerr',AutoFarm._sellMsg)}catch{}}},4000);
+setInterval(()=>{try{AutoFarm.P();const o=AutoFarm.opts?.sell;if(o&&o.on&&!QS.busy&&AutoFarm.running&&!AutoFarm.paused)AutoFarm.sellStep() /* chỉ bán khi Auto đang chạy; tạm dừng/dừng hẳn thì không đụng vào túi */}catch(e){try{AutoFarm._sellMsg='Lỗi tự bán: '+(e.message||e);AutoFarm.noteOnce('sellerr',AutoFarm._sellMsg)}catch{}}},4000);
 let qsRaf=0;
 function qsInject(){qsRaf=0;try{document.querySelectorAll('.bnv-don-nut:not(.vkt-qs-btn)').forEach(b=>{const p=b.parentElement;if(!p)return;let n=p.querySelector(':scope > .vkt-qs-btn');if(!n){n=document.createElement('button');n.type='button';n.className='nut-phu bnv-don-nut vkt-qs-btn';const ic=b.firstElementChild;n.innerHTML=`<span class="${ic?E(ic.getAttribute('class')||''):''} vkt-qs-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5h4a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3h4"/></svg></span> <span class="vkt-qs-lab">Bán nhanh</span>`;n.onclick=e=>{e.stopPropagation();qsClick()};b.after(n)}});qsBar();qsMarks();if(QS.on&&!document.querySelector('.bnv-tui'))qsStop()}catch{}}
 const qsMo=new MutationObserver(()=>{if(!qsRaf)qsRaf=requestAnimationFrame(qsInject)});
