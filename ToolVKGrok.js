@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261126-game030-v126',ID='vkt2',g=window.game;
+const BUILD='20261126-game030-v127',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -4282,7 +4282,7 @@ const AutoFarm={
       if(r==='partial')return 'partial';
     }
     if(!pick){
-      if(!this._noHealAt||Date.now()-this._noHealAt>15000){this._noHealAt=Date.now();this.push(`Thương thế: ${this.injuryName(lv)} — túi không có đan chữa dùng được`,'err',{reason})}
+      if(!this._noHealAt||Date.now()-this._noHealAt>120000){this._noHealAt=Date.now();this.push(`Thương thế: ${this.injuryName(lv)} — túi không có đan chữa dùng được`,lv>=2?'err':'dbg',{reason})}
       if(this.opts.pauseIfNoHeal&&lv>=2){
         this.paused=true;this.syncFab();
         toast('Auto tạm dừng: bị '+this.injuryName(lv)+' mà không có thuốc','',4000);
@@ -6234,7 +6234,7 @@ const AutoFarm={
         }
       }catch(e){this.push('Đổi chỗ: '+(e.message||e),'dbg')}
       clearTimeout(this.timer);
-      this.timer=setTimeout(()=>this.tick(),Math.max(1000,this.opts.delayMs));
+      {const d=Math.max(1000,this.opts.delayMs);this._due=Date.now()+d;this.timer=setTimeout(()=>{this.timer=0;this.tick()},d)}
       return;
     }catch(e){
       this.stats.err++;this.push('tick exception: '+(e.message||e),'err');this.stop('exception');
@@ -6243,12 +6243,34 @@ const AutoFarm={
   schedule(){
     clearTimeout(this.timer);
     if(!this.running)return;
-    this.timer=setTimeout(()=>this.tick(),Math.max(400,this.opts.delayMs|0));
+    const d=Math.max(400,this.opts.delayMs|0);this._due=Date.now()+d;
+    this.timer=setTimeout(()=>{this.timer=0;this.tick()},d);
+  },
+  /* Chrome siết timer của tab nền (1 lần/phút). Worker + Web Lock giữ nhịp để Auto chạy khi sang tab khác/hạ Chrome */
+  keepAlive(on){
+    try{
+      if(!on){this._kaW?.terminate();this._kaW=null;try{this._kaRel?.()}catch{}this._kaRel=null;return}
+      if(!this._kaW){
+        try{
+          const url=URL.createObjectURL(new Blob(['setInterval(()=>postMessage(1),1000)'],{type:'text/javascript'}));
+          const w=new Worker(url);URL.revokeObjectURL(url);
+          w.onmessage=()=>{try{
+            if(!this.running||this.paused||!this.timer)return;
+            if(Date.now()>this._due+300){clearTimeout(this.timer);this.timer=0;this.tick()}
+          }catch{}};
+          this._kaW=w;
+        }catch(e){this._kaErr=String(e&&e.message||e)}
+      }
+      if(!this._kaRel&&navigator.locks?.request){
+        navigator.locks.request('vkt-keepalive',{ifAvailable:true},()=>new Promise(res=>{this._kaRel=res})).catch(()=>{});
+      }
+      if(!this._kaW&&!this._kaNote){this._kaNote=1;this.push('Chạy nền: không tạo được Worker giữ nhịp ('+(this._kaErr||'?')+') — dùng Web Lock','dbg')}
+    }catch{}
   },
   start(){
     if(this.running&&!this.paused)return;
     if(!g?.state?.run){toast('Chưa có kiếp.');return}
-    this.running=true;this.paused=false;this.stepN=0;this.emptyScans=0;this.stats={ok:0,skip:0,err:0,heal:0};
+    this.running=true;this.paused=false;this.keepAlive(true);this.stepN=0;this.emptyScans=0;this.stats={ok:0,skip:0,err:0,heal:0};
     this.gainsBase=this.charSnapshot();
     this.gainsPrev=this.gainsBase;
     this.gainsAcc={
@@ -6287,7 +6309,7 @@ const AutoFarm={
   },
   stop(reason){
     if(!this.running&&!this.timer)return;
-    this.running=false;this.paused=false;clearTimeout(this.timer);this.timer=null;
+    this.running=false;this.paused=false;clearTimeout(this.timer);this.timer=null;this.keepAlive(false);
     try{this.jrnEnd('auto dừng'+(reason?': '+reason:''))}catch{}
     this.push('Đã dừng'+(reason?': '+reason:''),'err');
     this.dumpState('stop');
