@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261126-game030-v124',ID='vkt2',g=window.game;
+const BUILD='20261126-game030-v126',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -1880,8 +1880,12 @@ function render(){
   if(!ui.isOpen)return;
   const keep=body.scrollTop;$(panel,'#'+ID+'-sub').textContent=hdrSub();
   ui._sig=null;const fn=VIEWS[ui.tab]||VIEWS.quest;fn();syncNav();body.scrollTop=keep;
+  /* nội dung nạp/đổi chiều cao sau đó (ảnh, thẻ vật phẩm...) không được kéo trang lệch: đặt lại vị trí nếu người dùng chưa cuộn */
+  if(keep>0){const t0=scr.t,tab=ui.tab,fix=()=>{if(ui.tab===tab&&scr.t===t0&&!scr.touch&&Math.abs(body.scrollTop-keep)>2){scr.prog=true;body.scrollTop=keep;scr.prog=false}};requestAnimationFrame(fix);setTimeout(fix,150);setTimeout(fix,600)}
 }
-function softRender(){if(!ui.isOpen)return;if(userScrolling()){clearTimeout(ui._srT);ui._srT=setTimeout(softRender,450);return}const a=document.activeElement;if(a&&panel.contains(a)&&/INPUT|SELECT/.test(a.tagName))return;if(ui.tab==='build'||ui.tab==='check'||ui.tab==='breakthrough')return;if(ui.tab==='auto'&&AutoFarm?.running){AutoFarm.refreshLogOnly?.();return}
+function softRender(){if(!ui.isOpen)return;if(userScrolling()){clearTimeout(ui._srT);ui._srT=setTimeout(softRender,450);return}
+  /* đang đọc giữa trang (vừa cuộn xuống trong 40s): không dựng lại, chờ thêm */
+  if(body.scrollTop>40&&performance.now()-scr.t<40000){clearTimeout(ui._srT);ui._srT=setTimeout(softRender,5000);return}const a=document.activeElement;if(a&&panel.contains(a)&&/INPUT|SELECT/.test(a.tagName))return;if(ui.tab==='build'||ui.tab==='check'||ui.tab==='breakthrough')return;if(ui.tab==='auto'){AutoFarm.refreshLogOnly?.();return}
   if(ui.tab==='quest'||ui.tab==='realm'||ui.tab==='map'){let sg='';try{sg=tabSig(ui.tab)}catch{}if(sg&&sg===ui._sig){const sub=$(panel,'#'+ID+'-sub');if(sub)sub.textContent=hdrSub();return}render();ui._sig=sg;return}
   render()}
 function tabSig(tab){
@@ -4144,12 +4148,18 @@ const AutoFarm={
   refreshLogOnly(){
     if(!ui.isOpen||ui.tab!=='auto')return;
     const el=$(body,'#af-log');if(!el)return;
+    const sm=$(body,'#sl-msg');if(sm&&this._sellMsg&&sm.textContent!==this._sellMsg)sm.textContent=this._sellMsg;
+    const sig=this.log.length+'|'+(this.log[this.log.length-1]?.t||'');
+    if(el._sig===sig&&el.firstChild){const st0=$(body,'#af-stats');if(st0)st0.textContent=`OK ${this.stats.ok} · bỏ ${this.stats.skip} · lỗi ${this.stats.err} · chữa ${this.stats.heal||0}${this.running?(this.paused?' · TẠM DỪNG':' · ĐANG CHẠY'):''}`;return}
+    el._sig=sig;
+    const h0=el.offsetHeight,above=el.getBoundingClientRect().bottom<body.getBoundingClientRect().top+4,k0=body.scrollTop;
     el.innerHTML=this.log.slice().reverse().map(x=>{
       const k=x.kind||'';
       const cls=k==='err'?' r':k==='ok'?' g':k==='dbg'?'':'';
       const t=x.tShow||x.t||'';
       return `<div class="sub${cls}">[${E(t)}]${k?` <b>${E(k)}</b>`:''} ${E(x.msg)}</div>`;
     }).join('')||'<div class="sub">Chưa có nhật ký.</div>';
+    if(above){const dh=el.offsetHeight-h0;if(dh)body.scrollTop=k0+dh}
     const st=$(body,'#af-stats');
     if(st)st.textContent=`OK ${this.stats.ok} · bỏ ${this.stats.skip} · lỗi ${this.stats.err} · chữa ${this.stats.heal||0}${this.running?(this.paused?' · TẠM DỪNG':' · ĐANG CHẠY'):''}`;
     this.syncGainsBar?.();
@@ -4348,7 +4358,7 @@ const AutoFarm={
     if(r.noprice){this._sellMsg='Lỗi: không nạp được hàm giá — '+r.noprice;this.noteOnce('sellnoprice','Tự bán: không nạp được hàm giá của game ('+r.noprice+')');return'err'}
     if(r.err){this.push('Bán nhanh lỗi: '+r.err,'err');return'err'}
     this._sellMsg=r.pcs?`Lần bán gần nhất: ${F(r.pcs)} cái, +${F(r.gold)} linh thạch`:`Chưa có gì để bán (túi ${r.total} loại, ${r.match} khớp loại+phẩm)`;
-    if(!r.pcs){this.noteOnce('sellnone',`Tự bán: túi ${r.total} loại, ${r.match} khớp loại+phẩm đã tick, ${r.held} giữ lại, ${r.skipped.length} không bán được (khóa/không giá) → không có gì để bán`);return'nothing'}
+    if(!r.pcs)return'nothing'
     this.stats.sell=(this.stats.sell||0)+r.pcs;this.stats.sellGain=(this.stats.sellGain||0)+r.gold;
     this.push(`Bán nhanh: ${F(r.kinds)} món (${F(r.pcs)} cái), +${F(r.gold)} linh thạch`+(r.skipped.length?` · bỏ qua ${r.skipped.length} món không bán được`:''),'ok',{sold:r.pcs,gain:r.gold});
     return'sold';
