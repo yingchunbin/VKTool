@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261126-game030-v123',ID='vkt2',g=window.game;
+const BUILD='20261126-game030-v124',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -7092,7 +7092,7 @@ function qsBlock(id){
   if((nv.lockedItems||[]).includes(id))return'Đã khóa';
   if(it.loai==='lenh_bai'||it.tran_phai)return'Không bán được';
   if(!(it.gia>0))return'Không có giá';
-  if(Number(it.pham)===8)return'Bảo vật Nghịch Thiên';
+  if(Number(it.pham_cap)>=8||(it.tag||[]).includes?.('di_bao')||(it.tag||[]).includes?.('nghich_thien'))return'Bảo vật Nghịch Thiên';
   return null;
 }
 function qsQuote(id){
@@ -7129,7 +7129,7 @@ function qsAutoSell(o){
     for(const id of Object.keys(nv.tuiDo||{})){
       const it=C.items.get(id),n=Number(nv.tuiDo[id]||0);
       if(!it||n<=0)continue;total++;
-      if(!ks.has(it.loai)||!gs.has(Number(it.pham)))continue;
+      if(!ks.has(it.loai)||!gs.has(Number(it.pham_cap||1)))continue;
       match++;
       if(o.keepHeal&&o.isHeal&&o.isHeal(it)){held++;continue}
       if(qsBlock(id)){skipped.push(id);continue}
@@ -7157,7 +7157,7 @@ function qsDoSell(){
   if(QS.busy||!QS.on)return;const nv=me(),t=qsTotals();if(!t.kinds)return;
   const ids=[...QS.sel],skipped=[];const ok=ids.filter(id=>{const b=qsBlock(id);if(b){skipped.push(`${T(C.items.get(id)?.ten||id)} (${b})`);return false}return true});
   if(!ok.length){toast('Không có món nào bán được: '+skipped.join(', '),'err',6000);return}
-  const high=ok.filter(id=>Number(C.items.get(id)?.pham)>=5).map(id=>T(C.items.get(id).ten));
+  const high=ok.filter(id=>Number(C.items.get(id)?.pham_cap)>=5).map(id=>T(C.items.get(id).ten));
   if(high.length&&!confirm('Có vật phẩm phẩm cao: '+high.join(', ')+'. Vẫn bán?'))return;
   QS.busy=true;let gold=0,pcs=0,kinds=0;
   try{
