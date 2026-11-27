@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const BUILD='20261126-game030-v133',ID='vkt2',g=window.game;
+const BUILD='20261127-game030-v139',ID='vkt2',g=window.game;
 if(!g?.state?.run||!g?.env?.content?.encounters||!g?.env?.world){alert('Game chưa sẵn sàng. Hãy vào một kiếp rồi chạy lại.');return}
 try{window.__VKT2__?.destroy?.()}catch{}
 document.getElementById(ID)?.remove();document.getElementById(ID+'-style')?.remove();document.getElementById(ID+'-fab')?.remove();
@@ -436,16 +436,28 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     return s;
   }
   function ruleAudit(nv,R){const pieces=[];for(let i=0;i<A(nv.kinhMach?.manh).length;i++){const m=nv.kinhMach.manh[i],it=C().items.get(m.item),rm=A(R.manh)[i];if(!it)continue;pieces.push({id:m.item,name:it.ten,alignment:itemAlignment(it),elements:itemElements(it),connected:Boolean(rm?.thong),color:rm?.mau??1,generation:rm?.sinhKhac??1,intrinsic:rm?.noiTai??1,route:rm?.kinhLo??1,acupoint:rm?.huyet??1,isEvil:itemAlignment(it)==='ta'&&it.loai==='cong_phap'})}return{pieces,dead:pieces.filter(x=>!x.connected).length,evilActive:pieces.filter(x=>x.isEvil&&x.connected).length,evilTotal:pieces.filter(x=>x.isEvil).length}}
+  /* Mô hình linh lực theo luật game: mỗi lượt hồi linhLucMoiLuot (trần linhLucToiDa), bắt đầu trận đầy bình; mỗi lượt ra 1 chiêu đã hết hồi (ta.hoi[id]=hiệp+chieu.hoi → dùng lại sau `hoi` lượt).
+     Mô phỏng 16 lượt xoay vòng chiêu mạnh nhất đang sẵn: (a) không giới hạn linh lực, (b) có giới hạn linh lực. eff = uy thực / uy lý tưởng. D = linh lực/lượt xoay vòng cần; Σ = Σ phí/hồi (mỗi chiêu một lần/hồi). */
+  function spiritModel(P){
+    const ll=P.linhLucMoiLuot||0,maxll=P.linhLucToiDa!=null?P.linhLucToiDa:ll*3,T=16;
+    const sk=(P.chieu||[]).filter(x=>x&&x.dang&&(x.uy||0)>0).map(x=>({phi:Math.max(0,x.phi||0),per:Math.max(1,x.hoi||0),uy:x.uy||0}));
+    if(!sk.length)return{n:0,eff:0,D:0,sumPer:0,ll,maxll,castRate:0,starved:0,sustain:true,minCost:0};
+    const run=lim=>{const cd=sk.map(()=>0);let sp=maxll,uy=0,cast=0,spent=0,starve=0,sSteady=0;for(let t=0;t<T;t++){if(t>0)sp=Math.min(maxll,sp+ll);let b=-1;for(let i=0;i<sk.length;i++){if(cd[i]>t)continue;if(lim&&sk[i].phi>sp+1e-9)continue;if(b<0||sk[i].uy>sk[b].uy)b=i}
+      if(b<0){if(lim&&sk.some((x,i)=>cd[i]<=t))starve++;continue}
+      cd[b]=t+sk[b].per;uy+=sk[b].uy;cast++;if(lim)sp-=sk[b].phi;spent+=sk[b].phi;if(t>=T/2)sSteady+=sk[b].phi}
+      return{uy,cast,starve,spent,sSteady}};
+    const a=run(false),b=run(true),sumPer=sk.reduce((x,y)=>x+y.phi/y.per,0);
+    const eff=a.uy>0?Math.min(1,b.uy/a.uy):1,D=a.spent/T;
+    return{n:sk.length,eff,D,sumPer,ll,maxll,castRate:b.cast/T,starved:b.starve,sustain:eff>=0.9&&ll+1e-9>=a.sSteady/(T/2)*0.85,minCost:Math.min(...sk.map(x=>x.phi))}}
   function meridianQuality(R,P,mode){const live=(R.manh||[]).filter(Boolean),dead=live.filter(x=>!x.thong).length,connected=live.length-dead,heSo=live.reduce((a,x)=>a+(x.heSo||0),0),huyet=live.filter(x=>(x.huyet||1)>1).length,nghich=R.diemNghich||0,ll=P.linhLucMoiLuot||0,maxll=P.linhLucToiDa||ll*3,costs=(P.chieu||[]).filter(x=>x.dang&&x.phi>0).map(x=>x.phi),minCost=costs.length?Math.min(...costs):0,maxCost=costs.length?Math.max(...costs):0,castReady=!minCost||ll>=minCost,burstReady=!maxCost||maxll>=maxCost;
     // nghịch: game trừ đột phá 3%/điểm (trần 15%) — mode tu gần như không chấp nhận
     let score=connected*3-dead*200000-nghich*(mode==='tu'?5000:mode==='danh'?20:80);
-    // danh: bắt buộc hồi/lượt >= chiêu rẻ nhất; thưởng nếu >= tổng phi mọi chiêu đang có
-    const sumCost=costs.reduce((a,b)=>a+b,0);
-    const sustain= !sumCost || ll>=sumCost;
-    if(mode==='danh')score+=ll*6+(castReady?40:-8000)+(sustain?50:-2500)+(burstReady?15:-200);
-    else if(mode==='tu')score+=ll*1+(castReady?5:0);
-    else score+=ll*3+(castReady?20:-1500)+(sustain?15:-400);
-    return{score,dead,connected,heSo,huyet,nghich,ll,maxll,minCost,maxCost,castReady,burstReady}}
+    // Linh lực: không chỉ so 1 chỉ số — mô phỏng xoay vòng chiêu có hồi chiêu + bình linh lực (spiritModel). Thiếu linh lực để đánh = phế.
+    const sp=spiritModel(P),sustain=sp.sustain,short=1-sp.eff;
+    if(mode==='danh')score+=ll*6+(castReady?40:-8000)+(sustain?50:-2500)-short*30000-(sp.eff<0.6?8000:0)+sp.eff*400+(burstReady?15:-200);
+    else if(mode==='tu')score+=ll*1+(castReady?5:0)-short*2500;
+    else score+=ll*3+(castReady?20:-1500)-short*9000-(sp.eff<0.5?4000:0)+(sustain?15:-400);
+    return{score,dead,connected,heSo,huyet,nghich,ll,maxll,minCost,maxCost,castReady,burstReady,sp,sustain}}
   function meridianAudit(nv,R,P){const Cc=C(),roles={tam:0,dau:0,phap:0,bao:0},pieces=[];for(let i=0;i<(nv.kinhMach.manh||[]).length;i++){const m=nv.kinhMach.manh[i],it=Cc.items.get(m.item),rm=(R.manh||[])[i];if(!it)continue;let role='Khác';if(it.loai==='cong_phap'){if(it.chieu){roles.dau++;role='Đấu pháp'}else{roles.tam++;role='Tâm pháp'}}else if(it.loai==='phap_khi'){if(it.chieu){roles.phap++;role='Pháp khí'}else{roles.bao++;role='Bảo vật'}}pieces.push({id:m.item,ten:it.ten,role,thong:!!rm?.thong,heSo:rm?.heSo||0,huyet:(rm?.huyet||1)>1,kinhLo:rm?.kinhLo||1,mau:rm?.mau||1,sinhKhac:rm?.sinhKhac||1,noiTai:rm?.noiTai||1})}return{roles,pieces,...meridianQuality(R,P,'danh')}}
   /* Thành thạo (masteryMult): Hg = 0.5 + 0.5·thành thạo; món mới chưa lĩnh ngộ bắt đầu ở 0 (×0.5), viên mãn 500 năm ×1.1.
      Game xem trước đúng như vậy; Rt không tự đặt, nên phải đặt tay — nếu không món mới bị chấm cao hơn thực tế gấp đôi. */
@@ -473,18 +485,14 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
       // Độ lấp: số ô bị mảnh chiếm (khuyến khích xếp đầy hơn khi giả định)
       const fs0=fillStat(manh),filled=fs0.f;
       const nPieces=fs0.n-fs0.low*6;
-      let score=-dead*1e12;
+      let score=-dead*1e12,parts=null;
       if(mode==='danh'){
         // Mục tiêu chính: số trận thắng. Lấp ô chỉ phụ. Đủ linh lực ra chiêu.
-        const costs=(P.chieu||[]).filter(x=>x.dang&&x.phi>0).map(x=>x.phi);
-        const minC=costs.length?Math.min(...costs):0;
-        const sumC=costs.reduce((a,b)=>a+b,0);
-        const ll=P.linhLucMoiLuot||0;
-        const nChieu=costs.length;
-        if(minC&&ll<minC)score-=12000; // không ra nổi chiêu → gần như loại
-        else if(sumC&&ll<sumC)score-=1500;
+        const ll=P.linhLucMoiLuot||0,sp=mq.sp||spiritModel(P),nChieu=sp.n;
+        if(nChieu&&sp.minCost&&ll<sp.minCost&&sp.maxll<sp.minCost)score-=12000; // không ra nổi chiêu → gần như loại
         if(nChieu<1)score-=6000; // không có chiêu đánh
         // Thắng trận vẫn là chính; lấp ô phụ nhưng đủ mạnh để không để lưới trống (đồ đã đúng cảnh)
+        parts={wins:wins*8000,fight:fightScore*2.2,mq:mq.score*0.3,toc:toc*15,dp:dp*8,nghich:-nghich*30,filled:filled*22,nPieces:nPieces*40,ll:ll*10,nChieu:nChieu*80,eff:sp.eff,fightRaw:fightScore};
         score+=wins*8000+fightScore*2.2+mq.score*0.3+toc*15+dp*8-nghich*30+filled*22+nPieces*40+ll*10+nChieu*80;
       }else if(mode==='tu'){
         // Tu luyện: toc + đột phá thực; ưu tiên 0 nghịch nhưng vẫn thưởng lấp đầy khi nghịch không tăng
@@ -509,7 +517,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
       }
       score+=preferenceScore(manh,mode)+schoolDominanceScore(manh,mode)+pathShareScore(manh,mode);score+=schoolReqScore(nv,R);
       const rules=ruleAudit(nv,R),audit=meridianAudit(nv,R,P),school=schoolStats(manh);
-      const out={s:score,wins,n:enemies.length,P,R,mq,enemyCount:enemies.length,rules,audit,school};
+      const out={s:score,wins,n:enemies.length,P,R,mq,enemyCount:enemies.length,rules,audit,school,parts};
       if(cache.size>3000)cache.clear();cache.set(key,out);return out}}
   const _candCache = new WeakMap();
   async function buildCandidates(nv0, hypo=false) {
@@ -628,7 +636,13 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
       const nat=cg<=0?2:Math.min(7,cg+2);let mx=0;for(const id of pool){const ph=c.items.get(id)?.pham_cap||0;if(ph<8&&ph>mx)mx=ph}
       S.pref=S.pref||{};S.pref._refPham=Math.min(nat,mx||nat);
     }
-    const ck = hypo + '|' + pool.join(',');
+    { // Lọc phẩm theo mức đã chọn cho TOÀN pool (trước chỉ áp khi lấp hố → đồ thấp 2–3 bậc vẫn lọt vào qua anneal)
+      const keep = pool.filter(qualFill);
+      if (keep.length >= 8 || keep.length === pool.length) pool = keep; else { S.pref._gapRelaxed = pool.length - keep.length; }
+    }
+    try { const hist = {}; for (const id of pool) { const ph = c.items.get(id)?.pham_cap || 0; hist[ph] = (hist[ph] || 0) + 1; }
+      (S.dbg = S.dbg || {})[hypo ? 'hypo' : 'bag'] = { pool: pool.length, refPham: S.pref._refPham, fillGap: fillGap(), gapRelaxed: S.pref._gapRelaxed || 0, phamHist: hist, school, pathW: Number(p.pathW || p.w || 0), cg, relaxedPath: S.pref._relaxed || 0 }; } catch {}
+    const ck = hypo + '|' + pool.join(',') + '|' + fillGap();
     { const m0 = _candCache.get(nv0); if (m0 && m0.has(ck)) return m0.get(ck); }
     const nvWork = hypo ? (() => {
       const n = clone(nv0);
@@ -801,7 +815,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     const ev = makeEval({ ...clone(nv), kinhMach: { ...clone(nv.kinhMach), manh: [] } }, enemies, mode);
     const manh = nv.kinhMach.manh.map((m) => ({ m, key: m.item + ':' + m.x + ',' + m.y + ',' + m.xoay }));
     const e = ev(manh);
-    return{manh:clone(nv.kinhMach.manh),score:e.s,wins:e.wins,n:enemies.length,P:e.P,R:e.R,mq:e.mq,rules:e.rules,audit:e.audit,school:e.school,s:e.s};
+    return{manh:clone(nv.kinhMach.manh),score:e.s,wins:e.wins,n:enemies.length,P:e.P,R:e.R,mq:e.mq,rules:e.rules,audit:e.audit,school:e.school,s:e.s,parts:e.parts};
   }
 
   // ───────────────────────── 5. Vẽ kinh mạch ─────────────────────────
@@ -953,16 +967,18 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
         const n=p.cells?p.cells.length:0;cells+=n;
         if(isMatch(p.m.item))matchCells+=n;
       }
-      return {n:R.diemNghich||0,dead,toc:R.biDong?.toc_do||0,dp:R.biDong?.dot_pha||0,ll:P.linhLucMoiLuot||0,uy:(P.chieu||[]).reduce((a,x)=>a+(x.uyLuc||x.uy||0),0),filled,np:manh.length,shareMatch:cells?matchCells/cells:0};
+      return {eff:spiritModel(P).eff,n:R.diemNghich||0,dead,toc:R.biDong?.toc_do||0,dp:R.biDong?.dot_pha||0,ll:P.linhLucMoiLuot||0,uy:(P.chieu||[]).reduce((a,x)=>a+(x.uyLuc||x.uy||0),0),filled,np:manh.length,shareMatch:cells?matchCells/cells:0};
     };
     const idsBySize=Object.keys(cand).sort((a,b)=>sizeOf(a)-sizeOf(b)||(isMatch(b)-isMatch(a)));
     const tryAdd=async(preferPath,fillMode)=>{
       let base=evalN(cur);
       for(let round=0;round<120;round++){
         let best=null;
+        if(S.deadline&&workNow()>S.deadline)break;
         const used=new Set(cur.flatMap(p=>p.cells));
         for(const id of idsBySize){
           if(usedIds.has(id))continue;
+          if(S.deadline&&workNow()>S.deadline)break;
           if(!qualFill(id))continue; // không nhét món quá thấp phẩm chỉ để lấp ô
           const pathItem=isMatch(id);
           if(preferPath&&!pathItem)continue;
@@ -973,6 +989,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
             const next=[...cur,cnd];
             const e=evalN(next);
             if(e.dead>0)continue;
+            if(mode!=='tu'&&e.eff<0.9&&e.eff<base.eff-0.02)continue; // món này làm thiếu linh lực hơn
             if(mode==='tu'&&e.n>base.n)continue;
             if(mode!=='tu'&&e.n>base.n+(fillMode?3:1))continue;
             let v;
@@ -1108,27 +1125,35 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
   async function optimizeOne(nv,mode,iters,onProg,seeds){
     await ensureCore();S.abort=false;if(S.pref)S.pref._mode=mode;
     const current=evalCurrent(nv,mode),nv0=clone(nv);nv0.kinhMach.manh=[];
+    const T0=performance.now(),tm=((S.dbg=S.dbg||{}).timing=S.dbg.timing||{})[mode]={};const mark=k=>{tm[k]=Math.round(performance.now()-T0);try{console.log('[VKT kinh mạch]',mode,k,tm[k]+'ms')}catch{}};
     onProg?.(.01,'Xếp nền');
     let seed=await greedy(nv0,mode);
-    onProg?.(.03,'Lấp mạch');
+    mark('greedy');onProg?.(.03,'Lấp mạch');
     if(mode!=='danh')seed=await dpSeed(nv0,mode,seed);
     seed=await packFill(nv0,mode,seed);
     const a=await anneal({nv0,mode,iters:Math.round(iters*.5),init:seed,onProg:f=>onProg?.(.05+f*.4,'Tối ưu')});
-    onProg?.(.48,'Lấp lại');
+    mark('anneal1');onProg?.(.48,'Lấp lại');
     let mid=await packFill(nv0,mode,a.manh);
     const b=await anneal({nv0,mode,iters:Math.round(iters*.4),init:mid,onProg:f=>onProg?.(.5+f*.4,'Tinh chỉnh')});
-    onProg?.(.90,'Lối rồi lấp hố');
+    mark('anneal2');onProg?.(.90,'Lối rồi lấp hố 1/4');
+    // Trần thời gian cho cả khâu lấp hố (đo theo thời gian tính thật): quá hạn thì bỏ các lượt lấp còn lại, giữ kết quả đang có
+    S.deadline=workNow()+((S.pref&&S.pref._cap)||(iters>=1500?70000:iters>=800?45000:25000));
     let finalManh=await packFill(nv0,mode,b.manh);
-    finalManh=await packFill(nv0,mode,finalManh);
-    finalManh=await packFill(nv0,mode,finalManh);
-    finalManh=await packFill(nv0,mode,finalManh);
-    onProg?.(.95,'Đánh bóng');
+    for(let k=2;k<=4;k++){
+      if(S.abort||workNow()>S.deadline)break;
+      onProg?.(.90+.01*k,'Lối rồi lấp hố '+k+'/4');
+      finalManh=await packFill(nv0,mode,finalManh);
+    }
+    mark('packFill');onProg?.(.95,'Đánh bóng (có thể mất ~20s)');
     finalManh=await polish(nv0,mode,finalManh,iters,onProg);
-    const polished=finalManh;
+    mark('polish');const polished=finalManh;
     finalManh=await setPass(nv0,mode,finalManh,iters,onProg);
-    const setted=finalManh;
+    mark('setPass');const setted=finalManh;
+    S.deadline=workNow()+((iters>=1500)?30000:20000);
+    onProg?.(.98,'Chốt bộ');
     const polPacked=setted!==polished?await packFill(nv0,mode,polished):null;
     finalManh=await packFill(nv0,mode,finalManh);
+    S.deadline=0;mark('final');
     const enemies=benchEnemies(nv.canhGioi,nv.tieuCanhGioi||0);
     const ev=makeEval(nv0,enemies,mode);
     const pack=list=>list.map(m=>({m,key:m.item+':'+m.x+','+m.y+','+m.xoay}));
@@ -1147,7 +1172,9 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     const e2=ev(pack(best.manh));
     best={...best,score:e2.s,s:e2.s,wins:e2.wins,P:e2.P,R:e2.R,mq:e2.mq,rules:e2.rules,audit:e2.audit,
       missing:(S.pref&&S.pref.hypo)?[...new Set(best.manh.map(m=>m.item).filter(id=>!((nv.tuiDo||{})[id]>0)))]:[]};
-    if(current.score>=best.score&&!(current.R.manh||[]).some(x=>x&&!x.thong))best={...current,same:true};
+    const candBest={manh:best.manh,score:best.score,wins:best.wins,P:best.P,parts:e2.parts,mq:best.mq};
+    if(current.score>=best.score&&!(current.R.manh||[]).some(x=>x&&!x.thong))best={...current,same:true,candBest};else best.candBest=candBest;
+    best.cur=current;
     return{current,best,mode};
   }
   async function optimizeThree(pref,iters,onProg){
@@ -1171,7 +1198,7 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
       for(const m of['tu','can']){
         const mh=A(out[m]?.best?.manh);if(!mh.length)continue;
         const nv3=clone(nv);nv3.kinhMach.manh=mh.map(x=>({...x}));
-        try{const e=evalCurrent(nv3,'danh');
+        try{const e=evalCurrent(nv3,'danh');((S.dbg=S.dbg||{}).cross=S.dbg.cross||{})[m]={score:e.score,wins:e.wins,parts:e.parts,uy:A(e.P?.chieu).map(x=>[x.ten,x.phi,x.hoi,Math.round(x.uy)])};
           if(e.score>out.danh.best.score&&!(e.R.manh||[]).some(x=>x&&!x.thong)){const bag=nv.tuiDo||{};out.danh.best={...e,hypo,missing:[...new Set(mh.map(x=>x.item).filter(id=>(bag[id]||0)<1))]}}
         }catch{}
       }
@@ -1201,7 +1228,35 @@ const BuildEngine=(()=>{const S={core:null,abort:false,pref:{},results:null};
     }
     return rs;
   }
-  return{ensureCore,optimizeThree,apply,applyAll,missingForManh,stop:()=>S.abort=true,reset:()=>{S.core=null},drawGrid,nvNow,pathShareInfo,get core(){return S.core},get results(){return S.results}};
+  /* [DEBUG tạm] Xuất toàn bộ dữ kiện bộ vừa xếp để đối chiếu với code game. Bỏ sau khi tối ưu xong. */
+  function debugDump(){
+    const c=C(),res=S.results;if(!res)return null;
+    const nv=nvNow(),ref=S.pref&&S.pref._refPham,gap=S.pref&&S.pref.fillGap;
+    const itemInfo=id=>{const it=c.items.get(id)||{};return{id,ten:it.ten,loai:it.loai,pham_cap:it.pham_cap,canh_gioi:it.canh_gioi,he:it.he,tag:it.tag,tran_phai:it.tran_phai,hinh:it.hinh?(Array.isArray(it.hinh)?it.hinh.flat().filter(Boolean).length:it.hinh.length):null,bi_dong:it.bi_dong,chieu:it.chieu?{dang:it.chieu.dang,phi:it.chieu.phi,hoi:it.chieu.hoi,uy:it.chieu.uy}:null}};
+    const out={build:BUILD,thoiGian:new Date().toISOString(),nhanVat:{canhGioi:nv.canhGioi,tieuCanhGioi:nv.tieuCanhGioi,linhCan:nv.linhCan,path:nv.path,theChat:nv.theChat,loadouts:(nv.kinhMach?.loadouts||[]).length},
+      pref:{...Object.fromEntries(Object.entries(S.pref||{}).filter(([k])=>!k.startsWith('_')||['_refPham','_relaxed','_gapRelaxed','_rx','_mode'].includes(k)))},refPham:ref,fillGap:gap,pool:S.dbg||null,timing:(S.dbg||{}).timing,modes:{}};
+    out.cross=(S.dbg||{}).cross;
+    const brief=r=>{if(!r)return null;const ids=A(r.manh).map(m=>(m.m||m).item);return{score:r.score,wins:r.wins,parts:r.parts,pieces:ids.map(id=>{const it=c.items.get(id)||{};return it.ten+' p'+it.pham_cap+' cg'+it.canh_gioi}),uy:A(r.P?.chieu).map(x=>[x.ten,x.phi,x.hoi,Math.round(x.uy)]),ll:r.P?.linhLucMoiLuot,maxll:r.P?.linhLucToiDa,hp:r.P?.khiHuyetToiDa}};
+    for(const mode of['danh','tu','can']){
+      const b=res[mode]?.best;if(!b){out.modes[mode]=null;continue}
+      out.modes[mode+'_so']={same:!!b.same,hienTai:brief(b.cur||res[mode].current),ungVien:brief(b.candBest)};
+      const P=b.P||{},R=b.R||{};let sm=null;try{sm=spiritModel(P)}catch{}
+      const cells=A(b.manh).reduce((a,p)=>a+(p.cells?p.cells.length:0),0);
+      const lowPham=A(b.manh).map(p=>p.m?p.m.item:p.item).filter(id=>{const ph=c.items.get(id)?.pham_cap||1;return ph<8&&ref&&ph<ref-(Number.isFinite(gap)?gap:2)});
+      out.modes[mode]={score:b.score??b.s,wins:b.wins,n:b.n,hypo:b.hypo,missing:b.missing,
+        cells,gridCells:(()=>{try{return Object.values(res[mode].best.g||{}).length||null}catch{return null}})(),
+        vuotPham:lowPham.map(id=>({id,ten:c.items.get(id)?.ten,pham:c.items.get(id)?.pham_cap})),
+        mảnh:A(b.manh).map((p,i)=>{const m=p.m||p,id=m.item,rm=A(R.manh)[i]||{};return{...itemInfo(id),x:m.x,y:m.y,xoay:m.xoay,o:p.cells?p.cells.length:null,thong:rm.thong,heSo:rm.heSo,sinhKhac:rm.sinhKhac,huyet:rm.huyet,kinhLo:rm.kinhLo,noiTai:rm.noiTai}}),
+        P:{linhLucMoiLuot:P.linhLucMoiLuot,linhLucToiDa:P.linhLucToiDa,khiHuyetToiDa:P.khiHuyetToiDa,chieu:A(P.chieu).map(x=>({ten:x.ten,dang:x.dang,phi:x.phi,hoi:x.hoi,uy:x.uy,he:x.he}))},
+        spirit:sm,
+        R:{diemNghich:R.diemNghich,biDong:R.biDong},
+        mq:b.mq?{score:b.mq.score,dead:b.mq.dead,connected:b.mq.connected,sustain:b.mq.sustain,castReady:b.mq.castReady,burstReady:b.mq.burstReady}:null,
+        rules:b.rules,school:b.school,
+        cult:(()=>{try{const n2=clone(nv);n2.kinhMach.manh=A(b.manh).map(p=>({...(p.m||p)}));return gameCult(n2)}catch{return null}})()};
+    }
+    return out;
+  }
+  return{ensureCore,optimizeThree,apply,applyAll,debugDump,spiritModel,missingForManh,stop:()=>S.abort=true,reset:()=>{S.core=null},drawGrid,nvNow,pathShareInfo,get core(){return S.core},get results(){return S.results}};
 })();
 
 /* ───────── Dữ liệu: Nhiệm vụ bản đồ / Bí cảnh / Dị bảo ───────── */
@@ -2536,7 +2591,7 @@ function buildResultHtml(){
     +'<div class="stats"><div>Tốc độ tu luyện<b>+'+F((R.biDong?.toc_do||0)*100)+'%</b></div>'
     +'<div>Đột phá (công pháp)<b>+'+F(dp*100)+'%'+(dp>0.12?' → kẹp '+F(dpShow*100)+'%':'')+'</b></div>'
     +'<div>Linh lực mỗi lượt<b>'+F(P.linhLucMoiLuot||0)+'</b></div>'
-    +(()=>{const costs=(P.chieu||[]).filter(x=>x.dang&&x.phi>0).map(x=>x.phi);const minC=costs.length?Math.min(...costs):0;const sumC=costs.reduce((a,b)=>a+b,0);const ll=P.linhLucMoiLuot||0;const ok1=!minC||ll>=minC,ok2=!sumC||ll>=sumC;return '<div>Chiêu / lượt<b class="'+(ok1?'ok':'r')+'">'+F(ll)+' hồi · min '+F(minC)+' · tổng '+F(sumC)+(ok2?' ✓':' ⚠ thiếu')+'</b></div>';})()
+    +(()=>{const sp=BuildEngine.spiritModel(P),ok=sp.eff>=0.9;return '<div>Linh lực / chiêu<b class="'+(ok?'ok':'r')+'">hồi '+F(sp.ll)+'/lượt · bình '+F(sp.maxll)+' · cần ~'+F(Math.round(sp.D*10)/10)+'/lượt (Σ phí÷hồi '+F(Math.round(sp.sumPer*10)/10)+') · ra chiêu '+F(Math.round(sp.eff*100))+'% '+(ok?'✓':'⚠ thiếu linh lực')+'</b></div>';})()
     +'<div>Điểm nghịch<b class="'+(nghich>0?'r':'')+'">'+nghich+(nghich>0?' (−'+F(phaPhe*100)+'% đột phá)':'')+'</b></div>'
     +'<div>Đột phá thực<b class="'+(netBreak<0?'r':'')+'">'+(netBreak>=0?'+':'')+F(netBreak*100)+'%</b></div>'
     +'<div>Thông mạch<b>'+(b.mq?.connected||0)+'/'+A(b.manh).length+'</b></div>'
@@ -2623,7 +2678,8 @@ VIEWS.build=()=>{
     +'<div class="acts" style="flex-wrap:wrap;gap:4px">'
     +'<button class="btn pri" id="b-go" style="padding:4px 8px;font-size:12px" '+(bld.busy?'disabled':'')+'>'+(bld.busy?'…':'Phân tích thực tế')+'</button>'
     +'<button class="btn" id="b-go-hypo" style="padding:4px 8px;font-size:12px" '+(bld.busy?'disabled':'')+' title="Cùng thuật toán; pool = toàn đồ game phù hợp cảnh giới">Phân tích giả định</button>'
-    +'<button class="btn" id="b-stop" style="padding:4px 8px;font-size:12px" '+(bld.busy?'':'disabled')+'>Dừng</button></div>'
+    +'<button class="btn" id="b-stop" style="padding:4px 8px;font-size:12px" '+(bld.busy?'':'disabled')+'>Dừng</button>'
+    +'<button class="btn" id="b-dbg" style="padding:4px 8px;font-size:12px" '+(bld.results?'':'disabled')+' title="Tạm thời: tải log kết quả xếp để đối chiếu code game">Xuất log (debug)</button></div>'
     +'<div class="sub" style="margin-top:4px">Hai chế độ cùng thuật toán xếp. <b>Thực tế</b> = đồ trong túi · <b>Giả định</b> = cả đồ chưa có (đúng cảnh). Món còn thiếu sẽ hiện kèm nút <b>Đặt hàng</b> (cọc 30%, hàng về sau vài năm); có đủ đồ trong túi mới xếp được.</div>'
     +'<div class="bar2"><i id="b-bar"></i></div><div class="sub" id="b-msg">'+E(bld.msg)+(bld.results&&bld.hypo?' <span class="tag o">Chế độ giả định</span>':'')+'</div></div>'
     +(bld.results?('<div class="seg">'+MODES.map(([k,n])=>'<button type="button" data-mode="'+k+'" class="'+(bld.mode===k?'on':'')+'">'+n+'</button>').join('')+'</div>'
@@ -2644,6 +2700,7 @@ VIEWS.build=()=>{
   $$(body,'[data-br]').forEach(el=>el.onclick=()=>{bld.buildR=+el.dataset.br;VIEWS.build()});
   $$(body,'[data-mode]').forEach(x=>x.onclick=()=>{bld.mode=x.dataset.mode;VIEWS.build()});
   $(body,'#b-stop')&&($(body,'#b-stop').onclick=()=>BuildEngine.stop());
+  $(body,'#b-dbg')&&($(body,'#b-dbg').onclick=()=>{try{const d=BuildEngine.debugDump();if(!d){toast('Chưa có kết quả để xuất — hãy bấm Phân tích trước','',3000);return}const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(d,null,1)],{type:'application/json'}));a.download='kinhmach-log-'+Date.now()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),20000);toast('Đã tải log kinh mạch','ok',3000)}catch(e){toast('Lỗi xuất log: '+(e?.message||e),'',5000)}});
   const runOptimize=async(hypo)=>{
     syncPath();
     const he=A((me().linhCan||{}).he);
